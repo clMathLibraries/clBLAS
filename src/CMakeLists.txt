@@ -98,18 +98,7 @@ endif()
 # TODO: maybe this could be written using the FindBLAS module in the future
 if( BUILD_TEST )
 	if(NOT CORR_TEST_WITH_ACML)
-		if( WIN32 )
-			find_package( Netlib COMPONENTS BLAS REQUIRED )
-		else( )
-			if( $ENV{REFBLAS_ROOT} )
-				set( REFBLAS_ROOT $ENV{REFBLAS_ROOT} CACHE PATH "NetLib BLAS root path")
-			else( )
-				message(FATAL_ERROR "Cannot find reference BLAS, please set REFBLAS_ROOT environment variable")
-			endif( )
-			
-			# Find reference BLAS implementation
-			include( ${REFBLAS_ROOT}/package/cmake/exportBLAS.cmake )
-		endif( )
+		find_package( Netlib COMPONENTS BLAS REQUIRED )
 	else( )
 		# Find ACML BLAS implementation
 		# platform dependent ACML subdirectory
