@@ -9,8 +9,11 @@ This repository houses the code for the OpenCL™ BLAS portion of APPML.  The co
 
 The primary goal of clBLAS is to make it easier for developers to utilize the inherent performance and power efficiency benefits of heterogeneous computing.  clBLAS interfaces do not hide nor wrap OpenCL interfaces, but rather leaves OpenCL state management to the control of the user to allow for maximum performance and flexibility.  The clBLAS library does generate and enqueue optimized OpenCL kernels, relieving the user from the task of writing, optimizing and maintaining kernel code themselves.
 
+## clBLAS library user documentation
+[Library and API documentation]( http://clmathlibraries.github.io/clBLAS/ ) for developers is available online as a GitHub Pages website
+
 ## clBLAS Wiki
-The [project wiki](https://github.com/kknox/clBLAS/wiki) contains helpful documentation, including a [build primer](https://github.com/kknox/clBLAS/wiki/Build)
+The [project wiki](https://github.com/clMathLibraries/clBLAS/wiki) contains helpful documentation, including a [build primer](https://github.com/clMathLibraries/clBLAS/wiki/Build)
 
 ## Contributing code
 Please refer to and read the [Contributing](CONTRIBUTING.md) document for guidelines on how to contribute code to this open source project
