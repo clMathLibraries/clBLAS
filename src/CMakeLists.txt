@@ -42,7 +42,7 @@ endif( )
 
 # Define a version for the code
 set( clBLAS_VERSION_MAJOR 2 )
-set( clBLAS_VERSION_MINOR 1 )
+set( clBLAS_VERSION_MINOR 0 )
 set( clBLAS_VERSION_PATCH 0 )
 set( clBLAS_VERSION "${clBLAS_VERSION_MAJOR}.${clBLAS_VERSION_MINOR}.${clBLAS_VERSION_PATCH}")
 
