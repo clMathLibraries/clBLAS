@@ -52,7 +52,7 @@ PROJECT_LOGO           =
 # If a relative path is entered, it will be relative to the location 
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = F:\code\git-svn\clBLAS.head\bin\master\vs10x64.superbuild\docs
+OUTPUT_DIRECTORY       = ..\..\bin\clBLAS.doxy
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 
 # 4096 sub-directories (in 2 levels) under the output directory of each output 
@@ -651,17 +651,17 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = clBLAS.h \
-                         include/cltypes.h \
-                         include/kerngen.h \
-                         include/solver.h \
-                         include/mempat.h \
-                         src/blas/gens/blas_kgen.h \
-                         src/blas/include/clblas-internal.h \
-                         src/blas/include/kernel_extra.h \
-                         src/blas/include/solution_seq.h \
-                         include/granulation.h \
-                         src/tools/ktest/step.h
+INPUT                  = ../src/clBLAS.h \
+                         ../src/include/cltypes.h \
+                         ../src/include/kerngen.h \
+                         ../src/include/solver.h \
+                         ../src/include/mempat.h \
+                         ../src/library/gens/blas_kgen.h \
+                         ../src/library/include/clblas-internal.h \
+                         ../src/library/include/kernel_extra.h \
+                         ../src/library/include/solution_seq.h \
+                         ../src/include/granulation.h \
+                         ../src/library/tools/ktest/step.h
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
@@ -721,7 +721,7 @@ EXCLUDE_SYMBOLS        =
 # directories that contain example code fragments that are included (see 
 # the \include command).
 
-EXAMPLE_PATH           = samples
+EXAMPLE_PATH           = ../src/samples
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the 
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
