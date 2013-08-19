@@ -58,7 +58,7 @@ if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 	set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
 endif( )
 
-set( ACMLROOT $ENV{ACMLROOT} CACHE PATH "AMD ACML root path")
+set( ACML_ROOT $ENV{ACML_ROOT} CACHE PATH "AMD ACML root path")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING
@@ -110,9 +110,9 @@ if( BUILD_TEST )
 
 		find_path(ACML_INCLUDE_DIRS acml.h
 			HINTS
-				$ENV{ACMLROOT}/include
-				${ACMLROOT}/include
-				${ACMLROOT}/${ACML_SUBDIR}/include
+				$ENV{ACML_ROOT}/include
+				${ACML_ROOT}/include
+				${ACML_ROOT}/${ACML_SUBDIR}/include
 		)
 
 		if( ACML_INCLUDE_DIRS )
@@ -123,15 +123,15 @@ if( BUILD_TEST )
 		if( UNIX )
 			find_library(ACML_LIBRARIES acml acml_mp
 				HINTS
-					$ENV{ACMLROOT}/lib
-					${ACMLROOT}/lib
-					${ACMLROOT}/${ACML_SUBDIR}/lib
+					$ENV{ACML_ROOT}/lib
+					${ACML_ROOT}/lib
+					${ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 			find_library(_acml_mv_library acml_mv
 				HINTS
-					$ENV{ACMLROOT}/lib
-					${ACMLROOT}/lib
-					${ACMLROOT}/${ACML_SUBDIR}/lib
+					$ENV{ACML_ROOT}/lib
+					${ACML_ROOT}/lib
+					${ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 			mark_as_advanced(_acml_mv_library)
 		endif( )
@@ -139,9 +139,9 @@ if( BUILD_TEST )
 		if(WIN32)
 			find_library(ACML_LIBRARIES libacml_dll libacml_mp_dll
 				HINTS
-					$ENV{ACMLROOT}/lib
-					${ACMLROOT}/lib
-					${ACMLROOT}/${ACML_SUBDIR}/lib
+					$ENV{ACML_ROOT}/lib
+					${ACML_ROOT}/lib
+					${ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 		endif( )
 		
