@@ -285,12 +285,19 @@ ExternalProject_Add( tplgen
 
 ExternalProject_Get_Property( tplgen binary_dir )
 
+set( tplgenBinaryDir "" )
+if( CMAKE_COMPILER_IS_GNUCXX )
+    set( tplgenBinaryDir ${binary_dir} )
+else()
+    set( tplgenBinaryDir "${binary_dir}/Debug" )
+endif()
+
 add_custom_target( GENERATE_CLT
-    COMMAND ${binary_dir}/Debug/tplgen -o ${clBLAS_BINARY_DIR}/include ${SRC_CL_TEMPLATES}
+    COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include ${SRC_CL_TEMPLATES}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
 )
 
-add_dependencies(GENERATE_CLT tplgen)
+add_dependencies( GENERATE_CLT tplgen )
 
 add_library(clBLAS SHARED ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
 add_dependencies(clBLAS GENERATE_CLT)
