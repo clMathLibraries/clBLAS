@@ -1,11 +1,6 @@
 clBLAS
 =====
-
-clMATH is a software library containing FFT and BLAS functions written in OpenCL. In addition to GPU devices, the libraries also support running on CPU devices to facilitate debugging and multicore programming.
-
-<a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-math-libraries/">APPML 1.10</a> is the most current generally available version of the library, and pre-built binaries are available for download on both Linux and Windows platforms.
-
-This repository houses the code for the OpenCL™ BLAS portion of APPML.  The complete set of BLAS level 1, 2 & 3 routines has been  implemented. Please see <a href="http://www.netlib.org/blas/index.html"> Netlib BLAS </a> for the list of routines.  For more information on supported graphics cards, see the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/system-requirements-driver-compatibility/">AMD APP System Requirements</a>.
+This repository houses the code for the OpenCL™ BLAS portion of clMath.  The complete set of BLAS level 1, 2 & 3 routines is implemented. Please see <a href="http://www.netlib.org/blas/index.html"> Netlib BLAS </a> for the list of supported routines.  In addition to GPU devices, the library also supports running on CPU devices to facilitate debugging and multicore programming.  <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-math-libraries/">APPML 1.10</a> is the most current generally available pre-packaged binary version of the library available for download for both Linux and Windows platforms.
 
 The primary goal of clBLAS is to make it easier for developers to utilize the inherent performance and power efficiency benefits of heterogeneous computing.  clBLAS interfaces do not hide nor wrap OpenCL interfaces, but rather leaves OpenCL state management to the control of the user to allow for maximum performance and flexibility.  The clBLAS library does generate and enqueue optimized OpenCL kernels, relieving the user from the task of writing, optimizing and maintaining kernel code themselves.
 
@@ -144,7 +139,7 @@ int main( void )
 ## Build dependencies
 ### Library for Windows
 *  Windows® 7/8
-*  Visual Studio 2010 SP1
+*  Visual Studio 2010 SP1, 2012
 *  An OpenCL SDK, such as APP SDK 2.8
 *  Latest CMake
 
