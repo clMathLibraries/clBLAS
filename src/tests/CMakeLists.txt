@@ -242,6 +242,12 @@ source_group(functional  FILES ${SRC_FUNC} ${FUNC_HEADERS})
 # at paramVal = CL_PROGRAM_BINARIES and several devices in the context
 add_definitions( -DTEST_WITH_SINGLE_DEVICE )
 
+# vs11 needs std::tuples compiled with 10 parameters by default
+# NOTE: this assumes that googletest is compiled with the same preprocessor macro; they must match
+if( MSVC11 )
+	add_definitions( "/D_VARIADIC_MAX=10" )
+endif()
+
 # Having problems on build server, compiling gtest headers with -pedantic; disabling detection of long long
 # http://code.google.com/p/googletest/issues/detail?id=334
 if( CMAKE_COMPILER_IS_GNUCXX )
