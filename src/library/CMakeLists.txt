@@ -277,35 +277,28 @@ if( BLAS_PRINT_BUILD_ERRORS )
     add_definitions( -DPRINT_BUILD_ERRORS )
 endif()
 
-#add_executable(tplgen tools/tplgen/tplgen.cpp)
-if (CMAKE_COMPILER_IS_GNUCXX)
-    include(ExternalProject)
-    ExternalProject_Add(
-        tplgen
-        URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
-        INSTALL_COMMAND ""
-    )
-    add_custom_target( GENERATE_CLT
-                   COMMAND ${CMAKE_BINARY_DIR}/library/tplgen-prefix/src/tplgen-build/tplgen -o ../../include/ ${SRC_CL_TEMPLATES}
-                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
-                )
-    add_dependencies(GENERATE_CLT tplgen)
+include( ExternalProject )
+ExternalProject_Add( tplgen
+    URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property( tplgen binary_dir )
+
+set( tplgenBinaryDir "" )
+if( CMAKE_COMPILER_IS_GNUCXX )
+    set( tplgenBinaryDir ${binary_dir} )
 else()
-    include(ExternalProject)
-    ExternalProject_Add(
-        tplgen
-        URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
-        CONFIGURE_COMMAND "${CMAKE_BINARY_DIR}\\library\\tplgen-prefix\\src\\tplgen\\configure.bat"
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Debug
-#        BUILD_COMMAND MSBuild.exe tplgen.sln /m /fl /flp1:logfile=errors.log;errorsonly /flp2:logfile=warnings.log;warningsonly /t:rebuild
-        INSTALL_COMMAND ""
-    )
-    add_custom_target( GENERATE_CLT
-        COMMAND ${CMAKE_BINARY_DIR}\\library\\tplgen-prefix\\src\\tplgen-build\\Debug\\tplgen.exe -o ..\\..\\include ${SRC_CL_TEMPLATES}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\\library\\blas\\gens\\clTemplates
-    )
-    add_dependencies(GENERATE_CLT tplgen)
+    set( tplgenBinaryDir "${binary_dir}/Debug" )
 endif()
+
+add_custom_target( GENERATE_CLT
+    COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include ${SRC_CL_TEMPLATES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
+)
+
+add_dependencies( GENERATE_CLT tplgen )
+
 add_library(clBLAS SHARED ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
 add_dependencies(clBLAS GENERATE_CLT)
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
