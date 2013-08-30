@@ -139,18 +139,9 @@ add_executable(tune ${TOOLS_SRC} ${TOOLS_EXTERNAL_SRC})
 add_dependencies(tune GENERATE_CLT)
 target_link_libraries(tune ${OPENCL_LIBRARIES} ${TIME_LIBRARY} ${MATH_LIBRARY})
 
-if( TARGET_PLATFORM EQUAL 64 )
-	# CPack configuration; include the executable into the package
-	install( TARGETS tune
-			RUNTIME DESTINATION bin64
-			LIBRARY DESTINATION lib64
-			ARCHIVE DESTINATION lib64/import
-			)
-else()
-	# CPack configuration; include the executable into the package
-	install( TARGETS tune
-			RUNTIME DESTINATION bin32
-			LIBRARY DESTINATION lib32
-			ARCHIVE DESTINATION lib32/import
-			)
-endif()
+# CPack configuration; include the executable into the package
+install( TARGETS tune
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+		)
