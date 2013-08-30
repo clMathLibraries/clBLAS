@@ -21,10 +21,4 @@ set(GRAPHING_SCRIPTS 	measurePerformance.py
 						performanceUtility.py
 						)
 
-if( TARGET_PLATFORM EQUAL 64 )
-    set( BIN_DIR bin64 )
-else()
-    set( BIN_DIR bin32 )
-endif()
-
-install( FILES ${GRAPHING_SCRIPTS} DESTINATION ${BIN_DIR} )
+install( FILES ${GRAPHING_SCRIPTS} DESTINATION bin${SUFFIX_BIN} )

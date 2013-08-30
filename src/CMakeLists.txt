@@ -28,10 +28,14 @@ option( BUILD_KTEST "A command line tool for testing single clBLAS kernel" ON )
 # However, test-correctness can instead use NETLIB as a reference library
 set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
 
-# uncomment these to print compiler invocation lines for nmake files
-# set( CMAKE_START_TEMP_FILE "" )
-# set( CMAKE_END_TEMP_FILE "" )
-# set( CMAKE_VERBOSE_MAKEFILE 1 )
+if( CMAKE_GENERATOR MATCHES "NMake" )
+  option( NMAKE_COMPILE_VERBOSE "Print compile and link strings to the console" OFF )
+  if( NMAKE_COMPILE_VERBOSE )
+    set( CMAKE_START_TEMP_FILE "" )
+    set( CMAKE_END_TEMP_FILE "" )
+    set( CMAKE_VERBOSE_MAKEFILE 1 )
+  endif( )
+endif( )
 
 # If we are on linux, and we wish to link with the netlib BLAS implementation, we need to have a valid fortran compiler
 if( NOT CORR_TEST_WITH_ACML AND NOT WIN32)
@@ -66,15 +70,27 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif()
 
+# These variables are meant to contain string which should be appended to the installation paths 
+# of library and executable binaries, respectively.  They are meant to be user configurable/overridable.  
+set( SUFFIX_LIB_DEFAULT "" )
+set( SUFFIX_BIN_DEFAULT "" )
+
 if(TARGET_PLATFORM EQUAL 32 OR TARGET_PLATFORM EQUAL 64)
     set(TARGET_PLATFORM ${TARGET_PLATFORM} CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
+    if( TARGET_PLATFORM EQUAL 64 )
+        set( SUFFIX_LIB_DEFAULT "64" )
+    endif( )
 else()
     if(CMAKE_SIZEOF_VOID_P MATCHES 8)
         set(TARGET_PLATFORM "64" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
+        set( SUFFIX_LIB_DEFAULT "64" )
     else()
         set(TARGET_PLATFORM "32" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
     endif()
 endif()
+
+set( SUFFIX_LIB ${SUFFIX_LIB_DEFAULT} CACHE STRING "String to append to 'lib' install path" )
+set( SUFFIX_BIN ${SUFFIX_BIN_DEFAULT} CACHE STRING "String to append to 'bin' install path" )
 
 if( MSVC_IDE )
     set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
@@ -202,11 +218,16 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     if(TARGET_PLATFORM EQUAL 32)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin")
     endif()
-endif()
+elseif( MSVC )
+	# CMake sets huge stack frames for windows, for whatever reason.  We go with compiler default.
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
+endif( )
 
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
+endif( )
 
 #TODO:  We should remove this pre-processor define for our 1.8 build; this means removing our deprecated image functions such as calls clCreateImage2D( )
 add_definitions( -DCL_USE_DEPRECATED_OPENCL_1_1_APIS )
