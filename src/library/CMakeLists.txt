@@ -289,7 +289,7 @@ set( tplgenBinaryDir "" )
 if( CMAKE_COMPILER_IS_GNUCXX )
     set( tplgenBinaryDir ${binary_dir} )
 else()
-    set( tplgenBinaryDir "${binary_dir}/Debug" )
+    set( tplgenBinaryDir "${binary_dir}/${CMAKE_CFG_INTDIR}" )
 endif()
 
 add_custom_target( GENERATE_CLT
@@ -305,18 +305,9 @@ set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
 target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 
-if( TARGET_PLATFORM EQUAL 64 )
-	# CPack configuration; include the executable into the package
-	install( TARGETS clBLAS
-			RUNTIME DESTINATION bin64
-			LIBRARY DESTINATION lib64
-			ARCHIVE DESTINATION lib64/import
-			)
-else()
-	# CPack configuration; include the executable into the package
-	install( TARGETS clBLAS
-			RUNTIME DESTINATION bin32
-			LIBRARY DESTINATION lib32
-			ARCHIVE DESTINATION lib32/import
-			)
-endif()
+# CPack configuration; include the executable into the package
+install( TARGETS clBLAS
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+		)

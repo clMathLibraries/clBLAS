@@ -48,18 +48,9 @@ target_link_libraries(t_dblock_kgen ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 add_executable(t_gens_cache ${SRC_GENS_CACHE})
 target_link_libraries(t_gens_cache ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 
-if( TARGET_PLATFORM EQUAL 64 )
-	# CPack configuration; include the executable into the package
-	install( TARGETS t_dblock_kgen t_gens_cache
-			RUNTIME DESTINATION bin64
-			LIBRARY DESTINATION lib64
-			ARCHIVE DESTINATION lib64/import
-			)
-else()
-	# CPack configuration; include the executable into the package
-	install( TARGETS t_dblock_kgen t_gens_cache
-			RUNTIME DESTINATION bin32
-			LIBRARY DESTINATION lib32
-			ARCHIVE DESTINATION lib32/import
-			)
-endif()
+# CPack configuration; include the executable into the package
+install( TARGETS t_dblock_kgen t_gens_cache
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+		)

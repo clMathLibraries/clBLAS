@@ -52,17 +52,9 @@ target_link_libraries(client ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} clBLAS)
 add_executable(testPerfWrapper ${WRAPPER_SRC})
 target_link_libraries(testPerfWrapper ${Boost_LIBRARIES})
 
-if( TARGET_PLATFORM EQUAL 64 )
-    set( BIN_DIR bin64 )
-    set( LIB_DIR lib64 )
-else()
-    set( BIN_DIR bin32 )
-    set( LIB_DIR lib32 )
-endif()
-
 # CPack configuration; include the executable into the package
 install( TARGETS client testPerfWrapper
-		RUNTIME DESTINATION ${BIN_DIR}
-		LIBRARY DESTINATION ${LIB_DIR}
-		ARCHIVE DESTINATION ${LIB_DIR}/import
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
 		)

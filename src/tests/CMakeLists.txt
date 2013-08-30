@@ -276,11 +276,7 @@ endif()
 # It stitches together a path to a previously built static library, based on our 'make install' logic
 # Search for 64bit libs if FIND_LIBRARY_USE_LIB64_PATHS is set to true in the global environment, 32bit libs else
 get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
-if( LIB64 )
-	set( runtime.library "${CMAKE_INSTALL_PREFIX}/lib64" )
-else( )
-	set( runtime.library "${CMAKE_INSTALL_PREFIX}/lib32" )
-endif( )
+set( runtime.library "${CMAKE_INSTALL_PREFIX}/lib${SUFFIX_LIB}" )
 
 if( WIN32 )
 	set( runtime.library "${runtime.library}/import/clBLAS${CMAKE_STATIC_LIBRARY_SUFFIX}" )
@@ -371,22 +367,13 @@ if( GTEST_FOUND )
     set_property( TARGET test-medium PROPERTY FOLDER "Test")
     set_property( TARGET test-short PROPERTY FOLDER "Test")
 
-    if( TARGET_PLATFORM EQUAL 64 )
-	    # CPack configuration; include the executable into the package
-	    install( TARGETS test-correctness test-medium test-short
-			    RUNTIME DESTINATION bin64
-			    LIBRARY DESTINATION lib64
-			    ARCHIVE DESTINATION lib64/import
-			    )
-    else()
-	    # CPack configuration; include the executable into the package
-	    install( TARGETS test-correctness test-medium test-short
-			    RUNTIME DESTINATION bin32
-			    LIBRARY DESTINATION lib32
-			    ARCHIVE DESTINATION lib32/import
-			    )
-    endif()
-
+    # CPack configuration; include the executable into the package
+    install( TARGETS test-correctness test-medium test-short
+            RUNTIME DESTINATION bin${SUFFIX_BIN}
+            LIBRARY DESTINATION lib${SUFFIX_LIB}
+            ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+            )
+    
 	if( ACML_FOUND )
 		include_directories(${OPENCL_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
 			${clBLAS_SOURCE_DIR} ${clBLAS_SOURCE_DIR}/tests/include  ${clBLAS_SOURCE_DIR}/include)
@@ -407,21 +394,12 @@ if( GTEST_FOUND )
 
         set_property( TARGET test-performance PROPERTY FOLDER "Test")
 
-		if( TARGET_PLATFORM EQUAL 64 )
-			# CPack configuration; include the executable into the package
-			install( TARGETS test-performance
-					RUNTIME DESTINATION bin64
-					LIBRARY DESTINATION lib64
-					ARCHIVE DESTINATION lib64/import
-					)
-		else()
-			# CPack configuration; include the executable into the package
-			install( TARGETS test-performance
-					RUNTIME DESTINATION bin32
-					LIBRARY DESTINATION lib32
-					ARCHIVE DESTINATION lib32/import
-					)
-		endif()
+        # CPack configuration; include the executable into the package
+        install( TARGETS test-performance
+                RUNTIME DESTINATION bin${SUFFIX_BIN}
+                LIBRARY DESTINATION lib${SUFFIX_LIB}
+                ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+                )
 	endif()
 
 	include_directories(${OPENCL_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
@@ -438,19 +416,10 @@ if( GTEST_FOUND )
 
     set_property( TARGET test-functional PROPERTY FOLDER "Test")
 
-	if( TARGET_PLATFORM EQUAL 64 )
-		# CPack configuration; include the executable into the package
-		install( TARGETS test-functional
-				RUNTIME DESTINATION bin64
-				LIBRARY DESTINATION lib64
-				ARCHIVE DESTINATION lib64/import
-				)
-	else()
-		# CPack configuration; include the executable into the package
-		install( TARGETS test-functional
-				RUNTIME DESTINATION bin32
-				LIBRARY DESTINATION lib32
-				ARCHIVE DESTINATION lib32/import
-				)
-	endif()
+    # CPack configuration; include the executable into the package
+    install( TARGETS test-functional
+            RUNTIME DESTINATION bin${SUFFIX_BIN}
+            LIBRARY DESTINATION lib${SUFFIX_LIB}
+            ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+            )
 endif()
