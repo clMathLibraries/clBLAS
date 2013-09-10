@@ -51,7 +51,7 @@ set( clBLAS_VERSION_PATCH 0 )
 set( clBLAS_VERSION "${clBLAS_VERSION_MAJOR}.${clBLAS_VERSION_MINOR}.${clBLAS_VERSION_PATCH}")
 
 # Increment this if we break backward compatibility.
-set(clBLAS_SOVERSION 1)
+set( clBLAS_SOVERSION 2 )
 
 # We have custom written Find* modules now in the root source directory
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )

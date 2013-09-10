@@ -299,6 +299,14 @@ add_custom_target( GENERATE_CLT
 
 add_dependencies( GENERATE_CLT tplgen )
 
+if( CMAKE_COMPILER_IS_GNUCC )
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/clBLAS.pc.in
+                    ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc @ONLY )
+
+    install( FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc
+             DESTINATION lib${SUFFIX_LIB}/pkgconfig )
+endif( )
+
 add_library(clBLAS SHARED ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
 add_dependencies(clBLAS GENERATE_CLT)
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
