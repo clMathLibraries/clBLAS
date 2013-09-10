@@ -267,7 +267,7 @@ if( CMAKE_Fortran_COMPILER_ID STREQUAL "PGI" )
 endif( )
 
 # Library with functions for time measurement. In Windows they are included automatically
-if(UNIX)
+if(UNIX AND NOT(APPLE))
     set(TIME_LIBRARY "rt")
     set(THREAD_LIBRARY "pthread")
 endif()

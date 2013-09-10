@@ -130,7 +130,7 @@ if( BLAS_DEBUG_TOOLS )
 endif()
 
 # Library with functions for time measurement. In Windows they are included automatically
-if(UNIX)
+if(UNIX AND NOT(APPLE))
     set(TIME_LIBRARY "rt")
 endif()
 
