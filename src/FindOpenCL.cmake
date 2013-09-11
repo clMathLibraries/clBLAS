@@ -85,7 +85,7 @@ else( )
             ${OPENCL_ROOT}/lib
             ENV AMDAPPSDKROOT/lib
 		DOC "OpenCL dynamic library path"
-		PATH_SUFFIXES x86
+		PATH_SUFFIXES x86 Win32
 	)
 endif( )
 mark_as_advanced( OPENCL_LIBRARIES )
