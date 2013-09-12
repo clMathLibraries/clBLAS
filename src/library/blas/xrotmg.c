@@ -14,10 +14,6 @@
  * limitations under the License.
  * ************************************************************************/
 
-/***********************************************************************
-**  Rotgright (C) 2011 Advanced Micro Devices, Inc. All Rights Reserved.
-***********************************************************************/
-
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>

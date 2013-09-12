@@ -14,10 +14,6 @@
  * limitations under the License.
  * ************************************************************************/
 
-/***********************************************************************
-**  Rotgright (C) 2011 Advanced Micro Devices, Inc. All Rights Reserved.
-***********************************************************************/
-
 #include <stdlib.h>             // srand()
 #include <string.h>             // memcpy()
 #include <gtest/gtest.h>
