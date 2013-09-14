@@ -15,13 +15,16 @@
  * ************************************************************************/
 
 
-#include <malloc.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 // #include "fileio.h"
 #include "toolslib.h"
@@ -35,6 +38,10 @@
 
 #if defined(_MSC_VER)
 #include "Windows.h"
+#elif defined(__APPLE__)
+#include <stdint.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 #else
 #include "time.h"
 #endif
@@ -83,7 +90,33 @@ getCurrentTime(void)
      }
      return (nano_time_t)count.QuadPart;
 }
-#else /* defined(_MCS_VER) */
+
+#elif defined(__APPLE__)
+
+typedef uint64_t nano_time_t;
+#define NANOTIME_MAX UINT64_MAX
+
+nano_time_t
+conv2nanosec(nano_time_t t)
+{
+  static mach_timebase_info_data_t timebase_info = {0};
+
+    if (timebase_info.denom == 0)
+    {
+        (void)mach_timebase_info(&timebase_info);
+    }
+
+    /* Let's hope we don't overflow */
+    return (t * timebase_info.denom) / timebase_info.numer;
+}
+
+nano_time_t
+getCurrentTime(void)
+{
+    return mach_absolute_time();
+}
+
+#else
 
 typedef unsigned long nano_time_t;
 #define NANOTIME_MAX (~0UL - 1)

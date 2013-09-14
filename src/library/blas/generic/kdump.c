@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include <cltypes.h>
 #include <clblas-internal.h>

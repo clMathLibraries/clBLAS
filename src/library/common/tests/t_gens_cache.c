@@ -23,7 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 #include <kerngen.h>
 #include <kern_cache.h>
