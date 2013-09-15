@@ -48,6 +48,8 @@
 #-----------------------
 if( DEFINED ENV{AMDAPPSDKROOT} )
 	set( OPENCL_ROOT $ENV{AMDAPPSDKROOT} CACHE PATH "Environment variable defining the root of OPENCL implementation" )
+elseif( DEFINED ENV{CUDA_PATH} )
+        set( OPENCL_ROOT $ENV{CUDA_PATH} CACHE PATH "Environment variable defining the root of OPENCL implementation" )
 else( )
 	set( OPENCL_ROOT "/usr/lib" CACHE PATH "Environment variable defining the root of OPENCL implementation" )
 endif( )
@@ -83,7 +85,7 @@ else( )
             ${OPENCL_ROOT}/lib
             ENV AMDAPPSDKROOT/lib
 		DOC "OpenCL dynamic library path"
-		PATH_SUFFIXES x86
+		PATH_SUFFIXES x86 Win32
 	)
 endif( )
 mark_as_advanced( OPENCL_LIBRARIES )
