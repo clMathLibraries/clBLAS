@@ -1,5 +1,7 @@
 clBLAS
 =====
+[![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.png)](https://travis-ci.org/clMathLibraries/clBLAS)
+
 This repository houses the code for the OpenCL™ BLAS portion of clMath.  The complete set of BLAS level 1, 2 & 3 routines is implemented. Please see <a href="http://www.netlib.org/blas/index.html"> Netlib BLAS </a> for the list of supported routines.  In addition to GPU devices, the library also supports running on CPU devices to facilitate debugging and multicore programming.  <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-math-libraries/">APPML 1.10</a> is the most current generally available pre-packaged binary version of the library available for download for both Linux and Windows platforms.
 
 The primary goal of clBLAS is to make it easier for developers to utilize the inherent performance and power efficiency benefits of heterogeneous computing.  clBLAS interfaces do not hide nor wrap OpenCL interfaces, but rather leaves OpenCL state management to the control of the user to allow for maximum performance and flexibility.  The clBLAS library does generate and enqueue optimized OpenCL kernels, relieving the user from the task of writing, optimizing and maintaining kernel code themselves.
