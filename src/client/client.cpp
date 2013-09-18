@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   cl_double beta;
   cl_uint profileCount;
   cl_uint commandQueueFlags = 0;
-  cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
+  cl_device_type deviceType = CL_DEVICE_TYPE_CPU;
   int order_option;
   //clblasOrder order;
   //clblasTranspose transA;
