@@ -39,6 +39,11 @@
 #include "time.h"
 #endif
 
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 #define EXIT_COD_OK                         0x0000
 #define EXIT_COD_CL_ERROR                   0x0100
 #define EXIT_COD_UNKNOWN_DATATYPE           0x0101
@@ -101,7 +106,17 @@ getCurrentTime(void)
     int err;
     struct timespec t;
 
+#ifdef __MACH__
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    err = clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    t.tv_sec = mts.tv_sec;
+    t.tv_nsec = mts.tv_nsec;
+#else
     err = clock_gettime(CLOCK_REALTIME, &t);
+#endif
     if (err == 0) {
         return (t.tv_sec * 1000000000UL + t.tv_nsec);
     }
