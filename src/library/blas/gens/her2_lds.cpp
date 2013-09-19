@@ -301,7 +301,7 @@ generator(
 	}
 	kprintf kobj( Prefix[extraFlags->dtype], vecLenA, doVLOAD, doVLOAD);
 
-	sprintf( targetRows, "%d", TARGETROWS );
+	sprintf( targetRows, "%" SPREFIX "u", TARGETROWS );
 	sprintf( blockSize, "%d", BLOCKSIZE );
 
 	#ifdef DEBUG_HER2
