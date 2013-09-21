@@ -18,7 +18,11 @@
 #ifndef KTEST_VAR_H__
 #define KTEST_VAR_H__
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 #include <string>
 
 namespace clMath {

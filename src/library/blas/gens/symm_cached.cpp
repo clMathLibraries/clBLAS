@@ -193,10 +193,10 @@ generator(
 		printf("WARNING: SYMM- generator: subdim and blocksize in-compatible.\n");
 	}
 
-	sprintf(width, "%d", Y);
-	sprintf(itemy, "%lu", ITEMY);
-	sprintf(itemx, "%lu", ITEMX);
-	sprintf(itemy_by_width, "%lu", (size_t) ITEMY/kextra->vecLenA);
+	sprintf(width, "%" SPREFIX "u", Y);
+	sprintf(itemy, "%" SPREFIX "u", ITEMY);
+	sprintf(itemx, "%" SPREFIX "u", ITEMX);
+	sprintf(itemy_by_width, "%" SPREFIX "u", (size_t) ITEMY/kextra->vecLenA);
 
 	kobj.put("%WIDTH", width);
 	kobj.put("%ITEMX", itemx);

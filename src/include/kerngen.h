@@ -42,6 +42,12 @@
  */
 /*@{*/
 
+#ifdef _MSC_VER
+#define SPREFIX "I"
+#else
+#define SPREFIX "z"
+#endif
+
 #define SUBDIM_UNUSED (size_t)-1
 
 enum {

@@ -18,13 +18,16 @@
 #ifndef STORAGEDATA_H_
 #define STORAGEDATA_H_
 
-#include <malloc.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 #include <trace_malloc.h>
 

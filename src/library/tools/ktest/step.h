@@ -18,7 +18,11 @@
 #ifndef KTEST_PATTERN_H__
 #define KTEST_PATTERN_H__
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 #include <list>
 #include <map>
 #include <string>

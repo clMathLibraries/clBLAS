@@ -69,21 +69,21 @@ doRotg(
 
 		// Check wheather enough memory was allocated
 
-		if (retCode = checkVectorSizes(kargs->dtype, 1, A, offA, 1, X_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, A, offA, 1, X_VEC_ERRSET))) {
 			printf("Invalid Size for A\n");
             return retCode;
 		}
-		if (retCode = checkVectorSizes(kargs->dtype, 1, B, offB, 1, Y_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, B, offB, 1, Y_VEC_ERRSET))) {
 			printf("Invalid Size for B\n");
             return retCode;
 		}
 
-		if (retCode = checkVectorSizes(cType, 1, C, offC, 1, X_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(cType, 1, C, offC, 1, X_VEC_ERRSET))) {
 			printf("Invalid Size for C\n");
             return retCode;
 		}
 
-		if (retCode = checkVectorSizes(kargs->dtype, 1, S, offS, 1, Y_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, S, offS, 1, Y_VEC_ERRSET))) {
 			printf("Invalid Size for S\n");
             return retCode;
 		}

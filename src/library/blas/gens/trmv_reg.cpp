@@ -381,8 +381,8 @@ generator(
 	}
 	kprintf kobj( Prefix[extraFlags->dtype], vecLenA, doVLOAD);
 
-    sprintf( targetRows, "%d", TARGETROWS );
-	sprintf( blockSize, "%d", BLOCKSIZE );
+    sprintf( targetRows, "%" SPREFIX "u", TARGETROWS );
+	sprintf( blockSize, "%" SPREFIX "u", BLOCKSIZE );
 
 	#ifdef DEBUG_TRMV
     printf("TARGET ROWS = %s\n", targetRows);

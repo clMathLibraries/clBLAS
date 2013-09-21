@@ -282,8 +282,8 @@ generator(
 
 	BH = subdims->y;
 	BW = subdims->x;
-	sprintf( bhStr, "%d", BH );
-	sprintf( bwStr, "%d", BW );
+	sprintf( bhStr, "%" SPREFIX "u", BH );
+	sprintf( bwStr, "%" SPREFIX "u", BW );
 
 	#ifdef DEBUG_GER
     printf("BH = %s\n", bhStr);

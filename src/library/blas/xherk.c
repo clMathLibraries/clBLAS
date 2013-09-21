@@ -64,7 +64,7 @@ doHerk(
     }
 
     // Validate arguments
-    if (retCode = checkMemObjects(A, C, NULL, false, A_MAT_ERRSET, C_MAT_ERRSET, END_ERRSET )) {
+    if ((retCode = checkMemObjects(A, C, NULL, false, A_MAT_ERRSET, C_MAT_ERRSET, END_ERRSET))) {
         return retCode;
     }
 
@@ -72,11 +72,11 @@ doHerk(
         return clblasInvalidValue;
     }
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, transA, N, K, A, offA, lda, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, transA, N, K, A, offA, lda, A_MAT_ERRSET))) {
         return retCode;
     }
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, false, N, N, C, offC, ldc, C_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, false, N, N, C, offC, ldc, C_MAT_ERRSET))) {
         return retCode;
     }
 
