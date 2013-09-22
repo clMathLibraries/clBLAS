@@ -57,7 +57,7 @@ doScal(
 
 		// Check wheather enough memory was allocated
 
-		if (retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET))) {
 			printf("Invalid Size for X\n");
             return retCode;
 		}

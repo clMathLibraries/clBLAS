@@ -50,31 +50,31 @@ doSymm(	CLBlasKargs *kargs, clblasOrder order, clblasUplo uplo, clblasSide side,
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET )) {
+    if ((retCode = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET))) {
 		printf("SYMM:- Invalid mem object..\n");
         return retCode;
     }
 
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, B, offb, ldb, B_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, B, offb, ldb, B_MAT_ERRSET))) {
 		printf("Invalid Size for B\n");
         return retCode;
     }
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, C, offc, ldc, C_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, C, offc, ldc, C_MAT_ERRSET))) {
 		printf("Invalid Size for C\n");
         return retCode;
     }
 	if (side == clblasLeft)
 	{
 		// MxM x MxN
-    	if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, M, A, offa, lda, A_MAT_ERRSET )) {
+    	if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, M, A, offa, lda, A_MAT_ERRSET))) {
 			printf("Invalid Size for A\n");
             return retCode;
     	}
 	} else {
 		// MxN x NxN
-    	if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, A, offa, lda, A_MAT_ERRSET )) {
+    	if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, A, offa, lda, A_MAT_ERRSET))) {
 			printf("Invalid Size for A\n");
             return retCode;
     	}

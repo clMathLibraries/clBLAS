@@ -415,9 +415,9 @@ generator(
 		{
 			return 0;
 		}
-        sprintf( TARGETHEIGHT_S, "%d", TARGETHEIGHT );
+        sprintf( TARGETHEIGHT_S, "%" SPREFIX "u", TARGETHEIGHT );
 	    sprintf( BLOCKSIZE_S, "%d", BLOCKSIZE );
-        sprintf( TRIANGLE_HEIGHT_S, "%d", subdims->y );
+        sprintf( TRIANGLE_HEIGHT_S, "%" SPREFIX "u", subdims->y );
 
 		kobj.put("%TARGET_HEIGHT", TARGETHEIGHT_S);
 		kobj.put("%BLOCKSIZE", BLOCKSIZE_S);
@@ -433,9 +433,9 @@ generator(
 		{
 			return 0;
 		}
-        sprintf( TARGETROWS_S, "%d", TARGETROWS );
-	    sprintf( TARGETWIDTH_S, "%d", TARGETWIDTH );
-        sprintf( NLOOPS_S, "%d", NLOOPS );
+        sprintf( TARGETROWS_S, "%" SPREFIX "u", TARGETROWS );
+	    sprintf( TARGETWIDTH_S, "%" SPREFIX "u", TARGETWIDTH );
+        sprintf( NLOOPS_S, "%" SPREFIX "u", NLOOPS );
 		kobj.put("%TARGET_ROWS", TARGETROWS_S);
 		kobj.put("%TARGET_WIDTH", TARGETWIDTH_S);
 		kobj.put("%NLOOPS", NLOOPS_S);

@@ -55,7 +55,7 @@ doSyr(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, X, 0, false, A_MAT_ERRSET, X_VEC_ERRSET, END_ERRSET )) {
+    if ((retCode = checkMemObjects(A, X, 0, false, A_MAT_ERRSET, X_VEC_ERRSET, END_ERRSET))) {
    		printf("Invalid mem object..\n");
         return retCode;
     }
@@ -65,11 +65,11 @@ doSyr(
      * checkMatrixSizes() does not account of "offa" argument.
      * Need to be added.
      */
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, A, offa, lda, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, A, offa, lda, A_MAT_ERRSET))) {
         printf("Invalid Size for A\n");
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET))) {
         printf("Invalid Size for X\n");
         return retCode;
     }
