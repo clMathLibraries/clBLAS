@@ -2641,7 +2641,7 @@ main(int argc, char*  argv[])
     clblasSetup();
 
     if (!FILE_PATH){
-        printf("The environment variable 'AMD_CLBLAS_STORAGE_PATH' is not defined\n");
+        printf("The environment variable 'CLBLAS_STORAGE_PATH' is not defined\n");
         exit(EXIT_COD_NO_ENVIRONMENT_VARIABLE);
     }
 

@@ -45,9 +45,18 @@ else( )
 endif( )
 
 # Define a version for the code
-set( clBLAS_VERSION_MAJOR 2 )
-set( clBLAS_VERSION_MINOR 1 )
-set( clBLAS_VERSION_PATCH 0 )
+if( NOT DEFINED clBLAS_VERSION_MAJOR )
+    set( clBLAS_VERSION_MAJOR 2 )
+endif( )
+
+if( NOT DEFINED clBLAS_VERSION_MINOR )
+    set( clBLAS_VERSION_MINOR 1 )
+endif( )
+
+if( NOT DEFINED clBLAS_VERSION_PATCH )
+    set( clBLAS_VERSION_PATCH 0 )
+endif( )
+
 set( clBLAS_VERSION "${clBLAS_VERSION_MAJOR}.${clBLAS_VERSION_MINOR}.${clBLAS_VERSION_PATCH}")
 
 # Increment this if we break backward compatibility.
