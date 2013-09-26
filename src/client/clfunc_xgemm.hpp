@@ -62,15 +62,6 @@ public:
 
     ~xGemm()
     {
-        delete buffer_.a_;
-        delete buffer_.b_;
-        delete buffer_.c_;
-        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_a_),
-                        "releasing buffer A");
-        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_b_),
-                        "releasing buffer B");
-        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_c_),
-                        "releasing buffer C");
     }
 
     void call_func()
@@ -659,6 +650,20 @@ public:
         buffer_.c_ = new T[buffer_.ldc_*buffer_.c_num_vectors_ ];
 
     }
+	void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+		//need to do this before we eventually hit the destructor
+		delete buffer_.a_;
+        delete buffer_.b_;
+        delete buffer_.c_;
+        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_a_),
+                        "releasing buffer A");
+        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_b_),
+                        "releasing buffer B");
+        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_c_),
+                        "releasing buffer C");
+	}
 
 protected:
     void initialize_scalars(double alpha, double beta)

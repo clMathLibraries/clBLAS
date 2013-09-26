@@ -98,7 +98,12 @@ public:
 		{}
 
   void call_func();
-
+  void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+		//need to do this before we eventually hit the destructor
+		//to do
+	}
 protected:
   void initialize_scalars(double alpha, double beta)
   {

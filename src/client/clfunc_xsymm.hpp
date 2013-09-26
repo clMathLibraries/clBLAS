@@ -58,12 +58,6 @@ public:
 
   ~xSymm()
   {
-    delete buffer.cpuA;
-    delete buffer.cpuB;
-    delete buffer.cpuC;
-    OPENCL_V_THROW( clReleaseMemObject(buffer.A), "releasing buffer A");
-    OPENCL_V_THROW( clReleaseMemObject(buffer.B), "releasing buffer B");
-    OPENCL_V_THROW( clReleaseMemObject(buffer.C), "releasing buffer C");
   }
 
   double gflops()
@@ -212,6 +206,17 @@ public:
   buffer.cpuC = new T[buffer.N * buffer.ldc];
   buffer.cpuA = new T[buffer.a_num_vectors * buffer.lda];
   }
+  	void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+		//need to do this before we eventually hit the destructor
+		delete buffer.cpuA;
+		delete buffer.cpuB;
+		delete buffer.cpuC;
+		OPENCL_V_THROW( clReleaseMemObject(buffer.A), "releasing buffer A");
+		OPENCL_V_THROW( clReleaseMemObject(buffer.B), "releasing buffer B");
+		OPENCL_V_THROW( clReleaseMemObject(buffer.C), "releasing buffer C");
+	}
 protected:
   void initialize_scalars(double alpha, double beta)
   {

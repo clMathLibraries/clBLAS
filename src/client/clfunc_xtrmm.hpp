@@ -57,12 +57,6 @@ public:
 
     ~xTrmm()
     {
-        delete buffer_.a_;
-        delete buffer_.b_;
-        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_a_),
-                       "releasing buffer A");
-        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_b_),
-                       "releasing buffer B");
     }
 
     void call_func()
@@ -449,6 +443,17 @@ public:
 
         buffer_.a_ = new T[buffer_.lda_*buffer_.a_num_vectors_];
         buffer_.b_ = new T[buffer_.ldb_*buffer_.b_num_vectors_];
+	}
+	void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+		//need to do this before we eventually hit the destructor
+        delete buffer_.a_;
+        delete buffer_.b_;
+        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_a_),
+                       "releasing buffer A");
+        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_b_),
+                       "releasing buffer B");
 	}
 protected:
     void initialize_scalars(double alpha, double beta)

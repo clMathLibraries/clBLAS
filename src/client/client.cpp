@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   cl_double beta;
   cl_uint profileCount;
   cl_uint commandQueueFlags = 0;
-  cl_device_type deviceType = CL_DEVICE_TYPE_CPU;
+  cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
   int order_option;
   //clblasOrder order;
   //clblasTranspose transA;
@@ -484,7 +484,8 @@ int main(int argc, char *argv[])
 	my_function->read_gpu_buffer();
     my_function->reset_gpu_write_buffer();*/
 	my_function->roundtrip_func();
-	my_function->reset_gpu_write_buffer();
+	//my_function->reset_gpu_write_buffer();
+	my_function->releaseGPUBuffer_deleteCPUBuffer();
   }
 
   if( commandQueueFlags & CL_QUEUE_PROFILING_ENABLE )
@@ -512,7 +513,8 @@ int main(int argc, char *argv[])
     my_function->initialize_gpu_buffer();
     my_function->call_func();
 	my_function->read_gpu_buffer();
-    my_function->reset_gpu_write_buffer();
+    //my_function->reset_gpu_write_buffer();
+	my_function->releaseGPUBuffer_deleteCPUBuffer();
   }
 
   if( commandQueueFlags & CL_QUEUE_PROFILING_ENABLE )
@@ -525,7 +527,7 @@ int main(int argc, char *argv[])
       std::endl;
   }
   }
-
+  delete my_function;
   return 0;
 }
 

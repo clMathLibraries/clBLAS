@@ -313,7 +313,7 @@ public:
                               size_t M, size_t N, size_t K, size_t lda,
                               size_t ldb, size_t ldc, size_t offA, size_t offBX,
                               size_t offCY, double alpha, double beta) = 0;
-
+	virtual void releaseGPUBuffer_deleteCPUBuffer()=0;
     StatisticalTimer& timer;
     StatisticalTimer::sTimerID timer_id;
 
