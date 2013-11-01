@@ -42,6 +42,7 @@ include_directories(${OPENCL_INCLUDE_DIRS} ${clBLAS_SOURCE_DIR} ${clBLAS_SOURCE_
 
 add_executable(t_tilemul ${SRC_TILEMUL})
 target_link_libraries(t_tilemul ${OPENCL_LIBRARIES})
+set_target_properties( t_tilemul PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
 install( TARGETS t_tilemul

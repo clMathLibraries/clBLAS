@@ -48,9 +48,11 @@ include_directories(
 
 add_executable(client ${CLIENT_SRC} ${CLIENT_HEADER})
 target_link_libraries(client ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} clBLAS)
+set_target_properties( client PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 add_executable(testPerfWrapper ${WRAPPER_SRC})
 target_link_libraries(testPerfWrapper ${Boost_LIBRARIES})
+set_target_properties( testPerfWrapper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
 install( TARGETS client testPerfWrapper

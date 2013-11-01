@@ -140,6 +140,7 @@ source_group(\\ FILES ${KTEST_SRC})
 add_executable(make-ktest ${KTEST_SRC} ${KTEST_EXTERNAL_SRC})
 add_dependencies(make-ktest GENERATE_CLT)
 target_link_libraries(make-ktest ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} ${MATH_LIBRARY})
+set_target_properties( make-ktest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
 install( TARGETS make-ktest

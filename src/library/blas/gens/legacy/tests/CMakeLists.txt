@@ -45,6 +45,7 @@ include_directories(${OPENCL_INCLUDE_DIRS} ${clBLAS_SOURCE_DIR} ${clBLAS_SOURCE_
 
 add_executable(t_blkmul ${SRC_BLKMUL})
 target_link_libraries(t_blkmul ${OPENCL_LIBRARIES})
+set_target_properties( t_blkmul PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
 install( TARGETS t_blkmul
