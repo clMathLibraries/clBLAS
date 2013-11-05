@@ -1164,7 +1164,7 @@ void zcopy_(int *n, doublecomplex *x, int *incx, doublecomplex *y, int *incy);
 float sdot_(int *n, float *x, int *incx, float* y, int *incy);
 double ddot_(int *n, double *x, int *incx, double* y, int *incy);
 
-#if defined( _WIN32 ) || defined( _WIN64 )
+#if defined( _WIN32 ) || defined( _WIN64 ) || defined( __APPLE__)
     complex cdotu_(int *n, complex *x, int *incx, complex* y, int *incy);
     doublecomplex zdotu_(int *n, doublecomplex *x, int *incx, doublecomplex* y, int *incy);
     complex cdotc_(int *n, complex *x, int *incx, complex* y, int *incy);

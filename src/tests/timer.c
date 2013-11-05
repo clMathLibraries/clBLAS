@@ -79,6 +79,30 @@ sleepTime(nano_time_t time) {
 
 #include <time.h>
 
+#ifdef __APPLE__
+#include <sys/time.h>
+// we dont have clock_gettime on mac, fake it
+// NB: this is *not* nano-second precision
+#define CLOCK_REALTIME 0
+static int
+clock_gettime(int time_id, struct timespec *t)
+{
+  struct timeval nuc;
+  int err;
+
+  err = gettimeofday(&nuc, NULL);
+  if (err != 0) {
+    return err;
+  }
+
+  t->tv_sec = nuc.tv_sec;
+  t->tv_nsec = nuc.tv_usec * 1000;
+
+  return 0;
+}
+#endif
+
+
 nano_time_t
 conv2nanosec(nano_time_t t)
 {
