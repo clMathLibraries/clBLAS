@@ -409,7 +409,7 @@ if( GTEST_FOUND )
 								  ${FUNC_HEADERS} ${TESTS_HEADERS})
 								  
 	if( BUILD_RUNTIME )
-		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} clBLAS)
+		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} clBLAS)
 	else()
 		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} ${OPENCL_LIBRARIES} ${runtime.library} )
 	endif()
