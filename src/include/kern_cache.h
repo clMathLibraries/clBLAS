@@ -55,6 +55,7 @@ typedef struct Kernel {
     void *extra;
     size_t extraSize;
     void (*dtor)(struct Kernel *kern);
+    int noSource;
 } Kernel;
 
 typedef int

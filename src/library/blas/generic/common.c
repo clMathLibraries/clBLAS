@@ -364,6 +364,7 @@ Kernel VISIBILITY_HIDDEN
         kernel->extra = calloc(1, kernel->extraSize);
         *(CLBLASKernExtra*)(kernel->extra) = *extra;
         kernel->dtor = extraDtor;
+        kernel->noSource = 1;
     }
     else {
         putKernel(NULL, kernel);
@@ -491,6 +492,7 @@ Kernel
 #if !defined(KEEP_CLBLAS_KERNEL_SOURCES)
     if (err == CL_SUCCESS) {
         err = dropProgramSource(&kernel->program, context, device);
+        kernel->noSource = 1;
     }
 #endif  /* !DUMP_CLBLAS_KERNELS */
 
