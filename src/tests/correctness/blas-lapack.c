@@ -24,6 +24,9 @@
 #if !defined CORR_TEST_WITH_ACML
 
 #include "blas-lapack.h"
+#if defined(__APPLE__)
+#include <Accelerate/Accelerate.h>
+#endif
 
 void
 sgemv(char transa, int m, int n, float alpha, float *a, int lda, float *x, int incx, float beta, float *y, int incy)
@@ -639,8 +642,10 @@ complex cdotu( int n, complex *x, int incx, complex *y, int incy)
 {
     complex ans;
 
-    #if defined( _WIN32 ) || defined( _WIN64 )
+#if defined( _WIN32 ) || defined( _WIN64 )
         ans = cdotu_(&n, x, &incx, y, &incy);
+    #elif defined( __APPLE__)
+        cblas_cdotu_sub(n, x, incx, y, incy, &ans);
     #else
         cdotusub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -654,6 +659,8 @@ doublecomplex zdotu( int n, doublecomplex *x, int incx,  doublecomplex *y, int i
 
     #if defined( _WIN32 ) || defined( _WIN64 )
         ans = zdotu_(&n, x, &incx, y, &incy);
+    #elif defined(__APPLE__)
+        cblas_zdotu_sub(n, x, incx, y, incy, &ans);
     #else
         zdotusub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -667,6 +674,8 @@ complex cdotc( int n, complex *x, int incx, complex *y, int incy)
 
     #if defined( _WIN32 ) || defined( _WIN64 )
         ans = cdotc_(&n, x, &incx, y, &incy);
+    #elif defined(__APPLE__)
+        cblas_cdotc_sub(n, x, incx, y, incy, &ans);
     #else
         cdotcsub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -680,6 +689,8 @@ doublecomplex zdotc( int n, doublecomplex *x, int incx,  doublecomplex *y, int i
 
     #if defined( _WIN32 ) || defined( _WIN64 )
         ans = zdotc_(&n, x, &incx, y, &incy);
+    #elif defined(__APPLE__)
+        cblas_zdotc_sub(n, x, incx, y, incy, &ans);
     #else
         zdotcsub_(&n, x, &incx, y, &incy, &ans);
     #endif

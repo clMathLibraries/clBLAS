@@ -205,7 +205,11 @@ const ComplexLong alphaBetaRange[] = {{50,50}, {20,20}};
 const ComplexLong alphaBeta = {10,10};
 const ComplexLong sflagRange[] = {{-1,0}, {0,0}, {1,0}, {-2,0}};
 
+const ComplexLong rotCosMedium = {0, 3};
+const ComplexLong rotSinMedium = {0, 4};
 
+const ComplexLong rotCosShort = {1, 6};
+const ComplexLong rotSinShort = {1, 2};
 
 #ifdef DO_SPL
 
@@ -316,10 +320,10 @@ INSTANTIATE_TEST_CASE_P(ALL_ROTM, ROTM, Combine(
 #ifdef DO_ROT
 #if defined(SHORT_TESTS)
 INSTANTIATE_TEST_CASE_P(Small_ROT, ROT, Combine(
-        Values(1, 5, 10, 20), Values(1, 6), Values(1, -1), Values(1, 6), Values(1, -1), Values(1, 6), Values(1, 2), Values(1)));
+        Values(1, 5, 10, 20), Values(1, 6), Values(1, -1), Values(1, 6), Values(1, -1), Values(rotCosShort), Values(rotSinShort), Values(1)));
 #elif defined(MEDIUM_TESTS)
 INSTANTIATE_TEST_CASE_P(Medium_ROT, ROT, Combine(
-        Values(64,128,256,512), Values(0,3), Values(1, -3, 3, 1), Values(0,3), Values(1, -3, 3, 1), Values(0, 3), Values(0, 4), Values(1)));
+        Values(64,128,256,512), Values(0,3), Values(1, -3, 3, 1), Values(0,3), Values(1, -3, 3, 1), Values(rotCosMedium), Values(rotSinMedium), Values(1)));
 #else
 INSTANTIATE_TEST_CASE_P(ALL_ROT, ROT, Combine(
         ValuesIn(completeRange), ValuesIn(offsetRange), ValuesIn(incs), ValuesIn(offsetRange), ValuesIn(incs),

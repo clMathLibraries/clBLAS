@@ -79,6 +79,55 @@ sleepTime(nano_time_t time) {
 
 #include <time.h>
 
+#if defined(__APPLE__) && defined(__MACH__)
+
+#include <assert.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#include <pthread.h>
+
+// see https://developer.apple.com/library/mac/qa/qa1398/_index.html
+static mach_timebase_info_data_t mtb_;
+
+static void
+init_timebase_conv_(void)
+{
+    kern_return_t err;
+
+    err = mach_timebase_info(&mtb_);
+    assert(err == KERN_SUCCESS);
+}
+
+nano_time_t
+getCurrentTime(void)
+{
+     static pthread_once_t once = PTHREAD_ONCE_INIT;
+     uint64_t              now;
+
+     pthread_once(&once, init_timebase_conv_);
+     now = mach_absolute_time();
+
+     return (now * mtb_.numer) / mtb_.denom;
+}
+
+#else /* ! (_MCS_VER || __APPLE__) */
+
+nano_time_t
+getCurrentTime(void)
+{
+    int err;
+    struct timespec t;
+
+    err = clock_gettime(CLOCK_REALTIME, &t);
+    if (err == 0) {
+        return (t.tv_sec * 1000000000UL + t.tv_nsec);
+    }
+    return 0;
+}
+
+#endif
+
+
 nano_time_t
 conv2nanosec(nano_time_t t)
 {
@@ -98,18 +147,6 @@ conv2millisec(nano_time_t t)
     return t/1000000;
 }
 
-nano_time_t
-getCurrentTime(void)
-{
-    int err;
-    struct timespec t;
-
-    err = clock_gettime(CLOCK_REALTIME, &t);
-    if (err == 0) {
-        return (t.tv_sec * 1000000000UL + t.tv_nsec);
-    }
-    return 0;
-}
 
 void
 sleepTime(nano_time_t time) {
