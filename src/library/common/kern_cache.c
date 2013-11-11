@@ -425,7 +425,9 @@ fullKernelSize(Kernel *kern)
         size += allSizes[i];
     }
 
-    clGetProgramInfo(kern->program, CL_PROGRAM_SOURCE, 0, NULL, &retSize);
+    if (!kern->noSource) {
+        clGetProgramInfo(kern->program, CL_PROGRAM_SOURCE, 0, NULL, &retSize);
+    }
 
     return (size + retSize + sizeof(Kernel) + kern->extraSize);
 }
