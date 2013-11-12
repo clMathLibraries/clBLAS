@@ -16,7 +16,7 @@ The [project wiki](https://github.com/clMathLibraries/clBLAS/wiki) contains help
 Please refer to and read the [Contributing](CONTRIBUTING.md) document for guidelines on how to contribute code to this open source project
 
 ## License
-The source for clFFT is licensed under the [Apache License, Version 2.0]( http://www.apache.org/licenses/LICENSE-2.0 )
+The source for clBLAS is licensed under the [Apache License, Version 2.0]( http://www.apache.org/licenses/LICENSE-2.0 )
 
 ## Example
 The simple example below shows how to use clBLAS to compute an OpenCL accelerated SGEMM
