@@ -22,13 +22,13 @@ before_script:
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir -p bin/clBLAS
   - cd bin/clBLAS
-  - cmake -DBUILD_TEST=OFF -DBUILD_CLIENT=ON ../../src
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON ../../src
 
 script: 
   - make install
 #  - ls -Rla package
 # Run a simple test to validate that the build works; CPU device in a VM
-  - cd client
+  - cd package/bin
   - export LD_LIBRARY_PATH=${TRAVIS_BUILD_DIR}/bin/clBLAS/package/lib64:${LD_LIBRARY_PATH}
   - ./client --cpu
 

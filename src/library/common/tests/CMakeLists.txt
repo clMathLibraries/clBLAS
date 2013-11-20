@@ -44,9 +44,11 @@ include_directories(${OPENCL_INCLUDE_DIRS} ${clBLAS_SOURCE_DIR} ${clBLAS_SOURCE_
 
 add_executable(t_dblock_kgen ${SRC_DBLOCK_KGEN})
 target_link_libraries(t_dblock_kgen ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
+set_target_properties( t_dblock_kgen PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 add_executable(t_gens_cache ${SRC_GENS_CACHE})
 target_link_libraries(t_gens_cache ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
+set_target_properties( t_gens_cache PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
 install( TARGETS t_dblock_kgen t_gens_cache

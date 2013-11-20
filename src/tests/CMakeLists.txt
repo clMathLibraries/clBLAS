@@ -296,14 +296,17 @@ if( GTEST_FOUND )
 	    
 	    add_executable(test-correctness ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 									    ${CORR_HEADERS} ${TESTS_HEADERS})
+        set_target_properties( test-correctness PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 	    add_executable(test-medium ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 							      ${CORR_HEADERS} ${TESTS_HEADERS})
 	    set_target_properties(test-medium PROPERTIES COMPILE_DEFINITIONS MEDIUM_TESTS)
+        set_target_properties( test-medium PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 	    add_executable(test-short ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 							      ${CORR_HEADERS} ${TESTS_HEADERS})
 	    set_target_properties(test-short PROPERTIES COMPILE_DEFINITIONS SHORT_TESTS)
+        set_target_properties( test-short PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 	    # The build server builds the library with gcc 4.1.2 to support Red Hat 5.5, but the test programs must be built with 
 	    # gcc > 4.3.2 to support ACML.  
@@ -327,14 +330,17 @@ if( GTEST_FOUND )
 
 		add_executable(test-correctness ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 						${CORR_HEADERS} ${TESTS_HEADERS})
+        set_target_properties( test-correctness PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 		add_executable(test-medium ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 					  ${CORR_HEADERS} ${TESTS_HEADERS})
 		set_target_properties( test-medium PROPERTIES COMPILE_DEFINITIONS MEDIUM_TESTS )
+        set_target_properties( test-medium PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 		add_executable(test-short ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 					  ${CORR_HEADERS} ${TESTS_HEADERS})
 		set_target_properties( test-short PROPERTIES COMPILE_DEFINITIONS SHORT_TESTS )
+        set_target_properties( test-short PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 		if( NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE)
 			set_target_properties( test-correctness PROPERTIES LINKER_LANGUAGE Fortran )
@@ -376,6 +382,17 @@ if( GTEST_FOUND )
             ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
             )
     
+    get_target_property( testLocation test-correctness LOCATION )
+
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/copyTestDependencies.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/copyTestDependencies.cmake"
+        @ONLY
+    )
+
+    # Register script at run at install time to analyze the executable and copy dependencies into package
+    install( SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/copyTestDependencies.cmake")
+ 
 	if( ACML_FOUND )
 		include_directories(${OPENCL_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
 			${clBLAS_SOURCE_DIR} ${clBLAS_SOURCE_DIR}/tests/include  ${clBLAS_SOURCE_DIR}/include)
@@ -386,6 +403,7 @@ if( GTEST_FOUND )
 			${SRC_COMMON_TIMER} ${PERF_HEADERS} ${TESTS_HEADERS}
 			${SRC_COMMON_REFIMPL})
 		target_link_libraries(test-performance ${ACML_LIBRARIES})
+        set_target_properties( test-performance PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 
 		if( BUILD_RUNTIME )
@@ -410,8 +428,9 @@ if( GTEST_FOUND )
 	add_executable(test-functional ${SRC_FUNC} ${SRC_COMMON} ${SRC_COMMON_TIMER}
 								  ${FUNC_HEADERS} ${TESTS_HEADERS})
 								  
+    set_target_properties( test-functional PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 	if( BUILD_RUNTIME )
-		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} clBLAS)
+		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} clBLAS )
 	else()
 		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} ${OPENCL_LIBRARIES} ${runtime.library} )
 	endif()
