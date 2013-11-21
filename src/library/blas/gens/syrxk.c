@@ -1401,7 +1401,7 @@ genUpdateGenericDiagTile(
                                 "cc%u = ((%s)mask &\n"
                                 "       %s) >>\n"
                                 "      %s;\n"
-                                "cc%u = %u - mad24(cc%u, %s, 0);\n",
+                                "cc%u = %u - mad24(cc%u, %s, 0u);\n",
 
                                 iter.row,
                                 (1 << (nrCols - 1)),
@@ -1416,7 +1416,7 @@ genUpdateGenericDiagTile(
                                 "cc%u = ((%s)mask &\n"
                                 "       %s) >>\n"
                                 "      %s;\n"
-                                "cc%u = mad24(cc%u, %s, 0);\n",
+                                "cc%u = mad24(cc%u, %s, 0u);\n",
 
                                 nrRows - 1, iter.row,
                                 i, vctype.buf, constMasks.buf, constShifts.buf,
