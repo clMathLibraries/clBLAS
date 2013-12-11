@@ -231,7 +231,7 @@ public:
                                             buffer_.offA_) * sizeof(T),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(T),
                                          NULL, &err);
@@ -504,7 +504,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_float),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_float),
                                          NULL, &err);
@@ -567,7 +567,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_double),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_double),
                                          NULL, &err);
@@ -630,7 +630,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_float2),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_float2),
                                          NULL, &err);
@@ -693,7 +693,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_double2),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_double2),
                                          NULL, &err);

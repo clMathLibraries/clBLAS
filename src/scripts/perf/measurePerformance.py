@@ -42,7 +42,7 @@ transvalues = ['none','transpose','conj']
 sidevalues = ['left','right']
 uplovalues = ['upper','lower']
 diagvalues = ['unit','nonunit']
-functionvalues = ['gemm', 'trmm', 'trsm', 'syrk', 'syr2k', 'gemv', 'symv' ]
+functionvalues = ['gemm', 'trmm', 'trsm', 'syrk', 'syr2k', 'gemv', 'symv', 'symm', 'hemm', 'herk', 'her2k' ]
 precisionvalues = ['s', 'd', 'c', 'z']
 roundtripvalues = ['roundtrip','noroundtrip','both']
 

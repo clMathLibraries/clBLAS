@@ -26,7 +26,11 @@ set(CLIENT_HEADER
     clfunc_xtrmm.hpp
     clfunc_xtrsm.hpp
     clfunc_xsyrk.hpp
-    clfunc_xsyr2k.hpp)
+    clfunc_xsyr2k.hpp
+	clfunc_xhemm.hpp
+	clfunc_xsymm.hpp
+	clfunc_xherk.hpp
+	clfunc_xher2k.hpp)
 
 set(WRAPPER_SRC testPerfWrapper.cpp)
 

@@ -39,6 +39,8 @@
 #include "clfunc_xhemv.hpp"
 #include "clfunc_xhemm.hpp"
 #include "clfunc_xsymm.hpp"
+#include "clfunc_xherk.hpp"
+#include "clfunc_xher2k.hpp"
 
 namespace po = boost::program_options;
 
@@ -130,6 +132,8 @@ int main(int argc, char *argv[])
       && function != "hemv"
       && function != "hemm"
       && function != "symm"
+	  && function != "herk"
+	  && function != "her2k"
       )
   {
     std::cerr << "Invalid value for --function" << std::endl;
@@ -429,6 +433,30 @@ int main(int argc, char *argv[])
     else
     {
       std::cerr << "Unknown hemm function" << std::endl;
+      return -1;
+    }
+  }
+  else if (function == "herk")
+  {
+    if (precision == "c")
+      my_function = new xHerk<cl_float2>(timer, deviceType);
+    else if (precision == "z")
+      my_function = new xHerk<cl_double2>(timer, deviceType);
+    else
+    {
+      std::cerr << "Unknown her function" << std::endl;
+      return -1;
+    }
+  }
+  else if (function == "her2k")
+  {
+    if (precision == "c")
+      my_function = new xHer2k<cl_float2>(timer, deviceType);
+    else if (precision == "z")
+      my_function = new xHer2k<cl_double2>(timer, deviceType);
+    else
+    {
+      std::cerr << "Unknown her2 function" << std::endl;
       return -1;
     }
   }

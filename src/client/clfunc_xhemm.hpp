@@ -45,7 +45,7 @@
 template <typename T>
 struct xHemmBuffer
 {
-	clblasOrder order;
+  clblasOrder order;
   clblasSide side;
   clblasUplo uplo;
   size_t M;
@@ -78,22 +78,30 @@ public:
 
   ~xHemm()
   {
-    delete buffer.cpuA;
-    delete buffer.cpuB;
-    delete buffer.cpuC;
-    OPENCL_V_THROW( clReleaseMemObject(buffer.A), "releasing buffer A");
-    OPENCL_V_THROW( clReleaseMemObject(buffer.B), "releasing buffer B");
-    OPENCL_V_THROW( clReleaseMemObject(buffer.C), "releasing buffer C");
   }
 
   double gflops()
   {
-    return (buffer.N*(buffer.N+1))/time_in_ns();
+	  if (buffer.side == clblasLeft)
+	  {
+		return (8*buffer.M*buffer.M*buffer.N)/time_in_ns();
+	  }
+	  else
+	  {
+		return (8*buffer.N*buffer.N*buffer.M)/time_in_ns();
+	  }
   }
 
   std::string gflops_formula()
   {
-    return "M*(M+1)/time";
+	  if (buffer.side == clblasLeft)
+	  {
+		  return "8*M*M*N/time";
+	  }
+	  else
+	  {
+		  return "8*N*N*M/time";
+	  }
   }
 
   void setup_buffer(int order_option, int side_option, int
@@ -106,25 +114,136 @@ public:
   void initialize_gpu_buffer();
   void reset_gpu_write_buffer();
   void call_func();
-  	void read_gpu_buffer()
+  void read_gpu_buffer()
 	{
-		//cl_int err;
-		//to-do need to fill up
+		cl_int err;
+		err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+			                    buffer.offc * sizeof(T),
+								buffer.ldc*buffer.N*sizeof(T),
+								buffer.cpuC,0,NULL,NULL);
 	}
-	void roundtrip_func()
-	{//to-do need to fill up
+  void roundtrip_func()
+	{
+		std::cout << "xHemm::roundtrip_func" <<std::endl;
 	}
-	void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
+  void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
                       size_t M, size_t N, size_t K, size_t lda, size_t ldb,
-                      size_t ldc, size_t offA, size_t offBX, size_t offCY,
+                      size_t ldc, size_t offA, size_t offB, size_t offC,
                       double alpha, double beta)
-		{}
-	void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		  initialize_scalars(alpha, beta);
+		  buffer.offa = offA;
+		  buffer.offb = offB;
+		  buffer.offc = offC;
+		  buffer.M = M;
+		  buffer.N = N;
+		  if (order_option == 0)
+		  {
+			buffer.order = clblasRowMajor;
+		  }
+		  else
+		  {
+			buffer.order = clblasColumnMajor;
+		  }
+		  if (uplo_option == 0)
+		  {
+			buffer.uplo = clblasUpper;
+		  }
+		  else
+		  {
+			buffer.uplo = clblasLower;
+		  }
+		  if (side_option == 0)
+		  {
+			  buffer.side = clblasLeft;
+			  buffer.a_num_vectors = M;
+			  if (lda == 0)
+			  {
+				buffer.lda = buffer.M;
+			  }
+			  else if (lda < buffer.M)
+			  {
+				std::cerr << "lda:wrong size\n";
+				exit(1);
+			  }
+			  else
+			  {
+				buffer.lda = lda;
+			  }
+		  }
+		  else
+		  {
+			  buffer.side = clblasRight;
+			  buffer.a_num_vectors = N;
+			  if (lda == 0)
+			  {
+				buffer.lda = buffer.N;
+			  }
+			  else if (lda < buffer.N)
+			  {
+				std::cerr << "lda:wrong size\n";
+				exit(1);
+			  }
+			  else
+			  {
+				buffer.lda = lda;
+			  }
+		  }
+		  /*}
+		  if (lda == 0)
+		  {
+			buffer.lda = buffer.M;
+		  }
+		  else if (lda < buffer.M)
+		  {
+			std::cerr << "lda:wrong size\n";
+			exit(1);
+		  }
+		  else
+		  {
+			buffer.lda = lda;
+		  }*/
+		  if (ldb == 0)
+		  {
+			buffer.ldb = buffer.M;
+		  }
+		  else if (ldb < buffer.M)
+		  {
+			std::cerr << "ldb:wrong size\n";
+			exit(1);
+		  }
+		  else
+		  {
+			buffer.ldb = ldb;
+		  }
+		  if (ldc == 0)
+		  {
+			buffer.ldc = buffer.M;
+		  }
+		  else if (ldc < buffer.M)
+		  {
+			std::cerr << "ldc:wrong size\n";
+			exit(1);
+		  }
+		  else
+		  {
+			buffer.ldc = ldc;
+		  }
+		  buffer.cpuB = new T[buffer.N * buffer.ldb];
+		  buffer.cpuC = new T[buffer.N * buffer.ldc];
+		  buffer.cpuA = new T[buffer.a_num_vectors * buffer.lda];
+	}
+  void releaseGPUBuffer_deleteCPUBuffer()
 	{
 		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
 		//need to do this before we eventually hit the destructor
-		//to do
+		delete buffer.cpuA;
+		delete buffer.cpuB;
+		delete buffer.cpuC;
+		OPENCL_V_THROW( clReleaseMemObject(buffer.A), "releasing buffer A");
+		OPENCL_V_THROW( clReleaseMemObject(buffer.B), "releasing buffer B");
+		OPENCL_V_THROW( clReleaseMemObject(buffer.C), "releasing buffer C");
 	}
 
 protected:
@@ -253,7 +372,7 @@ void xHemm<T>::setup_buffer(int order_option, int side_option, int
                                 buffer.a_num_vectors * buffer.lda*sizeof(T),
                                 NULL, &err);
 
-  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                     buffer.N*buffer.ldb*sizeof(T),
                                     NULL, &err);
   buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
@@ -356,10 +475,12 @@ void xHemm<T>::initialize_gpu_buffer()
                               buffer.a_num_vectors * buffer.lda*sizeof(T),
                               buffer.cpuA, 0, NULL, NULL);
 
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE,
+	                          buffer.offb * sizeof(T),
                               buffer.ldb*buffer.N*sizeof(T),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE,
+							  buffer.offc * sizeof(T),
                               buffer.ldc*buffer.N*sizeof(T),
                               buffer.cpuC, 0, NULL, NULL);
 }
@@ -386,6 +507,50 @@ void xHemm<cl_float2>::call_func()
 }
 
 template <>
+void xHemm<cl_float2>::roundtrip_func()
+{
+	timer.Start(timer_id);
+	cl_int err;
+	//create buffer
+	buffer.A = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                buffer.a_num_vectors * buffer.lda*sizeof(cl_float2),
+                                NULL, &err);
+
+    buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                    buffer.N*buffer.ldb*sizeof(cl_float2),
+                                    NULL, &err);
+    buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                    buffer.N*buffer.ldc*sizeof(cl_float2),
+                                    NULL, &err);
+	//write gpu buffer
+	err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+                              buffer.offa * sizeof(cl_float2),
+                              buffer.a_num_vectors * buffer.lda*sizeof(cl_float2),
+                              buffer.cpuA, 0, NULL, NULL);
+
+    err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE,
+	                          buffer.offb * sizeof(cl_float2),
+                              buffer.ldb*buffer.N*sizeof(cl_float2),
+                              buffer.cpuB, 0, NULL, NULL);
+    err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE,
+							  buffer.offc * sizeof(cl_float2),
+                              buffer.ldc*buffer.N*sizeof(cl_float2),
+                              buffer.cpuC, 0, NULL, NULL);
+
+	clblasChemm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
+      buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      0, NULL,NULL);
+	//read gpu buffer
+	err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE, 
+							  buffer.offc * sizeof(cl_float2),
+                              buffer.ldc*buffer.N*sizeof(cl_float2),
+                              buffer.cpuC, 0, NULL, &event_);
+	clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
+
+}
+template <>
 void xHemm<cl_double2>::call_func()
 {
   timer.Start(timer_id);
@@ -396,5 +561,48 @@ void xHemm<cl_double2>::call_func()
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
 }
+template <>
+void xHemm<cl_double2>::roundtrip_func()
+{
+	timer.Start(timer_id);
+	cl_int err;
+	//create buffer
+	buffer.A = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                buffer.a_num_vectors * buffer.lda*sizeof(cl_double2),
+                                NULL, &err);
 
+    buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                    buffer.N*buffer.ldb*sizeof(cl_double2),
+                                    NULL, &err);
+    buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                    buffer.N*buffer.ldc*sizeof(cl_double2),
+                                    NULL, &err);
+	//write gpu buffer
+	err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+                              buffer.offa * sizeof(cl_double2),
+                              buffer.a_num_vectors * buffer.lda*sizeof(cl_double2),
+                              buffer.cpuA, 0, NULL, NULL);
+
+    err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE,
+	                          buffer.offb * sizeof(cl_double2),
+                              buffer.ldb*buffer.N*sizeof(cl_double2),
+                              buffer.cpuB, 0, NULL, NULL);
+    err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE,
+							  buffer.offc * sizeof(cl_double2),
+                              buffer.ldc*buffer.N*sizeof(cl_double2),
+                              buffer.cpuC, 0, NULL, NULL);
+
+	clblasZhemm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
+      buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      0, NULL,NULL);
+	//read gpu buffer
+	err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE, 
+							  buffer.offc * sizeof(cl_double2),
+                              buffer.ldc*buffer.N*sizeof(cl_double2),
+                              buffer.cpuC, 0, NULL, &event_);
+	clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
+
+}
 #endif // ifndef CLBLAS_BENCHMARK_XSYR_HXX__

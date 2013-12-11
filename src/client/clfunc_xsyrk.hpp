@@ -56,13 +56,7 @@ public:
 
     ~xSyrk()
     {
-        delete buffer_.a_;
-        delete buffer_.c_;
-        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_a_),
-                        "releasing buffer A");
-        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_c_),
-                        "releasing buffer C");
-        }
+    }
 
     void call_func()
     {
@@ -70,13 +64,12 @@ public:
 
     double gflops()
     {
-        return buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns() +
-            buffer_.n_*(buffer_.n_+1)/time_in_ns();
+        return buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
     }
 
     std::string gflops_formula()
     {
-        return "(N*(N+1)*K+N*(N+1))/time";
+        return "(N*(N+1)*K)/time";
     }
 
     void setup_buffer(int order_option, int side_option, int uplo_option,
@@ -224,7 +217,7 @@ public:
                                             buffer_.offA_) * sizeof(T),
                                         NULL, &err);
 
-        buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldc_ * buffer_.c_num_vectors_ +
                                             buffer_.offC_) * sizeof(T),
                                         NULL, &err);
@@ -281,23 +274,163 @@ public:
     }
  	void read_gpu_buffer()
 	{
-		//cl_int err;
-		//to-do need to fill up
+		cl_int err;
+		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+								  buffer_.offC_*sizeof(T), buffer_.ldc_*buffer_.c_num_vectors_*sizeof(T),
+								  buffer_.c_, 0, NULL, NULL);
 	}
 	void roundtrip_func()
-	{//to-do need to fill up
+	{
 	}
 	void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
                       size_t M, size_t N, size_t K, size_t lda, size_t ldb,
                       size_t ldc, size_t offA, size_t offBX, size_t offCY,
                       double alpha, double beta)
-		{}
+	{
+		DUMMY_ARGS_USAGE_4(side_option, diag_option, transB_option, M);
+        DUMMY_ARGS_USAGE_2(ldb, offBX);
+
+        initialize_scalars(alpha, beta);
+
+        buffer_.n_ = N;
+        buffer_.k_ = K;
+        buffer_.offA_ = offA;
+        buffer_.offC_ = offCY;
+
+        if (uplo_option == 0)
+        {
+            buffer_.uplo_ = clblasUpper;
+        }
+        else
+        {
+            buffer_.uplo_ = clblasLower;
+        }
+
+
+        if (ldc == 0)
+        {
+            buffer_.ldc_ = N;
+        }
+        else if (ldc < N)
+        {
+            std::cerr << "ldc:wrong size\n";
+        }
+        else
+        {
+            buffer_.ldc_ = ldc;
+        }
+        buffer_.c_num_vectors_ = N;
+
+        if (order_option == 0)
+        {
+            order_ = clblasRowMajor;
+            if (transA_option == 0)
+            {
+                buffer_.trans_a_ = clblasNoTrans;
+                buffer_.a_num_vectors_ = N;
+                if (lda == 0)
+                {
+                    buffer_.lda_ = K;
+                }
+                else if (lda < K)
+                {
+                    std::cerr << "lda:wrong size\n";
+                    exit(1);
+                }
+                else
+                {
+                    buffer_.lda_ = lda;
+                }
+            }
+            else
+            {
+                buffer_.a_num_vectors_ = K;
+                if (transA_option == 1)
+                {
+                    buffer_.trans_a_ = clblasTrans;
+                }
+                else if (transA_option == 2)
+                {
+                    buffer_.trans_a_ = clblasConjTrans;
+                }
+                if (lda == 0)
+                {
+                    buffer_.lda_ = N;
+                }
+                else if (lda < N)
+                {
+                    std::cerr << "lda:wrong size\n";
+                    exit(1);
+                }
+                else
+                {
+                    buffer_.lda_ = lda;
+                }
+            }
+        }
+        else
+        {
+            order_ = clblasColumnMajor;
+            if (transA_option == 0)
+            {
+                buffer_.a_num_vectors_ = K;
+                buffer_.trans_a_ = clblasNoTrans;
+                if (lda == 0)
+                {
+                    buffer_.lda_ = N;
+                }
+                else if (lda < N)
+                {
+                    std::cerr << "lda:wrong size\n";
+                    exit(1);
+                }
+                else
+                {
+                    buffer_.lda_ = lda;
+                }
+            }
+            else
+            {
+                buffer_.a_num_vectors_ = N;
+                if (transA_option == 1)
+                {
+                    buffer_.trans_a_ = clblasTrans;
+                }
+                else if (transA_option == 2)
+                {
+                    buffer_.trans_a_ = clblasConjTrans;
+                }
+
+                if (lda == 0)
+                {
+                    buffer_.lda_ = K;
+                }
+                else if (lda < K)
+                {
+                    std::cerr << "lda:wrong size\n";
+                    exit(1);
+                }
+                else
+                {
+                    buffer_.lda_ = lda;
+                }
+            }
+        }
+
+        buffer_.a_ = new T[buffer_.lda_*buffer_.a_num_vectors_];
+        buffer_.c_ = new T[buffer_.ldc_*buffer_.c_num_vectors_];
+	}
 	void releaseGPUBuffer_deleteCPUBuffer()
 	{
 		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
 		//need to do this before we eventually hit the destructor
-		//to-do
+		delete buffer_.a_;
+        delete buffer_.c_;
+        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_a_),
+                        "releasing buffer A");
+        OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_c_),
+                        "releasing buffer C");
 	}
 protected:
     void initialize_scalars(double alpha, double beta)
@@ -329,6 +462,35 @@ call_func()
 
 template<>
 void
+xSyrk<float>::roundtrip_func()
+{
+	timer.Start(timer_id);
+
+	cl_int err;
+    buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(float),
+                                        NULL, &err);
+
+    buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                        (buffer_.ldc_ * buffer_.c_num_vectors_ +
+                                            buffer_.offC_) * sizeof(float),
+                                        NULL, &err);
+	this->initialize_gpu_buffer();
+	clblasSsyrk(order_, buffer_.uplo_, buffer_.trans_a_, buffer_.n_,
+                     buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
+                     buffer_.lda_, buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
+                     buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+								  buffer_.offC_*sizeof(float), buffer_.ldc_*buffer_.c_num_vectors_*sizeof(float),
+								  buffer_.c_, 0, NULL, &event_);
+
+    clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+}
+
+template<>
+void
 xSyrk<double>::
 call_func()
 {
@@ -338,6 +500,35 @@ call_func()
                      buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                      buffer_.lda_, buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
                      buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+
+    clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+}
+
+template<>
+void
+xSyrk<double>::roundtrip_func()
+{
+	timer.Start(timer_id);
+
+	cl_int err;
+    buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(double),
+                                        NULL, &err);
+
+    buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                        (buffer_.ldc_ * buffer_.c_num_vectors_ +
+                                            buffer_.offC_) * sizeof(double),
+                                        NULL, &err);
+	this->initialize_gpu_buffer();
+	clblasDsyrk(order_, buffer_.uplo_, buffer_.trans_a_, buffer_.n_,
+                     buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
+                     buffer_.lda_, buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
+                     buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+								  buffer_.offC_*sizeof(double), buffer_.ldc_*buffer_.c_num_vectors_*sizeof(double),
+								  buffer_.c_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -361,6 +552,48 @@ call_func()
 
 template<>
 void
+xSyrk<cl_float2>::roundtrip_func()
+{
+	timer.Start(timer_id);
+
+	cl_int err;
+    buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(cl_float2),
+                                        NULL, &err);
+
+    buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                        (buffer_.ldc_ * buffer_.c_num_vectors_ +
+                                            buffer_.offC_) * sizeof(cl_float2),
+                                        NULL, &err);
+	this->initialize_gpu_buffer();
+	clblasCsyrk(order_, buffer_.uplo_, buffer_.trans_a_, buffer_.n_,
+                     buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
+                     buffer_.lda_, buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
+                     buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+								  buffer_.offC_*sizeof(cl_float2), buffer_.ldc_*buffer_.c_num_vectors_*sizeof(cl_float2),
+								  buffer_.c_, 0, NULL, &event_);
+
+    clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+}
+
+template<>
+double
+xSyrk<cl_float2>::gflops()
+{
+        return 4*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+}
+
+template<>
+std::string 
+xSyrk<cl_float2>::gflops_formula()
+{
+        return "(4*N*(N+1)*K)/time";
+}
+template<>
+void
 xSyrk<cl_double2>::
 call_func()
 {
@@ -373,6 +606,49 @@ call_func()
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
+}
+
+template<>
+void
+xSyrk<cl_double2>::roundtrip_func()
+{
+	timer.Start(timer_id);
+
+	cl_int err;
+    buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(cl_double2),
+                                        NULL, &err);
+
+    buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                        (buffer_.ldc_ * buffer_.c_num_vectors_ +
+                                            buffer_.offC_) * sizeof(cl_double2),
+                                        NULL, &err);
+	this->initialize_gpu_buffer();
+	clblasZsyrk(order_, buffer_.uplo_, buffer_.trans_a_, buffer_.n_,
+                     buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
+                     buffer_.lda_, buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
+                     buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+								  buffer_.offC_*sizeof(cl_double2), buffer_.ldc_*buffer_.c_num_vectors_*sizeof(cl_double2),
+								  buffer_.c_, 0, NULL, &event_);
+
+    clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+}
+
+template<>
+double
+xSyrk<cl_double2>::gflops()
+{
+        return 4*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+}
+
+template<>
+std::string 
+xSyrk<cl_double2>::gflops_formula()
+{
+        return "(4*N*(N+1)*K)/time";
 }
 
 #endif // ifndef CLBLAS_BENCHMARK_XSYRK_HXX__
