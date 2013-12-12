@@ -69,13 +69,12 @@ public:
 
     double gflops()
     {
-        return 2.0*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns() +
-            buffer_.n_*(buffer_.n_+1)/time_in_ns();
+        return 2*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
     }
 
     std::string gflops_formula()
     {
-        return "2.0*(M*(M+1)*N+M*(M+1))/time";
+        return "(2*N*(N+1)*K)/time";
     }
 
     void setup_buffer(int order_option, int side_option, int uplo_option,
