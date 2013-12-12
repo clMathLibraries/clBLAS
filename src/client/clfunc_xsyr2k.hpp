@@ -69,12 +69,12 @@ public:
 
     double gflops()
     {
-        return 2*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return (2*buffer_.k_*buffer_.n_*buffer_.n_+buffer_.n_)/time_in_ns();
     }
 
     std::string gflops_formula()
     {
-        return "(2*N*(N+1)*K)/time";
+        return "(2*K*N*N+N)/time";
     }
 
     void setup_buffer(int order_option, int side_option, int uplo_option,
@@ -749,14 +749,14 @@ template<>
 double
 xSyr2k<cl_float2>::gflops()
 {
-        return 8*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return (8*buffer_.k_*buffer_.n_*buffer_.n_+2*buffer_.n_)/time_in_ns();
 }
 
 template<>
 std::string 
 xSyr2k<cl_float2>::gflops_formula()
 {
-        return "(8*N*(N+1)*K)/time";
+        return "(8*K*N*N+2*N)/time";
 }
 
 template<>
@@ -815,14 +815,14 @@ template<>
 double
 xSyr2k<cl_double2>::gflops()
 {
-        return 8*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return (8*buffer_.k_*buffer_.n_*buffer_.n_+2*buffer_.n_)/time_in_ns();
 }
 
 template<>
 std::string 
 xSyr2k<cl_double2>::gflops_formula()
 {
-        return "(8*N*(N+1)*K)/time";
+        return "(8*K*N*N+2*N)/time";
 }
 
 #endif // ifndef CLBLAS_BENCHMARK_XSYR2K_HXX__
