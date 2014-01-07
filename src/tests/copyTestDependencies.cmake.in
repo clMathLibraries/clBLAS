@@ -43,6 +43,10 @@ endif( )
 
 if( EXISTS "${testDir}" )
     list( APPEND depList "${testDir}" )
+    # On linux, the .so files are not staged with the rest of the executables
+    if( UNIX )
+       list( APPEND depList "${testDir}/../library" )
+    endif( )
 endif( )
 
 # message( STATUS "depList: ${depList}" )
