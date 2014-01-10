@@ -151,7 +151,7 @@ if( BUILD_TEST )
 		endif()
 		
 		if( UNIX )
-			find_library(ACML_LIBRARIES acml acml_mp
+			find_library(ACML_LIBRARIES acml_mp
 				HINTS
 					${ACML_ROOT}/lib
 					${ACML_ROOT}/${ACML_SUBDIR}/lib
@@ -169,7 +169,7 @@ if( BUILD_TEST )
 		endif( )
 		
 		if(WIN32)
-			find_library(ACML_LIBRARIES libacml_dll libacml_mp_dll
+			find_library(ACML_LIBRARIES libacml_mp_dll
 				HINTS
 					${ACML_ROOT}/lib
 					${ACML_ROOT}/${ACML_SUBDIR}/lib
