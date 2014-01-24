@@ -18,7 +18,7 @@
 #include <clBLAS.h>
 #include <toolslib.h>
 #include <kern_cache.h>
-#include <version.h>
+#include <clBLAS.version.h>
 #include <trace_malloc.h>
 
 #include "clblas-internal.h"

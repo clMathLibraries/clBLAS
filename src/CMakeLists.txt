@@ -249,7 +249,7 @@ endif( )
 #TODO:  We should remove this pre-processor define for our 1.8 build; this means removing our deprecated image functions such as calls clCreateImage2D( )
 add_definitions( -DCL_USE_DEPRECATED_OPENCL_1_1_APIS )
 
-configure_file( "${PROJECT_SOURCE_DIR}/version.h.in" "${PROJECT_BINARY_DIR}/include/version.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/clBLAS.version.h.in" "${PROJECT_BINARY_DIR}/include/clBLAS.version.h" )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 install( FILES 
@@ -257,7 +257,7 @@ install( FILES
 			"clAmdBlas.h"
 			"clAmdBlas.version.h"
 			"clBLAS-complex.h"
-			"${PROJECT_BINARY_DIR}/include/version.h"
+			"${PROJECT_BINARY_DIR}/include/clBLAS.version.h"
 		DESTINATION 
 			"./include" )
 
