@@ -87,13 +87,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="contents">
 <p>This library provides an implementation of the Basic Linear Algebra Subprograms levels 1, 2 and 3, using OpenCL and optimized for AMD GPU hardware. It provides BLAS-1 functions SWAP, SCAL, COPY, AXPY, DOT, DOTU, DOTC, ROTG, ROTMG, ROT, ROTM, iAMAX, ASUM and NRM2, BLAS-2 functions GEMV, SYMV, TRMV, TRSV, HEMV, SYR, SYR2, HER, HER2, GER, GERU, GERC, TPMV, SPMV, HPMV, TPSV, SPR, SPR2, HPR, HPR2, GBMV, TBMV, SBMV, HBMV and TBSV and BLAS-3 functions GEMM, SYMM, TRMM, TRSM, HEMM, HERK, HER2K, SYRK and SYR2K.</p>
 <p>This library’s primary goal is to assist the end user to enqueue OpenCL kernels to process BLAS functions in an OpenCL-efficient manner, while keeping interfaces familiar to users who know how to use BLAS. All functions accept matrices through buffer objects.</p>
+<p>This library is entirely thread-safe with the exception of the following API : clblasSetup and clblasTeardown. Developers using the library can safely using any blas routine from different thread.</p>
 <h1><a class="anchor" id="deprecated"></a>
 deprecated</h1>
 <p>This library provided support for the creation of scratch images to achieve better performance on older <a href="http://developer.amd.com/gpu/AMDAPPSDK/Pages/default.aspx">AMD APP SDK's</a>. However, memory buffers now give the same performance as buffers objects in the current SDK's. Scratch image buffers are being deprecated and users are advised not to use scratch images in new applications. </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 13 2013 12:18:58 for clBLAS by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Feb 6 2014 17:15:53 for clBLAS by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.4
 </small></address>
