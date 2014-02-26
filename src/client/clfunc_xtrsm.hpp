@@ -61,7 +61,9 @@ public:
 
     void call_func()
     {
-        std::cout << "xtrsm::call_func\n";
+    timer.Start(timer_id);
+	xTrsm_Function(true);
+    timer.Stop(timer_id);
     }
 
     double gflops()
@@ -311,23 +313,171 @@ public:
 	}
 	void roundtrip_func()
 	{
-		std::cout << "xTrsm::call_func\n";
+	timer.Start(timer_id);
+	    //set up buffer
+        cl_int err;
+        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(T),
+                                        NULL, &err);
+
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+                                         NULL, &err);
+		//initialize gpu buffer
+		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+                                   buffer_.offA_ * sizeof(T),
+                                   buffer_.lda_ * buffer_.a_num_vectors_ *
+                                       sizeof(T),
+                                   buffer_.a_, 0, NULL, NULL);
+
+        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+                                   buffer_.offB_ * sizeof(T),
+                                   buffer_.ldb_ * buffer_.b_num_vectors_ *
+                                       sizeof(T),
+                                   buffer_.b_, 0, NULL, NULL);
+		//call func
+		xTrsm_Function(false);
+		//read gpu buffer
+		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			                      buffer_.offB_ * sizeof(T), buffer_.ldb_ * buffer_.b_num_vectors_ *
+                                       sizeof(T),
+								  buffer_.b_, 0, NULL, &event_);
+		clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
 	}
 	void allochostptr_roundtrip_func()
 	{
-		std::cout << "xTrsm::allochostptr_roundtrip_func\n";
+	timer.Start(timer_id);
+	    //set up buffer
+        cl_int err;
+        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(T),
+                                        NULL, &err);
+
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
+                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+                                         NULL, &err);
+		// Map the buffers to pointers at host device
+		T *map_a,*map_b;
+		map_a = (T*)clEnqueueMapBuffer(queue_, buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+											0, NULL, NULL, &err);
+		map_b = (T*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+											0, NULL, NULL, &err);
+		// memcpy the input A, B to the mapped regions
+		memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( T ) );
+		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
+		// unmap the buffers
+		clEnqueueUnmapMemObject(queue_, buffer_.buf_a_, map_a, 0, NULL, NULL);
+		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
+		//call func
+		xTrsm_Function(false);
+		// map the B buffer again to read the output
+		map_b = (T*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_READ, 0,
+                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+											0, NULL, NULL, &err);
+		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
+		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
+		clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
 	}
 	void usehostptr_roundtrip_func()
 	{
-		std::cout << "xTrsm::usehostptr_roundtrip_func\n";
+	timer.Start(timer_id);
+	    //set up buffer
+        cl_int err;
+        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(T),
+                                        buffer_.a_, &err);
+
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+                                         buffer_.b_, &err);
+		//call func
+		xTrsm_Function(false);
+		//read gpu buffer
+		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			                      buffer_.offB_ * sizeof(T), buffer_.ldb_ * buffer_.b_num_vectors_ *
+                                       sizeof(T),
+								  buffer_.b_, 0, NULL, &event_);
+		clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
 	}
 	void copyhostptr_roundtrip_func()
 	{
-		std::cout << "xTrsm::copyhostptr_roundtrip_func\n";
+	timer.Start(timer_id);
+	    //set up buffer
+        cl_int err;
+        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(T),
+                                        buffer_.a_, &err);
+
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+                                         buffer_.b_, &err);
+		//call func
+		xTrsm_Function(false);
+		//read gpu buffer
+		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			                      buffer_.offB_ * sizeof(T), buffer_.ldb_ * buffer_.b_num_vectors_ *
+                                       sizeof(T),
+								  buffer_.b_, 0, NULL, &event_);
+	clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
 	}
 	void usepersismem_roundtrip_func()
 	{
-		std::cout << "xTrsm::usepersismem_roundtrip_func\n";
+	timer.Start(timer_id);
+	    //set up buffer
+        cl_int err;
+        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
+                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
+                                            buffer_.offA_) * sizeof(T),
+                                        NULL, &err);
+
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_USE_PERSISTENT_MEM_AMD,
+                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+                                         NULL, &err);
+		// Map the buffers to pointers at host device
+		T *map_a,*map_b;
+		map_a = (T*)clEnqueueMapBuffer(queue_, buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+											0, NULL, NULL, &err);
+		map_b = (T*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+											0, NULL, NULL, &err);
+		// memcpy the input A, B to the mapped regions
+		memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( T ) );
+		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
+		// unmap the buffers
+		clEnqueueUnmapMemObject(queue_, buffer_.buf_a_, map_a, 0, NULL, NULL);
+		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
+		//call func
+		xTrsm_Function(false);
+		// map the B buffer again to read the output
+		map_b = (T*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_READ, 0,
+                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
+                                            buffer_.offB_) * sizeof(T),
+											0, NULL, NULL, &err);
+		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
+		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
+	clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
 	}
 	void zerocopy_roundtrip_func()
 	{
@@ -490,428 +640,78 @@ protected:
 
 private:
     xTrsmBuffer<T> buffer_;
+	void xTrsm_Function(bool flush);
 
 }; // class xtrsm
 
 template<>
 void
 xTrsm<cl_float>::
-call_func()
+xTrsm_Function(bool flush)
 {
-    timer.Start(timer_id);
-
     clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      1, &queue_, 0, NULL, &event_);
-
-    clWaitForEvents(1, &event_);
-    timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_float>::
-roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_float),
-                                        NULL, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
-                                   buffer_.offA_ * sizeof(cl_float),
-                                   buffer_.lda_ * buffer_.a_num_vectors_ *
-                                       sizeof(cl_float),
-                                   buffer_.a_, 0, NULL, NULL);
-
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-                                   buffer_.offB_ * sizeof(cl_float),
-                                   buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_float),
-                                   buffer_.b_, 0, NULL, NULL);
-		//call func
-		clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		//read gpu buffer
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_float), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_float),
-								  buffer_.b_, 0, NULL, &event_);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_float>::
-allochostptr_roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_float),
-                                        NULL, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-                                         NULL, &err);
-		// Map the buffers to pointers at host device
-		float *map_a,*map_b;
-		map_a = (float*)clEnqueueMapBuffer(queue_, buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0,
-                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-											0, NULL, NULL, &err);
-		map_b = (float*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0,
-                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-											0, NULL, NULL, &err);
-		// memcpy the input A, B to the mapped regions
-		memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( cl_float ) );
-		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( cl_float ) );
-		// unmap the buffers
-		clEnqueueUnmapMemObject(queue_, buffer_.buf_a_, map_a, 0, NULL, NULL);
-		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
-		//call func
-		clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		// map the B buffer again to read the output
-		map_b = (float*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_READ, 0,
-                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-											0, NULL, NULL, &err);
-		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( cl_float ) );
-		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
+	if(flush==true)
+	{
 		clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_float>::
-usehostptr_roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_float),
-                                        buffer_.a_, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-                                         buffer_.b_, &err);
-		//call func
-		clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		//read gpu buffer
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_float), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_float),
-								  buffer_.b_, 0, NULL, &event_);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_float>::
-copyhostptr_roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_float),
-                                        buffer_.a_, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-                                         buffer_.b_, &err);
-		//call func
-		clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		//read gpu buffer
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_float), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_float),
-								  buffer_.b_, 0, NULL, &event_);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_float>::
-usepersismem_roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_float),
-                                        NULL, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE | CL_MEM_USE_PERSISTENT_MEM_AMD,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-                                         NULL, &err);
-		// Map the buffers to pointers at host device
-		float *map_a,*map_b;
-		map_a = (float*)clEnqueueMapBuffer(queue_, buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0,
-                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-											0, NULL, NULL, &err);
-		map_b = (float*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0,
-                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-											0, NULL, NULL, &err);
-		// memcpy the input A, B to the mapped regions
-		memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( cl_float ) );
-		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( cl_float ) );
-		// unmap the buffers
-		clEnqueueUnmapMemObject(queue_, buffer_.buf_a_, map_a, 0, NULL, NULL);
-		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
-		//call func
-		clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		// map the B buffer again to read the output
-		map_b = (float*)clEnqueueMapBuffer(queue_, buffer_.buf_b_, CL_TRUE, CL_MAP_READ, 0,
-                                          (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float),
-											0, NULL, NULL, &err);
-		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( cl_float ) );
-		clEnqueueUnmapMemObject(queue_, buffer_.buf_b_, map_b, 0, NULL, NULL);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
+	}
 }
 
 template<>
 void
 xTrsm<cl_double>::
-call_func()
+xTrsm_Function(bool flush)
 {
-    timer.Start(timer_id);
-
     clblasDtrsm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      1, &queue_, 0, NULL, &event_);
-
-    clWaitForEvents(1, &event_);
-    timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_double>::
-roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_double),
-                                        NULL, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_double),
-                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
-                                   buffer_.offA_ * sizeof(cl_double),
-                                   buffer_.lda_ * buffer_.a_num_vectors_ *
-                                       sizeof(cl_double),
-                                   buffer_.a_, 0, NULL, NULL);
-
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-                                   buffer_.offB_ * sizeof(cl_double),
-                                   buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_double),
-                                   buffer_.b_, 0, NULL, NULL);
-		//call func
-		clblasDtrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		//read gpu buffer
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_double), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_double),
-								  buffer_.b_, 0, NULL, &event_);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
+	if(flush==true)
+	{
+		clWaitForEvents(1, &event_);
+	}
 }
 
 template<>
 void
 xTrsm<cl_float2>::
-call_func()
+xTrsm_Function(bool flush)
 {
-    timer.Start(timer_id);
-
     clblasCtrsm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      1, &queue_, 0, NULL, &event_);
-
-  clWaitForEvents(1, &event_);
-  timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_float2>::
-roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_float2),
-                                        NULL, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_float2),
-                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
-                                   buffer_.offA_ * sizeof(cl_float2),
-                                   buffer_.lda_ * buffer_.a_num_vectors_ *
-                                       sizeof(cl_float2),
-                                   buffer_.a_, 0, NULL, NULL);
-
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-                                   buffer_.offB_ * sizeof(cl_float2),
-                                   buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_float2),
-                                   buffer_.b_, 0, NULL, NULL);
-		//call func
-		clblasCtrsm(order_, buffer_.side_, buffer_.uplo_,
-                     buffer_.trans_a_, buffer_.diag_,
-                     buffer_.m_, buffer_.n_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		//read gpu buffer
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_float2), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_float2),
-								  buffer_.b_, 0, NULL, &event_);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
+	if(flush==true)
+	{
+		clWaitForEvents(1, &event_);
+	}
 }
 
 template<>
 void
 xTrsm<cl_double2>::
-call_func()
+xTrsm_Function(bool flush)
 {
-  timer.Start(timer_id);
-
-  clblasZtrsm(order_, buffer_.side_, buffer_.uplo_,
-                   buffer_.trans_a_, buffer_.diag_,
-                   buffer_.m_, buffer_.n_, buffer_.alpha_,
-                   buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                   buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                   1, &queue_, 0, NULL, &event_);
-
-      clWaitForEvents(1, &event_);
-      timer.Stop(timer_id);
-}
-
-template<>
-void
-xTrsm<cl_double2>::
-roundtrip_func()
-{
-	timer.Start(timer_id);
-	    //set up buffer
-        cl_int err;
-        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
-                                        (buffer_.lda_ * buffer_.a_num_vectors_ +
-                                            buffer_.offA_) * sizeof(cl_double2),
-                                        NULL, &err);
-
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
-                                        (buffer_.ldb_ * buffer_.b_num_vectors_ +
-                                            buffer_.offB_) * sizeof(cl_double2),
-                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
-                                   buffer_.offA_ * sizeof(cl_double2),
-                                   buffer_.lda_ * buffer_.a_num_vectors_ *
-                                       sizeof(cl_double2),
-                                   buffer_.a_, 0, NULL, NULL);
-
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-                                   buffer_.offB_ * sizeof(cl_double2),
-                                   buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_double2),
-                                   buffer_.b_, 0, NULL, NULL);
-		//call func
-		clblasZtrsm(order_, buffer_.side_, buffer_.uplo_,
+    clblasZtrsm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
-		//read gpu buffer
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_double2), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(cl_double2),
-								  buffer_.b_, 0, NULL, &event_);
-	clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
+                     1, &queue_, 0, NULL, &event_);
+	if(flush==true)
+	{
+		clWaitForEvents(1, &event_);
+	}
 }
+
 
 template<>
 double
