@@ -98,6 +98,10 @@ public:
 	{
 				std::cout << "xSymm::roundtrip_func\n";
 	}
+	void zerocopy_roundtrip_func()
+	{
+		std::cout << "xSymm::zerocopy_roundtrip_func\n";
+	}
   void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
                       size_t M, size_t N, size_t K, size_t lda, size_t ldb,
