@@ -554,12 +554,7 @@ public:
                                         (buffer_.ldc_ * buffer_.c_num_vectors_ +
                                             buffer_.offC_) * sizeof(T),
                                         buffer_.c_, &err);
-		xGemm_Function(false);
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
-			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
-                                       sizeof(T),
-								  buffer_.c_, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
+		xGemm_Function(true);
 	timer.Stop(timer_id);
 	}
 	void usepersismem_roundtrip_func()
