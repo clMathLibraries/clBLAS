@@ -48,7 +48,7 @@ void releaseMallocTrace(void);
 
 static __inline void initMallocTrace(void)
 {
-    /* do noting */
+    /* do nothing */
 }
 
 static __inline void printMallocStatistics(void)
