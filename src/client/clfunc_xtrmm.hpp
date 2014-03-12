@@ -304,7 +304,11 @@ public:
 	}
 	void roundtrip_func()
 	{
-		std::cout << "xGemm::roundtrip_func\n";
+		std::cout << "xTrmm::roundtrip_func\n";
+	}
+	void zerocopy_roundtrip_func()
+	{
+		std::cout << "xTrmm::zerocopy_roundtrip_func\n";
 	}
 	void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
