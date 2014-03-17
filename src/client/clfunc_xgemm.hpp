@@ -536,7 +536,7 @@ public:
 		}
 		else
 		{
-			buffer_.ldb_=buffer_.m_;
+			buffer_.ldb_=buffer_.n_;
 		}
 		buffer_.ldc_=buffer_.m_;
 		xGemm_Function(false);
