@@ -522,9 +522,23 @@ public:
         err = clEnqueueWriteBufferRect(queue_, buffer_.buf_c_, CL_TRUE, c_buffer_origin, c_host_origin, c_region, c_buffer_row_pitch,
 										c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, NULL);
 
-		buffer_.lda_ = 0;
-        buffer_.ldb_ = 0;
-        buffer_.ldc_ = 0;
+		if(buffer_.trans_a_==clblasNoTrans)
+		{
+			buffer_.lda_=buffer_.m_;
+		}
+		else
+		{
+			buffer_.lda_=buffer_.k_;
+		}
+		if(buffer_.trans_b_==clblasNoTrans)
+		{
+			buffer_.ldb_=buffer_.k_;
+		}
+		else
+		{
+			buffer_.ldb_=buffer_.m_;
+		}
+		buffer_.ldc_=buffer_.m_;
 		xGemm_Function(false);
 		/*
 		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
