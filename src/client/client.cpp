@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
   std::string function;
   std::string precision;
   std::string roundtrip;
+  std::string memalloc;
   int side_option;
   int uplo_option;
   int diag_option;
@@ -100,7 +101,8 @@ int main(int argc, char *argv[])
     ( "uplo", po::value<int>( &uplo_option )->default_value(0), "0 = upper, 1 = lower. only used with [list of function families]" )  // xsymv xsyrk xsyr2k xtrsm xtrmm
     ( "diag", po::value<int>( &diag_option )->default_value(0), "0 = unit diagonal, 1 = non unit diagonal. only used with [list of function families]" ) // xtrsm xtrmm
     ( "profile,p", po::value<cl_uint>( &profileCount )->default_value(20), "Time and report the kernel speed (default: profiling off)" )
-	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"calculate the time for round trips")
+	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"including the time of OpenCL memory allocation and transportation; options:roundtrip, noroundtrip(default)")
+	( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd")
     ;
 
   po::variables_map vm;
@@ -511,7 +513,27 @@ int main(int argc, char *argv[])
     my_function->call_func();
 	my_function->read_gpu_buffer();
     my_function->reset_gpu_write_buffer();*/
-	my_function->roundtrip_func();
+	
+	if(memalloc=="default")
+	{
+		my_function->roundtrip_func();
+	}
+	else if (memalloc=="alloc_host_ptr")
+	{
+		my_function->allochostptr_roundtrip_func();
+	}
+	else if (memalloc=="use_host_ptr")
+	{
+		my_function->usehostptr_roundtrip_func();
+	}
+	else if (memalloc=="copy_host_ptr")
+	{
+		my_function->copyhostptr_roundtrip_func();
+	}
+	else if (memalloc=="use_persistent_mem_amd")
+	{
+		my_function->usepersismem_roundtrip_func();
+	}
 	//my_function->reset_gpu_write_buffer();
 	my_function->releaseGPUBuffer_deleteCPUBuffer();
   }
