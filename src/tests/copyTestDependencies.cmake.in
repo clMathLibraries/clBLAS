@@ -18,7 +18,7 @@ endif( )
 
 #    message( fixedTestLocation ": ${fixedTestLocation}" )
 # Get the directory that the test executable resides in; this helps get_prerequisites( ) find dependent libraries
-get_filename_component( testDir "${fixedTestLocation}" DIRECTORY )
+get_filename_component( testDir "${fixedTestLocation}" PATH )
 #    message( testDir ": ${testDir}" )
 
 set( installPath "" )
@@ -32,7 +32,7 @@ endif( )
 set( depList "" )
 
 #This logic assumes that clBLAS CMakeLists.txt has been called
-get_filename_component( acmlDir "@ACML_LIBRARIES@" DIRECTORY )
+get_filename_component( acmlDir "@ACML_LIBRARIES@" PATH )
 
 if( EXISTS "${acmlDir}" )
     list( APPEND depList "${acmlDir}" )
@@ -40,8 +40,8 @@ if( EXISTS "${acmlDir}" )
 endif( )
 
 #This logic assumes that FindGTest.cmake has been called
-get_filename_component( gtestDir "@GTEST_LIBRARY@" DIRECTORY )
-get_filename_component( gtestDirDebug "@GTEST_LIBRARY_DEBUG@" DIRECTORY )
+get_filename_component( gtestDir "@GTEST_LIBRARY@" PATH )
+get_filename_component( gtestDirDebug "@GTEST_LIBRARY_DEBUG@" PATH )
 
 if( EXISTS "${gtestDir}" )
     list( APPEND depList "${gtestDir}" )
@@ -55,7 +55,7 @@ if( ${gtestDiffDirs} AND EXISTS "${gtestDirDebug}" )
 endif( )
 
 #This logic assumes that FindOpenCL.cmake has been called
-get_filename_component( openclDir "@OPENCL_LIBRARIES@" DIRECTORY )
+get_filename_component( openclDir "@OPENCL_LIBRARIES@" PATH )
 
 if( EXISTS "${openclDir}" )
     list( APPEND depList "${openclDir}" )
