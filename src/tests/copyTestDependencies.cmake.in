@@ -18,9 +18,7 @@ endif( )
 
 #    message( fixedTestLocation ": ${fixedTestLocation}" )
 # Get the directory that the test executable resides in; this helps get_prerequisites( ) find dependent libraries
-get_filename_component( testName "${fixedTestLocation}" NAME )
-string( REPLACE ${testName} "" testDir ${fixedTestLocation} )
-string( REGEX REPLACE "/+$" "" testDir ${testDir} )
+get_filename_component( testDir "${fixedTestLocation}" DIRECTORY )
 #    message( testDir ": ${testDir}" )
 
 set( installPath "" )
@@ -33,20 +31,35 @@ endif( )
 # Only search for dependencies that have ROOT defined
 set( depList "" )
 
-if( EXISTS "@ACML_ROOT@" )
-    list( APPEND depList "@ACML_ROOT@/@ACML_SUBDIR@/lib" )
+#This logic assumes that clBLAS CMakeLists.txt has been called
+get_filename_component( acmlDir "@ACML_LIBRARIES@" DIRECTORY )
+
+if( EXISTS "${acmlDir}" )
+    list( APPEND depList "${acmlDir}" )
+#    message( "acmlDir: ${acmlDir}" )
 endif( )
 
-if( EXISTS "@GTEST_ROOT@" )
-    list( APPEND depList "@GTEST_ROOT@/lib@SUFFIX_LIB@" )
+#This logic assumes that FindGTest.cmake has been called
+get_filename_component( gtestDir "@GTEST_LIBRARY@" DIRECTORY )
+get_filename_component( gtestDirDebug "@GTEST_LIBRARY_DEBUG@" DIRECTORY )
+
+if( EXISTS "${gtestDir}" )
+    list( APPEND depList "${gtestDir}" )
+#    message( "gtestDir: ${gtestDir}" )
 endif( )
 
-if( EXISTS "@OPENCL_LIBRARIES@" )
-    get_filename_component( clLibName "@OPENCL_LIBRARIES@" NAME )
-    string( REPLACE ${clLibName} "" clLibDir "@OPENCL_LIBRARIES@" )
-    string( REGEX REPLACE "/+$" "" clLibDir ${clLibDir} )
+string( COMPARE NOTEQUAL "${gtestDir}" "${gtestDirDebug}" gtestDiffDirs )
+if( ${gtestDiffDirs} AND EXISTS "${gtestDirDebug}" )
+    list( APPEND depList "${gtestDirDebug}" )
+#    message( "gtestDirDebug: ${gtestDirDebug}" )
+endif( )
 
-    list( APPEND depList "${clLibDir}" )
+#This logic assumes that FindOpenCL.cmake has been called
+get_filename_component( openclDir "@OPENCL_LIBRARIES@" DIRECTORY )
+
+if( EXISTS "${openclDir}" )
+    list( APPEND depList "${openclDir}" )
+#    message( "openclDir: ${openclDir}" )
 endif( )
  
 if( EXISTS "${testDir}" )
@@ -57,7 +70,7 @@ if( EXISTS "${testDir}" )
     endif( )
 endif( )
 
-# message( STATUS "depList: ${depList}" )
+# message( "depList: ${depList}" )
 
 # This retrieves a list of shared library dependencies from the target; they are not full path names
 # Skip system dependencies and skip recursion
