@@ -53,8 +53,6 @@ NOTE:  On windows, if using a more recent version of visual studio than 2008,
 it may be necessary to trick python to using the newer version of your compiler, 
 by creating an environment variable that it expects to exist as such:
 set VS90COMNTOOLS=%VS110COMNTOOLS%
-
-6.  Execute demoBLAS.py file to test the pyclBLAS extention.  
     
 NOTE: It may be necessary to copy the clBLAS shared library into 
 the same directory as the extention module so that it can find 
