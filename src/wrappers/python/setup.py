@@ -19,6 +19,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 from os import path, environ
 import argparse
+import platform
 
 def main():
    parser = argparse.ArgumentParser(description='Set up the pyclBLAS extension module')
@@ -70,12 +71,22 @@ def main():
      print( "or pass the command line option --clBlasRoot" )
      exit( )
 
+   # 64bit and 32bit have different library paths
+   if( platform.architecture( )[0] == '64bit' ):
+     libraryPath = 'lib64'
+   else:
+     libraryPath = 'lib'
+
+   # Windows and linux have different library paths
+   if( platform.system( ) == 'Windows' ):
+     libraryPath = path.join( libraryPath, 'import' )
+
    module = [
      Extension( name = 'pyclBLAS',
                sources = ['pyclBLAS.pyx'],
                include_dirs = [ path.join( clRootPath, 'include' ),
                                 path.join( clBlasRootPath, 'include' ) ],
-               library_dirs = [ path.join( clBlasRootPath, 'lib', 'import' ) ],
+               library_dirs = [ path.join( clBlasRootPath, libraryPath ) ],
                libraries=['clBLAS'] )
    ]
 

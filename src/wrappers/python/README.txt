@@ -9,7 +9,7 @@ Dependencies:
 3.  Cython from http://cython.org/, ( 0.18 minimum )
 4.  OpenCL runtime, such as AMD's catalyst package ( AMD v2.9 SDK tested )
 
-NOTE:  This has only been tested with 32-bit python on windows
+NOTE:  This has been tested with 32-bit python on windows & 64-bit on OpenSUSE
 
 NOTE:  Only sgemm has been wrapped as proof-of-concept
 
