@@ -16,6 +16,7 @@
 
 # This pxd file defines all the enums and structs that we plan to use from
 # python.  It is used from pyclBLAS.pyx
+from libc.stdint cimport intptr_t, uintptr_t
 
 cdef extern from "clBLAS.h":
     # These are base OpenCL enumerations that clBLAS uses

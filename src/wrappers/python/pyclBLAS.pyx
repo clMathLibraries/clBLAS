@@ -81,12 +81,12 @@ def Sgemm( clblasOrder order, clblasTranspose transA, clblasTranspose transB,
    # Simplify python wrapper to only handle 1 queue at this time
    if( numCommandQueues != 1 ):
       raise IndexError( "pyblasSgemm( ) requires the number of queues to be 1" )
-   cdef int pIntQueue = commandQueues.int_ptr
+   cdef intptr_t pIntQueue = commandQueues.int_ptr
    cdef cl_command_queue pcqQueue = <cl_command_queue>pIntQueue
 
    # This logic does not yet work for numEventsInWaitList > (greater than) 1
    # Need to figure out how python & pyopencl pass lists of objects
-   cdef int pIntWaitList = 0
+   cdef intptr_t pIntWaitList = 0
    cdef cl_event* pWaitList = NULL
    if( numEventsInWaitList > 0 ):
       if( numEventsInWaitList < 2 ):
@@ -98,9 +98,9 @@ def Sgemm( clblasOrder order, clblasTranspose transA, clblasTranspose transB,
    # Pyopencl objects contain an int_ptr method to get access to the internally wrapped
    # OpenCL object pointers
    cdef cl_event outEvent = NULL
-   cdef int matA = A.int_ptr
-   cdef int matB = B.int_ptr
-   cdef int matC = C.int_ptr
+   cdef intptr_t matA = A.int_ptr
+   cdef intptr_t matB = B.int_ptr
+   cdef intptr_t matC = C.int_ptr
 
    # Transition execution to clBLAS
    cdef clblasStatus result = clblasSgemm( order, transA, transB, M, N, K, alpha, <const cl_mem>matA, offA, lda,
@@ -113,5 +113,5 @@ def Sgemm( clblasOrder order, clblasTranspose transA, clblasTranspose transB,
 
    # Create a pyopencl Event object from the event returned from clBLAS and return
    # it to the user
-   sgemmEvent = pyopencl.Event.from_int_ptr( <int>outEvent )
+   sgemmEvent = pyopencl.Event.from_int_ptr( <intptr_t>outEvent )
    return sgemmEvent
