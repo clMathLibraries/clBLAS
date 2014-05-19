@@ -20,6 +20,7 @@
 
 #include <clBLAS.h>
 #include <common.h>
+#include <algorithm>
 
 #if _MSC_VER
 #pragma warning (disable:4127)
