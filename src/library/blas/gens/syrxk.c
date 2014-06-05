@@ -1224,7 +1224,7 @@ genUpdateGenericDiagTile(
     unsigned int maxFetches = 0;
     const char *yname, *xname;
     const char *ldcName;
-	char hexadec[1];
+	char hexadec[2];
 
     batch = createStmtBatch();
     if (batch == NULL) {
@@ -1453,7 +1453,8 @@ genUpdateGenericDiagTile(
             ksprintf(&kstr, "cc%u", i);
         }
         else {
-			itoa(iter.col, hexadec, 16);
+			snprintf(hexadec, sizeof(char)*2, "%x", iter.col);
+			//itoa(iter.col, hexadec, 16);
             ksprintf(&kstr, "cc%u.s%s", i, hexadec);
         }
 
