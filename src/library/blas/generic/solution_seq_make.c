@@ -1435,9 +1435,12 @@ getStepGranulation(SolutionStep *step)
             }
         }
 
-        status = getGranularityInfo(&step->device, mempat->name,
-                                    step->args.dtype, step->extraFlags,
-                                    (int)MNK, dims, &step->pgran, &time);
+		if( step->funcID != CLBLAS_GEMM2 )
+		{
+			status = getGranularityInfo(&step->device, mempat->name,
+										step->args.dtype, step->extraFlags,
+										(int)MNK, dims, &step->pgran, &time);
+		}
         /*
          * Disable blocking for implementations dealing with cache reads
          * from the global memory
