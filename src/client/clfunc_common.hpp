@@ -313,6 +313,7 @@ public:
     virtual void reset_gpu_write_buffer() = 0;
 	virtual void read_gpu_buffer() = 0;
 	virtual void roundtrip_func() = 0;
+	virtual void roundtrip_func_rect() {}
 	virtual void allochostptr_roundtrip_func() {}
 	virtual void usehostptr_roundtrip_func() {}
 	virtual void copyhostptr_roundtrip_func() {}

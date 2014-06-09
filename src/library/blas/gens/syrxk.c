@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include <clBLAS.h>
@@ -1219,10 +1220,11 @@ genUpdateGenericDiagTile(
     // type of the vectorized coordinates
     Kstring vctype;
     Kstring constOffs, constShifts, constMasks;
-    unsigned int i, j, nops;
+    unsigned int i, j, nops,size;
     unsigned int maxFetches = 0;
     const char *yname, *xname;
     const char *ldcName;
+	char hexadec[2];
 
     batch = createStmtBatch();
     if (batch == NULL) {
@@ -1253,6 +1255,14 @@ genUpdateGenericDiagTile(
     tifl = (isUpper) ? TILE_ITER_BACKWARD_ROWS :
                        TILE_ITER_BACKWARD_COLS;
     iterInit(&iter, &tileTempC, 1, tifl);
+	nops = 0;
+	while (!iterIsEnd(&iter)) {
+		nops++;
+		size = nops / nrCols;
+		iterIterate(&iter);
+	}
+
+	iterInit(&iter, &tileTempC, 1, tifl);
 
     initTmpResTile(&tileTempC, gset, true);
 
@@ -1316,7 +1326,7 @@ genUpdateGenericDiagTile(
     maxFetches = umin(maxFetches, i);
 
     // declare vectorized coordinates
-    declareDiagUpresIndexedVars(ctx, vctype.buf, "cc", tempRows);
+    declareDiagUpresIndexedVars(ctx, vctype.buf, "cc", size);
 
     /*
      * real y coordinate, offset mask and
@@ -1326,8 +1336,8 @@ genUpdateGenericDiagTile(
                      "unsigned int mask;\n"
                      "int hit;\n");
     if (withBeta) {
-        declareDiagUpresIndexedVars(ctx, typeName, "alphaNew", tempRows);
-        declareDiagUpresIndexedVars(ctx, typeName, "betaNew", tempRows);
+        declareDiagUpresIndexedVars(ctx, typeName, "alphaNew", size);
+        declareDiagUpresIndexedVars(ctx, typeName, "betaNew", size);
     }
 
     // declare tile
@@ -1443,7 +1453,9 @@ genUpdateGenericDiagTile(
             ksprintf(&kstr, "cc%u", i);
         }
         else {
-            ksprintf(&kstr, "cc%u.s%u", i, iter.col);
+			snprintf(hexadec, sizeof(char)*2, "%x", iter.col);
+			//itoa(iter.col, hexadec, 16);
+            ksprintf(&kstr, "cc%u.s%s", i, hexadec);
         }
 
         // prepare multipliers and fetch

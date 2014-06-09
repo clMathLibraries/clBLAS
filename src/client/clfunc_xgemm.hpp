@@ -454,6 +454,103 @@ public:
 		clWaitForEvents(1, &event_);
 	timer.Stop(timer_id);
 	}
+	void roundtrip_func_rect()
+	{
+	timer.Start(timer_id);
+		cl_int err;
+		//rect
+		size_t a_buffer_origin[3] = {0,0,0}; 
+		size_t a_host_origin[3] = {0,0,0};
+		size_t a_region[3] = {buffer_.m_*sizeof(T),buffer_.k_,1};
+		size_t a_buffer_row_pitch=0*sizeof(T);//lda
+		size_t a_buffer_slice_pitch=0;
+		size_t a_host_row_pitch=buffer_.lda_*sizeof(T);
+		size_t a_host_slice_pitch=0;
+
+		size_t b_buffer_origin[3] = {0,0,0}; 
+		size_t b_host_origin[3] = {0,0,0};
+		size_t b_region[3] = {buffer_.k_*sizeof(T),buffer_.n_,1};
+		size_t b_buffer_row_pitch=0*sizeof(T);//ldb
+		size_t b_buffer_slice_pitch=0;
+		size_t b_host_row_pitch=buffer_.ldb_*sizeof(T);
+		size_t b_host_slice_pitch=0;
+
+		size_t c_buffer_origin[3] = {0,0,0}; 
+		size_t c_host_origin[3] = {0,0,0};
+		size_t c_region[3] = {buffer_.m_*sizeof(T),buffer_.n_,1};
+		size_t c_buffer_row_pitch=0*sizeof(T);//ldc
+		size_t c_buffer_slice_pitch=0;
+		size_t c_host_row_pitch=buffer_.ldc_*sizeof(T);
+		size_t c_host_slice_pitch=0;
+
+        buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                       (buffer_.k_*buffer_.m_ +
+                                           buffer_.offA_) * sizeof(T),
+                                       NULL, &err);
+
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+                                        (buffer_.k_ * buffer_.n_ +
+                                            buffer_.offB_) * sizeof(T),
+                                        NULL, &err);
+
+        buffer_.buf_c_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+                                        (buffer_.m_ * buffer_.n_ +
+                                            buffer_.offC_) * sizeof(T),
+                                        NULL, &err);
+        /*
+		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+                                   buffer_.offA_ * sizeof(T),
+                                   buffer_.lda_ * buffer_.a_num_vectors_ *
+                                       sizeof(T),
+                                   buffer_.a_, 0, NULL, NULL);
+		
+        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+                                   buffer_.offB_ * sizeof(T),
+                                   buffer_.ldb_ * buffer_.b_num_vectors_ *
+                                       sizeof(T),
+                                   buffer_.b_, 0, NULL, NULL);
+
+        err = clEnqueueWriteBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+                                   buffer_.offC_ * sizeof(T),
+                                   buffer_.ldc_ * buffer_.c_num_vectors_ *
+                                   sizeof(T),
+                                   buffer_.c_, 0, NULL, NULL);*/
+        err = clEnqueueWriteBufferRect(queue_, buffer_.buf_a_, CL_TRUE, a_buffer_origin, a_host_origin, a_region, a_buffer_row_pitch,
+										a_buffer_slice_pitch, a_host_row_pitch, a_host_slice_pitch, buffer_.a_, 0, NULL, NULL);
+        err = clEnqueueWriteBufferRect(queue_, buffer_.buf_b_, CL_TRUE, b_buffer_origin, b_host_origin, b_region, b_buffer_row_pitch,
+										b_buffer_slice_pitch, b_host_row_pitch, b_host_slice_pitch, buffer_.b_, 0, NULL, NULL);
+        err = clEnqueueWriteBufferRect(queue_, buffer_.buf_c_, CL_TRUE, c_buffer_origin, c_host_origin, c_region, c_buffer_row_pitch,
+										c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, NULL);
+
+		if(buffer_.trans_a_==clblasNoTrans)
+		{
+			buffer_.lda_=buffer_.m_;
+		}
+		else
+		{
+			buffer_.lda_=buffer_.k_;
+		}
+		if(buffer_.trans_b_==clblasNoTrans)
+		{
+			buffer_.ldb_=buffer_.k_;
+		}
+		else
+		{
+			buffer_.ldb_=buffer_.n_;
+		}
+		buffer_.ldc_=buffer_.m_;
+		xGemm_Function(false);
+		/*
+		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
+                                       sizeof(T),
+								  buffer_.c_, 0, NULL, &event_);
+		*/
+		err = ::clEnqueueReadBufferRect(queue_, buffer_.buf_c_, CL_TRUE, c_buffer_origin, c_host_origin, c_region, c_buffer_row_pitch,
+										c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, &event_);
+		clWaitForEvents(1, &event_);
+	timer.Stop(timer_id);
+	}	
 	void allochostptr_roundtrip_func()
 	{
 	timer.Start(timer_id);
@@ -528,12 +625,7 @@ public:
                                         (buffer_.ldc_ * buffer_.c_num_vectors_ +
                                             buffer_.offC_) * sizeof(T),
                                         buffer_.c_, &err);
-		xGemm_Function(false);
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
-			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
-                                       sizeof(T),
-								  buffer_.c_, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
+		xGemm_Function(true);
 	timer.Stop(timer_id);
 	}
 	void copyhostptr_roundtrip_func()
@@ -554,7 +646,12 @@ public:
                                         (buffer_.ldc_ * buffer_.c_num_vectors_ +
                                             buffer_.offC_) * sizeof(T),
                                         buffer_.c_, &err);
-		xGemm_Function(true);
+		xGemm_Function(false);
+		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
+                                       sizeof(T),
+								  buffer_.c_, 0, NULL, &event_);
+		clWaitForEvents(1, &event_);
 	timer.Stop(timer_id);
 	}
 	void usepersismem_roundtrip_func()

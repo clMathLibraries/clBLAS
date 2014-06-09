@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     ( "diag", po::value<int>( &diag_option )->default_value(0), "0 = unit diagonal, 1 = non unit diagonal. only used with [list of function families]" ) // xtrsm xtrmm
     ( "profile,p", po::value<cl_uint>( &profileCount )->default_value(20), "Time and report the kernel speed (default: profiling off)" )
 	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"including the time of OpenCL memory allocation and transportation; options:roundtrip, noroundtrip(default)")
-	( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd")
+	( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd,rect_mem")
     ;
 
   po::variables_map vm;
@@ -533,6 +533,10 @@ int main(int argc, char *argv[])
 	else if (memalloc=="use_persistent_mem_amd")
 	{
 		my_function->usepersismem_roundtrip_func();
+	}
+	else if (memalloc=="rect_mem")
+	{
+		my_function->roundtrip_func_rect();
 	}
 	//my_function->reset_gpu_write_buffer();
 	my_function->releaseGPUBuffer_deleteCPUBuffer();
