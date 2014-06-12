@@ -548,9 +548,10 @@ void addBuildOpt(
     if (l > 0 && !isspace(opts[l-1]) && l+1 < len) {
       opts[l] = ' ';
       opts[l+1]   = '\0';
+      l++;
     }
 
-    strlcat(opts, option, len);
+    strncat(opts, option, len - l - 1);
 }
 
 
