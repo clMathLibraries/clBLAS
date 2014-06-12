@@ -139,25 +139,25 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_COMPLEX_DOUBLE )
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_HER2
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
 	}
 	if( kargs->order == clblasRowMajor )
 	{
-		strcat( buildOptStr, " -DHER2_ROWMAJOR ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHER2_ROWMAJOR");
 		#ifdef DEBUG_HER2
 		printf("Setting build options ... HERMITIAN2_ROWMAJOR... for row-major support\n");
 		#endif
 	}
     if( kargs->pigFuncID == CLBLAS_HPR2 )
     {
-        strcat( buildOptStr, " -DPACKED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DPACKED");
     }
 
 	//Build options for syr2_her2.clT to generate HER2 related code.
-	strcat( buildOptStr, " -DHER2_ONLY ");
+	addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHER2_ONLY");
 	return;
 }
 

@@ -130,29 +130,29 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 	}
     switch(kargs->redctnType)
     {
-        case REDUCE_BY_SUM:                 strcat( buildOptStr, "-DREDUCE_BY_SUM ");
+        case REDUCE_BY_SUM:                 addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_BY_SUM");
                                             break;
 
-        case REDUCE_BY_MAX:                 strcat( buildOptStr, "-DREDUCE_BY_MAX ");
+        case REDUCE_BY_MAX:                 addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_BY_MAX");
                                             break;
 
-        case REDUCE_BY_MIN:                 strcat( buildOptStr, "-DREDUCE_BY_MIN ");
+        case REDUCE_BY_MIN:                 addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_BY_MIN");
                                             break;
 
-        case REDUCE_MAX_WITH_INDEX:         strcat( buildOptStr, "-DREDUCE_MAX_WITH_INDEX ");
+        case REDUCE_MAX_WITH_INDEX:         addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_MAX_WITH_INDEX");
                                             break;
 
-        case REDUCE_BY_HYPOT:               strcat( buildOptStr, "-DREDUCE_BY_HYPOT ");
+        case REDUCE_BY_HYPOT:               addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_BY_HYPOT");
                                             break;
 
-        case REDUCE_BY_SSQ:                 strcat( buildOptStr, "-DREDUCE_BY_SSQ ");
+        case REDUCE_BY_SSQ:                 addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_BY_SSQ");
                                             break;
 
-        case REDUCE_MAX_WITH_INDEX_ATOMICS: strcat( buildOptStr, "-DREDUCE_MAX_WITH_INDEX_ATOMICS ");
+        case REDUCE_MAX_WITH_INDEX_ATOMICS: addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_MAX_WITH_INDEX_ATOMICS");
                                             break;
 
         default:                            printf("Invalid reduction type!!\n");

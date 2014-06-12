@@ -527,14 +527,14 @@ setupBuildOpts(
     opts[0] = '\0';
 
 #if !defined NDEBUG
-    strcpy(opts, "-g ");
+    addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-g");
 #endif  /* NDEBUG */
 
     if (target.ident.vendor == VENDOR_NVIDIA &&
         !strcmp(mempat->name, "2-staged cached global memory based "
                               "block trsm")) {
 
-        strcat(opts, "-cl-opt-disable");
+        addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-cl-opt-disable");
     }
 }
 

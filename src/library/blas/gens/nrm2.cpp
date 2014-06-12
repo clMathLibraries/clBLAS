@@ -128,22 +128,22 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 	}
     if( (kargs->dtype == TYPE_COMPLEX_FLOAT) || (kargs->dtype == TYPE_COMPLEX_DOUBLE) ) {
-        strcat( buildOptStr, " -DCOMPLEX ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCOMPLEX");
     }
     if(kargs->redctnType == REDUCE_BY_HYPOT) {
-            strcat( buildOptStr, "-DUSE_HYPOT ");
+            addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DUSE_HYPOT");
     } else if(kargs->redctnType == REDUCE_BY_SSQ) {
-            strcat( buildOptStr, " -DUSE_SSQ ");
+            addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DUSE_SSQ");
     }
 
     if( (kargs->ldb.vector) != 1) {
-        strcat( buildOptStr, " -DINCX_NONUNITY ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DINCX_NONUNITY");
     }
     if( (kargs->ldb.vector) < 1) {
-        strcat( buildOptStr, " -DRETURN_ON_INVALID");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DRETURN_ON_INVALID");
     }
 	return;
 }

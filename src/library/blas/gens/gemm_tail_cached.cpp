@@ -96,10 +96,10 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
     KernelExtraFlags kflags = step->extraFlags;
 
-	strcat(buildOptStr, " -DTAIL_RUN -DM_TAIL_PRESENT -DN_TAIL_PRESENT ");
+	addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DTAIL_RUN -DM_TAIL_PRESENT -DN_TAIL_PRESENT");
     if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
     {
-        strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
         #ifdef DEBUG_GEMM_TAIL
         printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
         #endif
@@ -107,16 +107,16 @@ setBuildOpts(
 
     if (isComplexType(kargs->dtype))
     {
-        strcat(buildOptStr, " -DCOMPLEX ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCOMPLEX");
     }
 
     if (kflags & KEXTRA_CONJUGATE_A)
     {
-        strcat( buildOptStr, " -DCONJUGATE_A ");
-}
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCONJUGATE_A");
+    }
     if (kflags & KEXTRA_CONJUGATE_B)
     {
-        strcat( buildOptStr, " -DCONJUGATE_B ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCONJUGATE_B");
     }
 
 
@@ -127,14 +127,14 @@ setBuildOpts(
             break;
 
         case CLBLAS_HERK:
-            strcat( buildOptStr, " -DHERK");
+            addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERK");
             if(kargs->uplo == clblasLower)
             {
-                strcat( buildOptStr, " -DHERK_LOWER_TRIANGLE");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERK_LOWER_TRIANGLE");
             }
             else if(kargs->uplo == clblasUpper)
             {
-                strcat( buildOptStr, " -DHERK_UPPER_TRIANGLE");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERK_UPPER_TRIANGLE");
             }
             break;
 
@@ -147,33 +147,34 @@ setBuildOpts(
             #endif
             if (kargs->side == clblasLeft)
             {
-                strcat (buildOptStr, " -D__SYMM_LEFT__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_LEFT__");
             }
             if (kargs->side == clblasRight)
             {
-                strcat (buildOptStr, " -D__SYMM_RIGHT__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_RIGHT__");
             }
             if (kargs->uplo == clblasLower)
             {
-                strcat(buildOptStr, " -D__SYMM_LOWER__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_LOWER__");
             }
             if (kargs->uplo == clblasUpper)
             {
-                strcat(buildOptStr, " -D__SYMM_UPPER__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_UPPER__");
             }
+            // Define the order for Legacy sake.
             if (kargs->order == clblasColumnMajor)
             {
-                strcat(buildOptStr, " -D__SYMM_COLMAJOR__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_COLMAJOR__");
             } else {
-                strcat(buildOptStr, " -D__SYMM_ROWMAJOR__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_ROWMAJOR__");
             }
-            if ((kargs->pigFuncID == CLBLAS_SYMM_DIAGONAL)  || (kargs->pigFuncID == CLBLAS_HEMM_DIAGONAL))
+            if ((kargs->pigFuncID == CLBLAS_SYMM_DIAGONAL) || (kargs->pigFuncID == CLBLAS_HEMM_DIAGONAL))
             {
-                strcat(buildOptStr, " -D__SYMM_DIAGONAL__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_DIAGONAL__");
             }
             if (kargs->pigFuncID == CLBLAS_HEMM_DIAGONAL)
             {
-                strcat(buildOptStr, " -D__HEMM__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__HEMM__");
             }
             break;
 
