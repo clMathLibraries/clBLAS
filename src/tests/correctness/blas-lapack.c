@@ -896,22 +896,38 @@ double dznrm2( int n, doublecomplex *x, int incx)
 
 float sasum( int n, float *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_sasum(n, x, incx);
+#else
     return sasum_(&n, x, &incx);
+#endif
 }
 
 double dasum( int n, double *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_dasum(n, x, incx);
+#else
     return dasum_(&n, x, &incx);
+#endif
 }
 
 float scasum( int n, complex *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_scasum(n, x, incx);
+#else
     return scasum_(&n, x, &incx);
+#endif
 }
 
 double dzasum( int n, doublecomplex *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_dzasum(n, x, incx);
+#else
     return dzasum_(&n, x, &incx);
+#endif
 }
 
 #endif
