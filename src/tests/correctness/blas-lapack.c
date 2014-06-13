@@ -630,12 +630,20 @@ void zdscal( int n, double alpha, doublecomplex *x, int incx)
 
 float sdot( int n, float *x, int incx,  float *y, int incy)
 {
+#ifdef __APPLE__
+    return cblas_sdot(n, x, incx, y, incy);
+#else
     return sdot_(&n, x, &incx, y, &incy);
+#endif
 }
 
 double ddot( int n, double *x, int incx,  double *y, int incy)
 {
+#ifdef __APPLE__
+    return cblas_ddot(n, x, incx, y, incy);
+#else
     return ddot_(&n, x, &incx, y, &incy);
+#endif
 }
 
 complex cdotu( int n, complex *x, int incx, complex *y, int incy)
