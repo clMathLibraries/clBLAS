@@ -840,22 +840,50 @@ int izamax( int n, doublecomplex *x, int incx)
 
 float snrm2( int n, float *x, int incx)
 {
+#ifdef __APPLE__
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_snrm2(n, x, incx);
+#else
     return snrm2_(&n, x, &incx);
+#endif
 }
 
 double dnrm2( int n, double *x, int incx)
 {
+#ifdef __APPLE__
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_dnrm2(n, x, incx);
+#else
     return dnrm2_(&n, x, &incx);
+#endif
 }
 
 float scnrm2( int n, complex *x, int incx)
 {
+#ifdef __APPLE__
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_scnrm2(n, x, incx);
+#else
     return scnrm2_(&n, x, &incx);
+#endif
 }
 
 double dznrm2( int n, doublecomplex *x, int incx)
 {
+#ifdef __APPLE__
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_dznrm2(n, x, incx);
+#else
     return dznrm2_(&n, x, &incx);
+#endif
 }
 
 float sasum( int n, float *x, int incx)
