@@ -136,28 +136,28 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_TRMV
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
 	}
     if( (step->funcID == CLBLAS_HEMV) || (kargs->pigFuncID == CLBLAS_HPMV) || (kargs->pigFuncID == CLBLAS_SPMV) )
 	{
-		strcat( buildOptStr, " -DHEMV_ONLY ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHEMV_ONLY");
 		/*
 		if(kargs->diag == clblasUnit)
 		{
-			strcat( buildOptStr, " -DHEMV_ZERO_DIAG ");
+			addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHEMV_ZERO_DIAG");
 		}
 		*/
 	}
     if ( kargs->pigFuncID == CLBLAS_SPMV )
     {
-        strcat( buildOptStr, " -DSPMV_ONLY ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DSPMV_ONLY");
     }
     if( (kargs->pigFuncID == CLBLAS_TPMV) || (kargs->pigFuncID == CLBLAS_HPMV) || (kargs->pigFuncID == CLBLAS_SPMV) )
     {
-        strcat( buildOptStr, " -DPACKED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DPACKED");
     }
 
 	return;

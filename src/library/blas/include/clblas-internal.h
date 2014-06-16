@@ -240,6 +240,11 @@ setupBuildOpts(
     cl_device_id devID,
     MemoryPattern *mempat);
 
+void addBuildOpt(
+    char * opts,
+    size_t len,
+    const char * option);
+
 // Internal scatter image API
 
 int

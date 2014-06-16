@@ -116,7 +116,7 @@ setBuildOpts(
 
 	if ( (kargs->dtype == TYPE_DOUBLE) || (kargs->dtype == TYPE_COMPLEX_DOUBLE) )
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_GBMV
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
@@ -124,15 +124,15 @@ setBuildOpts(
 
     if( kargs->pigFuncID == CLBLAS_TBMV )
 	{
-		strcat( buildOptStr, " -DTBMV_ONLY ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DTBMV_ONLY");
 		if( kargs->diag == clblasUnit )
 		{
-		    strcat( buildOptStr, " -DUNIT_DIAG ");
+		    addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DUNIT_DIAG");
 		}
 	}
 	if( ((kargs->pigFuncID == CLBLAS_GBMV) || (kargs->pigFuncID == CLBLAS_TBMV)) && (kargs->transA == clblasConjTrans) )
 	{
-	    strcat( buildOptStr, " -DDO_CONJ ");
+	    addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDO_CONJ");
 	}
 
 	if( (kargs->pigFuncID == CLBLAS_SBMV) || (kargs->pigFuncID == CLBLAS_HBMV) )
@@ -141,15 +141,15 @@ setBuildOpts(
 	    isUpper = ( kargs->order == clblasColumnMajor )? !isUpper : isUpper;
 
 	    if( isUpper )
-	            strcat( buildOptStr, " -DGIVEN_SHBMV_UPPER ");
-	    else    strcat( buildOptStr, " -DGIVEN_SHBMV_LOWER ");
+	            addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DGIVEN_SHBMV_UPPER");
+	    else    addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DGIVEN_SHBMV_LOWER");
 
         if(kargs->pigFuncID == CLBLAS_HBMV)
         {
-            strcat( buildOptStr, " -DHBMV_ONLY ");
+            addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHBMV_ONLY");
             if( kargs->order == clblasColumnMajor )  // Since routine calls Row-major, the whole matrix has to be conjugated while loading
             {
-                strcat( buildOptStr, " -DDO_CONJ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDO_CONJ");
             }
         }
 	}

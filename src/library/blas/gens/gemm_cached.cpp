@@ -158,36 +158,36 @@ setBuildOpts(
 
     if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
     {
-        strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
     }
 
     if (isComplexType(kargs->dtype))
     {
-        strcat(buildOptStr, " -DCOMPLEX ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCOMPLEX");
     }
 
     if ((bestSize.useBarrier) == 1)
     {
-	    strcat(buildOptStr, " -DGEMM_NEEDS_BARRIER ");
+	    addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DGEMM_NEEDS_BARRIER");
     }
 
     if (kargs->M % dims->y)
 	{
-		strcat(buildOptStr, " -DM_TAIL_PRESENT ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DM_TAIL_PRESENT");
     }
 
 	if (kargs->N % dims->x)
 	{
-		strcat(buildOptStr, " -DN_TAIL_PRESENT ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DN_TAIL_PRESENT");
 	}
 
     if (kflags & KEXTRA_CONJUGATE_A)
     {
-        strcat( buildOptStr, " -DCONJUGATE_A ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCONJUGATE_A");
     }
     if (kflags & KEXTRA_CONJUGATE_B)
     {
-        strcat( buildOptStr, " -DCONJUGATE_B ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DCONJUGATE_B");
     }
 
     switch(kargs->pigFuncID)
@@ -201,46 +201,46 @@ setBuildOpts(
             #endif
             if (kargs->side == clblasLeft)
             {
-                strcat (buildOptStr, " -D__SYMM_LEFT__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_LEFT__");
             }
             if (kargs->side == clblasRight)
             {
-                strcat (buildOptStr, " -D__SYMM_RIGHT__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_RIGHT__");
             }
             if (kargs->uplo == clblasLower)
             {
-                strcat(buildOptStr, " -D__SYMM_LOWER__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_LOWER__");
             }
             if (kargs->uplo == clblasUpper)
             {
-                strcat(buildOptStr, " -D__SYMM_UPPER__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_UPPER__");
             }
             // Define the order for Legacy sake.
             if (kargs->order == clblasColumnMajor)
             {
-                strcat(buildOptStr, " -D__SYMM_COLMAJOR__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_COLMAJOR__");
             } else {
-                strcat(buildOptStr, " -D__SYMM_ROWMAJOR__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_ROWMAJOR__");
             }
             if ((kargs->pigFuncID == CLBLAS_SYMM_DIAGONAL) || (kargs->pigFuncID == CLBLAS_HEMM_DIAGONAL))
             {
-                strcat(buildOptStr, " -D__SYMM_DIAGONAL__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_DIAGONAL__");
             }
             if (kargs->pigFuncID == CLBLAS_HEMM_DIAGONAL)
             {
-                strcat(buildOptStr, " -D__HEMM__ ");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__HEMM__");
             }
             break;
 
          case CLBLAS_HERK:
-            strcat( buildOptStr, " -DHERK");
+            addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERK");
             if(kargs->uplo == clblasLower)
             {
-                strcat( buildOptStr, " -DHERK_LOWER_TRIANGLE");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERK_LOWER_TRIANGLE");
             }
             else if(kargs->uplo == clblasUpper)
             {
-                strcat( buildOptStr, " -DHERK_UPPER_TRIANGLE");
+                addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERK_UPPER_TRIANGLE");
             }
             break;
 

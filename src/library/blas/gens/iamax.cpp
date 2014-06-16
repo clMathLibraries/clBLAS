@@ -124,7 +124,7 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_AMAX
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
@@ -132,17 +132,17 @@ setBuildOpts(
 
     if( (kargs->ldb.vector) != 1)
     {
-        strcat( buildOptStr, " -DINCX_NONUNITY ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DINCX_NONUNITY");
     }
 
     if( (kargs->ldb.vector) < 1)
     {
-        strcat( buildOptStr, " -DRETURN_ON_INVALID ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DRETURN_ON_INVALID");
     }
 
     if( (kargs->redctnType == REDUCE_MAX_WITH_INDEX_ATOMICS))
     {
-        strcat( buildOptStr, " -DREDUCE_MAX_WITH_INDEX_ATOMICS ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DREDUCE_MAX_WITH_INDEX_ATOMICS");
     }
 
 	return;

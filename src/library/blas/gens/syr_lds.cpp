@@ -142,14 +142,14 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE )
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_SYR
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
 	}
     if( kargs->pigFuncID == CLBLAS_SPR )
     {
-        strcat( buildOptStr, " -DPACKED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DPACKED");
     }
 
 	return;
