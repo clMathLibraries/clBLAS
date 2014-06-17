@@ -849,6 +849,8 @@ int izamax( int n, doublecomplex *x, int incx)
 float snrm2( int n, float *x, int incx)
 {
 #ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
     if (n < 1 || incx < 1) {
         return 0;
     }
@@ -861,6 +863,8 @@ float snrm2( int n, float *x, int incx)
 double dnrm2( int n, double *x, int incx)
 {
 #ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
     if (n < 1 || incx < 1) {
         return 0;
     }
@@ -873,6 +877,8 @@ double dnrm2( int n, double *x, int incx)
 float scnrm2( int n, complex *x, int incx)
 {
 #ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
     if (n < 1 || incx < 1) {
         return 0;
     }
@@ -885,6 +891,8 @@ float scnrm2( int n, complex *x, int incx)
 double dznrm2( int n, doublecomplex *x, int incx)
 {
 #ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
     if (n < 1 || incx < 1) {
         return 0;
     }
