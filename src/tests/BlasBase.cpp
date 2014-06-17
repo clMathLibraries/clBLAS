@@ -162,6 +162,7 @@ BlasBase::getDevice(cl_device_type type, const char* name,
         }
 
         for (i = 0; i < nrDevices; i++) {
+            char devid_name[255];
             err = clGetDeviceInfo(devices[i], devInfo, 0, NULL, &sz);
             if (err != CL_SUCCESS) {
                 continue;
@@ -180,7 +181,9 @@ BlasBase::getDevice(cl_device_type type, const char* name,
                 selPlatform = platform;
             }
                 printf("---- %s\n", str);
-            if (strcmp(str, name) == 0) {
+                snprintf(devid_name, sizeof(devid_name), "%p", devices[i]);
+
+            if (strcmp(str, name) == 0 || strcmp(devid_name, name) == 0) {
                 //printf("---- %s\n", str);
                 platform_ = platform;
                 result = devices[i];
