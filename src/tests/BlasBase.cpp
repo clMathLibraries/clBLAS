@@ -496,6 +496,7 @@ BlasBase::printEnvInfo(void)
             break;
         }
 
+        std::cout << "Device id" << ": " << (i ? additionalDevice_ : primaryDevice_) << std::endl;
         printDevInfoStr(CL_DEVICE_NAME, "Device name", i);
         printDevInfoStr(CL_DEVICE_VENDOR, "Device vendor", i);
         std::cout << "Platform (bit): ";
