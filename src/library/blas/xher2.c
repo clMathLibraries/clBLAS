@@ -59,21 +59,21 @@ doHer2(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, X, Y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET )) {
+    if ((retCode = checkMemObjects(A, X, Y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET))) {
         printf("Invalid mem object..\n");
         return retCode;
     }
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, A, offa, lda, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, A, offa, lda, A_MAT_ERRSET))) {
         printf("Invalid Size for A\n");
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET))) {
         printf("Invalid Size for X\n");
         return retCode;
     }
 
-	if (retCode = checkVectorSizes(kargs->dtype, N, Y, offy, incy, Y_VEC_ERRSET )) {
+	if ((retCode = checkVectorSizes(kargs->dtype, N, Y, offy, incy, Y_VEC_ERRSET))) {
         printf("Invalid Size for Y\n");
         return retCode;
     }

@@ -24,6 +24,9 @@
 #if !defined CORR_TEST_WITH_ACML
 
 #include "blas-lapack.h"
+#if defined(__APPLE__)
+#include <Accelerate/Accelerate.h>
+#endif
 
 void
 sgemv(char transa, int m, int n, float alpha, float *a, int lda, float *x, int incx, float beta, float *y, int incy)
@@ -627,20 +630,30 @@ void zdscal( int n, double alpha, doublecomplex *x, int incx)
 
 float sdot( int n, float *x, int incx,  float *y, int incy)
 {
+#ifdef __APPLE__
+    return cblas_sdot(n, x, incx, y, incy);
+#else
     return sdot_(&n, x, &incx, y, &incy);
+#endif
 }
 
 double ddot( int n, double *x, int incx,  double *y, int incy)
 {
+#ifdef __APPLE__
+    return cblas_ddot(n, x, incx, y, incy);
+#else
     return ddot_(&n, x, &incx, y, &incy);
+#endif
 }
 
 complex cdotu( int n, complex *x, int incx, complex *y, int incy)
 {
     complex ans;
 
-    #if defined( _WIN32 ) || defined( _WIN64 )
+#if defined( _WIN32 ) || defined( _WIN64 )
         ans = cdotu_(&n, x, &incx, y, &incy);
+    #elif defined( __APPLE__)
+        cblas_cdotu_sub(n, x, incx, y, incy, &ans);
     #else
         cdotusub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -654,6 +667,8 @@ doublecomplex zdotu( int n, doublecomplex *x, int incx,  doublecomplex *y, int i
 
     #if defined( _WIN32 ) || defined( _WIN64 )
         ans = zdotu_(&n, x, &incx, y, &incy);
+    #elif defined(__APPLE__)
+        cblas_zdotu_sub(n, x, incx, y, incy, &ans);
     #else
         zdotusub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -667,6 +682,8 @@ complex cdotc( int n, complex *x, int incx, complex *y, int incy)
 
     #if defined( _WIN32 ) || defined( _WIN64 )
         ans = cdotc_(&n, x, &incx, y, &incy);
+    #elif defined(__APPLE__)
+        cblas_cdotc_sub(n, x, incx, y, incy, &ans);
     #else
         cdotcsub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -680,6 +697,8 @@ doublecomplex zdotc( int n, doublecomplex *x, int incx,  doublecomplex *y, int i
 
     #if defined( _WIN32 ) || defined( _WIN64 )
         ans = zdotc_(&n, x, &incx, y, &incy);
+    #elif defined(__APPLE__)
+        cblas_zdotc_sub(n, x, incx, y, incy, &ans);
     #else
         zdotcsub_(&n, x, &incx, y, &incy, &ans);
     #endif
@@ -829,42 +848,94 @@ int izamax( int n, doublecomplex *x, int incx)
 
 float snrm2( int n, float *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_snrm2(n, x, incx);
+#else
     return snrm2_(&n, x, &incx);
+#endif
 }
 
 double dnrm2( int n, double *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_dnrm2(n, x, incx);
+#else
     return dnrm2_(&n, x, &incx);
+#endif
 }
 
 float scnrm2( int n, complex *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_scnrm2(n, x, incx);
+#else
     return scnrm2_(&n, x, &incx);
+#endif
 }
 
 double dznrm2( int n, doublecomplex *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_dznrm2(n, x, incx);
+#else
     return dznrm2_(&n, x, &incx);
+#endif
 }
 
 float sasum( int n, float *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_sasum(n, x, incx);
+#else
     return sasum_(&n, x, &incx);
+#endif
 }
 
 double dasum( int n, double *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_dasum(n, x, incx);
+#else
     return dasum_(&n, x, &incx);
+#endif
 }
 
 float scasum( int n, complex *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_scasum(n, x, incx);
+#else
     return scasum_(&n, x, &incx);
+#endif
 }
 
 double dzasum( int n, doublecomplex *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_dzasum(n, x, incx);
+#else
     return dzasum_(&n, x, &incx);
+#endif
 }
 
 #endif

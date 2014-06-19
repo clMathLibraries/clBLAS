@@ -137,7 +137,7 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 
 		#ifdef DEBUG_GER
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
@@ -282,8 +282,8 @@ generator(
 
 	BH = subdims->y;
 	BW = subdims->x;
-	sprintf( bhStr, "%d", BH );
-	sprintf( bwStr, "%d", BW );
+	sprintf( bhStr, "%" SPREFIX "u", BH );
+	sprintf( bwStr, "%" SPREFIX "u", BW );
 
 	#ifdef DEBUG_GER
     printf("BH = %s\n", bhStr);

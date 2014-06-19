@@ -506,6 +506,8 @@ BlasBase::printEnvInfo(void)
     #else
             std::cout << "(x32)" << std::endl;
     #endif
+#elif defined( __APPLE__ )
+        std::cout << "Apple OS X" << std::endl;
 #else
         std::cout << "Linux" << std::endl;
 #endif

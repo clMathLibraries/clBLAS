@@ -351,7 +351,7 @@ doTrsv(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, x, (cl_mem) NULL, false, A_MAT_ERRSET, X_VEC_ERRSET, END_ERRSET)) {
+    if ((retCode = checkMemObjects(A, x, (cl_mem) NULL, false, A_MAT_ERRSET, X_VEC_ERRSET, END_ERRSET))) {
 		#ifdef DEBUG_TRSV
 		printf("Invalid mem object..\n");
 		#endif
@@ -363,13 +363,13 @@ doTrsv(
  	 * checkMatrixSizes() does not account for "offa" argument.
  	 * Need to pass "offa" when "checkMatrixSizes()" is changed.
 	 */
-    if (retCode = checkMatrixSizes(kargs->dtype, order, trans, N, N, A, offa, lda, A_MAT_ERRSET)) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, trans, N, N, A, offa, lda, A_MAT_ERRSET))) {
 		#ifdef DEBUG_TRSV
 		printf("Invalid Size for A\n");
 		#endif
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, x, offx, incx, X_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, x, offx, incx, X_VEC_ERRSET))) {
 		#ifdef DEBUG_TRSV
 		printf("Invalid Size for X\n");
 		#endif

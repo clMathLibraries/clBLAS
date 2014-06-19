@@ -277,53 +277,77 @@ if( BLAS_PRINT_BUILD_ERRORS )
     add_definitions( -DPRINT_BUILD_ERRORS )
 endif()
 
-#add_executable(tplgen tools/tplgen/tplgen.cpp)
-if (CMAKE_COMPILER_IS_GNUCXX)
-    include(ExternalProject)
-    ExternalProject_Add(
-        tplgen
-        URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
-        INSTALL_COMMAND ""
-    )
-    add_custom_target( GENERATE_CLT
-                   COMMAND ${CMAKE_BINARY_DIR}/library/tplgen-prefix/src/tplgen-build/tplgen -o ../../include/ ${SRC_CL_TEMPLATES}
-                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
-                )
-    add_dependencies(GENERATE_CLT tplgen)
+include( ExternalProject )
+ExternalProject_Add( tplgen
+    URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property( tplgen binary_dir )
+
+set( tplgenBinaryDir "" )
+if( CMAKE_COMPILER_IS_GNUCXX )
+    set( tplgenBinaryDir ${binary_dir} )
 else()
-    include(ExternalProject)
-    ExternalProject_Add(
-        tplgen
-        URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
-        CONFIGURE_COMMAND "${CMAKE_BINARY_DIR}\\library\\tplgen-prefix\\src\\tplgen\\configure.bat"
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Debug
-#        BUILD_COMMAND MSBuild.exe tplgen.sln /m /fl /flp1:logfile=errors.log;errorsonly /flp2:logfile=warnings.log;warningsonly /t:rebuild
-        INSTALL_COMMAND ""
-    )
-    add_custom_target( GENERATE_CLT
-        COMMAND ${CMAKE_BINARY_DIR}\\library\\tplgen-prefix\\src\\tplgen-build\\Debug\\tplgen.exe -o ..\\..\\include ${SRC_CL_TEMPLATES}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}\\library\\blas\\gens\\clTemplates
-    )
-    add_dependencies(GENERATE_CLT tplgen)
+    set( tplgenBinaryDir "${binary_dir}/${CMAKE_CFG_INTDIR}" )
 endif()
+
+add_custom_target( GENERATE_CLT
+    COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include ${SRC_CL_TEMPLATES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
+)
+
+add_dependencies( GENERATE_CLT tplgen )
+
+if( CMAKE_COMPILER_IS_GNUCC )
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/clBLAS.pc.in
+                    ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc @ONLY )
+
+    install( FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc
+             DESTINATION lib${SUFFIX_LIB}/pkgconfig )
+endif( )
+
 add_library(clBLAS SHARED ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
 add_dependencies(clBLAS GENERATE_CLT)
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
+set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 
-if( TARGET_PLATFORM EQUAL 64 )
-	# CPack configuration; include the executable into the package
-	install( TARGETS clBLAS
-			RUNTIME DESTINATION bin64
-			LIBRARY DESTINATION lib64
-			ARCHIVE DESTINATION lib64/import
-			)
-else()
-	# CPack configuration; include the executable into the package
-	install( TARGETS clBLAS
-			RUNTIME DESTINATION bin32
-			LIBRARY DESTINATION lib32
-			ARCHIVE DESTINATION lib32/import
-			)
-endif()
+# CPack configuration; include the executable into the package
+install( TARGETS clBLAS
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+		)
+
+# For debug builds, include the debug runtimes into the package for testing on non-developer machines
+set( CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP true )
+set( CMAKE_INSTALL_DEBUG_LIBRARIES true )
+set( CMAKE_INSTALL_DEBUG_LIBRARIES_ONLY true )
+
+if( WIN32 )
+    set( CLBLAS_RUNTIME_DESTINATION bin${SUFFIX_BIN} )
+else( )
+    set( CLBLAS_RUNTIME_DESTINATION lib${SUFFIX_LIB} )
+endif( )
+
+include( InstallRequiredSystemLibraries )
+
+# Install necessary runtime files for debug builds
+install(    PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+            CONFIGURATIONS Debug
+            DESTINATION ${CLBLAS_RUNTIME_DESTINATION} )
+
+# Install all *.pdb files for debug builds
+install(    DIRECTORY ${PROJECT_BINARY_DIR}/staging/
+            DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
+            OPTIONAL
+            CONFIGURATIONS Debug
+            FILES_MATCHING PATTERN "*.pdb" )
+
+# Install a snapshot of the source as it was for this build; useful for the .pdb's
+install(    DIRECTORY ${PROJECT_SOURCE_DIR}
+            DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
+            OPTIONAL
+            CONFIGURATIONS Debug )

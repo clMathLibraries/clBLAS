@@ -20,10 +20,12 @@
 
 #if defined (_MSC_VER)
 
+#if( _MSC_VER <= 1700 )
 static unsigned long long ROW_NAN = 0x7ff0000000000000LL;
-static unsigned int ROW_NANF = 0x7fc00000;
-
 #define NAN *(reinterpret_cast<double*>(&ROW_NAN))
+#endif
+
+static unsigned int ROW_NANF = 0x7fc00000;
 #define NANF *(reinterpret_cast<float*>(&ROW_NANF))
 
 #else   /* _MSC_VER */

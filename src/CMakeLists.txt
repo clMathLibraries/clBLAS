@@ -14,7 +14,7 @@
 # limitations under the License.
 # ########################################################################
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 
 #User toggle-able options that can be changed on the command line with -D
 option( BUILD_RUNTIME "Build the BLAS runtime library" ON )
@@ -28,26 +28,39 @@ option( BUILD_KTEST "A command line tool for testing single clBLAS kernel" ON )
 # However, test-correctness can instead use NETLIB as a reference library
 set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
 
-# uncomment these to print compiler invocation lines for nmake files
-# set( CMAKE_START_TEMP_FILE "" )
-# set( CMAKE_END_TEMP_FILE "" )
-# set( CMAKE_VERBOSE_MAKEFILE 1 )
+if( CMAKE_GENERATOR MATCHES "NMake" )
+  option( NMAKE_COMPILE_VERBOSE "Print compile and link strings to the console" OFF )
+  if( NMAKE_COMPILE_VERBOSE )
+    set( CMAKE_START_TEMP_FILE "" )
+    set( CMAKE_END_TEMP_FILE "" )
+    set( CMAKE_VERBOSE_MAKEFILE 1 )
+  endif( )
+endif( )
 
 # If we are on linux, and we wish to link with the netlib BLAS implementation, we need to have a valid fortran compiler
-if( NOT CORR_TEST_WITH_ACML AND NOT WIN32)
+if( NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE )
   project(clBLAS Fortran C CXX )
 else( )
   project(clBLAS C CXX)
 endif( )
 
 # Define a version for the code
-set( clBLAS_VERSION_MAJOR 2 )
-set( clBLAS_VERSION_MINOR 0 )
-set( clBLAS_VERSION_PATCH 0 )
+if( NOT DEFINED clBLAS_VERSION_MAJOR )
+    set( clBLAS_VERSION_MAJOR 2 )
+endif( )
+
+if( NOT DEFINED clBLAS_VERSION_MINOR )
+    set( clBLAS_VERSION_MINOR 2 )
+endif( )
+
+if( NOT DEFINED clBLAS_VERSION_PATCH )
+    set( clBLAS_VERSION_PATCH 0 )
+endif( )
+
 set( clBLAS_VERSION "${clBLAS_VERSION_MAJOR}.${clBLAS_VERSION_MINOR}.${clBLAS_VERSION_PATCH}")
 
 # Increment this if we break backward compatibility.
-set(clBLAS_SOVERSION 1)
+set( clBLAS_SOVERSION 2 )
 
 # We have custom written Find* modules now in the root source directory
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
@@ -58,23 +71,33 @@ if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 	set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
 endif( )
 
-set( ACMLROOT $ENV{ACMLROOT} CACHE PATH "AMD ACML root path")
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
       FORCE)
 endif()
 
+# These variables are meant to contain string which should be appended to the installation paths 
+# of library and executable binaries, respectively.  They are meant to be user configurable/overridable.  
+set( SUFFIX_LIB_DEFAULT "" )
+set( SUFFIX_BIN_DEFAULT "" )
+
 if(TARGET_PLATFORM EQUAL 32 OR TARGET_PLATFORM EQUAL 64)
     set(TARGET_PLATFORM ${TARGET_PLATFORM} CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
+    if( TARGET_PLATFORM EQUAL 64 )
+        set( SUFFIX_LIB_DEFAULT "64" )
+    endif( )
 else()
     if(CMAKE_SIZEOF_VOID_P MATCHES 8)
         set(TARGET_PLATFORM "64" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
+        set( SUFFIX_LIB_DEFAULT "64" )
     else()
         set(TARGET_PLATFORM "32" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
     endif()
 endif()
+
+set( SUFFIX_LIB ${SUFFIX_LIB_DEFAULT} CACHE STRING "String to append to 'lib' install path" )
+set( SUFFIX_BIN ${SUFFIX_BIN_DEFAULT} CACHE STRING "String to append to 'bin' install path" )
 
 if( MSVC_IDE )
     set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
@@ -98,19 +121,14 @@ endif()
 # TODO: maybe this could be written using the FindBLAS module in the future
 if( BUILD_TEST )
 	if(NOT CORR_TEST_WITH_ACML)
-		if( WIN32 )
+	        if(APPLE)
+			find_library(BLAS_LIBRARIES Accelerate)
+		       	MARK_AS_ADVANCED(BLAS_LIBRARIES)
+		       	message(STATUS "Using Accelerate framework on Mac OS-X")
+	       	else()
 			find_package( Netlib COMPONENTS BLAS REQUIRED )
+              	endif()
 		else( )
-			if( $ENV{REFBLAS_ROOT} )
-				set( REFBLAS_ROOT $ENV{REFBLAS_ROOT} CACHE PATH "NetLib BLAS root path")
-			else( )
-				message(FATAL_ERROR "Cannot find reference BLAS, please set REFBLAS_ROOT environment variable")
-			endif( )
-			
-			# Find reference BLAS implementation
-			include( ${REFBLAS_ROOT}/package/cmake/exportBLAS.cmake )
-		endif( )
-	else( )
 		# Find ACML BLAS implementation
 		# platform dependent ACML subdirectory
 		if (WIN32)
@@ -121,9 +139,10 @@ if( BUILD_TEST )
 
 		find_path(ACML_INCLUDE_DIRS acml.h
 			HINTS
-				$ENV{ACMLROOT}/include
-				${ACMLROOT}/include
-				${ACMLROOT}/${ACML_SUBDIR}/include
+				${ACML_ROOT}/include
+				${ACML_ROOT}/${ACML_SUBDIR}/include
+				$ENV{ACML_ROOT}/include
+                                $ENV{ACML_ROOT}/${ACML_SUBDIR}/include
 		)
 
 		if( ACML_INCLUDE_DIRS )
@@ -132,27 +151,30 @@ if( BUILD_TEST )
 		endif()
 		
 		if( UNIX )
-			find_library(ACML_LIBRARIES acml acml_mp
+			find_library(ACML_LIBRARIES acml_mp
 				HINTS
-					$ENV{ACMLROOT}/lib
-					${ACMLROOT}/lib
-					${ACMLROOT}/${ACML_SUBDIR}/lib
+					${ACML_ROOT}/lib
+					${ACML_ROOT}/${ACML_SUBDIR}/lib
+					$ENV{ACML_ROOT}/lib
+                                        $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 			find_library(_acml_mv_library acml_mv
 				HINTS
-					$ENV{ACMLROOT}/lib
-					${ACMLROOT}/lib
-					${ACMLROOT}/${ACML_SUBDIR}/lib
+					${ACML_ROOT}/lib
+					${ACML_ROOT}/${ACML_SUBDIR}/lib
+					$ENV{ACML_ROOT}/lib
+                                        $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 			mark_as_advanced(_acml_mv_library)
 		endif( )
 		
 		if(WIN32)
-			find_library(ACML_LIBRARIES libacml_dll libacml_mp_dll
+			find_library(ACML_LIBRARIES libacml_mp_dll
 				HINTS
-					$ENV{ACMLROOT}/lib
-					${ACMLROOT}/lib
-					${ACMLROOT}/${ACML_SUBDIR}/lib
+					${ACML_ROOT}/lib
+					${ACML_ROOT}/${ACML_SUBDIR}/lib
+					$ENV{ACML_ROOT}/lib
+                                        $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 		endif( )
 		
@@ -213,16 +235,21 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     if(TARGET_PLATFORM EQUAL 32)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin")
     endif()
-endif()
+elseif( MSVC )
+	# CMake sets huge stack frames for windows, for whatever reason.  We go with compiler default.
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
+endif( )
 
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
+endif( )
 
 #TODO:  We should remove this pre-processor define for our 1.8 build; this means removing our deprecated image functions such as calls clCreateImage2D( )
 add_definitions( -DCL_USE_DEPRECATED_OPENCL_1_1_APIS )
 
-configure_file( "${PROJECT_SOURCE_DIR}/version.h.in" "${PROJECT_BINARY_DIR}/include/version.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/clBLAS.version.h.in" "${PROJECT_BINARY_DIR}/include/clBLAS.version.h" )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 install( FILES 
@@ -230,7 +257,7 @@ install( FILES
 			"clAmdBlas.h"
 			"clAmdBlas.version.h"
 			"clBLAS-complex.h"
-			"${PROJECT_BINARY_DIR}/include/version.h"
+			"${PROJECT_BINARY_DIR}/include/clBLAS.version.h"
 		DESTINATION 
 			"./include" )
 

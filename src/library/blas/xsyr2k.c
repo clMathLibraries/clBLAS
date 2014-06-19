@@ -58,7 +58,7 @@ doSyr2k(
     }
 
     // Validate arguments
-    if (retCode = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET )) {
+    if ((retCode = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET))) {
         return retCode;
     }
 
@@ -66,13 +66,13 @@ doSyr2k(
         return clblasInvalidValue;
     }
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, transAB, N, K, A, offA, lda, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, transAB, N, K, A, offA, lda, A_MAT_ERRSET))) {
         return retCode;
     }
-    if (retCode = checkMatrixSizes(kargs->dtype, order, transAB, N, K, B, offB, ldb, B_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, transAB, N, K, B, offB, ldb, B_MAT_ERRSET))) {
         return retCode;
     }
-    if (retCode = checkMatrixSizes(kargs->dtype, order, false, N, N, C, offC, ldc, C_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, false, N, N, C, offC, ldc, C_MAT_ERRSET))) {
         return retCode;
     }
 

@@ -57,12 +57,6 @@ public:
 
     ~xTrmm()
     {
-        delete buffer_.a_;
-        delete buffer_.b_;
-        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_a_),
-                       "releasing buffer A");
-        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_b_),
-                       "releasing buffer B");
     }
 
     void call_func()
@@ -238,7 +232,7 @@ public:
                                             buffer_.offA_) * sizeof(T),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(T),
                                         NULL, &err);
@@ -310,7 +304,11 @@ public:
 	}
 	void roundtrip_func()
 	{
-		std::cout << "xGemm::roundtrip_func\n";
+		std::cout << "xTrmm::roundtrip_func\n";
+	}
+	void zerocopy_roundtrip_func()
+	{
+		std::cout << "xTrmm::zerocopy_roundtrip_func\n";
 	}
 	void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
@@ -450,6 +448,17 @@ public:
         buffer_.a_ = new T[buffer_.lda_*buffer_.a_num_vectors_];
         buffer_.b_ = new T[buffer_.ldb_*buffer_.b_num_vectors_];
 	}
+	void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+		//need to do this before we eventually hit the destructor
+        delete buffer_.a_;
+        delete buffer_.b_;
+        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_a_),
+                       "releasing buffer A");
+        OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_b_),
+                       "releasing buffer B");
+	}
 protected:
     void initialize_scalars(double alpha, double beta)
     {
@@ -493,7 +502,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_float),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_float),
                                         NULL, &err);
@@ -557,7 +566,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_double),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_double),
                                         NULL, &err);
@@ -621,7 +630,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_float2),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_float2),
                                         NULL, &err);
@@ -685,7 +694,7 @@ roundtrip_func()
                                             buffer_.offA_) * sizeof(cl_double2),
                                         NULL, &err);
 
-        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
+        buffer_.buf_b_ = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_double2),
                                         NULL, &err);

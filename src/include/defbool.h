@@ -18,7 +18,7 @@
 #ifndef DEFBOOL_H_
 #define DEFBOOL_H_
 
-#if defined(_MSC_VER) && _MSC_VER <= 1600
+#if defined(_MSC_VER) && _MSC_VER <= 1700
 
 /*
 FIX for windows compilation
@@ -48,10 +48,10 @@ typedef  int  _Bool;
 #endif /* !__cplusplus */
 
 
-#else /* defined(_MSC_VER) && _MSC_VER <= 1600 */
+#else /* defined(_MSC_VER) && _MSC_VER <= 1700 */
 
 #include <stdbool.h>
 
-#endif /* defined(_MSC_VER) && _MSC_VER <= 1600 */
+#endif /* defined(_MSC_VER) && _MSC_VER <= 1700 */
 
 #endif /* DEFBOOL_H_ */

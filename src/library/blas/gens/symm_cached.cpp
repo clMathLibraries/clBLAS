@@ -99,7 +99,7 @@ setBuildOpts(
 
     if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
     {
-        strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
         #ifdef DEBUG_TRMV
         printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
         #endif
@@ -107,23 +107,23 @@ setBuildOpts(
 
 	if (kargs->side == clblasLeft)
 	{
-		strcat(buildOptStr, " -D__SYMM_LEFT__ ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_LEFT__ ");
 	} else {
-		strcat(buildOptStr, " -D__SYMM_RIGHT__ ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_RIGHT__");
 	}
 
 	if (kargs->uplo == clblasUpper)
 	{
-		strcat(buildOptStr, " -D__SYMM_UPPER__ ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_UPPER__");
 	} else {
-		strcat(buildOptStr, " -D__SYMM_LOWER__ ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_LOWER__");
 	}
 
 	if (kargs->order == clblasColumnMajor)
 	{
-		strcat(buildOptStr, " -D__SYMM_COLMAJOR__ ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_COLMAJOR__");
 	} else {
-		strcat(buildOptStr, " -D__SYMM_ROWMAJOR__ ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-D__SYMM_ROWMAJOR__");
 	}
 
 	strcat(buildOptStr, " -cl-mad-enable ");
@@ -193,10 +193,10 @@ generator(
 		printf("WARNING: SYMM- generator: subdim and blocksize in-compatible.\n");
 	}
 
-	sprintf(width, "%d", Y);
-	sprintf(itemy, "%lu", ITEMY);
-	sprintf(itemx, "%lu", ITEMX);
-	sprintf(itemy_by_width, "%lu", (size_t) ITEMY/kextra->vecLenA);
+	sprintf(width, "%" SPREFIX "u", Y);
+	sprintf(itemy, "%" SPREFIX "u", ITEMY);
+	sprintf(itemx, "%" SPREFIX "u", ITEMX);
+	sprintf(itemy_by_width, "%" SPREFIX "u", (size_t) ITEMY/kextra->vecLenA);
 
 	kobj.put("%WIDTH", width);
 	kobj.put("%ITEMX", itemx);

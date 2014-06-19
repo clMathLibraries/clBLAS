@@ -39,6 +39,8 @@
 #include "clfunc_xhemv.hpp"
 #include "clfunc_xhemm.hpp"
 #include "clfunc_xsymm.hpp"
+#include "clfunc_xherk.hpp"
+#include "clfunc_xher2k.hpp"
 
 namespace po = boost::program_options;
 
@@ -67,6 +69,7 @@ int main(int argc, char *argv[])
   std::string function;
   std::string precision;
   std::string roundtrip;
+  std::string memalloc;
   int side_option;
   int uplo_option;
   int diag_option;
@@ -98,7 +101,8 @@ int main(int argc, char *argv[])
     ( "uplo", po::value<int>( &uplo_option )->default_value(0), "0 = upper, 1 = lower. only used with [list of function families]" )  // xsymv xsyrk xsyr2k xtrsm xtrmm
     ( "diag", po::value<int>( &diag_option )->default_value(0), "0 = unit diagonal, 1 = non unit diagonal. only used with [list of function families]" ) // xtrsm xtrmm
     ( "profile,p", po::value<cl_uint>( &profileCount )->default_value(20), "Time and report the kernel speed (default: profiling off)" )
-	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"calculate the time for round trips")
+	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"including the time of OpenCL memory allocation and transportation; options:roundtrip, noroundtrip(default)")
+	( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd,rect_mem")
     ;
 
   po::variables_map vm;
@@ -130,6 +134,8 @@ int main(int argc, char *argv[])
       && function != "hemv"
       && function != "hemm"
       && function != "symm"
+	  && function != "herk"
+	  && function != "her2k"
       )
   {
     std::cerr << "Invalid value for --function" << std::endl;
@@ -432,6 +438,30 @@ int main(int argc, char *argv[])
       return -1;
     }
   }
+  else if (function == "herk")
+  {
+    if (precision == "c")
+      my_function = new xHerk<cl_float2>(timer, deviceType);
+    else if (precision == "z")
+      my_function = new xHerk<cl_double2>(timer, deviceType);
+    else
+    {
+      std::cerr << "Unknown her function" << std::endl;
+      return -1;
+    }
+  }
+  else if (function == "her2k")
+  {
+    if (precision == "c")
+      my_function = new xHer2k<cl_float2>(timer, deviceType);
+    else if (precision == "z")
+      my_function = new xHer2k<cl_double2>(timer, deviceType);
+    else
+    {
+      std::cerr << "Unknown her2 function" << std::endl;
+      return -1;
+    }
+  }
   else if (function == "symm")
   {
     if (precision == "s")
@@ -483,8 +513,33 @@ int main(int argc, char *argv[])
     my_function->call_func();
 	my_function->read_gpu_buffer();
     my_function->reset_gpu_write_buffer();*/
-	my_function->roundtrip_func();
-	my_function->reset_gpu_write_buffer();
+	
+	if(memalloc=="default")
+	{
+		my_function->roundtrip_func();
+	}
+	else if (memalloc=="alloc_host_ptr")
+	{
+		my_function->allochostptr_roundtrip_func();
+	}
+	else if (memalloc=="use_host_ptr")
+	{
+		my_function->usehostptr_roundtrip_func();
+	}
+	else if (memalloc=="copy_host_ptr")
+	{
+		my_function->copyhostptr_roundtrip_func();
+	}
+	else if (memalloc=="use_persistent_mem_amd")
+	{
+		my_function->usepersismem_roundtrip_func();
+	}
+	else if (memalloc=="rect_mem")
+	{
+		my_function->roundtrip_func_rect();
+	}
+	//my_function->reset_gpu_write_buffer();
+	my_function->releaseGPUBuffer_deleteCPUBuffer();
   }
 
   if( commandQueueFlags & CL_QUEUE_PROFILING_ENABLE )
@@ -512,7 +567,8 @@ int main(int argc, char *argv[])
     my_function->initialize_gpu_buffer();
     my_function->call_func();
 	my_function->read_gpu_buffer();
-    my_function->reset_gpu_write_buffer();
+    //my_function->reset_gpu_write_buffer();
+	my_function->releaseGPUBuffer_deleteCPUBuffer();
   }
 
   if( commandQueueFlags & CL_QUEUE_PROFILING_ENABLE )
@@ -525,7 +581,7 @@ int main(int argc, char *argv[])
       std::endl;
   }
   }
-
+  delete my_function;
   return 0;
 }
 

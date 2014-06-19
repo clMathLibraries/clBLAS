@@ -139,25 +139,25 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_COMPLEX_DOUBLE )
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_HER
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
 	}
 	if( kargs->order == clblasRowMajor )
 	{
-		strcat( buildOptStr, " -DHERMITIAN_ROWMAJOR ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHERMITIAN_ROWMAJOR");
 		#ifdef DEBUG_HER
 		printf("Setting build options ... HERMITIAN_ROWMAJOR... for row-major support\n");
 		#endif
 	}
     if( kargs->pigFuncID == CLBLAS_HPR )
     {
-        strcat( buildOptStr, " -DPACKED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DPACKED");
     }
 
 	//Build options for syr_her.clT to generate HER related code.
-	strcat( buildOptStr, " -DHER_ONLY ");
+	addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DHER_ONLY");
 	return;
 }
 
@@ -300,7 +300,7 @@ generator(
 	}
 	kprintf kobj( Prefix[extraFlags->dtype], vecLenA, doVLOAD, doVLOAD);
 
-	sprintf( targetRows, "%d", TARGETROWS );
+	sprintf( targetRows, "%" SPREFIX "u", TARGETROWS );
 	sprintf( blockSize, "%d", BLOCKSIZE );
 
 	#ifdef DEBUG_HER

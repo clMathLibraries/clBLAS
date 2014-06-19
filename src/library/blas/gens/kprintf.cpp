@@ -346,7 +346,7 @@ char* kprintf::mystrtok( char* in, const char* tok)
             bool tokenFound = false;
             for( size_t i=0 ; i <= (strlen(tok) - 1); i++)
             {
-                if ((*strtokPtr == tok[i]))
+                if (*strtokPtr == tok[i])
                 {
                     if ( tok[i] == '(')
                     {

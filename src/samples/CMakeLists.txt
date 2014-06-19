@@ -260,45 +260,24 @@ add_executable(example_sasum ${SASUM_SAMPLE_SRC})
 target_link_libraries(example_sasum ${OPENCL_LIBRARIES} clBLAS)
 set_property( TARGET example_sasum PROPERTY FOLDER "Samples")
 
-if( TARGET_PLATFORM EQUAL 64 )
-	# CPack configuration; include the executable into the package
-	install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
-             example_ssyr2k example_strmm example_strsm 
-		     example_strmv example_strsv example_sger example_cher example_ssyr 
-		     example_ssyr2 example_cherk example_ssymm example_chemm
-		     example_stpmv example_chpmv example_stpsv example_sspmv example_sspr example_chpr
-		     example_sspr2 example_zhpr2 
-		     example_sgbmv example_stbmv example_ssbmv example_chbmv example_stbsv
-		     example_cher2k
-		     example_sswap example_sscal example_csscal example_scopy example_saxpy example_sdot
-		     example_srotg example_srotmg example_srot example_srotm
-		     example_snrm2 example_sasum example_isamax
+# CPack configuration; include the executable into the package
+install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
+         example_ssyr2k example_strmm example_strsm 
+         example_strmv example_strsv example_sger example_cher example_ssyr 
+         example_ssyr2 example_cherk example_ssymm example_chemm
+         example_stpmv example_chpmv example_stpsv example_sspmv example_sspr example_chpr
+         example_sspr2 example_zhpr2 
+         example_sgbmv example_stbmv example_ssbmv example_chbmv example_stbsv
+         example_cher2k
+         example_sswap example_sscal example_csscal example_scopy example_saxpy example_sdot
+         example_srotg example_srotmg example_srot example_srotm
+         example_snrm2 example_sasum example_isamax
 
-			 version
-			 RUNTIME DESTINATION bin64
-			 LIBRARY DESTINATION lib64
-			 ARCHIVE DESTINATION lib64/import
-			)
-else()
-	# CPack configuration; include the executable into the package
-	install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
-             example_ssyr2k example_strmm example_strsm 
-		     example_strmv example_strsv example_sger example_cher example_ssyr 
-		     example_ssyr2 example_cherk example_ssymm example_chemm
-		     example_stpmv example_chpmv example_stpsv example_sspmv example_sspr example_chpr
-		     example_sspr2 example_zhpr2 
-		     example_sgbmv example_stbmv example_ssbmv example_chbmv example_stbsv
-		     example_cher2k
-		     example_sswap example_sscal example_csscal example_scopy example_saxpy example_sdot
-		     example_srotg example_srotmg example_srot example_srotm
-		     example_snrm2 example_sasum example_isamax
-
-			 version
-			 RUNTIME DESTINATION bin32
-			 LIBRARY DESTINATION lib32
-			 ARCHIVE DESTINATION lib32/import
-			)
-endif()
+         version
+        RUNTIME DESTINATION bin${SUFFIX_BIN}
+        LIBRARY DESTINATION lib${SUFFIX_LIB}
+        ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+        )
 
 configure_file( "${PROJECT_SOURCE_DIR}/samples/CMakeLists.pack"
 		"${PROJECT_BINARY_DIR}/samples/CMakeLists.txt" COPYONLY )

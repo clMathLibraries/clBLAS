@@ -209,18 +209,18 @@ doGemm(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET)) {
+    if ((retCode = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET))) {
         return retCode;
     }
     if (K != 0) {
-        if (retCode = checkMatrixSizes(kargs->dtype, order, transA, M, K, A, offA, lda, A_MAT_ERRSET )) {
+        if ((retCode = checkMatrixSizes(kargs->dtype, order, transA, M, K, A, offA, lda, A_MAT_ERRSET))) {
             return retCode;
         }
-        if (retCode = checkMatrixSizes(kargs->dtype, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET )) {
+        if ((retCode = checkMatrixSizes(kargs->dtype, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET))) {
             return retCode;
         }
     }
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET))) {
             return retCode;
     }
 

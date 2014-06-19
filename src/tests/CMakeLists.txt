@@ -242,6 +242,12 @@ source_group(functional  FILES ${SRC_FUNC} ${FUNC_HEADERS})
 # at paramVal = CL_PROGRAM_BINARIES and several devices in the context
 add_definitions( -DTEST_WITH_SINGLE_DEVICE )
 
+# vs11 needs std::tuples compiled with 10 parameters by default
+# NOTE: this assumes that googletest is compiled with the same preprocessor macro; they must match
+if( MSVC11 )
+	add_definitions( "/D_VARIADIC_MAX=10" )
+endif()
+
 # Having problems on build server, compiling gtest headers with -pedantic; disabling detection of long long
 # http://code.google.com/p/googletest/issues/detail?id=334
 if( CMAKE_COMPILER_IS_GNUCXX )
@@ -262,7 +268,9 @@ endif( )
 
 # Library with functions for time measurement. In Windows they are included automatically
 if(UNIX)
-    set(TIME_LIBRARY "rt")
+    if(NOT APPLE)
+        set(TIME_LIBRARY "rt")
+    endif()
     set(THREAD_LIBRARY "pthread")
 endif()
 
@@ -270,11 +278,7 @@ endif()
 # It stitches together a path to a previously built static library, based on our 'make install' logic
 # Search for 64bit libs if FIND_LIBRARY_USE_LIB64_PATHS is set to true in the global environment, 32bit libs else
 get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
-if( LIB64 )
-	set( runtime.library "${CMAKE_INSTALL_PREFIX}/lib64" )
-else( )
-	set( runtime.library "${CMAKE_INSTALL_PREFIX}/lib32" )
-endif( )
+set( runtime.library "${CMAKE_INSTALL_PREFIX}/lib${SUFFIX_LIB}" )
 
 if( WIN32 )
 	set( runtime.library "${runtime.library}/import/clBLAS${CMAKE_STATIC_LIBRARY_SUFFIX}" )
@@ -292,14 +296,17 @@ if( GTEST_FOUND )
 	    
 	    add_executable(test-correctness ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 									    ${CORR_HEADERS} ${TESTS_HEADERS})
+        set_target_properties( test-correctness PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 	    add_executable(test-medium ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 							      ${CORR_HEADERS} ${TESTS_HEADERS})
 	    set_target_properties(test-medium PROPERTIES COMPILE_DEFINITIONS MEDIUM_TESTS)
+        set_target_properties( test-medium PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 	    add_executable(test-short ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 							      ${CORR_HEADERS} ${TESTS_HEADERS})
 	    set_target_properties(test-short PROPERTIES COMPILE_DEFINITIONS SHORT_TESTS)
+        set_target_properties( test-short PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 	    # The build server builds the library with gcc 4.1.2 to support Red Hat 5.5, but the test programs must be built with 
 	    # gcc > 4.3.2 to support ACML.  
@@ -323,16 +330,19 @@ if( GTEST_FOUND )
 
 		add_executable(test-correctness ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 						${CORR_HEADERS} ${TESTS_HEADERS})
+        set_target_properties( test-correctness PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 		add_executable(test-medium ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 					  ${CORR_HEADERS} ${TESTS_HEADERS})
 		set_target_properties( test-medium PROPERTIES COMPILE_DEFINITIONS MEDIUM_TESTS )
+        set_target_properties( test-medium PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 		add_executable(test-short ${SRC_CORR} ${SRC_COMMON} ${SRC_COMMON_REFIMPL}
 					  ${CORR_HEADERS} ${TESTS_HEADERS})
 		set_target_properties( test-short PROPERTIES COMPILE_DEFINITIONS SHORT_TESTS )
+        set_target_properties( test-short PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-		if( NOT CORR_TEST_WITH_ACML AND NOT WIN32)
+		if( NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE)
 			set_target_properties( test-correctness PROPERTIES LINKER_LANGUAGE Fortran )
 			set_target_properties( test-medium PROPERTIES LINKER_LANGUAGE Fortran )
 			set_target_properties( test-short PROPERTIES LINKER_LANGUAGE Fortran )
@@ -344,9 +354,9 @@ if( GTEST_FOUND )
 				target_link_libraries(test-medium ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
 				target_link_libraries(test-short ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
 			else( )
-				target_link_libraries(test-correctness BLAS_LIBRARIES ${GTEST_LIBRARIES} clBLAS)
-				target_link_libraries(test-medium BLAS_LIBRARIES ${GTEST_LIBRARIES} clBLAS)
-				target_link_libraries(test-short BLAS_LIBRARIES ${GTEST_LIBRARIES} clBLAS)
+				target_link_libraries(test-correctness ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
+				target_link_libraries(test-medium ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
+				target_link_libraries(test-short ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
 			endif( )
 		else( )
 			if( NETLIB_FOUND )
@@ -354,9 +364,9 @@ if( GTEST_FOUND )
 				target_link_libraries(test-medium ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
 				target_link_libraries(test-short ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
 			else( )
-				target_link_libraries(test-correctness BLAS_LIBRARIES ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
-				target_link_libraries(test-medium BLAS_LIBRARIES ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
-				target_link_libraries(test-short BLAS_LIBRARIES ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
+				target_link_libraries(test-correctness ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
+				target_link_libraries(test-medium ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
+				target_link_libraries(test-short ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library} )
 			endif( )
 		endif( )
     endif( )
@@ -365,22 +375,24 @@ if( GTEST_FOUND )
     set_property( TARGET test-medium PROPERTY FOLDER "Test")
     set_property( TARGET test-short PROPERTY FOLDER "Test")
 
-    if( TARGET_PLATFORM EQUAL 64 )
-	    # CPack configuration; include the executable into the package
-	    install( TARGETS test-correctness test-medium test-short
-			    RUNTIME DESTINATION bin64
-			    LIBRARY DESTINATION lib64
-			    ARCHIVE DESTINATION lib64/import
-			    )
-    else()
-	    # CPack configuration; include the executable into the package
-	    install( TARGETS test-correctness test-medium test-short
-			    RUNTIME DESTINATION bin32
-			    LIBRARY DESTINATION lib32
-			    ARCHIVE DESTINATION lib32/import
-			    )
-    endif()
+    # CPack configuration; include the executable into the package
+    install( TARGETS test-correctness test-medium test-short
+            RUNTIME DESTINATION bin${SUFFIX_BIN}
+            LIBRARY DESTINATION lib${SUFFIX_LIB}
+            ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+            )
+    
+    get_target_property( testLocation test-correctness LOCATION )
 
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/copyTestDependencies.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/copyTestDependencies.cmake"
+        @ONLY
+    )
+
+    # Register script at run at install time to analyze the executable and copy dependencies into package
+    install( SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/copyTestDependencies.cmake")
+ 
 	if( ACML_FOUND )
 		include_directories(${OPENCL_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
 			${clBLAS_SOURCE_DIR} ${clBLAS_SOURCE_DIR}/tests/include  ${clBLAS_SOURCE_DIR}/include)
@@ -391,6 +403,7 @@ if( GTEST_FOUND )
 			${SRC_COMMON_TIMER} ${PERF_HEADERS} ${TESTS_HEADERS}
 			${SRC_COMMON_REFIMPL})
 		target_link_libraries(test-performance ${ACML_LIBRARIES})
+        set_target_properties( test-performance PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 
 		if( BUILD_RUNTIME )
@@ -401,21 +414,12 @@ if( GTEST_FOUND )
 
         set_property( TARGET test-performance PROPERTY FOLDER "Test")
 
-		if( TARGET_PLATFORM EQUAL 64 )
-			# CPack configuration; include the executable into the package
-			install( TARGETS test-performance
-					RUNTIME DESTINATION bin64
-					LIBRARY DESTINATION lib64
-					ARCHIVE DESTINATION lib64/import
-					)
-		else()
-			# CPack configuration; include the executable into the package
-			install( TARGETS test-performance
-					RUNTIME DESTINATION bin32
-					LIBRARY DESTINATION lib32
-					ARCHIVE DESTINATION lib32/import
-					)
-		endif()
+        # CPack configuration; include the executable into the package
+        install( TARGETS test-performance
+                RUNTIME DESTINATION bin${SUFFIX_BIN}
+                LIBRARY DESTINATION lib${SUFFIX_LIB}
+                ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+                )
 	endif()
 
 	include_directories(${OPENCL_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
@@ -424,27 +428,19 @@ if( GTEST_FOUND )
 	add_executable(test-functional ${SRC_FUNC} ${SRC_COMMON} ${SRC_COMMON_TIMER}
 								  ${FUNC_HEADERS} ${TESTS_HEADERS})
 								  
+    set_target_properties( test-functional PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 	if( BUILD_RUNTIME )
-		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} clBLAS)
+		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} clBLAS )
 	else()
 		target_link_libraries(test-functional ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} ${OPENCL_LIBRARIES} ${runtime.library} )
 	endif()
 
     set_property( TARGET test-functional PROPERTY FOLDER "Test")
 
-	if( TARGET_PLATFORM EQUAL 64 )
-		# CPack configuration; include the executable into the package
-		install( TARGETS test-functional
-				RUNTIME DESTINATION bin64
-				LIBRARY DESTINATION lib64
-				ARCHIVE DESTINATION lib64/import
-				)
-	else()
-		# CPack configuration; include the executable into the package
-		install( TARGETS test-functional
-				RUNTIME DESTINATION bin32
-				LIBRARY DESTINATION lib32
-				ARCHIVE DESTINATION lib32/import
-				)
-	endif()
+    # CPack configuration; include the executable into the package
+    install( TARGETS test-functional
+            RUNTIME DESTINATION bin${SUFFIX_BIN}
+            LIBRARY DESTINATION lib${SUFFIX_LIB}
+            ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+            )
 endif()

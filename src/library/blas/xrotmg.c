@@ -14,10 +14,6 @@
  * limitations under the License.
  * ************************************************************************/
 
-/***********************************************************************
-**  Rotgright (C) 2011 Advanced Micro Devices, Inc. All Rights Reserved.
-***********************************************************************/
-
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
@@ -69,23 +65,23 @@ doRotmg(
 
 		// Check wheather enough memory was allocated
 
-		if (retCode = checkVectorSizes(kargs->dtype, 1, D1, offD1, 1, X_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, D1, offD1, 1, X_VEC_ERRSET))) {
 			printf("Invalid Size for D1\n");
             return retCode;
 		}
-		if (retCode = checkVectorSizes(kargs->dtype, 1, D2, offD2, 1, Y_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, D2, offD2, 1, Y_VEC_ERRSET))) {
 			printf("Invalid Size for D2\n");
             return retCode;
 		}
-		if (retCode = checkVectorSizes(kargs->dtype, 1, X1, offX1, 1, X_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, X1, offX1, 1, X_VEC_ERRSET))) {
 			printf("Invalid Size for X1\n");
             return retCode;
 		}
-		if (retCode = checkVectorSizes(kargs->dtype, 1, Y1, offY1, 1, Y_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, Y1, offY1, 1, Y_VEC_ERRSET))) {
 			printf("Invalid Size for Y1\n");
             return retCode;
 		}
-		if (retCode = checkVectorSizes(kargs->dtype, 1, param, offParam, 1, Y_VEC_ERRSET )) {
+		if ((retCode = checkVectorSizes(kargs->dtype, 1, param, offParam, 1, Y_VEC_ERRSET))) {
 			printf("Invalid Size for PARAM\n");
             return retCode;
 		}

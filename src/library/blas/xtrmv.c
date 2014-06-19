@@ -57,20 +57,20 @@ doTrmv(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, x, y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET)) {
+    if ((retCode = checkMemObjects(A, x, y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET))) {
 	printf("Invalid mem object..\n");
         return retCode;
     }
 
-    if (retCode = checkMatrixSizes(kargs->dtype, order, trans, N, N, A, offa, lda, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, trans, N, N, A, offa, lda, A_MAT_ERRSET))) {
 		printf("Invalid Size for A\n");
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, x, offx, incx, X_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, x, offx, incx, X_VEC_ERRSET))) {
 		printf("Invalid Size for X\n");
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, y, 0, incx, Y_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, y, 0, incx, Y_VEC_ERRSET))) {
 		printf("Invalid Size for scratch vector\n");
         return retCode;
     }

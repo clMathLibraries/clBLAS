@@ -128,14 +128,14 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
 	if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
 	{
-		strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+		addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
 		#ifdef DEBUG_TRSV_GEMV
 		printf("TRSV GEMV: Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
 	}
     if( kargs->pigFuncID == CLBLAS_TPSV)
     {
-        strcat( buildOptStr, " -DPACKED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DPACKED");
         #ifdef DEBUG_TRSV_GEMV
             printf("TPSV GEMV: Setting build options ... PACKED\n");
         #endif
@@ -415,9 +415,9 @@ generator(
 		{
 			return 0;
 		}
-        sprintf( TARGETHEIGHT_S, "%d", TARGETHEIGHT );
+        sprintf( TARGETHEIGHT_S, "%" SPREFIX "u", TARGETHEIGHT );
 	    sprintf( BLOCKSIZE_S, "%d", BLOCKSIZE );
-        sprintf( TRIANGLE_HEIGHT_S, "%d", subdims->y );
+        sprintf( TRIANGLE_HEIGHT_S, "%" SPREFIX "u", subdims->y );
 
 		kobj.put("%TARGET_HEIGHT", TARGETHEIGHT_S);
 		kobj.put("%BLOCKSIZE", BLOCKSIZE_S);
@@ -433,9 +433,9 @@ generator(
 		{
 			return 0;
 		}
-        sprintf( TARGETROWS_S, "%d", TARGETROWS );
-	    sprintf( TARGETWIDTH_S, "%d", TARGETWIDTH );
-        sprintf( NLOOPS_S, "%d", NLOOPS );
+        sprintf( TARGETROWS_S, "%" SPREFIX "u", TARGETROWS );
+	    sprintf( TARGETWIDTH_S, "%" SPREFIX "u", TARGETWIDTH );
+        sprintf( NLOOPS_S, "%" SPREFIX "u", NLOOPS );
 		kobj.put("%TARGET_ROWS", TARGETROWS_S);
 		kobj.put("%TARGET_WIDTH", TARGETWIDTH_S);
 		kobj.put("%NLOOPS", NLOOPS_S);

@@ -55,16 +55,16 @@ doTrmm(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(A, B, NULL, false, A_MAT_ERRSET, B_MAT_ERRSET, END_ERRSET )) {
+    if ((retCode = checkMemObjects(A, B, NULL, false, A_MAT_ERRSET, B_MAT_ERRSET, END_ERRSET))) {
         return retCode;
     }
     msize = (side == clblasLeft) ? M : N;
-    if (retCode = checkMatrixSizes(kargs->dtype, order, transA, msize, msize, A,
-                         offA, lda, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, transA, msize, msize,
+                                    A, offA, lda, A_MAT_ERRSET ))) {
         return retCode;
     }
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, B,
-                         offB, ldb, B_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N,
+                                    B, offB, ldb, B_MAT_ERRSET ))) {
         return retCode;
     }
 

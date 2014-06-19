@@ -1,78 +1,110 @@
 clBLAS
 =====
+[![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.png)](https://travis-ci.org/clMathLibraries/clBLAS)
 
-clMATH is a software library containing FFT and BLAS functions written in OpenCL. In addition to GPU devices, the libraries also support running on CPU devices to facilitate debugging and multicore programming.
 
-<a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-math-libraries/">APPML 1.10</a> is the most current generally available version of the library, and pre-built binaries are available for download on both Linux and Windows platforms.
+This repository houses the code for the OpenCL™ BLAS portion of clMath.
+The complete set of BLAS level 1, 2 & 3 routines is implemented. Please
+see Netlib BLAS for the list of supported routines. In addition to GPU
+devices, the library also supports running on CPU devices to facilitate
+debugging and multicore programming. APPML 1.10 is the most current
+generally available pre-packaged binary version of the library available
+for download for both Linux and Windows platforms.
 
-This repository houses the code for the OpenCL™ BLAS portion of APPML.  The complete set of BLAS level 1, 2 & 3 routines has been  implemented. Please see <a href="http://www.netlib.org/blas/index.html"> Netlib BLAS </a> for the list of routines.  For more information on supported graphics cards, see the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/system-requirements-driver-compatibility/">AMD APP System Requirements</a>.
-
-The primary goal of clBLAS is to make it easier for developers to utilize the inherent performance and power efficiency benefits of heterogeneous computing.  clBLAS interfaces do not hide nor wrap OpenCL interfaces, but rather leaves OpenCL state management to the control of the user to allow for maximum performance and flexibility.  The clBLAS library does generate and enqueue optimized OpenCL kernels, relieving the user from the task of writing, optimizing and maintaining kernel code themselves.
+The primary goal of clBLAS is to make it easier for developers to
+utilize the inherent performance and power efficiency benefits of
+heterogeneous computing. clBLAS interfaces do not hide nor wrap OpenCL
+interfaces, but rather leaves OpenCL state management to the control of
+the user to allow for maximum performance and flexibility. The clBLAS
+library does generate and enqueue optimized OpenCL kernels, relieving
+the user from the task of writing, optimizing and maintaining kernel
+code themselves.
 
 ## clBLAS library user documentation
-[Library and API documentation]( http://clmathlibraries.github.io/clBLAS/ ) for developers is available online as a GitHub Pages website
+
+[Library and API documentation][] for developers is available online as
+a GitHub Pages website
+
+### Google Groups
+
+Two mailing lists have been created for the clMath projects:
+
+-   [clmath@googlegroups.com][] - group whose focus is to answer
+    questions on using the library or reporting issues
+
+-   [clmath-developers@googlegroups.com][] - group whose focus is for
+    developers interested in contributing to the library code itself
 
 ## clBLAS Wiki
-The [project wiki](https://github.com/clMathLibraries/clBLAS/wiki) contains helpful documentation, including a [build primer](https://github.com/clMathLibraries/clBLAS/wiki/Build)
+
+The [project wiki][] contains helpful documentation, including a [build
+primer][]
 
 ## Contributing code
-Please refer to and read the [Contributing](CONTRIBUTING.md) document for guidelines on how to contribute code to this open source project
+
+Please refer to and read the [Contributing][] document for guidelines on
+how to contribute code to this open source project. The code in the
+/master branch is considered to be stable, and all pull-requests should
+be made against the /develop branch.
 
 ## License
-The source for clFFT is licensed under the [Apache License, Version 2.0]( http://www.apache.org/licenses/LICENSE-2.0 )
+
+The source for clBLAS is licensed under the [Apache License, Version
+2.0][]
 
 ## Example
-The simple example below shows how to use clBLAS to compute an OpenCL accelerated SGEMM
 
-```c
-#include <sys/types.h>
-#include <stdio.h>
+The simple example below shows how to use clBLAS to compute an OpenCL
+accelerated SGEMM
 
-/* Include the clBLAS header. It includes the appropriate OpenCL headers
+    #include <sys/types.h>
+    #include <stdio.h>
+
+    /* Include the clBLAS header. It includes the appropriate OpenCL headers
  */
-#include <clBLAS.h>
+    #include <clBLAS.h>
 
-/* This example uses predefined matrices and their characteristics for
+    /* This example uses predefined matrices and their characteristics for
  * simplicity purpose.
  */
 
-#define M  4
-#define N  3
-#define K  5
+    #define M  4
+    #define N  3
+    #define K  5
 
-static const cl_float alpha = 10;
+    static const cl_float alpha = 10;
 
-static const cl_float A[M*K] = {
+    static const cl_float A[M*K] = {
     11, 12, 13, 14, 15,
     21, 22, 23, 24, 25,
     31, 32, 33, 34, 35,
     41, 42, 43, 44, 45,
-};
-static const size_t lda = K;        /* i.e. lda = K */
+    };
+    static const size_t lda = K;        /* i.e. lda = K */
 
-static const cl_float B[K*N] = {
+    static const cl_float B[K*N] = {
     11, 12, 13,
     21, 22, 23,
     31, 32, 33,
     41, 42, 43,
     51, 52, 53,
-};
-static const size_t ldb = N;        /* i.e. ldb = N */
+    };
+    static const size_t ldb = N;        /* i.e. ldb = N */
 
-static const cl_float beta = 20;
+    static const cl_float beta = 20;
 
-static cl_float C[M*N] = {
+    static cl_float C[M*N] = {
     11, 12, 13,
     21, 22, 23,
     31, 32, 33,
     41, 42, 43, 
-};
-static const size_t ldc = N;        /* i.e. ldc = N */
+    };
+    static const size_t ldc = N;        /* i.e. ldc = N */
 
-static cl_float result[M*N];
+    static cl_float result[M*N];
 
-int main( void )
-{
+    int main( void )
+    {
     cl_int err;
     cl_platform_id platform = 0;
     cl_device_id device = 0;
@@ -138,25 +170,48 @@ int main( void )
     clReleaseContext( ctx );
 
     return ret;
-}
-```
+    }
 
 ## Build dependencies
+
 ### Library for Windows
-*  Windows® 7/8
-*  Visual Studio 2010 SP1
-*  An OpenCL SDK, such as APP SDK 2.8
-*  Latest CMake
+
+-   Windows® 7/8
+
+-   Visual Studio 2010 SP1, 2012
+
+-   An OpenCL SDK, such as APP SDK 2.9
+
+-   Latest CMake
 
 ### Library for Linux
-*  GCC 4.6 and onwards
-*  An OpenCL SDK, such as APP SDK 2.8
-*  Latest CMake
+
+-   GCC 4.6 and onwards
+
+-   An OpenCL SDK, such as APP SDK 2.9
+
+-   Latest CMake
+
+### Library for Mac OSX
+
+-   Recommended to generate Unix makefiles with cmake
 
 ### Test infrastructure
-* Latest Googletest
-* Latest ACML 
-* Latest Boost
+
+-   Googletest v1.6
+
+-   ACML on windows/linux; Accelerate on Mac OSX
+
+-   Latest Boost
 
 ### Performance infrastructure
-* Python
+
+-   Python
+
+  [Library and API documentation]: http://clmathlibraries.github.io/clBLAS/
+  [clmath@googlegroups.com]: https://groups.google.com/forum/#!forum/clmath
+  [clmath-developers@googlegroups.com]: https://groups.google.com/forum/#!forum/clmath-developers
+  [project wiki]: https://github.com/clMathLibraries/clBLAS/wiki
+  [build primer]: https://github.com/clMathLibraries/clBLAS/wiki/Build
+  [Contributing]: CONTRIBUTING.md
+  [Apache License, Version 2.0]: http://www.apache.org/licenses/LICENSE-2.0

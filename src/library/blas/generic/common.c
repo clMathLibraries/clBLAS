@@ -22,6 +22,7 @@
 #include <clkern.h>
 #include <cltypes.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "clblas-internal.h"
 
@@ -364,6 +365,7 @@ Kernel VISIBILITY_HIDDEN
         kernel->extra = calloc(1, kernel->extraSize);
         *(CLBLASKernExtra*)(kernel->extra) = *extra;
         kernel->dtor = extraDtor;
+        kernel->noSource = 1;
     }
     else {
         putKernel(NULL, kernel);
@@ -491,6 +493,7 @@ Kernel
 #if !defined(KEEP_CLBLAS_KERNEL_SOURCES)
     if (err == CL_SUCCESS) {
         err = dropProgramSource(&kernel->program, context, device);
+        kernel->noSource = 1;
     }
 #endif  /* !DUMP_CLBLAS_KERNELS */
 
@@ -524,16 +527,33 @@ setupBuildOpts(
     opts[0] = '\0';
 
 #if !defined NDEBUG
-    strcpy(opts, "-g ");
+    addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-g");
 #endif  /* NDEBUG */
 
     if (target.ident.vendor == VENDOR_NVIDIA &&
         !strcmp(mempat->name, "2-staged cached global memory based "
                               "block trsm")) {
 
-        strcat(opts, "-cl-opt-disable");
+        addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-cl-opt-disable");
     }
 }
+
+void addBuildOpt(
+    char * opts,
+    size_t len,
+    const char * option)
+{
+    size_t l = strlen(opts);
+
+    if (l > 0 && !isspace(opts[l-1]) && l+1 < len) {
+      opts[l] = ' ';
+      opts[l+1]   = '\0';
+      l++;
+    }
+
+    strncat(opts, option, len - l - 1);
+}
+
 
 char VISIBILITY_HIDDEN
 *sprintfGranulation(char *buf, const SubproblemDim *dim, int level)

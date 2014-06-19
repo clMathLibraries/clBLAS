@@ -16,7 +16,6 @@
 
 
 
-#include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -25,7 +24,7 @@
 #include "storage_data.h"
 
 #define  SUBDIM_UNUSED_FILE_VALUE 10000
-const char *ENV_FILE_PATH = "AMD_CLBLAS_STORAGE_PATH";
+const char *ENV_FILE_PATH = "CLBLAS_STORAGE_PATH";
 const char *FileID  = "CBS";
 const char *FileExt = "kdb";
 const char *FileExtTmp = "kdb.tmp";

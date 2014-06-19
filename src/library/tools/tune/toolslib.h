@@ -18,7 +18,11 @@
 #ifndef TOOLSLIB_H__
 #define TOOLSLIB_H__
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 #include <defbool.h>
 #include <devinfo.h>

@@ -56,6 +56,10 @@ extern "C" {
  * keeping interfaces familiar to users who know how to use BLAS. All
  * functions accept matrices through buffer objects.
  *
+ * This library is entirely thread-safe with the exception of the following API :
+ * clblasSetup and clblasTeardown. 
+ * Developers using the library can safely using any blas routine from different thread. 
+ *
  * @section deprecated
  * This library provided support for the creation of scratch images to achieve better performance
  * on older <a href="http://developer.amd.com/gpu/AMDAPPSDK/Pages/default.aspx">AMD APP SDK's</a>.

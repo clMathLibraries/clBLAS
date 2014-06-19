@@ -26,7 +26,11 @@ set(CLIENT_HEADER
     clfunc_xtrmm.hpp
     clfunc_xtrsm.hpp
     clfunc_xsyrk.hpp
-    clfunc_xsyr2k.hpp)
+    clfunc_xsyr2k.hpp
+	clfunc_xhemm.hpp
+	clfunc_xsymm.hpp
+	clfunc_xherk.hpp
+	clfunc_xher2k.hpp)
 
 set(WRAPPER_SRC testPerfWrapper.cpp)
 
@@ -48,21 +52,15 @@ include_directories(
 
 add_executable(client ${CLIENT_SRC} ${CLIENT_HEADER})
 target_link_libraries(client ${Boost_LIBRARIES} ${OPENCL_LIBRARIES} clBLAS)
+set_target_properties( client PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 add_executable(testPerfWrapper ${WRAPPER_SRC})
 target_link_libraries(testPerfWrapper ${Boost_LIBRARIES})
-
-if( TARGET_PLATFORM EQUAL 64 )
-    set( BIN_DIR bin64 )
-    set( LIB_DIR lib64 )
-else()
-    set( BIN_DIR bin32 )
-    set( LIB_DIR lib32 )
-endif()
+set_target_properties( testPerfWrapper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
 install( TARGETS client testPerfWrapper
-		RUNTIME DESTINATION ${BIN_DIR}
-		LIBRARY DESTINATION ${LIB_DIR}
-		ARCHIVE DESTINATION ${LIB_DIR}/import
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
 		)

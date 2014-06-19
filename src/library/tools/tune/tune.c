@@ -15,13 +15,16 @@
  * ************************************************************************/
 
 
-#include <malloc.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 // #include "fileio.h"
 #include "toolslib.h"
@@ -35,6 +38,10 @@
 
 #if defined(_MSC_VER)
 #include "Windows.h"
+#elif defined(__APPLE__)
+#include <stdint.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 #else
 #include "time.h"
 #endif
@@ -83,7 +90,33 @@ getCurrentTime(void)
      }
      return (nano_time_t)count.QuadPart;
 }
-#else /* defined(_MCS_VER) */
+
+#elif defined(__APPLE__)
+
+typedef uint64_t nano_time_t;
+#define NANOTIME_MAX UINT64_MAX
+
+nano_time_t
+conv2nanosec(nano_time_t t)
+{
+  static mach_timebase_info_data_t timebase_info = {0};
+
+    if (timebase_info.denom == 0)
+    {
+        (void)mach_timebase_info(&timebase_info);
+    }
+
+    /* Let's hope we don't overflow */
+    return (t * timebase_info.denom) / timebase_info.numer;
+}
+
+nano_time_t
+getCurrentTime(void)
+{
+    return mach_absolute_time();
+}
+
+#else
 
 typedef unsigned long nano_time_t;
 #define NANOTIME_MAX (~0UL - 1)
@@ -276,12 +309,12 @@ struct GeneratorInfoRec {
     DeviceInfo          deviceInfos;    // Todo delete this member. Use TargetDevice.
     char                *deviceName;    //
 
-    bool       aFunc[BLAS_FUNCTIONS_NUMBER];
+    bool       aFunc[BLAS_FUNCTIONS_NUMBER];    //  True/false value if the corresponding function should be tuned
     int        aPattern;
-    bool       aDType[TYPE_NUMBER];
+    bool       aDType[TYPE_NUMBER]; //  True false value if the precision should be tuned; s/d/c/z
     int        aFlag;
     int        aCommand;
-    bool       aIsKernel;
+    bool       aIsKernel;   // True/false value to store binary kernels into the kernel database
     int        aMaxparam;
     bool       aExtendedOutput;
     bool       aAll;
@@ -2214,14 +2247,29 @@ generateKernelForOthersFlag( BlasExtraInfo* bExtra,
                             bestParamOther[nDim]->count++;
                     }
                 }
+
+                //  If the user selected that they want to store the kernel binaries to disk,
+                //  and we do not have those binaries, generate them again
                 if (genInfo.aIsKernel && bestParamOther[nDim]->kernel == NULL) {
+                    MatrixInfo mi [DIMARRAYCOUNT];
                     unsigned int func = bFunc->funcNo;
                     unsigned int patt = bPatt->pattNo;
+
+                    //  Initialize resources to generate kernels in genAllKernel
                     initCLBLASExtra(&extra, bExtra);
-                    genAllKernel(&args, extra, bestParamOther[nDim],
-                                 pattern, func, patt);
-                    logKernalGen();
+                    initMatrixInfo( mi, extra.dtype, &genInfo.deviceInfos, bExtra );
+                    initCLBlasKArgDim( &args, mi, extra.flags );
+
+                    genAllKernel(&args, extra, bestParamOther[nDim], pattern, func, patt);
+
+                    //  Free those resources when finished
+                    releaseMemObjAll( mi, bExtra );
+                    destroyMatrixInfo( mi, bExtra );
+
+                    logKernalGen( );
                 }
+
+                //  This stores the kernel binaries to disk
                 saveBestParams(bExtraOther, bestParamOther);
             }
             deleteGParams(bExtraOther, bestParamOther);
@@ -2271,13 +2319,22 @@ createFile(void)
     bool isEnvPattSelected = false;
     unsigned int dev;
 
-    initOpenCl();
+    //  This intializes global genInfo with either the last detected platform, or the
+    //  first AMD platform it finds.  It records the number of devices in that platform.
+    initOpenCl( );
+
     // For each devices
     for (dev = 0; dev < genInfo.numDevices; dev++) {
     	initDevice(dev);
+
+        //  The following creates the .kdb file on disk according to the set environment variable
         writeStorageCache(&genInfo.targetDevice);
-        getContext();
-        configurePattern();
+
+        //  The following creates the OpenCL context and commanqueue for the first device in global genInfo struct
+        getContext( );
+
+        //  Does nothing; nop
+        configurePattern( );
 
         // for each function
         for (funcId = 0; funcId < BLAS_FUNCTIONS_NUMBER; funcId++) {
@@ -2345,6 +2402,9 @@ createFile(void)
                     bExtra = &(bPatt->extra[nExtra]);
                     genInfo.last = 0;
 
+                    //  This evaluates whether the current combination of parameters from the given function should be tuned or not
+                    //  If skipFlags returns 1, then the this combination is skipped
+                    //  This checks for hardcoded combinations which are skipped because of known runtime bugs.  
                     if ( skipFlags(bExtra,
                             pattId,
                             funcId,
@@ -2353,6 +2413,7 @@ createFile(void)
                         continue;
                     }
 
+                    //  Similar logic to skipFlags, but this mostly filters out cases that were specified on the command line
                     if (isFilter(bExtra, pattId, funcId)) {
                         continue;
                     }
@@ -2603,12 +2664,17 @@ main(int argc, char*  argv[])
 {
     FILE_PATH = getenv(ENV_FILE_PATH);
 
-    initGeneratorInfoRec();
+    //  This clears and initializes the global GeneratorInfoRec genInfo struct
+    initGeneratorInfoRec( );
     parseArg(argc, argv);
+
+    //  This will
+    //  Set up the global clblasSolvers for all function families supported within blas, including initializing memory patterns
+    //  Identify all recognized devices in the system
     clblasSetup();
 
     if (!FILE_PATH){
-        printf("The environment variable 'AMD_CLBLAS_STORAGE_PATH' is not defined\n");
+        printf("The environment variable 'CLBLAS_STORAGE_PATH' is not defined\n");
         exit(EXIT_COD_NO_ENVIRONMENT_VARIABLE);
     }
 

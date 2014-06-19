@@ -27,6 +27,12 @@ extern "C" {
 typedef unsigned long long nano_time_t;
 #define NANOTIME_MAX (~0ULL - 1)
 
+#elif defined(__APPLE__)
+#include <stdint.h>
+
+typedef uint64_t nano_time_t;
+#define NANOTIME_MAX (UINT64_MAX - 1)
+
 #else
 
 typedef unsigned long nano_time_t;

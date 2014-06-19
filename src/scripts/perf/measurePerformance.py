@@ -42,9 +42,10 @@ transvalues = ['none','transpose','conj']
 sidevalues = ['left','right']
 uplovalues = ['upper','lower']
 diagvalues = ['unit','nonunit']
-functionvalues = ['gemm', 'trmm', 'trsm', 'syrk', 'syr2k', 'gemv', 'symv' ]
+functionvalues = ['gemm', 'trmm', 'trsm', 'syrk', 'syr2k', 'gemv', 'symv', 'symm', 'hemm', 'herk', 'her2k' ]
 precisionvalues = ['s', 'd', 'c', 'z']
 roundtripvalues = ['roundtrip','noroundtrip','both']
+memallocvalues = ['default','alloc_host_ptr','use_host_ptr','copy_host_ptr','use_persistent_mem_amd']
 
 parser = argparse.ArgumentParser(description='Measure performance of the clblas library')
 parser.add_argument('--device',
@@ -125,6 +126,9 @@ parser.add_argument('--tablefile',
 parser.add_argument('--roundtrip',
     dest='roundtrip', default='noroundtrip',
     help='whether measure the roundtrips or not. choices are ' + str(roundtripvalues) + '. (default noroundtrip); should not be specified when calling ACML')
+parser.add_argument('--memalloc',
+	dest='memalloc', default='default',
+	help='set the flags for OpenCL memory allocation. Choices are ' + str(memallocvalues) + '. (default is default); do not need to set when calling ACML or if roundtrip is not set')
 ini_group = parser.add_mutually_exclusive_group()
 ini_group.add_argument('--createini',
     dest='createIniFilename', default=None, type=argparse.FileType('w'),
@@ -138,6 +142,7 @@ args = parser.parse_args()
 label = str(args.label)
 roundtrip = str(args.roundtrip)
 library = str(args.library)
+memalloc = str(args.memalloc)
 
 subprocess.call('mkdir perfLog', shell = True)
 logfile = os.path.join('perfLog', (label+'-'+'blasMeasurePerfLog.txt'))
@@ -145,7 +150,6 @@ logfile = os.path.join('perfLog', (label+'-'+'blasMeasurePerfLog.txt'))
 def printLog(txt):
     print txt
     log(logfile, txt)
-printLog(roundtrip)
 printLog("=========================MEASURE PERFORMANCE START===========================")
 printLog("Process id of Measure Performance:"+str(os.getpid()))
 
@@ -449,7 +453,8 @@ for params in test_combinations:
                      '--function', function,
                      '--precision', precision,
                      '-p', '10',
-					 '--roundtrip', roundtrip]
+					 '--roundtrip', roundtrip,
+					 '--memalloc', memalloc]
     else:
         printLog( 'ERROR: unknown library:"' +library+ '" can\'t assemble command')
         quit()

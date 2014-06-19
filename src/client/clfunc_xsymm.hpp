@@ -58,12 +58,6 @@ public:
 
   ~xSymm()
   {
-    delete buffer.cpuA;
-    delete buffer.cpuB;
-    delete buffer.cpuC;
-    OPENCL_V_THROW( clReleaseMemObject(buffer.A), "releasing buffer A");
-    OPENCL_V_THROW( clReleaseMemObject(buffer.B), "releasing buffer B");
-    OPENCL_V_THROW( clReleaseMemObject(buffer.C), "releasing buffer C");
   }
 
   double gflops()
@@ -103,6 +97,10 @@ public:
   void roundtrip_func()
 	{
 				std::cout << "xSymm::roundtrip_func\n";
+	}
+	void zerocopy_roundtrip_func()
+	{
+		std::cout << "xSymm::zerocopy_roundtrip_func\n";
 	}
   void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
@@ -212,6 +210,17 @@ public:
   buffer.cpuC = new T[buffer.N * buffer.ldc];
   buffer.cpuA = new T[buffer.a_num_vectors * buffer.lda];
   }
+  	void releaseGPUBuffer_deleteCPUBuffer()
+	{
+		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+		//need to do this before we eventually hit the destructor
+		delete buffer.cpuA;
+		delete buffer.cpuB;
+		delete buffer.cpuC;
+		OPENCL_V_THROW( clReleaseMemObject(buffer.A), "releasing buffer A");
+		OPENCL_V_THROW( clReleaseMemObject(buffer.B), "releasing buffer B");
+		OPENCL_V_THROW( clReleaseMemObject(buffer.C), "releasing buffer C");
+	}
 protected:
   void initialize_scalars(double alpha, double beta)
   {
@@ -337,7 +346,7 @@ void xSymm<T>::setup_buffer(int order_option, int side_option, int
                                 buffer.a_num_vectors * buffer.lda*sizeof(T),
                                 NULL, &err);
 
-  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                     buffer.N*buffer.ldb*sizeof(T),
                                     NULL, &err);
   buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
@@ -423,7 +432,7 @@ void xSymm<cl_float>::roundtrip_func()
                                 buffer.a_num_vectors * buffer.lda*sizeof(cl_float),
                                 NULL, &err);
 
-  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                     buffer.N*buffer.ldb*sizeof(cl_float),
                                     NULL, &err);
   buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
@@ -476,7 +485,7 @@ void xSymm<cl_double>::roundtrip_func()
                                 buffer.a_num_vectors * buffer.lda*sizeof(cl_double),
                                 NULL, &err);
 
-  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                     buffer.N*buffer.ldb*sizeof(cl_double),
                                     NULL, &err);
   buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
@@ -529,7 +538,7 @@ void xSymm<cl_float2>::roundtrip_func()
                                 buffer.a_num_vectors * buffer.lda*sizeof(cl_float2),
                                 NULL, &err);
 
-  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                     buffer.N*buffer.ldb*sizeof(cl_float2),
                                     NULL, &err);
   buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
@@ -577,12 +586,12 @@ void xSymm<cl_double2>::roundtrip_func()
 {
   timer.Start(timer_id);
   //set up buffer
-    cl_int err;
+  cl_int err;
   buffer.A = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                 buffer.a_num_vectors * buffer.lda*sizeof(cl_double2),
                                 NULL, &err);
 
-  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,
+  buffer.B = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                     buffer.N*buffer.ldb*sizeof(cl_double2),
                                     NULL, &err);
   buffer.C = clCreateBuffer(ctx_, CL_MEM_READ_WRITE,

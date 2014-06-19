@@ -128,21 +128,21 @@ setBuildOpts(
     const CLBlasKargs *kargs = (const CLBlasKargs *)(&step->args);
     if ( kargs->dtype == TYPE_DOUBLE || kargs->dtype == TYPE_COMPLEX_DOUBLE)
     {
-        strcat( buildOptStr, " -DDOUBLE_PRECISION ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DDOUBLE_PRECISION");
         #ifdef DEBUG_TRSV_TRTRI
         printf("TRSV TRTRI: Setting build options ... Double... for DOUBLE PRECISION support\n");
         #endif
     }
     if( kargs->pigFuncID == CLBLAS_TPSV)
     {
-        strcat( buildOptStr, " -DPACKED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DPACKED");
         #ifdef DEBUG_TRSV_TRTRI
             printf("TPSV TRTRI: Setting build options ... PACKED\n");
         #endif
     }
     if( kargs->pigFuncID == CLBLAS_TBSV)
     {
-        strcat( buildOptStr, " -DBANDED ");
+        addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DBANDED");
         #ifdef DEBUG_TRSV_TRTRI
         printf("TBSV TRTRI: Setting build options .. BANDED\n");
         #endif

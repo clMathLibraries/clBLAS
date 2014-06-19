@@ -28,6 +28,11 @@
 #include "dis_warning.h"
 
 #include "clBLAS.h"
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl_ext.h>
+#else
+#include <CL/cl_ext.h>
+#endif
 
 template<typename T>
 static T
@@ -243,6 +248,7 @@ public:
         OPENCL_V_THROW(err, "creating context");
         queue_ = clCreateCommandQueue(ctx_, device_, 0, &err);
 
+
         timer_id = timer.getUniqueID( "clfunc", 0 );
 
 
@@ -307,13 +313,18 @@ public:
     virtual void reset_gpu_write_buffer() = 0;
 	virtual void read_gpu_buffer() = 0;
 	virtual void roundtrip_func() = 0;
+	virtual void roundtrip_func_rect() {}
+	virtual void allochostptr_roundtrip_func() {}
+	virtual void usehostptr_roundtrip_func() {}
+	virtual void copyhostptr_roundtrip_func() {}
+	virtual void usepersismem_roundtrip_func() {}
 	virtual void roundtrip_setup_buffer(int order_option, int side_option,
                               int uplo_option, int diag_option, int
                               transA_option, int transB_option,
                               size_t M, size_t N, size_t K, size_t lda,
                               size_t ldb, size_t ldc, size_t offA, size_t offBX,
                               size_t offCY, double alpha, double beta) = 0;
-
+	virtual void releaseGPUBuffer_deleteCPUBuffer()=0;
     StatisticalTimer& timer;
     StatisticalTimer::sTimerID timer_id;
 

@@ -53,17 +53,17 @@ doHpmv(
 
     /* Validate arguments */
 
-    if (retCode = checkMemObjects(AP, X, Y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET)) {
+    if ((retCode = checkMemObjects(AP, X, Y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET))) {
         return retCode;
     }
-    if (retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N, AP,
-                         offa, 0, A_MAT_ERRSET )) {
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, N, N,
+                                    AP, offa, 0, A_MAT_ERRSET))) {
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET))) {
         return retCode;
     }
-    if (retCode = checkVectorSizes(kargs->dtype, N, Y, offy, incy, Y_VEC_ERRSET )) {
+    if ((retCode = checkVectorSizes(kargs->dtype, N, Y, offy, incy, Y_VEC_ERRSET))) {
         return retCode;
     }
 	if ((commandQueues == NULL) || (numCommandQueues == 0))

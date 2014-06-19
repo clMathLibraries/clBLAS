@@ -140,19 +140,11 @@ source_group(\\ FILES ${KTEST_SRC})
 add_executable(make-ktest ${KTEST_SRC} ${KTEST_EXTERNAL_SRC})
 add_dependencies(make-ktest GENERATE_CLT)
 target_link_libraries(make-ktest ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} ${MATH_LIBRARY})
+set_target_properties( make-ktest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-if( TARGET_PLATFORM EQUAL 64 )
-	# CPack configuration; include the executable into the package
-	install( TARGETS make-ktest
-			RUNTIME DESTINATION bin64
-			LIBRARY DESTINATION lib64
-			ARCHIVE DESTINATION lib64/import
-			)
-else()
-	# CPack configuration; include the executable into the package
-	install( TARGETS make-ktest
-			RUNTIME DESTINATION bin32
-			LIBRARY DESTINATION lib32
-			ARCHIVE DESTINATION lib32/import
-			)
-endif()
+# CPack configuration; include the executable into the package
+install( TARGETS make-ktest
+		RUNTIME DESTINATION bin${SUFFIX_BIN}
+		LIBRARY DESTINATION lib${SUFFIX_LIB}
+		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+		)

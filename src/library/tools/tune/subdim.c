@@ -364,7 +364,7 @@ nextSubdimElem(SubDimInfo* sd)
 
     // !!! DEBUG
     if (sd->count > 500) {
-        *(int*)0 = 0;
+        abort();
     }
 
     sd->count ++;

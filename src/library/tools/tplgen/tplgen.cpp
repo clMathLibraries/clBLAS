@@ -73,7 +73,7 @@ int main( int argc, char *argv[] )
     size_t found;
     string str;
     int startOptions = 1;
-    char *outputPrefix = "";
+    const char *outputPrefix = "";
 
     std::cout << "TPLGEN Running.....\n";
     if (argc < 2)
