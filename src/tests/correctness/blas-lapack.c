@@ -630,12 +630,20 @@ void zdscal( int n, double alpha, doublecomplex *x, int incx)
 
 float sdot( int n, float *x, int incx,  float *y, int incy)
 {
+#ifdef __APPLE__
+    return cblas_sdot(n, x, incx, y, incy);
+#else
     return sdot_(&n, x, &incx, y, &incy);
+#endif
 }
 
 double ddot( int n, double *x, int incx,  double *y, int incy)
 {
+#ifdef __APPLE__
+    return cblas_ddot(n, x, incx, y, incy);
+#else
     return ddot_(&n, x, &incx, y, &incy);
+#endif
 }
 
 complex cdotu( int n, complex *x, int incx, complex *y, int incy)
@@ -840,42 +848,94 @@ int izamax( int n, doublecomplex *x, int incx)
 
 float snrm2( int n, float *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_snrm2(n, x, incx);
+#else
     return snrm2_(&n, x, &incx);
+#endif
 }
 
 double dnrm2( int n, double *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_dnrm2(n, x, incx);
+#else
     return dnrm2_(&n, x, &incx);
+#endif
 }
 
 float scnrm2( int n, complex *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_scnrm2(n, x, incx);
+#else
     return scnrm2_(&n, x, &incx);
+#endif
 }
 
 double dznrm2( int n, doublecomplex *x, int incx)
 {
+#ifdef __APPLE__
+    //On OSX passing negative values for incx can lead to a
+    //a crash, so we catch it here (cf. Github issue #37).
+    if (n < 1 || incx < 1) {
+        return 0;
+    }
+    return cblas_dznrm2(n, x, incx);
+#else
     return dznrm2_(&n, x, &incx);
+#endif
 }
 
 float sasum( int n, float *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_sasum(n, x, incx);
+#else
     return sasum_(&n, x, &incx);
+#endif
 }
 
 double dasum( int n, double *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_dasum(n, x, incx);
+#else
     return dasum_(&n, x, &incx);
+#endif
 }
 
 float scasum( int n, complex *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_scasum(n, x, incx);
+#else
     return scasum_(&n, x, &incx);
+#endif
 }
 
 double dzasum( int n, doublecomplex *x, int incx)
 {
+#ifdef __APPLE__
+    return cblas_dzasum(n, x, incx);
+#else
     return dzasum_(&n, x, &incx);
+#endif
 }
 
 #endif
