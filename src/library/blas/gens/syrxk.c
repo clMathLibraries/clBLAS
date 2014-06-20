@@ -876,11 +876,19 @@ genUpdateSingleOptimized(
             sprintfComplexMulUpdate(&expr, k3, tempC, &betaStr, NULL,
                                     isDouble, false, false, core);
             kgenAddStmtToBatch(batch, MAD_STMT_PRIO, expr.buf);
+			
+			sprintfComplexMulUpdate(&expr, tempC, result, &alphaStr, k3,
+									isDouble, false, false, core);
+			kgenAddStmtToBatch(batch, MAD_STMT_PRIO, expr.buf);
         }
+		else
+		{
+			//fix correctness bug for c/z syr2k when beta = (0,0)
+			sprintfComplexMulUpdate_syr2k_beta0(&expr, tempC, result, &alphaStr, NULL,
+									isDouble, false, false, core);
+			kgenAddStmtToBatch(batch, MAD_STMT_PRIO, expr.buf);
+		}
 
-        sprintfComplexMulUpdate(&expr, tempC, result, &alphaStr, k3,
-                                isDouble, false, false, core);
-        kgenAddStmtToBatch(batch, MAD_STMT_PRIO, expr.buf);
     }
     else {
         if (betaName != NULL) {
@@ -1171,7 +1179,6 @@ genUpdateIsoscelesDiagTile(
         if (nrStored) {
             sprintfTileElement(&tempElem, &tileTempC, iter.row % tempRows,
                                iter.col % tempCols, nrStored);
-
             kgenBatchPrintf(batch, STORE_STMT_PRIO,
                             "*(__global %s*)(&%s[%s]) = %s;\n",
                             glbType, dstPtr, offExpr.buf, tempElem.buf);
@@ -1720,7 +1727,6 @@ genUpdateResult(
         // the function above put a respective code into a conditional path
         kgenBeginBranch(ctx, "else");
     }
-
     ret = genResultUpdateWithFlags( ctx,
         funcID,
         gset,

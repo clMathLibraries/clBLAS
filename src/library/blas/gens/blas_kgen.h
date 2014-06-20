@@ -52,6 +52,7 @@
 #include "tile.h"
 #include "fetch.h"
 
+
 #define BLAS_KGEN_FORMAT 1
 
 #define genInternalLoopEnd(ctx) kgenEndBranch(ctx, NULL)
@@ -539,6 +540,18 @@ sprintfComplexMulUpdate(
     bool conjB,
     TileMulCore core);
 
+void
+sprintfComplexMulUpdate_syr2k_beta0(
+    Kstring *expr,
+    const Kstring *dst,
+    const Kstring *a,
+    const Kstring *b,
+    const Kstring *c,
+    bool isDouble,
+    bool conjA,
+    bool conjB,
+    TileMulCore core);
+
 /**
  * @brief Sprintf expression of fast scalar mad
  *
@@ -891,5 +904,7 @@ checkGenRestoreTailCoords(
  */
 UpdateResultFlags
 tailStatusToUpresFlags(TailStatus status);
+
+
 
 #endif /* BLAS_KGEN_H_ */
