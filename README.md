@@ -60,13 +60,12 @@ accelerated SGEMM
     #include <sys/types.h>
     #include <stdio.h>
 
-    /* Include the clBLAS header. It includes the appropriate OpenCL headers
- */
+    /* Include the clBLAS header. It includes the appropriate OpenCL headers */
     #include <clBLAS.h>
 
     /* This example uses predefined matrices and their characteristics for
- * simplicity purpose.
- */
+     * simplicity purpose.
+    */
 
     #define M  4
     #define N  3
