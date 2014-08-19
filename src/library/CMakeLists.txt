@@ -279,7 +279,7 @@ endif()
 
 include( ExternalProject )
 ExternalProject_Add( tplgen
-    URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
+    URL "${PROJECT_SOURCE_DIR}/library/tools/tplgen"
     INSTALL_COMMAND ""
 )
 
@@ -294,7 +294,7 @@ endif()
 
 add_custom_target( GENERATE_CLT
     COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include ${SRC_CL_TEMPLATES}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/library/blas/gens/clTemplates
 )
 
 add_dependencies( GENERATE_CLT tplgen )
