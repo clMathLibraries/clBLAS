@@ -213,8 +213,8 @@ initVector(SubDimInfo* sd)
         setVariable(sd, V_L1_BW, 6, &dim[0]);
     }
     else {
-        setVariable(sd, V_L0_X,  4, &dim[4]);
-        setVariable(sd, V_L0_Y,  4, &dim[4]);
+        setVariable(sd, V_L0_X,  4, &dim[5]);
+        setVariable(sd, V_L0_Y,  4, &dim[5]);
         setVariable(sd, V_L0_BW, 6, &dim[0]);
         setVariable(sd, V_L1_X,  6, &dim[0]);
         setVariable(sd, V_L1_Y,  6, &dim[0]);
@@ -258,7 +258,7 @@ calcPGranularity (SubDimInfo* sd)
 
     pgran->wgDim = 2;
     pgran->wfSize = 64;
-
+	pgran->maxWorkGroupSize = sd->workGroupSizes;
 
     // if pattern provides granularity calculation
     // call the pattern function
