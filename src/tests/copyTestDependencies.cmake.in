@@ -58,6 +58,11 @@ endif( )
 get_filename_component( openclDir "@OPENCL_LIBRARIES@" PATH )
 
 if( EXISTS "${openclDir}" )
+    if( WIN32 )
+        # On Windows, we need to substitute the lib/ directory for the bin/ directory; the former holds the .lib and the latter holds the .dll
+        STRING( REGEX REPLACE "/lib/" "/bin/" openclDir ${openclDir} )
+    endif( )
+
     list( APPEND depList "${openclDir}" )
 #    message( "openclDir: ${openclDir}" )
 endif( )
