@@ -527,7 +527,9 @@ setupBuildOpts(
     opts[0] = '\0';
 
 #if !defined NDEBUG
-    addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-g");
+    // Nvidia runtime does not appear to support the -g flag, at least in their OpenCL v1.1 runtime
+    if( target.ident.vendor != VENDOR_NVIDIA )
+        addBuildOpt( opts, BUILD_OPTS_MAXLEN, "-g" );
 #endif  /* NDEBUG */
 
     if (target.ident.vendor == VENDOR_NVIDIA &&
