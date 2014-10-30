@@ -610,6 +610,11 @@ INSTANTIATE_TEST_CASE_P(RowMajor_SmallRange_BigLDA, GEMM, Combine(
     ValuesIn(smallRange), ValuesIn(smallRange), ValuesIn(smallRange),
     Values(clMath::ExtraTestSizes(500, 501, 502, 0, 0, 0)), Values(1)));
 
+INSTANTIATE_TEST_CASE_P(ColumnMajor_SmallRange_BigLDA_OffSet, GEMM, Combine(
+    Values(clblasColumnMajor), ValuesIn(transSet), ValuesIn(transSet),
+    ValuesIn(smallRange), ValuesIn(smallRange), ValuesIn(smallRange),
+    Values(clMath::ExtraTestSizes(500, 501, 502, 1, 0, 0)), Values(1)));
+
 // Cases for extended versions with offsets
 
 #if defined(SHORT_TESTS) || defined(MEDIUM_TESTS)
