@@ -560,7 +560,7 @@ blockGen(
         kgenAddStmt(ctx, tmp);
     }
     else {
-        sprintf(globalIdB, "get_global_id(%d)", 1-i);
+        sprintf(globalIdB, "(uint)get_global_id(%d)", 1-i);
     }
 
     if (!(isColMajA || isColMajB)) {
@@ -758,7 +758,7 @@ subgGen(
     vecLenA = gset.tileA.vecLen;
 
     // channel offset based coordinate
-    ksprintf(&exprK, "( get_group_id(0)*%lu + k )", staggered/vecLenA*vecLenA);
+    ksprintf(&exprK, "( (uint)(get_group_id(0))*%lu + k )", staggered/vecLenA*vecLenA);
 
     // starting code generation--------------------------------------------------
     pCtx = createKgenContext(pBuf, buflen, true);
