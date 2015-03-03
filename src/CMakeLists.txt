@@ -23,6 +23,7 @@ option( BUILD_PERFORMANCE "Copy the performance scripts that can measure and gra
 option( BUILD_SAMPLE "Build the sample programs" OFF )
 option( BUILD_CLIENT "Build a command line clBLAS client program with a variety of configurable parameters (dependency on Boost)" OFF )
 option( BUILD_KTEST "A command line tool for testing single clBLAS kernel" ON )
+option( BUILD_SHARED_LIBS "Build shared libraries" ON )
 
 # By default test-correctness is linked and tested against ACML library.
 # However, test-correctness can instead use NETLIB as a reference library
