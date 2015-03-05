@@ -84,24 +84,13 @@ set( SUFFIX_BIN_DEFAULT "" )
 
 if(TARGET_PLATFORM EQUAL 32 OR TARGET_PLATFORM EQUAL 64)
     set(TARGET_PLATFORM ${TARGET_PLATFORM} CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
-    if( TARGET_PLATFORM EQUAL 64 )
-        set( SUFFIX_LIB_DEFAULT "64" )
-    endif( )
 else()
     if(CMAKE_SIZEOF_VOID_P MATCHES 8)
         set(TARGET_PLATFORM "64" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
-        set( SUFFIX_LIB_DEFAULT "64" )
     else()
         set(TARGET_PLATFORM "32" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
     endif()
 endif()
-
-set( SUFFIX_LIB ${SUFFIX_LIB_DEFAULT} CACHE STRING "String to append to 'lib' install path" )
-set( SUFFIX_BIN ${SUFFIX_BIN_DEFAULT} CACHE STRING "String to append to 'bin' install path" )
-
-if( MSVC_IDE )
-    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
-endif( )
 
 message(STATUS "Target platform: ${TARGET_PLATFORM}-bit")
 if(TARGET_PLATFORM EQUAL 32)
@@ -110,7 +99,17 @@ if(TARGET_PLATFORM EQUAL 32)
 else()
     set(_arch "x86_64" INTERNAL)
     set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
+    if( NOT APPLE )
+        set( SUFFIX_LIB_DEFAULT "64" )
+    endif( )
 endif()
+
+set( SUFFIX_LIB ${SUFFIX_LIB_DEFAULT} CACHE STRING "String to append to 'lib' install path" )
+set( SUFFIX_BIN ${SUFFIX_BIN_DEFAULT} CACHE STRING "String to append to 'bin' install path" )
+
+if( MSVC_IDE )
+    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
+endif( )
 
 # add the math library for Linux
 if( UNIX ) 
