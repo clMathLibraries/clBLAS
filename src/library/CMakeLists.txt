@@ -316,8 +316,9 @@ target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBLAS
-		RUNTIME DESTINATION bin${SUFFIX_BIN}
-		LIBRARY DESTINATION lib${SUFFIX_LIB}
+                EXPORT Library
+                RUNTIME DESTINATION bin${SUFFIX_BIN}
+                LIBRARY DESTINATION lib${SUFFIX_LIB}
 		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
 		)
 
