@@ -297,6 +297,26 @@ if( BUILD_TEST )
 	endif( )
 endif( )
 
+if(WIN32)
+  set(destdir CMake)
+else()
+  set(destdir share/clBLAS)
+endif()
+string(REGEX REPLACE "[^/]+" ".." reldir "${destdir}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/clBLASConfigVersion.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfigVersion.cmake
+  @ONLY)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/clBLASConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfig.cmake
+  @ONLY)
+install(EXPORT Library DESTINATION ${destdir} FILE clBLASTargets.cmake)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfigVersion.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfig.cmake
+  DESTINATION ${destdir})
+
+
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )
 	set( CPACK_SOURCE_GENERATOR "ZIP" )
