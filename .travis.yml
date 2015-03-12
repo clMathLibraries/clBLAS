@@ -22,7 +22,7 @@ before_script:
   - cd ${TRAVIS_BUILD_DIR}
   - mkdir -p bin/clBLAS
   - cd bin/clBLAS
-  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON ../../src
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DCMAKE_INSTALL_PREFIX:PATH=$PWD/package ../../src
 
 script: 
   - make install
