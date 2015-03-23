@@ -274,7 +274,11 @@ install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
          example_snrm2 example_sasum example_isamax
 
          version
-        RUNTIME DESTINATION bin${SUFFIX_BIN}
+        if( WIN32 )
+            RUNTIME DESTINATION bin${SUFFIX_BIN}
+        else ( )
+            RUNTIME DESTINATION share/clBLAS/samples
+        endif( )
         LIBRARY DESTINATION lib${SUFFIX_LIB}
         ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
         )
@@ -332,5 +336,9 @@ install(FILES
             clBlasVersion.c
             ${PROJECT_BINARY_DIR}/samples/CMakeLists.txt
 
-        DESTINATION
-		    samples )
+            if( WIN32 )
+                DESTINATION samples
+            else ( )
+                DESTINATION share/clBLAS/samples/src
+            endif()
+        )
