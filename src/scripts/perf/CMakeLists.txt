@@ -21,4 +21,8 @@ set(GRAPHING_SCRIPTS 	measurePerformance.py
 						performanceUtility.py
 						)
 
-install( FILES ${GRAPHING_SCRIPTS} DESTINATION bin${SUFFIX_BIN} )
+if( WIN32 )
+		install( FILES ${GRAPHING_SCRIPTS} DESTINATION bin${SUFFIX_BIN} )
+else ( )
+		install( FILES ${GRAPHING_SCRIPTS} DESTINATION share/clBLAS )
+endif( )
