@@ -5,18 +5,10 @@ compiler:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq fglrx opencl-headers libboost-program-options-dev libgtest-dev
+  - sudo apt-get install -qq fglrx opencl-headers libboost-program-options-dev
 # Uncomment below to help verify the installs above work
 #  - ls -la /usr/lib/libboost*
 #  - ls -la /usr/include/boost
-#  - ls -la /usr/src/gtest
-
-install:
-  - mkdir -p bin/gTest
-  - cd bin/gTest
-  - cmake -DCMAKE_BUILD_TYPE=Release /usr/src/gtest
-  - make
-  - sudo mv libg* /usr/lib
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}

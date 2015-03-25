@@ -198,7 +198,7 @@ endif( )
 find_package( OpenCL )
 
 # Find Google Test package
-find_package( GTest )
+include(gtest.cmake)
 
 # Find Boost on the system, and configure the type of boost build we want
 set( Boost_USE_MULTITHREADED ON )
