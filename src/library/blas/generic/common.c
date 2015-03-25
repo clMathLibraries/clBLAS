@@ -527,7 +527,9 @@ setupBuildOpts(
     opts[0] = '\0';
 
 #if !defined NDEBUG
-    addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-g");
+    if ( target.ident.vendor != VENDOR_NVIDIA ) {
+    	addBuildOpt(opts, BUILD_OPTS_MAXLEN, "-g");
+    }
 #endif  /* NDEBUG */
 
     if (target.ident.vendor == VENDOR_NVIDIA &&
