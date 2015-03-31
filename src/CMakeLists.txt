@@ -197,9 +197,6 @@ endif( )
 # This will define OPENCL_FOUND
 find_package( OpenCL )
 
-# Find Google Test package
-include(gtest.cmake)
-
 # Find Boost on the system, and configure the type of boost build we want
 set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_LIBS   ON )
