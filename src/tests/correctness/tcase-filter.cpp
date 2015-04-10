@@ -99,6 +99,7 @@ canCaseBeSkipped(const TestParams *params, bool isComplex)
     /*
      * filter BigLDA cases
      */
+    /*
     s = nonZeroSize(params->lda, params->ldb, params->ldc);
     lda = selectSize(params->lda, s);
     ldb = selectSize(params->ldb, s);
@@ -106,10 +107,11 @@ canCaseBeSkipped(const TestParams *params, bool isComplex)
     if (sizeEquCount(lda, ldb, ldc) < 3) {
         return true;
     }
+	
     if (!isEquToAny(lda, m, n, k)) {
         return true;
     }
-
+    */
     return false;
 }
 

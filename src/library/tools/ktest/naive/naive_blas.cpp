@@ -350,13 +350,13 @@ operator/(FloatComplex a, cl_float b)
 static __inline DoubleComplex
 operator+(DoubleComplex a, DoubleComplex b)
 {
-    return doubleComplex(CREAL(a) + CREAL(b), CIMAG(b) + CIMAG(b));
+    return doubleComplex(CREAL(a) + CREAL(b), CIMAG(a) + CIMAG(b));
 }
 
 static __inline DoubleComplex
 operator-(DoubleComplex a, DoubleComplex b)
 {
-    return doubleComplex(CREAL(a) - CREAL(b), CIMAG(b) - CIMAG(b));
+    return doubleComplex(CREAL(a) - CREAL(b), CIMAG(a) - CIMAG(b));
 }
 
 static __inline DoubleComplex

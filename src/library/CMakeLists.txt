@@ -279,7 +279,7 @@ endif()
 
 include( ExternalProject )
 ExternalProject_Add( tplgen
-    URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
+    URL "${PROJECT_SOURCE_DIR}/library/tools/tplgen"
     INSTALL_COMMAND ""
 )
 
@@ -294,7 +294,7 @@ endif()
 
 add_custom_target( GENERATE_CLT
     COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include ${SRC_CL_TEMPLATES}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/library/blas/gens/clTemplates
 )
 
 add_dependencies( GENERATE_CLT tplgen )
@@ -307,7 +307,7 @@ if( CMAKE_COMPILER_IS_GNUCC )
              DESTINATION lib${SUFFIX_LIB}/pkgconfig )
 endif( )
 
-add_library(clBLAS SHARED ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
+add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
 add_dependencies(clBLAS GENERATE_CLT)
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
@@ -316,8 +316,9 @@ target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBLAS
-		RUNTIME DESTINATION bin${SUFFIX_BIN}
-		LIBRARY DESTINATION lib${SUFFIX_LIB}
+                EXPORT Library
+                RUNTIME DESTINATION bin${SUFFIX_BIN}
+                LIBRARY DESTINATION lib${SUFFIX_LIB}
 		ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
 		)
 
