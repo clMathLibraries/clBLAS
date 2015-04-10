@@ -138,7 +138,9 @@ endif()
 add_executable(tune ${TOOLS_SRC} ${TOOLS_EXTERNAL_SRC})
 add_dependencies(tune GENERATE_CLT)
 target_link_libraries(tune ${OPENCL_LIBRARIES} ${TIME_LIBRARY} ${MATH_LIBRARY})
-set_target_properties( tune PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( tune PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+  OUTPUT_NAME clBLAS-tune )
 
 # CPack configuration; include the executable into the package
 install( TARGETS tune

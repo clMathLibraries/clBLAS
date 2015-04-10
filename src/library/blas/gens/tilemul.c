@@ -28,6 +28,7 @@
 
 #include "blas_kgen.h"
 
+
 #define MAX_LENGTH 4096
 #define BITS_INT (sizeof(int) * 8)
 
@@ -692,6 +693,90 @@ sprintfComplexMulUpdate(
         kstrcatf(expr, "%s", ";\n");
     }
 }
+
+void
+sprintfComplexMulUpdate_syr2k_beta0(
+    Kstring *expr,
+    const Kstring *dst,
+    const Kstring *a,
+    const Kstring *b,
+    const Kstring *c,
+    bool isDouble,
+    bool conjA,
+    bool conjB,
+    TileMulCore core)
+{
+    Kstring swSrc1;      // swapped element of the first source
+    // real and imaginary part of the second source
+    Kstring reSrc2, imSrc2;
+    const Kstring *src11, *src12, *src21, *src22;
+    const char *sign1 = "", *sign2 = "", *sign3 = "";
+    const char *baseType;
+
+    baseType = (isDouble) ? "double2" : "float2";
+
+    /*
+     * Prepare components for multiplying. We should get the following
+     * vectorized operations:
+     *
+     * c = b * a1 + bsw * (-a2, a2)       if both 'a' and 'b' are not conjugated
+     * c = b * a1 + bsw * (a2, -a2)       if 'b' is conjugated and 'a' is not
+     * c = a * b1 + asw * (-b2, b2)       if 'a' is conjugated and 'b' is not
+     * c = asw * (-b2) + a * (b1, -b1)    if both 'a' and 'b' are conjugated
+     *
+     * Where (a1, a2) and (b1, b2) are complex components of 'a' and 'b',
+     * and asw and bsw - swapped elements of 'a' and 'b' respectively.
+     */
+
+    src11 = (conjB) ? a : b;
+    src21 = (conjB) ? b : a;
+
+    kstrcpy(&swSrc1, src11->buf);
+    swapComplexComponents(&swSrc1, 1);
+    takeComplexApart(&reSrc2, &imSrc2, src21);
+
+    if (conjA && conjB) {
+        src12 = src11;
+        src11 = &swSrc1;
+        src21 = &imSrc2;
+        src22 = &reSrc2;
+        sign1 = sign3 = "-";
+    }
+    else {
+        src12 = &swSrc1;
+        src21 = &reSrc2;
+        src22 = &imSrc2;
+        if (conjA || conjB) {
+            sign3 = "-";
+        }
+        else {
+            sign2 = "-";
+        }
+    }
+
+    if (core == TILEMUL_MAD) {
+        const char *strC = (c == NULL) ? "0" : c->buf;
+
+        ksprintf(expr, "%s = mad(%s, %s%s, %s);\n"
+                       "%s = mad(%s, (%s)(%s%s, %s%s), %s);\n",
+                 "sctmp", src11->buf, sign1, src21->buf, strC,
+                 dst->buf, src12->buf, baseType, sign2, src22->buf,
+                 sign3, src22->buf, "sctmp");
+    }
+    else {
+        const char *op = (dst == c) ? "+=" : "=";
+
+        ksprintf(expr, "%s %s %s * %s%s + %s * (%s)(%s%s, %s%s)",
+                 dst->buf, op, src11->buf, sign1,
+                 src21->buf, src12->buf, baseType, sign2, src22->buf,
+                 sign3, src22->buf);
+        if (!((c == NULL) || (c == dst))) {
+            kstrcatf(expr, " + %s", c->buf);
+        }
+        kstrcatf(expr, "%s", ";\n");
+    }
+}
+
 
 int
 genMulTiles(

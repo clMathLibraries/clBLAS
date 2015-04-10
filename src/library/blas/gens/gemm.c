@@ -560,7 +560,7 @@ blockGen(
         kgenAddStmt(ctx, tmp);
     }
     else {
-        sprintf(globalIdB, "get_global_id(%d)", 1-i);
+        sprintf(globalIdB, "(uint)get_global_id(%d)", 1-i);
     }
 
     if (!(isColMajA || isColMajB)) {
@@ -758,7 +758,7 @@ subgGen(
     vecLenA = gset.tileA.vecLen;
 
     // channel offset based coordinate
-    ksprintf(&exprK, "( get_group_id(0)*%lu + k )", staggered/vecLenA*vecLenA);
+    ksprintf(&exprK, "( (uint)(get_group_id(0))*%lu + k )", staggered/vecLenA*vecLenA);
 
     // starting code generation--------------------------------------------------
     pCtx = createKgenContext(pBuf, buflen, true);
@@ -1104,6 +1104,8 @@ blockCheckCalcDecomp(
     int check)
 {
     bool ret = true;
+	bool ret_multiple = false;
+	int i;
 
     DUMMY_ARG_USAGE(subdimsNum);
 
@@ -1114,7 +1116,12 @@ blockCheckCalcDecomp(
         minSize = (dtype == TYPE_COMPLEX_DOUBLE) ? 1 : 2;
         ret = decompSanityCheck(subdims, minSize, maxSize, 24, dtype, true);
         ret = ret && (subdims[0].bwidth == subdims[1].bwidth);
-        ret = ret && (pgran->wgSize[0] * pgran->wgSize[1] == 64);
+		for(i = 0; i < ( (pgran->maxWorkGroupSize) / (pgran->wfSize) ); i++)
+		{
+			// returns true if wgSize[0] * wgSize[1] is multiples of the 64 but not bigger than maxWorkGroupSize
+			ret_multiple = ret_multiple || ( pgran->wgSize[0] * pgran->wgSize[1] == pgran->wfSize * (i + 1) );
+		}
+		ret = ret && ret_multiple;
     }
     else {
         calcPgranDedicated(pgran, subdims, 1, 3);

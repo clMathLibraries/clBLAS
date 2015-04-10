@@ -359,7 +359,7 @@ sprintfNormalizedBaseCoord(
         kstrcpy(kstr, name);
     }
     else {
-        ksprintf(kstr, "(%s >> %d)", name, shift);
+        ksprintf(kstr, "(uint)(%s >> %d)", name, shift);
     }
 }
 
@@ -515,7 +515,7 @@ sprintfLeadingDimension(Kstring *ld, const FetchContext *fctx)
 
         shift = findHighestSetBit(fctx->physTile.vecLen);
         if (shift != 0) {
-            ksprintf(ld, "(%s >> %d)", varName, shift);
+            ksprintf(ld, "(uint)(%s >> %d)", varName, shift);
             done = true;
         }
     }
@@ -564,10 +564,10 @@ sprintfGboundK(Kstring *kstr, const FetchContext *fctx)
     }
     else {
         if (fctx->addrMode & FETCH_ADDR_TAILK_PADD) {
-            ksprintf(kstr, "((%s + %u) >> %d)", varK, vecLen - 1, shift);
+            ksprintf(kstr, "(uint)((%s + %u) >> %d)", varK, vecLen - 1, shift);
         }
         else {
-            ksprintf(kstr, "(%s >> %d)", varK, shift);
+            ksprintf(kstr, "(uint)(%s >> %d)", varK, shift);
         }
     }
 }

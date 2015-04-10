@@ -46,6 +46,8 @@ typedef struct PGranularity {
     unsigned int wfSize;
     /** Record number of work-groups spawned */
     unsigned int numWGSpawned[2];
+	/** max number of work group size */
+	unsigned int maxWorkGroupSize;
 } PGranularity;
 
 /**

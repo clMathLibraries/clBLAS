@@ -78,6 +78,7 @@ typedef enum BlasFunctionID {
     CLBLAS_iAMAX,
     CLBLAS_NRM2,
     CLBLAS_ASUM,
+    CLBLAS_TRANSPOSE,
 
     /* ! Must be the last */
     BLAS_FUNCTIONS_NUMBER

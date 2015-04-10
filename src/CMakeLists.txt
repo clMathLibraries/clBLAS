@@ -23,6 +23,7 @@ option( BUILD_PERFORMANCE "Copy the performance scripts that can measure and gra
 option( BUILD_SAMPLE "Build the sample programs" OFF )
 option( BUILD_CLIENT "Build a command line clBLAS client program with a variety of configurable parameters (dependency on Boost)" OFF )
 option( BUILD_KTEST "A command line tool for testing single clBLAS kernel" ON )
+option( BUILD_SHARED_LIBS "Build shared libraries" ON )
 
 # By default test-correctness is linked and tested against ACML library.
 # However, test-correctness can instead use NETLIB as a reference library
@@ -50,7 +51,7 @@ if( NOT DEFINED clBLAS_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_MINOR )
-    set( clBLAS_VERSION_MINOR 2 )
+    set( clBLAS_VERSION_MINOR 4 )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_PATCH )
@@ -67,7 +68,7 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files' (permissions problems)
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
-if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+if( WIN32 AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 	set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
 endif( )
 
@@ -84,24 +85,13 @@ set( SUFFIX_BIN_DEFAULT "" )
 
 if(TARGET_PLATFORM EQUAL 32 OR TARGET_PLATFORM EQUAL 64)
     set(TARGET_PLATFORM ${TARGET_PLATFORM} CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
-    if( TARGET_PLATFORM EQUAL 64 )
-        set( SUFFIX_LIB_DEFAULT "64" )
-    endif( )
 else()
     if(CMAKE_SIZEOF_VOID_P MATCHES 8)
         set(TARGET_PLATFORM "64" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
-        set( SUFFIX_LIB_DEFAULT "64" )
     else()
         set(TARGET_PLATFORM "32" CACHE STRING "Target platform type (32-bit or 64-bit)" FORCE)
     endif()
 endif()
-
-set( SUFFIX_LIB ${SUFFIX_LIB_DEFAULT} CACHE STRING "String to append to 'lib' install path" )
-set( SUFFIX_BIN ${SUFFIX_BIN_DEFAULT} CACHE STRING "String to append to 'bin' install path" )
-
-if( MSVC_IDE )
-    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
-endif( )
 
 message(STATUS "Target platform: ${TARGET_PLATFORM}-bit")
 if(TARGET_PLATFORM EQUAL 32)
@@ -110,7 +100,17 @@ if(TARGET_PLATFORM EQUAL 32)
 else()
     set(_arch "x86_64" INTERNAL)
     set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
+    if( NOT APPLE )
+        set( SUFFIX_LIB_DEFAULT "64" )
+    endif( )
 endif()
+
+set( SUFFIX_LIB ${SUFFIX_LIB_DEFAULT} CACHE STRING "String to append to 'lib' install path" )
+set( SUFFIX_BIN ${SUFFIX_BIN_DEFAULT} CACHE STRING "String to append to 'bin' install path" )
+
+if( MSVC_IDE )
+    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
+endif( )
 
 # add the math library for Linux
 if( UNIX ) 
@@ -196,9 +196,6 @@ endif( )
 
 # This will define OPENCL_FOUND
 find_package( OpenCL )
-
-# Find Google Test package
-find_package( GTest )
 
 # Find Boost on the system, and configure the type of boost build we want
 set( Boost_USE_MULTITHREADED ON )
@@ -296,6 +293,26 @@ if( BUILD_TEST )
 		add_subdirectory( library/common/tests )
 	endif( )
 endif( )
+
+if(WIN32)
+  set(destdir CMake)
+else()
+  set(destdir share/clBLAS)
+endif()
+string(REGEX REPLACE "[^/]+" ".." reldir "${destdir}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/clBLASConfigVersion.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfigVersion.cmake
+  @ONLY)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/clBLASConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfig.cmake
+  @ONLY)
+install(EXPORT Library DESTINATION ${destdir} FILE clBLASTargets.cmake)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfigVersion.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfig.cmake
+  DESTINATION ${destdir})
+
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )

@@ -258,7 +258,7 @@ calcPGranularity (SubDimInfo* sd)
 
     pgran->wgDim = 2;
     pgran->wfSize = 64;
-
+	pgran->maxWorkGroupSize = sd->workGroupSizes;
 
     // if pattern provides granularity calculation
     // call the pattern function

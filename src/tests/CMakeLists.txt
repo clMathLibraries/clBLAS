@@ -286,6 +286,9 @@ else( )
 	set( runtime.library "${runtime.library}/${CMAKE_SHARED_LIBRARY_PREFIX}clBLAS${CMAKE_SHARED_LIBRARY_SUFFIX}" )
 endif( )
 
+# Find Google Test package
+include(gtest.cmake)
+
 if( GTEST_FOUND )
     if( CORR_TEST_WITH_ACML AND ACML_FOUND )
 		include_directories(${OPENCL_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
