@@ -368,11 +368,14 @@ ExternalProject_Add( tplgen
     INSTALL_COMMAND ""
 )
 
-ExternalProject_Add( bingen
-    URL "${CMAKE_SOURCE_DIR}/library/tools/bingen"
-    CMAKE_ARGS -DOPENCL_LIBRARIES=${OPENCL_LIBRARIES} -DOPENCL_INCLUDE_DIRS=${OPENCL_INCLUDE_DIRS}
-    INSTALL_COMMAND ""
-)
+# if offline compilation is not chosen, bingen should not be built
+if(OCL_OFFLINE_BUILD_TAHITI_KERNEL OR OCL_OFFLINE_BUILD_HAWAII_KERNEL OR OCL_OFFLINE_BUILD_BONAIRE_KERNEL)
+	ExternalProject_Add( bingen
+		URL "${CMAKE_SOURCE_DIR}/library/tools/bingen"
+		CMAKE_ARGS -DOPENCL_LIBRARIES=${OPENCL_LIBRARIES} -DOPENCL_INCLUDE_DIRS=${OPENCL_INCLUDE_DIRS}
+		INSTALL_COMMAND ""
+	)
+endif()
 
 message(STATUS "OCL_VERSION = ${OCL_VERSION}")
 if( OCL_VERSION STREQUAL "2.0")
@@ -407,7 +410,10 @@ else()
 endif()
 
 #set( bingenBinaryDir "${CMAKE_BINARY_DIR}/library/tools/bingen/staging" )
-ExternalProject_Get_Property( bingen binary_dir )
+# if offline compilation is not chosen, bingen should not be built
+if(OCL_OFFLINE_BUILD_TAHITI_KERNEL OR OCL_OFFLINE_BUILD_HAWAII_KERNEL OR OCL_OFFLINE_BUILD_BONAIRE_KERNEL)
+	ExternalProject_Get_Property( bingen binary_dir )
+
 set( bingenBinaryDir "" )
 if( CMAKE_COMPILER_IS_GNUCXX )
     set( bingenBinaryDir "${binary_dir}/staging" )
@@ -438,6 +444,7 @@ add_custom_command(TARGET GEN_CLBIN
 				   )
 add_dependencies( GEN_CLBIN bingen )
 endif()
+endif()#if(OCL_OFFLINE_BUILD_TAHITI_KERNEL OR OCL_OFFLINE_BUILD_HAWAII_KERNEL OR OCL_OFFLINE_BUILD_BONAIRE_KERNEL)
 
 ExternalProject_Get_Property( tplgen binary_dir )
 
