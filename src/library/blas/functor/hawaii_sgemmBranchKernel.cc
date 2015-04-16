@@ -364,8 +364,8 @@ clblasStatus clBlashawaiiSgemmBranchKernelFunctor::execute(Args &args)
     setKernelArg<int>(kernel[i], arg[i]++, K);
 
     setKernelArg<cl_float>(kernel[i], arg[i]++, args.alpha);
-    if (args.beta!=0 && this->m_variantBranch->mult.compare("__ALPHA")!=0)
-      setKernelArg<cl_float>(kernel[i], arg[i]++, args.beta);
+    //if (args.beta!=0 && this->m_variantBranch->mult.compare("__ALPHA")!=0)
+    setKernelArg<cl_float>(kernel[i], arg[i]++, args.beta);
 
     setKernelArg<int>(kernel[i], arg[i]++, lda);
     setKernelArg<int>(kernel[i], arg[i]++, ldb);
