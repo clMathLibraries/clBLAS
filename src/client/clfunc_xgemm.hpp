@@ -48,7 +48,7 @@ struct xGemmBuffer
     cl_mem buf_c_;
     T alpha_;
     T beta_;
-	cl_uint apiCallCount=1;
+	cl_uint apiCallCount;
 }; // struct buffer
 
 template <typename T>
