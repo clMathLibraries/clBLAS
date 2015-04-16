@@ -68,6 +68,12 @@ stringToChip(const char *str)
     else if (!strcmp(str, "Tahiti")) {
         chip = TAHITI;
     }
+    else if (!strcmp(str, "Hawaii")) {
+        chip = HAWAII;
+    }
+    else if (!strcmp(str, "Bonaire")) {
+        chip = BONAIRE;
+    }
     else if (!strcmp(str, "GeForce GTX 480")) {
         chip = GEFORCE_GTX_480;
     }

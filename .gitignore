@@ -17,3 +17,6 @@
 
 # Generated kernel template files
 *.clT
+
+# flags.txt file
+*flags.txt

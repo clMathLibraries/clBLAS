@@ -102,12 +102,13 @@ main(void)
         return 1;
     }
 
+
     /* Prepare OpenCL memory objects and place vectors inside them. */
     bufX = clCreateBuffer(ctx, CL_MEM_READ_WRITE, ( lenX * sizeof(cl_float2)),
                           NULL, &err);
 
     err = clEnqueueWriteBuffer(queue, bufX, CL_TRUE, 0,
-                    (lenX * sizeof(cl_float)), X, 0, NULL, NULL);
+                    (lenX * sizeof(cl_float2)), X, 0, NULL, NULL);
 
     /* Call clblas function. */
     err = clblasCsscal( N, alpha, bufX, 0, incx, 1, &queue, 0, NULL, &event);

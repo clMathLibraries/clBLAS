@@ -48,6 +48,7 @@ struct xGemmBuffer
     cl_mem buf_c_;
     T alpha_;
     T beta_;
+	cl_uint apiCallCount=1;
 }; // struct buffer
 
 template <typename T>
@@ -67,15 +68,19 @@ public:
     void call_func()
     {
 		timer.Start(timer_id);
-		xGemm_Function(true);
+		xGemm_Function(true, buffer_.apiCallCount);
 		timer.Stop(timer_id);
     }
 
     double gflops()
     {
-        return (2.0*buffer_.m_*buffer_.n_*buffer_.k_)/time_in_ns();
+		return (2.0*buffer_.m_*buffer_.n_*buffer_.k_) / (time_in_ns() / buffer_.apiCallCount);
     }
 
+	void setup_apiCallCount(cl_uint apiCallCount)
+	{
+		buffer_.apiCallCount = apiCallCount;
+	}
     std::string gflops_formula()
     {
         return "2.0*M*N*K/time";
@@ -976,7 +981,7 @@ protected:
 
 private:
     xGemmBuffer<T> buffer_;
-	void xGemm_Function(bool flush);
+	void xGemm_Function(bool flush, cl_uint apiCallCount = 1);
 
 
 }; // class xgemm
@@ -984,14 +989,17 @@ private:
 template<>
 void 
 xGemm<cl_float>::
-xGemm_Function(bool flush)
+xGemm_Function(bool flush, cl_uint apiCallCount )
 {
-	clblasSgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
-                     buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
-                     buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-                     buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                     buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+	for (int i = 0; i < apiCallCount; i++)
+	{
+		clblasSgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
+			buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
+			buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
+			buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
+			buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
+			buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+	}
 	//flush==true if only the kernel time (library call) is timed
 	//flush==false if memory time is also timed
 	if (flush==true)
@@ -1003,7 +1011,7 @@ xGemm_Function(bool flush)
 template<>
 void 
 xGemm<cl_double>::
-xGemm_Function(bool flush)
+xGemm_Function(bool flush, cl_uint apiCallCount )
 {
 	clblasDgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
                      buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
@@ -1022,7 +1030,7 @@ xGemm_Function(bool flush)
 template<>
 void 
 xGemm<cl_float2>::
-xGemm_Function(bool flush)
+xGemm_Function(bool flush, cl_uint apiCallCount )
 {
 	clblasCgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
                      buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
@@ -1041,7 +1049,7 @@ xGemm_Function(bool flush)
 template<>
 void 
 xGemm<cl_double2>::
-xGemm_Function(bool flush)
+xGemm_Function(bool flush, cl_uint apiCallCount )
 {
 	clblasZgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
                      buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,

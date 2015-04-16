@@ -302,6 +302,7 @@ public:
     virtual void call_func() = 0;
     virtual double gflops() = 0;
     virtual std::string gflops_formula() = 0;
+	virtual void setup_apiCallCount(cl_uint apiCallCount){}
     virtual void setup_buffer(int order_option, int side_option,
                               int uplo_option, int diag_option, int
                               transA_option, int transB_option,

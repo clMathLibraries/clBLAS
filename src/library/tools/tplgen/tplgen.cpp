@@ -35,6 +35,51 @@
 
 using namespace std;
 
+void binaryCaseProcess(const string &inputStr, std::ostream &outFile)
+{
+  //Get the binary location in fileName
+  size_t found = inputStr.find( '@' );
+  string fileName = inputStr.substr (found+1);
+
+  //Open the binary
+  std::ifstream file (fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
+  size_t fileSize;
+  if(!file.is_open())
+  {
+    std::cerr << "fail to open binary file '" <<  fileName << "'" << std::endl;
+    exit(1);
+  }
+
+  //Get contents of the binary
+  char* fileContents;
+  fileSize = file.tellg();
+  fileContents = new char[fileSize];
+  file.seekg(0, std::ios::beg);
+  if(!file.read(fileContents, fileSize))
+  {
+    std::cerr << "fail to read binary file '" <<  fileName << "'" << std::endl;
+    exit(1);
+  }
+  file.close();
+
+
+  outFile << "//generated from the binary: " << fileName << "\n";
+
+  //Copy the chars found before the @
+  outFile <<  inputStr.substr (0,found);
+
+  //Write contents of the binary
+  outFile << "[" << fileSize << "] = {\n";
+  for(int i=0; i < fileSize; i++)
+  {
+    outFile << (int) fileContents[i];
+    if(i < fileSize-1) outFile << ",";
+    if((i+1)%50 == 0) outFile << "\n";
+  }
+  outFile << "\n};\n";
+}
+
+
 bool isModified( char *clFile, char *clTFile )
 {
     struct stat queryClFile;
@@ -74,6 +119,9 @@ int main( int argc, char *argv[] )
     string str;
     int startOptions = 1;
     const char *outputPrefix = "";
+	const char *inputPrefix = "";
+	char tempInputPrefix[1024];
+	const char *inputfile = "";
 
     std::cout << "TPLGEN Running.....\n";
     if (argc < 2)
@@ -91,6 +139,12 @@ int main( int argc, char *argv[] )
         startOptions = 3;
     }
 
+	if (strcmp(argv[startOptions], "-i") == 0)
+	{
+		inputPrefix = argv[startOptions + 1];
+		startOptions += 2;
+	}
+
     for ( int i=startOptions; i<argc; i++ )
     {
         char cltFile[1024];
@@ -104,20 +158,28 @@ int main( int argc, char *argv[] )
         strcat(cltFile, argv[i]);
         strcat(cltFile, "T");
 
-        if( !isModified(argv[i], cltFile ) )
-        {
-            continue;
-        }
-        std::cout << "Processing " << argv[i] << std::endl;
-
-        ifstream inFile( argv[i] );
+        //if( !isModified(argv[i], cltFile ) )
+        //{
+        //    continue;
+        //}
+		strcpy(tempInputPrefix, inputPrefix);
+		inputfile = strcat(tempInputPrefix, argv[i]);
+		std::cout << "Processing " << inputfile << std::endl;
+		std::cout << "output file " << cltFile << std::endl;
+		
+		ifstream inFile(inputfile);
         ofstream outFile( cltFile );
 
-        if( !(inFile.is_open()) || !(outFile.is_open()) )
+        if( !(inFile.is_open()) )
         {
-            cerr << "\tWARNING: couldn't open file!" << std::endl;
+            cerr << "\tWARNING: couldn't open input file " <<  inputfile << std::endl;
             continue;
         }
+		if ( !(outFile.is_open()) )
+		{
+			cerr << "\tWARNING: couldn't open output file " << cltFile << std::endl;
+			continue;
+		}
 
         validKernel = false;
         while( inFile.good() )
@@ -139,6 +201,11 @@ int main( int argc, char *argv[] )
                 validKernel = true;
                 outFile << str << "\\\n";
                 lineCount = 1;
+            }
+            // Deals with the case of a binary
+            else if( !validKernel && (str.find( "char" ) != string::npos) && (str.find( '@' ) != string::npos))
+            {
+              binaryCaseProcess(str, outFile);
             }
             // Find for end of kernel
             else if( (str.find( "\";" ) != string::npos) && validKernel )

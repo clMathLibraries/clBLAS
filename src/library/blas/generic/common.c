@@ -416,13 +416,13 @@ Kernel
     cl_device_id device,
     cl_context context,
     SolverKgen kernelGenerator,
+    cl_program program,
     const SubproblemDim *dims,
     const PGranularity *pgran,
     const CLBLASKernExtra *extra,
     const char *buildOpts,
     cl_int *error)
 {
-
     cl_int err;
     char *source;
     ssize_t size;
@@ -435,6 +435,17 @@ Kernel
 	printf("PG : wgSize[0] : %d, wgSize[1] : %d, wfSize: %d\n",  pgran->wgSize[0], pgran->wgSize[1], pgran->wfSize);
 	#endif
 
+    kernel = allocKernel();
+
+    if (kernel == NULL) {
+        free(source);
+        storeErrorCode(error, CL_OUT_OF_HOST_MEMORY);
+        return NULL;
+    }
+
+
+    if (kernelGenerator)
+    {
     size = kernelGenerator(NULL, 0, dims, pgran, (void*)extra);
     if (size < 0) {
         storeErrorCode(error, CL_OUT_OF_HOST_MEMORY);
@@ -451,12 +462,7 @@ Kernel
         return NULL;
     }
 
-	kernel = allocKernel();
-    if (kernel == NULL) {
-        free(source);
-        storeErrorCode(error, CL_OUT_OF_HOST_MEMORY);
-        return NULL;
-    }
+
 
     log = allocBuildLog();
 
@@ -501,6 +507,11 @@ Kernel
         putKernel(NULL, kernel);
         storeErrorCode(error, err);
         return NULL;
+    }
+    }
+    else 
+    {
+        kernel->program = program;
     }
 
     kernel->extraSize = sizeof(CLBLASKernExtra);

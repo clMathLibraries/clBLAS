@@ -49,6 +49,8 @@ typedef enum DeviceChip {
     HEMLOCK,
     CAYMAN,
     TAHITI,
+    HAWAII,
+    BONAIRE,
     GEFORCE_GTX_480,
     GEFORCE_GTX_580,
     NUM_DEVICE_CHIPS

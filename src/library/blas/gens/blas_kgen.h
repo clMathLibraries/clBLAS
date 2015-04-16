@@ -52,7 +52,6 @@
 #include "tile.h"
 #include "fetch.h"
 
-
 #define BLAS_KGEN_FORMAT 1
 
 #define genInternalLoopEnd(ctx) kgenEndBranch(ctx, NULL)
@@ -904,7 +903,5 @@ checkGenRestoreTailCoords(
  */
 UpdateResultFlags
 tailStatusToUpresFlags(TailStatus status);
-
-
 
 #endif /* BLAS_KGEN_H_ */

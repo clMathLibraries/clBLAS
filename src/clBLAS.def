@@ -225,3 +225,31 @@ EXPORTS
 	
 	clblasAddScratchImage
 	clblasRemoveScratchImage
+
+  clblasMatrixSizeInfo
+	clblasCreateMatrix
+	clblasCreateMatrixWithLd
+	clblasCreateMatrixFromHost
+	clblasWriteSubMatrix
+	clblasWriteSubMatrixAsync
+	clblasReadSubMatrix
+	clblasReadSubMatrixAsync
+	clblasCopySubMatrix
+	clblasCopySubMatrixAsync
+	clblasWriteVector
+	clblasWriteVectorAsync
+	clblasReadVector
+	clblasReadVectorAsync
+	clblasCopyVector
+	clblasCopyVectorAsync
+	clblasWriteMatrix
+	clblasWriteMatrixAsync
+	clblasReadMatrix
+	clblasReadMatrixAsync
+	clblasCopyMatrix
+	clblasCopyMatrixAsync
+	clblasFillVector
+	clblasFillVectorAsync
+	clblasFillMatrix
+	clblasFillSubMatrix
+	clblasFillSubMatrixAsync
