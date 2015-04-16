@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
 
       my_function->initialize_cpu_buffer();
       my_function->initialize_gpu_buffer();
-
+	  my_function->setup_apiCallCount(apiCallCount);
 	  my_function->call_func(); // do a calculation first to get any compilation out of the way
       my_function->reset_gpu_write_buffer(); // reset GPU write buffer
   }
