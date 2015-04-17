@@ -5,16 +5,21 @@ compiler:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq fglrx opencl-headers libboost-program-options-dev
+  - sudo apt-get install -qq fglrx libboost-program-options-dev
 # Uncomment below to help verify the installs above work
 #  - ls -la /usr/lib/libboost*
 #  - ls -la /usr/include/boost
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
+# download OpenCL 1.2 header files since Travis CI only provides 1.1
+  - mkdir -p OpenCLInclude/CL
+  - cd OpenCLInclude/CL
+  - wget -r --no-parent -nH --cut-dirs=4 --reject="index.html*" https://www.khronos.org/registry/cl/api/1.2/
+  - cd ../..
   - mkdir -p bin/clBLAS
   - cd bin/clBLAS
-  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DCMAKE_INSTALL_PREFIX:PATH=$PWD/package ../../src
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOPENCL_INCLUDE_DIRS=$PWD/OpenCL/Include -DCMAKE_INSTALL_PREFIX:PATH=$PWD/package ../../src
 
 script: 
   - make install
