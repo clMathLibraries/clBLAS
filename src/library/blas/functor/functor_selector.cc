@@ -96,7 +96,8 @@ clblasFunctorSelector::find(DeviceChip chip)
 
 int clblasFunctorSelector::FindFirePro(cl_device_id device)
 {
-  char cardName [1024];
+  return 1;
+  /*char cardName [1024];
   cl_int error = clGetDeviceInfo(device, CL_DEVICE_BOARD_NAME_AMD, sizeof(cardName), cardName, NULL);
   if (error!=CL_SUCCESS)
     return 0;
@@ -104,6 +105,7 @@ int clblasFunctorSelector::FindFirePro(cl_device_id device)
     return 1;
   else
     return 0;
+  */
 }
 
 // =================================================================================
