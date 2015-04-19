@@ -284,7 +284,8 @@ __kernel void sgemm_NT_32_32_16_16x16_2x2__ALPHABETA_BRANCH( __global float cons
 	{
         __local float* plA = lA + idy*33+idx;
         __local float* plB = lB + idy*33+idx;
-
+        barrier(CLK_LOCAL_MEM_FENCE);
+		
         plB[0]  = CurrentOffSetB>=N?0.0:B[0];
         plB[16] = CurrentOffSetB+16>=N?0.0:B[16];
 	   
