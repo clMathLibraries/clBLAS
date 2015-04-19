@@ -98,7 +98,7 @@ __kernel void sgemm_NT_96_96_16_16x16_6x6__ALPHABETA_SPLIT_MAIN( __global float 
 	//{
         __local float* plA = lA + idy*97+idx;
         __local float* plB = lB + idy*97+idx;
-       // barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_LOCAL_MEM_FENCE);
         plB[0] = B[0+0*ldb];
         plB[16] = B[16+0*ldb];
         plB[32] = B[32+0*ldb];
