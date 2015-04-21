@@ -2546,7 +2546,7 @@ static const char * sgemm_NN_16_SPLIT__ALPHABETA = "
             rC[3][5]=mad(rA[0][3],rB[0][5],rC[3][5]); \
             rC[4][5]=mad(rA[0][4],rB[0][5],rC[4][5]); \
             rC[5][5]=mad(rA[0][5],rB[0][5],rC[5][5]); \
-			barrier(CLK_LOCAL_MEM_FENCE);
+			mem_fence(CLK_LOCAL_MEM_FENCE);
 
 __attribute__((reqd_work_group_size(16,16,1)))
 __kernel void sgemm_NN_96_96_16_16x16_6x6__ALPHABETA_SPLIT_MAIN( __global float const * restrict A,
@@ -2591,6 +2591,7 @@ __kernel void sgemm_NN_96_96_16_16x16_6x6__ALPHABETA_SPLIT_MAIN( __global float 
 	{
         __local float* plA = lA + idy*97+idx;
         __local float* plB = lB + idx*97+idy;
+		barrier(CLK_LOCAL_MEM_FENCE);
         plB[0] = B[0];
         plB[16] = B[16*ldb];
         plB[32] = B[32*ldb];

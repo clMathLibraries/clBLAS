@@ -122,8 +122,30 @@ static const Variant * select_variant_BranchKernel(clblasSgemmFunctor::Args & ar
 		{
 
 			// ===== sgemm NN ======
-			// currently not supported
+			// sgemm_NN_32_32_16_16x16_2x2__ALPHABETA_BRANCH
+			const char* KName_NT = SGEMM_KERNEL_NAME(N, N, 32, 32, 16, 16, 16, 2, 2, __ALPHABETA, BRANCH);
+			const char* KBin_NN64;
+			size_t KBin_NNSize64 = 0;
+#if BUILD_KERNEL_FROM_STRING
+			//currently not supported
 			return NULL;
+#else
+			if (!strcmp(DevName, "Hawaii"))
+			{
+				//KBin_NT64             = SGEMM_SRC_NAME_BIN(N, T, 16, __ALPHABETA,  64, HAWAII) ;
+				KBin_NN64 = sgemm_NN_32_32_16_16x16_2x2__ALPHABETA_BRANCH_64_bin_Hawaii;
+				KBin_NNSize64 = sizeof(sgemm_NN_32_32_16_16x16_2x2__ALPHABETA_BRANCH_64_bin_Hawaii);
+
+			}
+#endif
+			static const Variant variant = SGEMM_VARIANT_OBJ(N, N, 16, 16, 16, 2, 2, 64, __ALPHABETA,
+				KName_NT,
+				NULL,
+				NULL,
+				KBin_NN64,
+				KBin_NNSize64);
+
+			return &variant;
 		}
 		if (args.transB == clblasTrans)
 		{
