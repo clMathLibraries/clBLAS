@@ -123,7 +123,7 @@ static const Variant * select_variant_BranchKernel(clblasSgemmFunctor::Args & ar
 
 			// ===== sgemm NN ======
 			// sgemm_NN_32_32_16_16x16_2x2__ALPHABETA_BRANCH
-			const char* KName_NT = SGEMM_KERNEL_NAME(N, N, 32, 32, 16, 16, 16, 2, 2, __ALPHABETA, BRANCH);
+			const char* KName_NN = SGEMM_KERNEL_NAME(N, N, 32, 32, 16, 16, 16, 2, 2, __ALPHABETA, BRANCH);
 			const char* KBin_NN64;
 			size_t KBin_NNSize64 = 0;
 #if BUILD_KERNEL_FROM_STRING
@@ -132,14 +132,14 @@ static const Variant * select_variant_BranchKernel(clblasSgemmFunctor::Args & ar
 #else
 			if (!strcmp(DevName, "Hawaii"))
 			{
-				//KBin_NT64             = SGEMM_SRC_NAME_BIN(N, T, 16, __ALPHABETA,  64, HAWAII) ;
+
 				KBin_NN64 = sgemm_NN_32_32_16_16x16_2x2__ALPHABETA_BRANCH_64_bin_Hawaii;
 				KBin_NNSize64 = sizeof(sgemm_NN_32_32_16_16x16_2x2__ALPHABETA_BRANCH_64_bin_Hawaii);
 
 			}
 #endif
 			static const Variant variant = SGEMM_VARIANT_OBJ(N, N, 16, 16, 16, 2, 2, 64, __ALPHABETA,
-				KName_NT,
+				KName_NN,
 				NULL,
 				NULL,
 				KBin_NN64,
@@ -188,20 +188,48 @@ static const Variant * select_variant_BranchKernel(clblasSgemmFunctor::Args & ar
 
 			return &variant;
 		}
-		else
+	}
+	else
+	{
+		if (args.transB == clblasNoTrans)
 		{
-			if (args.transB == clblasNoTrans)
-			{
 
 				// ===== sgemm TN ======
-				// currently not supported
-				return NULL;
-			}
-		}
+				//sgemm_TN_32_32_16_16x16_2x2__ALPHABETA_BRANCH
+				const char* KName_TN = SGEMM_KERNEL_NAME(T, N, 32, 32, 16, 16, 16, 2, 2, __ALPHABETA, BRANCH);
 
+
+				const char* KBin_TN64;
+				size_t KBin_TNSize64 = 0;
+
+
+#if BUILD_KERNEL_FROM_STRING
+				//currently not supported
+				return NULL;
+#else
+				if (!strcmp(DevName, "Hawaii"))
+				{
+					KBin_TN64 = sgemm_TN_32_32_16_16x16_2x2__ALPHABETA_BRANCH_64_bin_Hawaii;
+					KBin_TNSize64 = sizeof(sgemm_TN_32_32_16_16x16_2x2__ALPHABETA_BRANCH_64_bin_Hawaii);
+
+				}
+#endif
+				// ===== SGEMM NT ======
+				static const Variant variant = SGEMM_VARIANT_OBJ(T, N, 16, 16, 16, 2, 2, 64, __ALPHABETA,
+					KName_TN,
+					NULL,
+					NULL,
+					KBin_TN64,
+					KBin_TNSize64);
+
+				return &variant;
+		}
 		return NULL;
 	}
+
+		return NULL;
 }
+
 
 clBlashawaiiSgemmBranchKernelFunctor::clBlashawaiiSgemmBranchKernelFunctor(Args & args, const Variant * variant, cl_int & err)
 {

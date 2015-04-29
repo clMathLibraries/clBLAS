@@ -101,7 +101,7 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
   //TODO: the logic below is complicated; Needs cleanup;
   clblasSgemmFunctor * functor;
   bool Not_TT = ((args.transA==clblasNoTrans && args.transB==clblasTrans ) || ( args.transA==clblasNoTrans && args.transB==clblasNoTrans ) || ( args.transA==clblasTrans && args.transB==clblasNoTrans ));
-  bool SmallMatrices = args.M/6*args.N/6<150*150 || ((args.M%64!=0 && args.N%64!=0 && args.M<1900 &&args.N<1900 ) && (args.M%96!=0 && args.N%96!=0 && args.M<1900 &&args.N<1900 ));
+  bool SmallMatrices = args.M/6*args.N/6<180*180 || ((args.M%64!=0 && args.N%64!=0 && args.M<1900 &&args.N<1900 ) && (args.M%96!=0 && args.N%96!=0 && args.M<1900 &&args.N<1900 ));
   bool SmallMatricesMod32= (SmallMatrices && (args.M%32==0&&args.N%32==0)) ;
   SmallMatricesMod32 = SmallMatricesMod32&&Not_TT&&args.K % 16 == 0;
   //SmallMatrices= false;
@@ -109,8 +109,8 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
   bool useSpliKernel=((args.M%96==0 && args.N%96==0) || !(args.M%64==0 && args.N%64==0&& args.M<4000 &&args.N<4000)) /*&&args.K%16==0*/;
   useSpliKernel=useSpliKernel&&Not_TT;
   
-  //the English translation of below is: if small matrix that is (not mod32) and (NT or NN) and K has to be mod 16
-  if (SmallMatrices && (!SmallMatricesMod32) && (args.transA == clblasNoTrans) && (args.K%16 == 0))
+  //the English translation of below is: if small matrix that is (not mod32) and (not_TT) and K has to be mod 16
+  if (SmallMatrices && (!SmallMatricesMod32) && (Not_TT) && (args.K%16 == 0))
   {
 	  functor = clBlashawaiiSgemmBranchKernelFunctor::provide(args, "Hawaii");
 	  if (functor)
