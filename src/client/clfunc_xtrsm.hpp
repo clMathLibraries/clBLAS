@@ -75,7 +75,7 @@ public:
         }
         else
         {
-            return 20*buffer_.m_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+            return buffer_.m_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
         }
     }
 
