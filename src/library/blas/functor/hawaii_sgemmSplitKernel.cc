@@ -1,4 +1,4 @@
-#ifndef CLBLAS_HAWAII_DYNAMIC_KERNEL
+#if !define CLBLAS_HAWAII_DYNAMIC_KERNEL && !define CLBLAS_BONAIRE_DYNAMIC_KERNEL
 
 #include <stdio.h>
 #include <string.h>
@@ -23,9 +23,16 @@
 #if BUILD_KERNEL_FROM_STRING
 #include "sgemm_hawaiiSplitKernel.clT"
 #else 
+
+#ifndef CLBLAS_HAWAII_DYNAMIC_KERNEL
 #include "sgemm_hawaiiSplitKernel.clHawaii_64.bin.clT"
+#endif//CLBLAS_HAWAII_DYNAMIC_KERNEL
+
+#ifndef CLBLAS_BONAIRE_DYNAMIC_KERNEL
 #include "sgemm_hawaiiSplitKernel.clBonaire_64.bin.clT"
-#endif
+#endif //CLBLAS_BONAIRE_DYNAMIC_KERNEL
+
+#endif //BUILD_KERNEL_FROM_STRING
 
 // Just because the full name is too long
 typedef clBlashawaiiSgemmSplitKernelFunctor::Variant Variant ; 
@@ -161,9 +168,11 @@ static const Variant * select_variant_SplitKernel( clblasSgemmFunctor::Args & ar
       size_t KBin_NNMainK1Size64 = 0;       
 
       const char* KBin_NNMainK1Alpha64 ;    
-      size_t KBin_NNMainK1AlphaSize64 = 0;  
+      size_t KBin_NNMainK1AlphaSize64 = 0; 
+
       if (!strcmp(DevName, "Hawaii"))
       {
+#ifndef CLBLAS_HAWAII_DYNAMIC_KERNEL
         KBin_NNMain64             = SGEMM_SRC_NAME_BIN(N, N, 16, __ALPHABETA,  64, HAWAII) ;
         KBin_NNMainSize64        = sizeof(SGEMM_SRC_NAME_BIN(N, N, 16, __ALPHABETA,  64, HAWAII)) ;
 
@@ -175,7 +184,10 @@ static const Variant * select_variant_SplitKernel( clblasSgemmFunctor::Args & ar
 
         KBin_NNMainK1Alpha64      = SGEMM_SRC_NAME_BIN(N, N, 1, __ALPHA,  64, HAWAII) ;
         KBin_NNMainK1AlphaSize64 = sizeof(SGEMM_SRC_NAME_BIN(N, N, 1, __ALPHA,  64, HAWAII)) ;
+      
+#endif //CLBLAS_HAWAII_DYNAMIC_KERNEL
       }
+      
       else if (!strcmp(DevName, "Bonaire"))
       {
 #ifndef CLBLAS_BONAIRE_DYNAMIC_KERNEL
@@ -297,8 +309,11 @@ static const Variant * select_variant_SplitKernel( clblasSgemmFunctor::Args & ar
       const char* KSrc_NTColumn = SGEMM_SRC_NAME(N, T, 96, 1, 16, 16, 16, 6, 6, __ALPHABETA) ;
       const char* KSrc_NTSingleWave = SGEMM_SRC_NAME(N, T, 1, 1, 16, 16, 16, 6, 6, __ALPHABETA) ;
 #else
+
+
       if (!strcmp(DevName, "Hawaii"))
       {
+#ifndef CLBLAS_HAWAII_DYNAMIC_KERNEL
         KBin_NTMain64             = SGEMM_SRC_NAME_BIN(N, T, 16, __ALPHABETA,  64, HAWAII) ;
         KBin_NTMainSize64        = sizeof(SGEMM_SRC_NAME_BIN(N, T, 16, __ALPHABETA,  64, HAWAII)) ;
 
@@ -310,7 +325,9 @@ static const Variant * select_variant_SplitKernel( clblasSgemmFunctor::Args & ar
 
         KBin_NTMainK1Alpha64      = SGEMM_SRC_NAME_BIN(N, T, 1, __ALPHA,  64, HAWAII) ;
         KBin_NTMainK1AlphaSize64 = sizeof(SGEMM_SRC_NAME_BIN(N, T, 1, __ALPHA,  64, HAWAII)) ;
+#endif //CLBLAS_HAWAII_DYNAMIC_KERNEL
       }
+
       else if (!strcmp(DevName, "Bonaire"))
       {
 #ifndef CLBLAS_BONAIRE_DYNAMIC_KERNEL
@@ -430,8 +447,10 @@ static const Variant * select_variant_SplitKernel( clblasSgemmFunctor::Args & ar
 
       //const char* KBin_NNMainK1Alpha64 ;    
       //size_t KBin_NNMainK1AlphaSize64 = 0;  
+
       if (!strcmp(DevName, "Hawaii"))
       {
+#ifndef CLBLAS_HAWAII_DYNAMIC_KERNEL
         KBin_TNMain64             = SGEMM_SRC_NAME_BIN(T, N, 16, __ALPHABETA,  64, HAWAII) ;
         KBin_TNMainSize64        = sizeof(SGEMM_SRC_NAME_BIN(T, N, 16, __ALPHABETA,  64, HAWAII)) ;
              
@@ -443,7 +462,9 @@ static const Variant * select_variant_SplitKernel( clblasSgemmFunctor::Args & ar
 
         //KBin_NNMainK1Alpha64      = SGEMM_SRC_NAME_BIN(N, N, 1, __ALPHA,  64, HAWAII) ;
         //KBin_NNMainK1AlphaSize64 = sizeof(SGEMM_SRC_NAME_BIN(N, N, 1, __ALPHA,  64, HAWAII)) ;
+#endif  //CLBLAS_HAWAII_DYNAMIC_KERNEL
       }
+
       else if (!strcmp(DevName, "Bonaire"))
       {
 #ifndef CLBLAS_BONAIRE_DYNAMIC_KERNEL

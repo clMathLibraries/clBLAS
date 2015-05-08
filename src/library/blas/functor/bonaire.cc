@@ -15,13 +15,10 @@
  * ************************************************************************/
 
 #include <bonaire.h>
-//#include "gpu_dtrsm.h"
-//#include "gcn_dgemmCommon.h"
+
 #include "math.h"
-//#include "hawaii_dgemmChannelConflict.h"
-//#include "hawaii_dgemmSplitKernel.h"
+
 #include "hawaii_sgemmSplitKernel.h"
-//#include "gcn_dgemmSmallMatrices.h"
 #include "gcn_sgemmSmallMatrices.h"
 
 FunctorSelectorBonaire FunctorSelectorBonaire::instance ;
@@ -67,11 +64,11 @@ clblasSgemmFunctor * FunctorSelectorBonaire::select_sgemm_specific(clblasSgemmFu
     }
     if ( useSpliKernel) 
     {
-#ifndef CLBLAS_HAWAII_DYNAMIC_KERNEL
+
     functor = clBlashawaiiSgemmSplitKernelFunctor::provide(args, "Bonaire");
     if (functor)
       return functor;
-#endif
+
     }
     else
     {
