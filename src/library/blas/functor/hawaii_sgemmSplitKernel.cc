@@ -1,4 +1,4 @@
-#if !define CLBLAS_HAWAII_DYNAMIC_KERNEL && !define CLBLAS_BONAIRE_DYNAMIC_KERNEL
+#if !defined CLBLAS_HAWAII_DYNAMIC_KERNEL && !defined CLBLAS_BONAIRE_DYNAMIC_KERNEL
 
 #include <stdio.h>
 #include <string.h>
