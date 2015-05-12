@@ -514,7 +514,10 @@ install(    DIRECTORY ${PROJECT_BINARY_DIR}/staging/
             FILES_MATCHING PATTERN "*.pdb" )
 
 # Install a snapshot of the source as it was for this build; useful for the .pdb's
+# but exclude the binary dir that may be in the source dir
+string(REGEX REPLACE "([.[{()\\*+?|^$])" "\\\\\\1" escapedBuild "${CMAKE_BINARY_DIR}")
 install(    DIRECTORY ${PROJECT_SOURCE_DIR}
             DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
             OPTIONAL
-            CONFIGURATIONS Debug )
+            CONFIGURATIONS Debug
+            REGEX "^${escapedBuild}" EXCLUDE )
