@@ -27,13 +27,7 @@ option( BUILD_SHARED_LIBS "Build shared libraries" ON )
 
 # By default test-correctness is linked and tested against ACML library.
 # However, test-correctness can instead use NETLIB as a reference library
-# On Mac OSX systems, this must be set to OFF for the build to succeed (due to nesting of FindBLAS code)
-if ( APPLE )
-	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
-else ( )
-	message(STATUS "CORR_TEST_WITH_ACML set to ON")
-	set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
-endif( )
+set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
 
 if( CMAKE_GENERATOR MATCHES "NMake" )
   option( NMAKE_COMPILE_VERBOSE "Print compile and link strings to the console" OFF )
@@ -127,15 +121,14 @@ endif()
 # TODO: maybe this could be written using the FindBLAS module in the future
 if( BUILD_TEST )
 	if(NOT CORR_TEST_WITH_ACML)
-	    if(APPLE)
-			message(STATUS "Trying to find Accelerate library")
-			find_library(BLAS_LIBRARIES Accelerate HINTS /System/Library/Frameworks/Accelerate.framework)
+	        if(APPLE)
+			find_library(BLAS_LIBRARIES Accelerate)
 		       	MARK_AS_ADVANCED(BLAS_LIBRARIES)
 		       	message(STATUS "Using Accelerate framework on Mac OS-X")
-	    else()
+	       	else()
 			find_package( Netlib COMPONENTS BLAS REQUIRED )
-        endif()
-	else( )
+              	endif()
+		else( )
 		# Find ACML BLAS implementation
 		# platform dependent ACML subdirectory
 		if (WIN32)
