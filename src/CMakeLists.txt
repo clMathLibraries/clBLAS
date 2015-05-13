@@ -27,7 +27,13 @@ option( BUILD_SHARED_LIBS "Build shared libraries" ON )
 
 # By default test-correctness is linked and tested against ACML library.
 # However, test-correctness can instead use NETLIB as a reference library
-set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+# On Mac OSX systems, this must be set to OFF for the build to succeed (due to nesting of FindBLAS code)
+if ( APPLE )
+	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
+else ( )
+	message(STATUS "CORR_TEST_WITH_ACML set to ON")
+	set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+endif( )
 
 if( CMAKE_GENERATOR MATCHES "NMake" )
   option( NMAKE_COMPILE_VERBOSE "Print compile and link strings to the console" OFF )
