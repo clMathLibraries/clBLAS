@@ -307,8 +307,8 @@ clBlashawaiiSgemmBranchKernelFunctor *
 
   getCLVersion(dev, major, minor);
 
-  if (major<2)
-    return NULL;
+  //if (major<2)
+  //  return NULL;
 
   // to_upper( DevName);
   const Variant * variant = select_variant_BranchKernel( args, DevName, bitness ) ;
