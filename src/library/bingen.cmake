@@ -14,6 +14,7 @@ ${CLTEMPLATE_PATH}/dgemm_hawaiiSplitKernel.cl
 ${CLTEMPLATE_PATH}/sgemm_hawaiiSplitKernel.cl
 ${CLTEMPLATE_PATH}/sgemm_gcn.cl
 ${CLTEMPLATE_PATH}/sgemm_gcn_SmallMatrices.cl
+${CLTEMPLATE_PATH}/sgemm_hawaiiSplit64_32.cl
 )
 
 

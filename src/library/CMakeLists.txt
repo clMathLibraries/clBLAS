@@ -73,6 +73,7 @@ set(SRC_BLAS
 	blas/functor/hawaii_dgemmChannelConflict.cc
 	blas/functor/hawaii_dgemmSplitKernel.cc
 	blas/functor/hawaii_sgemmSplitKernel.cc
+	blas/functor/hawaii_sgemmSplit64_32.cc
 	blas/functor/gcn_dgemmCommon.cc
 	blas/functor/gcn_sgemm.cc
 	blas/functor/gcn_dgemmSmallMatrices.cc
@@ -103,6 +104,7 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/hawaii_dgemmChannelConflict.h
 	blas/functor/include/hawaii_dgemmSplitKernel.h
 	blas/functor/include/hawaii_sgemmSplitKernel.h
+	blas/functor/include/hawaii_sgemmSplit64_32.h
 	blas/functor/include/gcn_dgemmCommon.h
 	blas/functor/include/gcn_sgemm.h
 	blas/functor/include/gcn_dgemmSmallMatrices.h
@@ -248,6 +250,7 @@ set(SRC_CL_TEMPLATES_GEN
 	sgemm_gcn.clHawaii_64.bin.cl
     sgemm_gcn.clBonaire_64.bin.cl
 	sgemm_gcn.clTahiti_64.bin.cl
+	sgemm_hawaiiSplit64_32.clHawaii_64.bin.cl
 )
 
 set(SRC_BLAS_GENERIC_HEADERS

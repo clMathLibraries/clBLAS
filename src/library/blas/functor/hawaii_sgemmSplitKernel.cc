@@ -1,5 +1,8 @@
 #if !defined CLBLAS_HAWAII_DYNAMIC_KERNEL || !defined CLBLAS_BONAIRE_DYNAMIC_KERNEL
-
+//this split kernel algorithm solves the main matrix with 96x96 micro tile size
+//solves the row boundry with 16x96 micro tile size
+//solves the column boundry with 96x16 micro tile size
+//solves the rest boundry with 16x16 micro tile size
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
