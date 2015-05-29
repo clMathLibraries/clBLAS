@@ -24,6 +24,7 @@
 #include "gcn_dgemmSmallMatrices.h"
 #include "gcn_sgemmSmallMatrices.h"
 #include "hawaii_sgemmBranchKernel.h"
+#include "hawaii_sgemmSplit64_32.h"
 
 FunctorSelectorHawaii FunctorSelectorHawaii::instance ;
 
@@ -106,8 +107,24 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
   SmallMatricesMod32 = SmallMatricesMod32&&Not_TT&&args.K % 16 == 0;
   //SmallMatrices= false;
   
-  bool useSpliKernel=((args.M%96==0 && args.N%96==0) || !(args.M%64==0 && args.N%64==0&& args.M<4000 &&args.N<4000)) /*&&args.K%16==0*/;
+  bool useSpliKernel=((args.M%96==0 && args.N%96==0) || !(args.M%64==0 && args.N%64==0&& args.M<4000 &&args.N<4000)) ;
   useSpliKernel=useSpliKernel&&Not_TT;
+
+  //functor = clBlashawaiiSgemmSplit64_32Functor::provide(args, "Hawaii");
+  //if (functor)
+  //  return functor;
+
+  if ((args.M >= 1184 && args.N >= 1184) && (args.M <= 3872 && args.N <= 3872) && (args.M % 64 != 0 && args.N % 64 != 0) && (args.M % 96 != 0 && args.N % 96 != 0) && (args.K % 16 == 0))
+  {
+	  //all the mod32 sizes that is not mod64 or mod96 ranging from 1184 to 3872 
+	  //non mod32 cases are not implemented in this approach and are of less interest
+	  if ((args.M % 32 == 0 && args.N % 32 == 0) && (args.transA == clblasNoTrans && args.transB == clblasTrans))
+	  {
+		  functor = clBlashawaiiSgemmSplit64_32Functor::provide(args, "Hawaii");
+		  if (functor)
+			  return functor;
+	  }
+  }
   
   //the English translation of below is: if small matrix that is (not mod32) and (not_TT) and K has to be mod 16
   if (SmallMatrices && (!SmallMatricesMod32) && (Not_TT) && (args.K%16 == 0))
@@ -141,6 +158,7 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
   
   // else use the fallback implementation
   return this->clblasFunctorSelector::select_sgemm_specific(args);
+  
 #endif
 }
 
