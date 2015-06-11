@@ -366,7 +366,7 @@ endif( )
 if(WIN32)
   set(destdir CMake)
 else()
-  set(destdir share/clBLAS)
+  set(destdir lib${SUFFIX_LIB}/cmake/clBLAS)
 endif()
 string(REGEX REPLACE "[^/]+" ".." reldir "${destdir}")
 configure_file(
