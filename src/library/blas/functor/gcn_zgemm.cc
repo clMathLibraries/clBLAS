@@ -13,7 +13,7 @@
 #include <functor_xgemm.h>
 #include <tahiti.h>
 #include <hawaii.h>
-#include <gcn_ZGEMM.h>
+#include <gcn_zgemm.h>
 
 #include "BinaryBuild.h"
 
