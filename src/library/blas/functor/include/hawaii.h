@@ -33,6 +33,7 @@ public:
     // and incx==1
     virtual clblasDgemmFunctor * select_dgemm_specific(clblasDgemmFunctor::Args & args);
 	virtual clblasSgemmFunctor * select_sgemm_specific(clblasSgemmFunctor::Args & args);
+	virtual clblasZgemmFunctor * select_zgemm_specific(clblasZgemmFunctor::Args & args);
     virtual clblasDtrsmFunctor * select_dtrsm_specific(clblasDtrsmFunctor::Args & args);
 
 };
