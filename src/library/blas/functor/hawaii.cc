@@ -25,6 +25,7 @@
 #include "gcn_sgemmSmallMatrices.h"
 #include "hawaii_sgemmBranchKernel.h"
 #include "hawaii_sgemmSplit64_32.h"
+#include "gcn_zgemm.h"
 
 FunctorSelectorHawaii FunctorSelectorHawaii::instance ;
 
@@ -93,7 +94,7 @@ clblasDgemmFunctor * FunctorSelectorHawaii::select_dgemm_specific(clblasDgemmFun
 }
 
 
-// The selector function for SGEMM on hawaii 
+// The selector function for SGEMM on hawaii
 clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFunctor::Args & args)
 {
 #ifdef CLBLAS_HAWAII_DYNAMIC_KERNEL
@@ -162,6 +163,26 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
 #endif
 }
 
+
+// The selector function for ZGEMM on hawaii
+clblasZgemmFunctor * FunctorSelectorHawaii::select_zgemm_specific(clblasZgemmFunctor::Args & args)
+{
+
+  //TODO: the logic below is complicated; Needs cleanup;
+  clblasZgemmFunctor * functor;
+
+  if ( args.M%32==0
+    && args.N%64==0
+    && args.K%8==0
+    && args.transA==clblasNoTrans
+    && args.transB==clblasTrans
+    && args.order==clblasColumnMajor) {
+    functor = clblasZgemmFunctorGCN::provide(args, "Hawaii");
+  } else {
+    return this->clblasFunctorSelector::select_zgemm_specific(args);
+  }
+
+}
 
 // The selector function for DTRSM on hawaii
 //

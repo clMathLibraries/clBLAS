@@ -37,7 +37,7 @@ FunctorSelectorBonaire::FunctorSelectorBonaire()
 
 
 
-// The selector function for SGEMM on hawaii 
+// The selector function for SGEMM on bonaire 
 clblasSgemmFunctor * FunctorSelectorBonaire::select_sgemm_specific(clblasSgemmFunctor::Args & args)
 {
 #ifdef CLBLAS_BONAIRE_DYNAMIC_KERNEL
