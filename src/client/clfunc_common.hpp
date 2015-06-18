@@ -246,7 +246,7 @@ public:
         props_[2] = 0;
         ctx_ = clCreateContext(props_, 1, &device_, NULL, NULL, &err);
         OPENCL_V_THROW(err, "creating context");
-        queue_ = clCreateCommandQueue(ctx_, device_, 0, &err);
+        queue_ = clCreateCommandQueue(ctx_, device_, CL_QUEUE_PROFILING_ENABLE, &err);
 
 
         timer_id = timer.getUniqueID( "clfunc", 0 );
