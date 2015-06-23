@@ -1065,19 +1065,6 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
                      buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
-#if 0
-    // print kernel time
-    clFinish(queue_);
-    cl_ulong start, stop;
-    double time;
-    cl_int err;
-    err = clGetEventProfilingInfo( event_, CL_PROFILING_COMMAND_START, sizeof(start), &start, NULL );
-    if (err) printf("err = %i\n", err);
-    err = clGetEventProfilingInfo( event_, CL_PROFILING_COMMAND_END,   sizeof(stop),  &stop,  NULL );
-    if (err) printf("err = %i\n", err);
-    time = (stop - start) / 1000000.0; // milliseconds
-    printf("kernel %lu -> %lu = %.f ms\n", start, stop, time );
-#endif
   }
 	//flush==true if only the kernel time (library call) is timed
 	//flush==false if memory time is also timed

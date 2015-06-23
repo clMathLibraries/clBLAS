@@ -168,16 +168,13 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
 clblasZgemmFunctor * FunctorSelectorHawaii::select_zgemm_specific(clblasZgemmFunctor::Args & args)
 {
 
-  //TODO: the logic below is complicated; Needs cleanup;
-  clblasZgemmFunctor * functor;
-
   if ( args.M%32==0
     && args.N%64==0
     && args.K%8==0
     && args.transA==clblasNoTrans
     && args.transB==clblasTrans
     && args.order==clblasColumnMajor) {
-    functor = clblasZgemmFunctorGCN::provide(args, "Hawaii");
+    return clblasZgemmFunctorGCN::provide(args, "Hawaii");
   } else {
     return this->clblasFunctorSelector::select_zgemm_specific(args);
   }
