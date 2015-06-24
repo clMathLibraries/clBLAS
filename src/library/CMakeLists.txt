@@ -69,6 +69,7 @@ set(SRC_BLAS
 	blas/functor/bonaire.cc
     blas/functor/gcn_dgemm.cc
     blas/functor/gpu_dtrsm.cc
+    blas/functor/gpu_dtrsm192.cc
     blas/functor/functor_fill.cc
 	blas/functor/hawaii_dgemmChannelConflict.cc
 	blas/functor/hawaii_dgemmSplitKernel.cc
@@ -101,6 +102,7 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/bonaire.h
     blas/functor/include/gcn_dgemm.h
     blas/functor/include/gpu_dtrsm.h
+    blas/functor/include/gpu_dtrsm192.h
     blas/functor/include/BinaryBuild.h
 	blas/functor/include/hawaii_dgemmChannelConflict.h
 	blas/functor/include/hawaii_dgemmSplitKernel.h
@@ -229,7 +231,7 @@ set (SRC_CL_TEMPLATES
 	dgemm_hawaiiSplitKernel.cl
 	sgemm_hawaiiSplitKernel.cl
     dtrsm_gpu.cl
-
+    dtrsm_gpu192.cl
 	dgemm_gcn_SmallMatrices.cl
 	sgemm_gcn_SmallMatrices.cl
 	sgemm_gcn.cl
@@ -239,6 +241,7 @@ set (SRC_CL_TEMPLATES
 set(SRC_CL_TEMPLATES_GEN
     dgemm_hawai.clHawaii_64.bin.cl
     dtrsm_gpu.clHawaii_64.bin.cl
+	dtrsm_gpu192.clHawaii_64.bin.cl
 	dgemm_hawaiiChannelConfilct.clHawaii_64.bin.cl
 	dgemm_hawaiiSplitKernel.clHawaii_64.bin.cl
 	sgemm_hawaiiSplitKernel.clHawaii_64.bin.cl	
