@@ -26,6 +26,7 @@
 #include "hawaii_sgemmBranchKernel.h"
 #include "hawaii_sgemmSplit64_32.h"
 #include "gcn_zgemm.h"
+#include "gpu_dtrsm192.h"
 
 FunctorSelectorHawaii FunctorSelectorHawaii::instance ;
 
@@ -190,6 +191,25 @@ clblasDtrsmFunctor * FunctorSelectorHawaii::select_dtrsm_specific(clblasDtrsmFun
 #else
   clblasDtrsmFunctor * functor;
   
+  
+  if ((args.M % 192 == 0) && (args.N % 192 == 0))
+  {
+	  //TODO: the implementation of sub block being 192 only supports 
+	  //side == right
+	  //uplo == upper
+	  //trans == notrans
+	  //M and N need to be mod192
+	  //subblock being 192 is prefered over 128 on Hawaii device since
+	  //it does not create "boundary" in DGEMM calls
+	  //Hawaii DGEMM calls have better performance when M N K are mod48
+	  if ((args.side == clblasRight) && (args.uplo == clblasUpper) && (args.transA == clblasNoTrans))
+	  {
+		  functor = clblasDtrsm192FunctorGpu::provide(args, "Hawaii");
+		  if (functor)
+			  return functor;
+	  }
+  }
+  //sub block is 128 here
   functor = clblasDtrsmFunctorGpu::provide(args, "Hawaii");
   if (functor) 
     return functor;
