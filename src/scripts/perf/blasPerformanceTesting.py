@@ -94,9 +94,9 @@ def executable(library):
         quit()
     if library == 'clblas':
         if sys.platform == 'win32':
-            exe = 'client.exe'
+            exe = 'clBLAS-client.exe'
         elif sys.platform == 'linux2':
-            exe = './client'
+            exe = './clBLAS-client'
     if library == 'acmlblas':
         if sys.platform == 'win32':
             exe = 'ACMLBlas_client.exe'
