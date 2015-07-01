@@ -75,7 +75,7 @@ public:
         }
         else
         {
-            return 20*buffer_.m_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+            return buffer_.m_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
         }
     }
 
@@ -151,7 +151,7 @@ public:
 
         if (order_option == 0)
         {
-            order_ = clblasRowMajor;
+			buffer_.order_ = clblasRowMajor;
             buffer_.b_num_vectors_ = M;
             if (ldb == 0)
             {
@@ -548,7 +548,7 @@ public:
 
         if (order_option == 0)
         {
-            order_ = clblasRowMajor;
+			buffer_.order_ = clblasRowMajor;
             buffer_.b_num_vectors_ = M;
             if (ldb == 0)
             {
@@ -654,7 +654,7 @@ void
 xTrsm<cl_float>::
 xTrsm_Function(bool flush)
 {
-    clblasStrsm(order_, buffer_.side_, buffer_.uplo_,
+    clblasStrsm(buffer_.order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
@@ -671,7 +671,7 @@ void
 xTrsm<cl_double>::
 xTrsm_Function(bool flush)
 {
-    clblasDtrsm(order_, buffer_.side_, buffer_.uplo_,
+	clblasDtrsm(buffer_.order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
@@ -688,7 +688,7 @@ void
 xTrsm<cl_float2>::
 xTrsm_Function(bool flush)
 {
-    clblasCtrsm(order_, buffer_.side_, buffer_.uplo_,
+	clblasCtrsm(buffer_.order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
@@ -705,7 +705,7 @@ void
 xTrsm<cl_double2>::
 xTrsm_Function(bool flush)
 {
-    clblasZtrsm(order_, buffer_.side_, buffer_.uplo_,
+	clblasZtrsm(buffer_.order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,

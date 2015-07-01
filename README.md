@@ -20,6 +20,24 @@ library does generate and enqueue optimized OpenCL kernels, relieving
 the user from the task of writing, optimizing and maintaining kernel
 code themselves.
 
+## clBLAS update notes 04/2015
+-   A subset of GEMM and TRSM can be off-line compiled for Hawaii, Bonaire and Tahiti device at compile-time. This feature
+    eliminates the overhead of calling clBuildProgram() at run-time.
+-   Off-line compilation can be done with OpenCL 1.1, OpenCL 1.2 and OpenCl 2.0 runtime. However, for better
+    performance OpenCL 2.0 is recommended. Library user can select "OCL_VERSION" from CMake to ensure the library with
+    OpenCL version. It is library user's responsibility to ensure compatible hardware and driver.
+-   Added flags_public.txt file that contains OpenCL compiler flags used by off-line compilation. The flags_public.txt
+    will only be loaded when OCL_VERSION is 2.0.
+-   User can off-line compile one or more supported device by selecting 
+    OCL_OFFLINE_BUILD_BONAIRE_KERNEL
+    OCL_OFFLINE_BUILD_HAWII_KERNEL
+    OCL_OFFLINE_BUILD_TAHITI_KERNEL.
+    However, compile for more than one device at a time might result in running out of heap memory. Thus, compile for
+    one device at a time is recommended.
+-   User may also supply specific OpenCL compiler path with OCL_COMPILER_DIR or the library will load default OpenCL compiler.
+-   The minimum driver requirement for off-line compilation is 14.502.
+    
+
 ## clBLAS library user documentation
 
 [Library and API documentation][] for developers is available online as
@@ -48,15 +66,12 @@ how to contribute code to this open source project. The code in the
 be made against the /develop branch.
 
 ## License
-
-The source for clBLAS is licensed under the [Apache License, Version
-2.0][]
+The source for clBLAS is licensed under the [Apache License, Version 2.0]( http://www.apache.org/licenses/LICENSE-2.0 )
 
 ## Example
+The simple example below shows how to use clBLAS to compute an OpenCL accelerated SGEMM
 
-The simple example below shows how to use clBLAS to compute an OpenCL
-accelerated SGEMM
-
+```c
     #include <sys/types.h>
     #include <stdio.h>
 
@@ -170,42 +185,30 @@ accelerated SGEMM
 
     return ret;
     }
+```
 
 ## Build dependencies
-
 ### Library for Windows
-
--   Windows® 7/8
-
--   Visual Studio 2010 SP1, 2012
-
--   An OpenCL SDK, such as APP SDK 2.9
-
--   Latest CMake
+*  Windows® 7/8
+*  Visual Studio 2010 SP1, 2012
+*  An OpenCL SDK, such as APP SDK 2.8
+*  Latest CMake
 
 ### Library for Linux
-
--   GCC 4.6 and onwards
-
--   An OpenCL SDK, such as APP SDK 2.9
-
--   Latest CMake
+*  GCC 4.6 and onwards
+*  An OpenCL SDK, such as APP SDK 2.9
+*  Latest CMake
 
 ### Library for Mac OSX
-
--   Recommended to generate Unix makefiles with cmake
+*  Recommended to generate Unix makefiles with cmake
 
 ### Test infrastructure
-
--   Googletest v1.6
-
--   ACML on windows/linux; Accelerate on Mac OSX
-
--   Latest Boost
+*  Googletest v1.6
+*  ACML on windows/linux; Accelerate on Mac OSX
+*  Latest Boost
 
 ### Performance infrastructure
-
--   Python
+* Python
 
   [Library and API documentation]: http://clmathlibraries.github.io/clBLAS/
   [clmath@googlegroups.com]: https://groups.google.com/forum/#!forum/clmath

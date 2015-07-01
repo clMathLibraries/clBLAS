@@ -5,16 +5,34 @@ compiler:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq fglrx opencl-headers libboost-program-options-dev
+  - sudo apt-get install -qq fglrx libboost-program-options-dev
 # Uncomment below to help verify the installs above work
 #  - ls -la /usr/lib/libboost*
 #  - ls -la /usr/include/boost
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
+# download OpenCL 1.2 header files since Travis CI only provides 1.1
+  - mkdir -p OpenCLInclude/CL
+  - cd OpenCLInclude/CL
+  #- wget -r --no-parent -nH --cut-dirs=4 --reject="index.html*" https://www.khronos.org/registry/cl/api/1.2/
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl.hpp
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_d3d10.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_d3d11.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_dx9_media_sharing.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_egl.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_ext.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_gl.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_gl_ext.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/cl_platform.h
+  - wget https://www.khronos.org/registry/cl/api/1.2/opencl.h
+  - ls
+  - pwd
+  - cd ../..
   - mkdir -p bin/clBLAS
   - cd bin/clBLAS
-  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DCMAKE_INSTALL_PREFIX:PATH=$PWD/package ../../src
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOPENCL_INCLUDE_DIRS:PATH=$PWD/../../OpenCLInclude -DCMAKE_INSTALL_PREFIX:PATH=$PWD/package ../../src
 
 script: 
   - make install

@@ -25,9 +25,63 @@ option( BUILD_CLIENT "Build a command line clBLAS client program with a variety 
 option( BUILD_KTEST "A command line tool for testing single clBLAS kernel" ON )
 option( BUILD_SHARED_LIBS "Build shared libraries" ON )
 
+#enable or disable offline compilation for different devices. Currently only Hawaii, Bonaire, Tahiti have the option.
+option( OCL_OFFLINE_BUILD_HAWAII_KERNEL "Offline compile the OpenCL kernels for Hawaii device" OFF)
+option( OCL_OFFLINE_BUILD_BONAIRE_KERNEL "Offline compile the OpenCL kernels for Bonaire device" OFF)
+option( OCL_OFFLINE_BUILD_TAHITI_KERNEL "Offline compile the OpenCL kernels for Tathit device" OFF)
+
+if( (OCL_OFFLINE_BUILD_HAWAII_KERNEL AND OCL_OFFLINE_BUILD_BONAIRE_KERNEL) OR (OCL_OFFLINE_BUILD_HAWAII_KERNEL AND OCL_OFFLINE_BUILD_TAHITI_KERNEL) OR (OCL_OFFLINE_BUILD_BONAIRE_KERNEL AND OCL_OFFLINE_BUILD_TAHITI_KERNEL))
+   MESSAGE( WARNING "More than one device is chosen for offline compilation of static kernels. This might result in running out of heap memory with certain driver. Please consider offline compliation for ONE device only." )
+endif( )
+
+if( NOT OCL_OFFLINE_BUILD_HAWAII_KERNEL )
+  #use dynamic generated kernels
+  MESSAGE(STATUS "Build dynamic Hawaii kernels.")
+  MESSAGE(STATUS "Check OCL_OFFLINE_BUILD_HAWAII_KERNEL to build kernls at compile-time. This will eliminates clBuildProgram() overhead and better kernel performance with certain driver.")
+  add_definitions(-DCLBLAS_HAWAII_DYNAMIC_KERNEL) 
+else()
+  MESSAGE(STATUS "Build static Hawaii kernels.")
+  MESSAGE(STATUS "Uncheck OCL_OFFLINE_BUILD_HAWAII_KERNEL to build kernls at run-time")
+  MESSAGE(STATUS "Please ensure the presence of Hawaii device in the system. With certain driver/compiler flags, this might result in compile-time error.")  
+endif( )
+
+if( NOT OCL_OFFLINE_BUILD_BONAIRE_KERNEL )
+  #use dynamic generated kernels
+  MESSAGE(STATUS "Build dynamic Bonaire kernels.")
+  MESSAGE(STATUS "Check OCL_OFFLINE_BUILD_BONAIRE_KERNEL to build kernls at compile-time. This will eliminates clBuildProgram() overhead and better kernel performance with certain driver.")
+  add_definitions(-DCLBLAS_BONAIRE_DYNAMIC_KERNEL) 
+else()
+  MESSAGE(STATUS "Build static Bonaire kernels.")
+  MESSAGE(STATUS "Uncheck OCL_OFFLINE_BUILD_BONAIRE_KERNEL to build kernls at run-time")
+  MESSAGE(STATUS "Please ensure the presence of Bonaire device in the system. With certain driver/compiler flags, this might result in compile-time error.")    
+endif( )
+
+if( NOT OCL_OFFLINE_BUILD_TAHITI_KERNEL )
+  #use dynamic generated kernels
+  MESSAGE(STATUS "Build dynamic Tahiti kernels.")
+  MESSAGE(STATUS "Check OCL_OFFLINE_BUILD_TAHITI_KERNEL to build kernls at compile-time. This will eliminates clBuildProgram() overhead and better kernel performance with certain driver.")
+  add_definitions(-DCLBLAS_TAHITI_DYNAMIC_KERNEL) 
+else( )
+  MESSAGE(STATUS "Build static Tahiti kernels.")
+  MESSAGE(STATUS "Uncheck OCL_OFFLINE_BUILD_TAHITI_KERNEL to build kernls at run-time")
+  MESSAGE(STATUS "Please ensure the presence of Tahiti device in the system. With certain driver/compiler flags, this might result in compile-time error.")    
+endif( )
+
+
+# Ask the user to verify compiler version. If OpenCL 2.0 is supported. Certain public flags can be user
+set( OCL_VERSION "1.2" CACHE STRING "The version of OpenCL supported by your driver/device" )
+set_property( CACHE OCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
+message( STATUS "You have confirmed OpenCL ${OCL_VERSION} is supported in your system" )
+
 # By default test-correctness is linked and tested against ACML library.
 # However, test-correctness can instead use NETLIB as a reference library
-set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+# On Mac OSX systems, this must be set to OFF for the build to succeed (due to nesting of FindBLAS code)
+if ( APPLE )
+	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
+else ( )
+	message(STATUS "CORR_TEST_WITH_ACML set to ON")
+	set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+endif( )
 
 if( CMAKE_GENERATOR MATCHES "NMake" )
   option( NMAKE_COMPILE_VERBOSE "Print compile and link strings to the console" OFF )
@@ -51,7 +105,7 @@ if( NOT DEFINED clBLAS_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_MINOR )
-    set( clBLAS_VERSION_MINOR 4 )
+    set( clBLAS_VERSION_MINOR 6 )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_PATCH )
@@ -117,17 +171,31 @@ if( UNIX )
     set(MATH_LIBRARY "m")
 endif()
 
+# set the path to specific OpenCL compiler
+set( OCL_COMPILER_DIR "OPENCL COMPILER PATH" CACHE PATH "OPENCL COMPILER PATH")
+if ( ${OCL_COMPILER_DIR} STREQUAL "OPENCL COMPILER PATH")
+    message( STATUS "Use default OpenCL Compiler")
+	  set(ENV_PATH "$ENV{PATH}")
+else ()
+    message( STATUS "OPENCL COMPILER: ${OCL_COMPILER_DIR}")
+	if(UNIX)
+	  set(ENV_PATH "${OCL_COMPILER_DIR}")
+	else()
+	  set(ENV_PATH "${OCL_COMPILER_DIR}")
+	endif()
+endif()
+
 # Find the BLAS library
 # TODO: maybe this could be written using the FindBLAS module in the future
 if( BUILD_TEST )
 	if(NOT CORR_TEST_WITH_ACML)
-	        if(APPLE)
-			find_library(BLAS_LIBRARIES Accelerate)
+	    if(APPLE)
+			find_library(BLAS_LIBRARIES Accelerate HINTS /System/Library/Frameworks/Accelerate.framework)
 		       	MARK_AS_ADVANCED(BLAS_LIBRARIES)
 		       	message(STATUS "Using Accelerate framework on Mac OS-X")
-	       	else()
+	    else()
 			find_package( Netlib COMPONENTS BLAS REQUIRED )
-              	endif()
+        endif()
 		else( )
 		# Find ACML BLAS implementation
 		# platform dependent ACML subdirectory
@@ -268,6 +336,7 @@ if( BUILD_PERFORMANCE AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/scripts/perf" )
 endif( )
 
 if( BUILD_RUNTIME AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/library" )
+#	add_subdirectory( library/tools/bingen )
 	add_subdirectory( library )
 	add_subdirectory( library/tools/tune )
 	if( BUILD_KTEST )
@@ -297,7 +366,7 @@ endif( )
 if(WIN32)
   set(destdir CMake)
 else()
-  set(destdir share/clBLAS)
+  set(destdir lib${SUFFIX_LIB}/cmake/clBLAS)
 endif()
 string(REGEX REPLACE "[^/]+" ".." reldir "${destdir}")
 configure_file(

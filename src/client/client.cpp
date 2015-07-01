@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
   cl_double alpha;
   cl_double beta;
   cl_uint profileCount;
+  cl_uint apiCallCount;
   cl_uint commandQueueFlags = 0;
   cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
   int order_option;
@@ -100,7 +101,8 @@ int main(int argc, char *argv[])
     ( "side", po::value<int>( &side_option )->default_value(0), "0 = left, 1 = right. only used with [list of function families]" ) // xtrsm xtrmm
     ( "uplo", po::value<int>( &uplo_option )->default_value(0), "0 = upper, 1 = lower. only used with [list of function families]" )  // xsymv xsyrk xsyr2k xtrsm xtrmm
     ( "diag", po::value<int>( &diag_option )->default_value(0), "0 = unit diagonal, 1 = non unit diagonal. only used with [list of function families]" ) // xtrsm xtrmm
-    ( "profile,p", po::value<cl_uint>( &profileCount )->default_value(20), "Time and report the kernel speed (default: profiling off)" )
+    ( "profile,p", po::value<cl_uint>( &profileCount )->default_value(20), "Time and report the kernel speed (default: 20)" )
+	( "apiCallCount", po::value<cl_uint>(&apiCallCount)->default_value(10), "Time and report the kernel speed on counds of API calls (default: 10)")
 	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"including the time of OpenCL memory allocation and transportation; options:roundtrip, noroundtrip(default)")
 	( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd,rect_mem")
     ;
@@ -488,8 +490,8 @@ int main(int argc, char *argv[])
 
       my_function->initialize_cpu_buffer();
       my_function->initialize_gpu_buffer();
-
-      my_function->call_func(); // do a calculation first to get any compilation out of the way
+	  my_function->setup_apiCallCount(apiCallCount);
+	  my_function->call_func(); // do a calculation first to get any compilation out of the way
       my_function->reset_gpu_write_buffer(); // reset GPU write buffer
   }
   catch( std::exception& exc )
@@ -554,9 +556,7 @@ int main(int argc, char *argv[])
   }
   if(roundtrip=="noroundtrip"||roundtrip=="both")
   {
-  timer.Reset();
-  for( cl_uint i = 0; i < profileCount; ++i )
-  {
+    timer.Reset();
     my_function->setup_buffer( order_option, side_option, uplo_option,
                                  diag_option, transA_option, transB_option,
                                    M, N, K, lda, ldb, ldc, offA, offBX, offCY,
@@ -565,17 +565,20 @@ int main(int argc, char *argv[])
 
     my_function->initialize_cpu_buffer();
     my_function->initialize_gpu_buffer();
-    my_function->call_func();
+	my_function->setup_apiCallCount( apiCallCount );
+	for (cl_uint i = 0; i < profileCount; ++i)
+    {
+		my_function->call_func();
+	}
 	my_function->read_gpu_buffer();
     //my_function->reset_gpu_write_buffer();
 	my_function->releaseGPUBuffer_deleteCPUBuffer();
-  }
 
   if( commandQueueFlags & CL_QUEUE_PROFILING_ENABLE )
   {
     //std::cout << timer << std::endl;
     timer.pruneOutliers( 3.0 );
-    std::cout << "BLAS kernel execution time < ns >: " << my_function->time_in_ns() << std::endl;
+    std::cout << "BLAS kernel execution time < ns >: " << my_function->time_in_ns() / apiCallCount << std::endl;
     std::cout << "BLAS kernel execution Gflops < " <<
       my_function->gflops_formula() << " >: " << my_function->gflops() <<
       std::endl;
