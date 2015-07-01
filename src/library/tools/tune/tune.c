@@ -578,7 +578,7 @@ genKernel(GParam *param, CLBLASKernExtra* extra, MemoryPattern *pattern)
     device = genInfo.targetDevice.id;
 
     setupBuildOpts(bopts, device, pattern);
-    param->kernel = makeKernel(device, genInfo.ctx, genKernel,
+    param->kernel = makeKernel(device, genInfo.ctx, genKernel, NULL /*cl_program*/,
                                param->dims, &param->pgran, extra, bopts, NULL);
     if (param->kernel != NULL) {
         status = clGetProgramInfo(param->kernel->program, CL_PROGRAM_BINARY_SIZES,
@@ -1285,8 +1285,9 @@ generatePrepKernel(
 
     k = makeKernel(
         device,
-        genInfo.ctx,
+        genInfo.ctx,        
         pattern->sops->genKernel,
+        0,
         param->dims,
         &pgran,
         extra,

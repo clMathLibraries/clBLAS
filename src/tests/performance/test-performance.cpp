@@ -593,7 +593,8 @@ static const clblasUplo uploSet[] =
 static const clblasDiag diagSet[] =
     { clblasUnit, clblasNonUnit };
 
-const int sizeRange[] = { 2048, 2800, 4096, 5600 };
+const int sizeRange[]   = { 2048, 2800, 4096, 5600 };
+const int sizeRange48[] = { 41*48, 41*48+24 };
 // Since blas-1 contains only vector arrays, huge vectors has to be provided to reach the peak of the card
 const int blas1sizeRange[] = {4194304, 7840000, 16777216, 31360000 };
 //const int sizeRange[] = { 2800, 4096, 5600};
@@ -655,7 +656,7 @@ INSTANTIATE_TEST_CASE_P(Generic, GEMM, Combine(
 // Custom test - use command line arguments to tweak it
 INSTANTIATE_TEST_CASE_P(Custom, GEMM, Combine(
     ValuesIn(orderSet), ValuesIn(transSet), ValuesIn(transSet),
-    Values(32), Values(32), Values(32),
+    Values(41*48), Values(41*48), Values(41*48),
     Values(ExtraTestSizes()), Values(1)));
 #endif
 

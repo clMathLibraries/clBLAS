@@ -52,6 +52,9 @@ clblasSetup(void)
     // printf("\n%s, line %d\n", __func__, __LINE__);
     initMallocTrace();
 
+
+    clblasInitBinaryCache();
+
     clblasSolvers[CLBLAS_GEMM].nrPatterns =
         initGemmMemPatterns(clblasSolvers[CLBLAS_GEMM].memPatterns);
     clblasSolvers[CLBLAS_GEMM].defaultPattern = -1;
@@ -215,6 +218,13 @@ clblasSetup(void)
     return clblasSuccess;
 }
 
+// TO BE FIXED: is really a uggly hack.
+// The tune tool and some tests are linked with 
+// only a subset of clBLAS that does not contain 
+// the functor related codes. 
+// 
+//void (* _cleanFunctorCachesHook)(void) = 0 ; 
+
 void
 clblasTeardown(void)
 {
@@ -234,6 +244,8 @@ clblasTeardown(void)
 
     // win32 - crashes
     destroyStorageCache();
+
+    cleanFunctorCaches() ;
 
     printMemLeaksInfo();
     releaseMallocTrace();

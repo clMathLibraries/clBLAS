@@ -261,6 +261,11 @@ target_link_libraries(example_sasum ${OPENCL_LIBRARIES} clBLAS)
 set_property( TARGET example_sasum PROPERTY FOLDER "Samples")
 
 # CPack configuration; include the executable into the package
+if( WIN32 )
+    set( CLBLAS_EXAMPLE_INSTALL_DESTINATION bin${SUFFIX_BIN})
+else( )
+    set( CLBLAS_EXAMPLE_INSTALL_DESTINATION share/clBLAS/samples)
+endif()
 install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
          example_ssyr2k example_strmm example_strsm 
          example_strmv example_strsv example_sger example_cher example_ssyr 
@@ -274,13 +279,19 @@ install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
          example_snrm2 example_sasum example_isamax
 
          version
-        RUNTIME DESTINATION bin${SUFFIX_BIN}
-        LIBRARY DESTINATION lib${SUFFIX_LIB}
-        ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+         RUNTIME DESTINATION ${CLBLAS_EXAMPLE_INSTALL_DESTINATION}
+         LIBRARY DESTINATION lib${SUFFIX_LIB}
+         ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
         )
 
 configure_file( "${PROJECT_SOURCE_DIR}/samples/CMakeLists.pack"
 		"${PROJECT_BINARY_DIR}/samples/CMakeLists.txt" COPYONLY )
+		
+if( WIN32 )
+    set( CLBLAS_SAMPLE_INSTALL_DESTINATION samples)
+else( )
+    set( CLBLAS_SAMPLE_INSTALL_DESTINATION share/clBLAS/samples/src)
+endif()
 		
 install(FILES
             example_sgemv.c
@@ -332,5 +343,5 @@ install(FILES
             clBlasVersion.c
             ${PROJECT_BINARY_DIR}/samples/CMakeLists.txt
 
-        DESTINATION
-		    samples )
+            DESTINATION ${CLBLAS_SAMPLE_INSTALL_DESTINATION}
+        )

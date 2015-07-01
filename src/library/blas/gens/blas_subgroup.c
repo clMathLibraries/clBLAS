@@ -148,6 +148,8 @@ calcMergeStepSubgrN(
                                    vecLenC * 16 );//2x8-byte double
             break;
 
+        default:
+          break ;
     }
 
     if( 0==subgPerStep ){
@@ -263,6 +265,8 @@ static int declareSubgrLDS(
 
             break;
 
+        default:  // to avoid compilation warning
+            break;   
     }
 
     kgenAddStmt( pCtx, tmp );

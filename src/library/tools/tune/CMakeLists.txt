@@ -27,6 +27,7 @@ set(TOOLS_SRC
 
 set(TOOLS_EXTERNAL_SRC
     ../../blas/generic/common.c
+    ../../blas/generic/common2.cc
     ../../blas/generic/blas_funcs.c
     ../../blas/init.c
     ../../blas/impl.c
@@ -76,6 +77,7 @@ set(TOOLS_EXTERNAL_SRC
     ../../common/kgen_guard.c
     ../../common/clkern.c
     ../../common/trace_malloc.c
+    ../../common/md5sum.c
     ../../common/gens/dblock_kgen.c
     ../../blas/generic/solution_seq_make.c
     ../../blas/generic/solution_seq.c
@@ -83,21 +85,22 @@ set(TOOLS_EXTERNAL_SRC
     ../../blas/generic/problem_iter.c
     ../../blas/generic/kernel_extra.c
     ../../blas/generic/kdump.c
-	
-	../../blas/gens/trmv_reg.cpp
-	../../blas/gens/ger_lds.cpp
-	../../blas/gens/trsv_trtri.cpp
-	../../blas/gens/trsv_gemv.cpp
-	../../blas/gens/kprintf.cpp
-	../../blas/gens/syr_lds.cpp
-	../../blas/gens/symm_cached.cpp
-	../../blas/gens/gemm_cached.cpp
-	../../blas/gens/gemm_tail_cached.cpp
-	../../blas/gens/syr2_lds.cpp
-	../../blas/gens/her_lds.cpp
-	../../blas/gens/her2_lds.cpp
-	../../blas/gens/gbmv.cpp
-	../../blas/gens/tuned_numbers.c
+    ../../blas/generic/binary_lookup.cc
+    ../../blas/generic/functor_cache.cc
+    ../../blas/gens/trmv_reg.cpp
+    ../../blas/gens/ger_lds.cpp
+    ../../blas/gens/trsv_trtri.cpp
+    ../../blas/gens/trsv_gemv.cpp
+    ../../blas/gens/kprintf.cpp
+    ../../blas/gens/syr_lds.cpp
+    ../../blas/gens/symm_cached.cpp
+    ../../blas/gens/gemm_cached.cpp
+    ../../blas/gens/gemm_tail_cached.cpp
+    ../../blas/gens/syr2_lds.cpp
+    ../../blas/gens/her_lds.cpp
+    ../../blas/gens/her2_lds.cpp
+    ../../blas/gens/gbmv.cpp
+    ../../blas/gens/tuned_numbers.c
     ../../blas/gens/swap_reg.cpp
     ../../blas/gens/scal_reg.cpp
     ../../blas/gens/copy_reg.cpp

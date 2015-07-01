@@ -130,6 +130,19 @@ typedef struct CLBlasKargs {
     reductionType redctnType;   // To store kind of reduction for reduction-framewrok to handle -- enum
 } CLBlasKargs;
 
+
+/**
+ * @internal
+ * @brief Initialize the binary cache (on disk) for OpenCL programs 
+ */
+void clblasInitBinaryCache(void);
+
+/* 
+ * Clear all registered functor caches 
+ */
+void cleanFunctorCaches(void);
+
+
 static __inline bool
 areKernelsCacheable(void)
 {
@@ -213,11 +226,26 @@ getQueueProperties(
     cl_command_queue queue,
     cl_command_queue_properties *props);
 
+
+Kernel
+*makeKernelCached(
+    cl_device_id device,
+    cl_context context,
+    solver_id_t sid,
+    KernelKey * key,
+    SolverKgen kernelGenerator,
+    const SubproblemDim *dims,
+    const PGranularity *pgran,
+    const CLBLASKernExtra *extra,
+    const char *buildOpts,
+    cl_int *error);
+
 Kernel
 *makeKernel(
     cl_device_id device,
     cl_context context,
     SolverKgen kernelGenerator,
+    cl_program program,
     const SubproblemDim *dims,
     const PGranularity *pgran,
     const CLBLASKernExtra *extra,

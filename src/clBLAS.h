@@ -9644,6 +9644,628 @@ clblasZher2k(
     cl_event *events);
 /*@}*/
 
+/**
+ * @brief Helper function to compute leading dimension and size of a matrix
+ *
+ * @param[in] order	matrix ordering
+ * @param[in] rows	number of rows
+ * @param[in] columns	number of column
+ * @param[in] elemsize	element size
+ * @param[in] padding	additional padding on the leading dimension
+ * @param[out] ld	if non-NULL *ld is filled with the leading dimension  
+ *			in elements
+ * @param[out] fullsize	if non-NULL *fullsize is filled with the byte size
+ *
+ * @return
+ *   - \b clblasSuccess for success
+ *   - \b clblasInvalidValue if:
+ *	 - \b elementsize is 0
+ *	 - \b row and \b colums are both equal to 0
+ */
+clblasStatus clblasMatrixSizeInfo(
+	clblasOrder order,
+	size_t rows,
+	size_t columns, 
+	size_t elemsize,
+	size_t padding, 
+	size_t * ld, 
+	size_t * fullsize);
+
+/**
+ * @brief Allocates matrix on device and computes ld and size
+ *
+ * @param[in] context	OpenCL context
+ * @param[in] order	Row/column order.
+ * @param[in] rows	number of rows
+ * @param[in] columns	number of columns
+ * @param[in] elemsize	element size
+ * @param[in] padding	additional padding on the leading dimension
+ * @param[out] ld	if non-NULL *ld is filled with the leading dimension  
+ *			in elements
+ * @param[out] fullsize	if non-NULL *fullsize is filled with the byte size
+ * @param[in] err	Error code (see \b clCreateBuffer() )
+ * 
+ * @return
+ *   - OpenCL memory object of the allocated matrix
+ */
+cl_mem clblasCreateMatrix(
+	cl_context context,
+	clblasOrder order,
+	size_t rows,
+	size_t columns,
+	size_t elemsize,
+	size_t padding,
+	size_t * ld,
+	size_t * fullsize,
+	cl_int * err);
+
+
+/**
+ * @brief Allocates matrix on device with specified size and ld and computes its size
+ *
+ * @param[in] context	OpenCL context
+ * @param[in] order	Row/column order.
+ * @param[in] rows	number of rows
+ * @param[in] columns	number of columns 
+ * @param[in] elemsize	element size
+ * @param[in] padding	additional padding on the leading dimension
+ * @param[out] ld	the length of the leading dimensions. It cannot 
+ *                      be less than \b columns when the \b order parameter is set to
+ *                      \b clblasRowMajor,\n or less than \b rows when the
+ *                      parameter is set to \b clblasColumnMajor.
+ * @param[out] fullsize	if non-NULL *fullsize is filled with the byte size
+ * @param[in] err	Error code (see \b clCreateBuffer() )
+ * 
+ * @return
+ *   - OpenCL memory object of the allocated matrix
+ */
+cl_mem clblasCreateMatrixWithLd( cl_context context,
+                                 clblasOrder order,
+                                 size_t rows,
+                                 size_t columns,
+                                 size_t elemsize,
+                                 size_t ld,
+                                 size_t * fullsize,
+                                 cl_int * err) ;
+
+
+/**
+ * @brief Allocates matrix on device and initialize from existing similar matrix
+ *	  on host. See \b clblasCreateMatrixBuffer().
+ *
+ * @param[in] ld	leading dimension in elements
+ * @param[in] host 	base address of host matrix data
+ * @param[in] off_host 	host matrix offset in elements
+ * @param[in] ld_host 	leading dimension of host matrix in elements
+ * @param[in] command_queue 		specifies the OpenCL queue
+ * @param[in] numEventsInWaitList 	specifies the number of OpenCL events 
+ *	   	    		        to wait for
+ * @param[in] eventWaitList 		specifies the list of OpenCL events to 
+ *					wait for
+ *					
+ * @return
+ *   - OpenCL memory object of the allocated matrix
+ */
+cl_mem clblasCreateMatrixFromHost(
+	cl_context context, 
+	clblasOrder order,
+	size_t rows,
+	size_t columns, 
+	size_t elemsize,
+	size_t ld,
+	void * host,
+	size_t off_host, 
+	size_t ld_host,
+  cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_int * err);
+
+/**
+ * @brief Copies synchronously a sub-matrix from host (A) to device (B).
+ * 
+ * @param[in] order			matrix ordering
+ * @param[in] element_size		element size
+ * @param[in] A				specifies the source matrix on the host
+ * @param[in] offA			specifies the offset of matrix A in 
+ *					elements
+ * @param[in] ldA			specifies the leading dimension of 
+ * 					matrix A in elements
+ * @param[in] nrA			specifies the number of rows of A 
+ *					in elements
+ * @param[in] ncA			specifies the number of columns of A 
+ *					in elements
+ * @param[in] xA			specifies the top-left x position to 
+ * 					copy from A
+ * @param[in] yA			specifies the top-left y position to 
+ * 					copy from A
+ * @param[in] B				specifies the destination matrix on the 
+ *					device
+ * @param[in] offB			specifies the offset of matrix B in 
+ *					elements
+ * @param[in] ldB 			specifies the leading dimension of 
+ * 					matrix B in bytes
+ * @param[in] nrB 			specifies the number of rows of B 
+ *					in elements
+ * @param[in] ncB 			specifies the number of columns of B 
+ *					in elements
+ * @param[in] xB 			specifies the top-left x position to 
+ *					copy from B
+ * @param[in] yB 			specifies the top-left y position to 
+ *					copy from B
+ * @param[in] nx 			specifies the number of elements to 
+ *					copy according to the x dimension (rows)
+ * @param[in] ny 			specifies the number of elements to 
+ *					copy according to the y dimension 
+ *					(columns)
+ * @param[in] command_queue 		specifies the OpenCL queue
+ * @param[in] numEventsInWaitList 	specifies the number of OpenCL events 
+ *	   	    		        to wait for
+ * @param[in] eventWaitList 		specifies the list of OpenCL events to 
+ *					wait for
+ *
+ * @return
+ *   - \b clblasSuccess for success
+ *   - \b clblasInvalidValue if:
+ *	- \b xA + \b offA + \b nx is superior to number of columns of A
+ *      - \b xB + \b offB + \b nx is superior to number of columns of B
+ *      - \b yA + \b ny is superior to number of rows of A
+ *      - \b yB + \b ny is superior to number of rows of B
+ */
+clblasStatus clblasWriteSubMatrix(
+	clblasOrder order,
+	size_t element_size,
+	const void *A, size_t offA, size_t ldA,
+	size_t nrA, size_t ncA,
+	size_t xA, size_t yA,
+	cl_mem B, size_t offB, size_t ldB,
+	size_t nrB, size_t ncB,
+	size_t xB, size_t yB,
+	size_t nx, size_t ny,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a sub-matrix from host (A) to device (B). 
+ *	  See \b clblasWriteSubMatrix().
+ *
+ * @param[out] event 	Event objects per each command queue that identify a 
+ *			particular kernel execution instance.
+ */
+clblasStatus clblasWriteSubMatrixAsync(
+	clblasOrder order,
+	size_t element_size,
+	const void *A, size_t offA, size_t ldA,
+	size_t nrA, size_t ncA,
+	size_t xA, size_t yA,
+	cl_mem B, size_t offB, size_t ldB,
+	size_t nrB, size_t ncB,
+	size_t xB, size_t yB,
+	size_t nx, size_t ny,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *event);
+
+/**
+ * @brief Copies a sub-matrix from device (A) to host (B). 
+ *	  See \b clblasWriteSubMatrix().
+ * 
+ * @param[in] A		specifies the source matrix on the device
+ * @param[in] B		specifies the destination matrix on the host
+ *
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+clblasStatus clblasReadSubMatrix(
+	clblasOrder order,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	size_t nrA, size_t ncA,
+	size_t xA, size_t yA,
+	void *B, size_t offB, size_t ldB,
+	size_t nrB, size_t ncB,
+	size_t xB, size_t yB,
+	size_t nx, size_t ny,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a sub-matrix from device (A) to host (B). 
+ * 	  See \b clblasReadSubMatrix() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasReadSubMatrixAsync(
+	clblasOrder order,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	size_t nrA, size_t ncA,
+	size_t xA, size_t yA,
+	void *B, size_t offB, size_t ldB,
+	size_t nrB, size_t ncB,
+	size_t xB, size_t yB,
+	size_t nx, size_t ny,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *event);
+
+/**
+ * @brief Copies a sub-matrix from device (A) to device (B). 
+ *	  See \b clblasWriteSubMatrix().
+ * 
+ * @param[in] A		specifies the source matrix on the device
+ * @param[in] B		specifies the destination matrix on the device
+ *
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+clblasStatus clblasCopySubMatrix(
+	clblasOrder order,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	size_t nrA, size_t ncA,
+	size_t xA, size_t yA,
+	cl_mem B, size_t offB, size_t ldB,
+	size_t nrB, size_t ncB,
+	size_t xB, size_t yB,
+	size_t nx, size_t ny,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a sub-matrix from device (A) to device (B). 
+ *        See \b clblasCopySubMatrix() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasCopySubMatrixAsync(
+	clblasOrder order,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	size_t nrA, size_t ncA,
+	size_t xA, size_t yA,
+	cl_mem B, size_t offB, size_t ldB,
+	size_t nrB, size_t ncB,
+	size_t xB, size_t yB,
+	size_t nx, size_t ny,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *event);
+
+/**
+ * @brief Copies synchronously a vector from host (A) to device (B). 
+ *	  See \b clblasWriteSubMatrix().
+ * 
+ * @param[in] A		specifies the source vector on the host
+ * @param[in] B		specifies the destination vector on the device
+ *
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+clblasStatus clblasWriteVector(
+	size_t nb_elem,
+	size_t element_size,
+	const void *A, size_t offA,
+	cl_mem B, size_t offB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a vector from host (A) to device (B). 
+ * 	  See \b clblasWriteVector() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasWriteVectorAsync(
+	size_t nb_elem,
+	size_t element_size,
+	const void *A, size_t offA,
+	cl_mem B, size_t offB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events);
+
+/**
+ * @brief Copies synchronously a vector from device (A) to host (B). 
+ *	  See \b clblasReadSubMatrix().
+ * 
+ * @param[in] A		specifies the source vector on the device
+ * @param[in] B		specifies the destination vector on the host
+ *
+ * @return
+ *   - see \b clblasReadSubMatrix()
+ */
+clblasStatus clblasReadVector(
+	size_t nb_elem,
+	size_t element_size,
+	const cl_mem A, size_t offA,
+	void * B, size_t offB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a vector from device (A) to host (B). 
+ * 	  See \b clblasReadVector() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasReadVectorAsync(
+	size_t nb_elem,
+	size_t element_size,
+	const cl_mem A, size_t offA,
+	void * B, size_t offB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events);
+
+/**
+ * @brief Copies synchronously a vector from device (A) to device (B). 
+ *	  See \b clblasCopySubMatrix().
+ * 
+ * @param[in] A		specifies the source vector on the device
+ * @param[in] B		specifies the destination vector on the device
+ *
+ * @return
+ *   - see \b clblasCopySubMatrix()
+ */
+clblasStatus clblasCopyVector(
+	size_t nb_elem,
+	size_t element_size,
+	const cl_mem A, size_t offA,
+	cl_mem B, size_t offB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a vector from device (A) to device (B). 
+ * 	  See \b clblasCopyVector() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasCopyVectorAsync(
+	size_t nb_elem,
+	size_t element_size,
+	const cl_mem A, size_t offA,
+	cl_mem B, size_t offB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events);
+
+/**
+ * @brief Copies synchronously a whole matrix from host (A) to device (B). 
+ *        See \b clblasWriteSubMatrix().
+ * 
+ * @param[in] A		specifies the source matrix on the host
+ * @param[in] B		specifies the destination matrix on the device
+ *
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+clblasStatus clblasWriteMatrix(
+	clblasOrder order,
+	size_t sx, size_t sy,
+	size_t element_size,
+	const void *A, size_t offA, size_t ldA,
+	cl_mem B, size_t offB, size_t ldB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a vector from host (A) to device (B). 
+ *        See \b clblasWriteMatrix() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasWriteMatrixAsync(
+	clblasOrder order,
+	size_t sx, size_t sy,
+	size_t element_size,
+	const void *A, size_t offA, size_t ldA,
+	cl_mem B, size_t offB, size_t ldB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events);
+
+/**
+ * @brief Copies synchronously a whole matrix from device (A) to host (B). 
+ *	  See \b clblasReadSubMatrix().
+ * 
+ * @param[in] A		specifies the source vector on the device
+ * @param[in] B		specifies the destination vector on the host
+ *
+ * @return
+ *   - see \b clblasReadSubMatrix()
+ */
+clblasStatus clblasReadMatrix(
+	clblasOrder order,
+	size_t sx, size_t sy,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	void * B, size_t offB, size_t ldB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a vector from device (A) to host (B). 
+ *        See \b clblasReadMatrix() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasReadMatrixAsync(
+	clblasOrder order,
+	size_t sx, size_t sy,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	void * B, size_t offB, size_t ldB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events);
+
+/**
+ * @brief Copies synchronously a whole matrix from device (A) to device (B). 
+ *	  See \b clblasCopySubMatrix().
+ * 
+ * @param[in] A		specifies the source matrix on the device
+ * @param[in] B		specifies the destination matrix on the device
+ *
+ * @return
+ *   - see \b clblasCopySubMatrix()
+ */
+clblasStatus clblasCopyMatrix(
+	clblasOrder order,
+	size_t sx, size_t sy,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	cl_mem B, size_t offB, size_t ldB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList);
+
+/**
+ * @brief Copies asynchronously a vector from device (A) to device (B). 
+ *        See \b clblasCopyMatrix() and \b clblasWriteSubMatrixAsync().
+ */
+clblasStatus clblasCopyMatrixAsync(
+	clblasOrder order,
+	size_t sx, size_t sy,
+	size_t element_size,
+	const cl_mem A, size_t offA, size_t ldA,
+	cl_mem B, size_t offB, size_t ldB,
+	cl_command_queue command_queue,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events);
+
+/**
+ * @brief Fill synchronously a vector with a pattern of a size element_size_bytes
+ * 
+ * @param[in] nb_elem             specifies the number of element in buffer A
+ * @param[in] element_size        specifies the size of one element of A. Supported sizes correspond 
+ *                                element size used in clBLAS (1,2,4,8,16)
+ * @param[in] A		          specifies the source vector on the device
+ * @param[in] offA                specifies the offset of matrix A in 
+ *				  elements
+ * @param[in] pattern             specifies the host address of the pattern to fill with (element_size_bytes)
+ * @param[in] command_queue 	  specifies the OpenCL queue
+ * @param[in] numEventsInWaitList specifies the number of OpenCL events 
+ *	   	    		  to wait for
+ * @param[in] eventWaitList 	  specifies the list of OpenCL events to 
+ *				  wait for
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+clblasStatus clblasFillVector(
+     size_t nb_elem,
+     size_t element_size,
+     cl_mem A, size_t offA,
+     const void * host,
+     cl_command_queue command_queue,
+     cl_uint numEventsInWaitList,
+     const cl_event *eventWaitList);
+
+/**
+ * @brief Fill asynchronously a vector with a pattern of a size element_size_bytes
+ *	  See \b clblasFillVector().
+ */
+clblasStatus clblasFillVectorAsync(
+     size_t nb_elem,
+     size_t element_size,
+     cl_mem A, size_t offA,
+     const void * pattern,
+     cl_command_queue command_queue,
+     cl_uint numEventsInWaitList,
+     const cl_event *eventWaitList,
+     cl_event *event);
+
+/**
+ * @brief Fill synchronously a matrix with a pattern of a size element_size_bytes
+ * 
+ * @param[in] order               specifies the matrix order
+ * @param[in] element_size        specifies the size of one element of A. Supported sizes correspond 
+ *                                element size used in clBLAS (1,2,4,8,16)
+ * @param[in] A		          specifies the source vector on the device
+ * @param[in] offA                specifies the offset of matrix A in 
+ * @param[in] ldA                 specifies the leading dimension of A
+ * @param[in] nrA                 specifies the number of row in A
+ * @param[in] ncA                 specifies the number of column in A
+ * @param[in] pattern             specifies the host address of the pattern to fill with (element_size_bytes)
+ * @param[in] command_queue 	  specifies the OpenCL queue
+ * @param[in] numEventsInWaitList specifies the number of OpenCL events to wait for
+ * @param[in] eventWaitList 	  specifies the list of OpenCL events to wait for
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+clblasStatus clblasFillMatrix(
+     clblasOrder order,
+     size_t element_size,
+     cl_mem A, size_t offA, size_t ldA,
+     size_t nrA, size_t ncA,
+     const void *pattern,
+     cl_command_queue command_queue,
+     cl_uint numEventsInWaitList,
+     const cl_event *eventWaitList);
+
+
+/**
+ * @brief Partially fill a sub-matrix with a pattern of a size element_size_bytes 
+ *        
+ * 
+ * @param[in] order               specifies the matrix order
+ * @param[in] element_size        specifies the size of one element of A. Supported values 
+ *                                are to element sizes used in clBLAS - that is 1, 2, 4, 8 or 16 
+ * @param[in] offA                specifies the offset of matrix A in elements
+ * @param[in] ldA                 specifies the leading dimension of A in elements
+ * @param[in] nrA		  specifies the number of rows of A 
+ *				  in elements
+ * @param[in] ncA		  specifies the number of columns of A 
+ *				  in elements
+ * @param[in] xA		  specifies the top-left x position to 
+ * 				  copy from A
+ * @param[in] yA		  specifies the top-left y position to 
+ * 				  copy from A
+ * @param[in] nx 		  specifies the number of elements to 
+ *				  copy according to the x dimension (rows)
+ * @param[in] ny 		  specifies the number of elements to 
+ *				  copy according to the y dimension 
+ *				  (columns)
+ * @param[in] pattern             specifies the host address of the pattern to fill with (element_size_bytes)
+ * @param[in] command_queue 	  specifies the OpenCL queue
+ * @param[in] numEventsInWaitList specifies the number of OpenCL events to wait for
+ * @param[in] eventWaitList 	  specifies the list of OpenCL events to wait for
+ * @return
+ *   - see \b clblasWriteSubMatrix()
+ */
+
+clblasStatus clblasFillSubMatrix(
+     clblasOrder order,
+     size_t element_size,
+     cl_mem A, size_t offA, size_t ldA,
+     size_t nrA, size_t ncA,
+     size_t xA, size_t yA,
+     size_t nx, size_t ny,
+     const void *pattern,
+     cl_command_queue command_queue,
+     cl_uint numEventsInWaitList,
+     const cl_event *eventWaitList);
+
+/**
+ * @brief Asynchronous asynchronously fill a sub-matrix with a pattern of a size element_size_bytes  
+ *	  See \b clblasFillSubMatrix().
+ */
+clblasStatus clblasFillSubMatrixAsync(
+     clblasOrder order,
+     size_t element_size,
+     cl_mem A, size_t offA, size_t ldA,
+     size_t sxA, size_t syA,
+     int xA, int yA,
+     size_t nx, size_t ny,
+     const void *host,
+     cl_command_queue command_queue,
+     cl_uint numEventsInWaitList,
+     const cl_event *eventWaitList,
+     cl_event *event);
 
 
 

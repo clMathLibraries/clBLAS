@@ -315,16 +315,16 @@ if( GTEST_FOUND )
 	    # gcc > 4.3.2 to support ACML.  
 	    # If the runtime is being built by the project, use it, otherwise link to a runtime library specified in the install prefix
 	    if( BUILD_RUNTIME )
-		    target_link_libraries(test-correctness ${ACML_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
-		    target_link_libraries(test-medium ${ACML_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
-		    target_link_libraries(test-short ${ACML_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
+		    target_link_libraries(test-correctness ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
+		    target_link_libraries(test-medium ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
+		    target_link_libraries(test-short ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
 	    else( )
 		    target_link_libraries(test-correctness
-			    ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library})
+			    ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${THREAD_LIBRARY} ${runtime.library})
 		    target_link_libraries(test-medium
-			    ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library})
+			    ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${THREAD_LIBRARY} ${runtime.library})
 		    target_link_libraries(test-short
-			    ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${runtime.library})
+			    ${ACML_LIBRARIES} ${GTEST_LIBRARIES} ${OPENCL_LIBRARIES} ${THREAD_LIBRARY}  ${runtime.library})
 	    endif( )
 	else( )
 		#Link against the netlib reference library
@@ -353,13 +353,13 @@ if( GTEST_FOUND )
 		
 	    if( BUILD_RUNTIME )
 			if( NETLIB_FOUND )
-				target_link_libraries(test-correctness ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
-				target_link_libraries(test-medium ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
-				target_link_libraries(test-short ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
+				target_link_libraries(test-correctness ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
+				target_link_libraries(test-medium ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
+				target_link_libraries(test-short ${Netlib_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
 			else( )
-				target_link_libraries(test-correctness ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
-				target_link_libraries(test-medium ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
-				target_link_libraries(test-short ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} clBLAS)
+				target_link_libraries(test-correctness ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
+				target_link_libraries(test-medium ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
+				target_link_libraries(test-short ${BLAS_LIBRARIES} ${GTEST_LIBRARIES} ${THREAD_LIBRARY} clBLAS)
 			endif( )
 		else( )
 			if( NETLIB_FOUND )
@@ -405,12 +405,12 @@ if( GTEST_FOUND )
 		add_executable(test-performance ${SRC_PERF} ${SRC_COMMON}
 			${SRC_COMMON_TIMER} ${PERF_HEADERS} ${TESTS_HEADERS}
 			${SRC_COMMON_REFIMPL})
-		target_link_libraries(test-performance ${ACML_LIBRARIES})
+		target_link_libraries(test-performance ${ACML_LIBRARIES} ${THREAD_LIBRARY})
         set_target_properties( test-performance PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 
 		if( BUILD_RUNTIME )
-			target_link_libraries(test-performance ${GTEST_LIBRARIES} ${TIME_LIBRARY} clBLAS)
+			target_link_libraries(test-performance ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${THREAD_LIBRARY} clBLAS)
 		else()
 			target_link_libraries( test-performance ${GTEST_LIBRARIES} ${TIME_LIBRARY} ${OPENCL_LIBRARIES} ${runtime.library} )
 		endif()

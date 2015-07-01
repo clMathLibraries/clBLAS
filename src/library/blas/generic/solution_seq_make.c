@@ -584,10 +584,12 @@ makeSolutionSeq(
 					printf("Build options used : %s\n", bopts);
 					#endif
 
-                    kernel = makeKernel(key.device, key.context,
+                    kernel = makeKernelCached(key.device, key.context,
+                                              sid, &key,
                                         pattern->sops->genKernel,
                                         &dims[firstDimIdx], &step->pgran,
                                         &extra, bopts, &err);
+
                 }
 
                 if (kernel == NULL) {
