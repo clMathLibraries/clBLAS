@@ -246,8 +246,9 @@ public:
         props_[2] = 0;
         ctx_ = clCreateContext(props_, 1, &device_, NULL, NULL, &err);
         OPENCL_V_THROW(err, "creating context");
-        queue_ = clCreateCommandQueue(ctx_, device_, 0, &err);
-
+        for (unsigned int i = 0; i < numQueues; i++) {
+          queues_[i] = clCreateCommandQueue(ctx_, device_, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+        }
 
         timer_id = timer.getUniqueID( "clfunc", 0 );
 
@@ -258,7 +259,9 @@ public:
         err = clblasSetup();
         if (err != CL_SUCCESS) {
             std::cerr << "clblasSetup() failed with %d\n";
-            clReleaseCommandQueue(queue_);
+            for (unsigned int i = 0; i < numQueues; i++) {
+              clReleaseCommandQueue(queues_[i]);
+            }
             clReleaseContext(ctx_);
         }
     }
@@ -266,8 +269,10 @@ public:
     virtual ~clblasFunc()
     {
         clblasTeardown();
-        OPENCL_V_THROW( clReleaseCommandQueue(queue_),
-                        "releasing command queue" );
+        
+        for (unsigned int i = 0; i < numQueues; i++) {
+          OPENCL_V_THROW( clReleaseCommandQueue(queues_[i]), "releasing command queue" );
+        }
         OPENCL_V_THROW( clReleaseContext(ctx_), "releasing context" );
     }
 
@@ -337,7 +342,8 @@ protected:
     cl_device_id device_;
     cl_context_properties props_[3];
     cl_context ctx_;
-    cl_command_queue queue_;
+    static const unsigned int numQueues = 4;
+    cl_command_queue queues_[numQueues];
     clblasOrder order_;
     cl_event event_;
     size_t maxMemAllocSize;

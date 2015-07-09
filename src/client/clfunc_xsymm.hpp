@@ -89,7 +89,7 @@ public:
   void read_gpu_buffer()
 	{
 		cl_int err;
-		err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+		err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE,
 			                      buffer.offc * sizeof(T), buffer.ldc * buffer.N *
                                        sizeof(T),
 								  buffer.cpuC, 0, NULL, NULL);
@@ -389,14 +389,14 @@ void xSymm<T>::initialize_gpu_buffer()
 {
   cl_int err;
 
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(T),
                               buffer.a_num_vectors * buffer.lda*sizeof(T),
                               buffer.cpuA, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE, 0,
                               buffer.ldb*buffer.N*sizeof(T),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(T),
                               buffer.cpuC, 0, NULL, NULL);
 }
@@ -405,7 +405,7 @@ template <typename T>
 void xSymm<T>::reset_gpu_write_buffer()
 {
   cl_int err;
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(T),
                               buffer.cpuC, 0, NULL, NULL);
 }
@@ -416,7 +416,7 @@ void xSymm<cl_float>::call_func()
   timer.Start(timer_id);
   clblasSsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -439,23 +439,23 @@ void xSymm<cl_float>::roundtrip_func()
                                     buffer.N*buffer.ldc*sizeof(cl_float),
                                     NULL, &err);
   //initialize gpu buffer
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(cl_float),
                               buffer.a_num_vectors * buffer.lda*sizeof(cl_float),
                               buffer.cpuA, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE, 0,
                               buffer.ldb*buffer.N*sizeof(cl_float),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(cl_float),
                               buffer.cpuC, 0, NULL, NULL);
   //call func
   clblasSsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,NULL);
   //read gpu buffer
-  err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+  err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE,
 			                      buffer.offc * sizeof(cl_float), buffer.ldc * buffer.N *
                                        sizeof(cl_float),
 								  buffer.cpuC, 0, NULL, &event_);
@@ -469,7 +469,7 @@ void xSymm<cl_double>::call_func()
   timer.Start(timer_id);
   clblasDsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -492,23 +492,23 @@ void xSymm<cl_double>::roundtrip_func()
                                     buffer.N*buffer.ldc*sizeof(cl_double),
                                     NULL, &err);
   //initialize gpu buffer
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(cl_double),
                               buffer.a_num_vectors * buffer.lda*sizeof(cl_double),
                               buffer.cpuA, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE, 0,
                               buffer.ldb*buffer.N*sizeof(cl_double),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(cl_double),
                               buffer.cpuC, 0, NULL, NULL);
   //call func
   clblasDsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,NULL);
   //read gpu buffer
-  err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+  err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE,
 			                      buffer.offc * sizeof(cl_double), buffer.ldc * buffer.N *
                                        sizeof(cl_double),
 								  buffer.cpuC, 0, NULL, &event_);
@@ -522,7 +522,7 @@ void xSymm<cl_float2>::call_func()
   timer.Start(timer_id);
   clblasCsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -545,23 +545,23 @@ void xSymm<cl_float2>::roundtrip_func()
                                     buffer.N*buffer.ldc*sizeof(cl_float2),
                                     NULL, &err);
   //initialize gpu buffer
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(cl_float2),
                               buffer.a_num_vectors * buffer.lda*sizeof(cl_float2),
                               buffer.cpuA, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE, 0,
                               buffer.ldb*buffer.N*sizeof(cl_float2),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(cl_float2),
                               buffer.cpuC, 0, NULL, NULL);
   //call func
   clblasCsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,NULL);
   //read gpu buffer
-  err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+  err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE,
 			                      buffer.offc * sizeof(cl_float2), buffer.ldc * buffer.N *
                                        sizeof(cl_float2),
 								  buffer.cpuC, 0, NULL, &event_);
@@ -575,7 +575,7 @@ void xSymm<cl_double2>::call_func()
   timer.Start(timer_id);
   clblasZsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -598,23 +598,23 @@ void xSymm<cl_double2>::roundtrip_func()
                                     buffer.N*buffer.ldc*sizeof(cl_double2),
                                     NULL, &err);
   //initialize gpu buffer
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(cl_double2),
                               buffer.a_num_vectors * buffer.lda*sizeof(cl_double2),
                               buffer.cpuA, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE, 0,
                               buffer.ldb*buffer.N*sizeof(cl_double2),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(cl_double2),
                               buffer.cpuC, 0, NULL, NULL);
   //call func
   clblasZsymm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,NULL);
   //read gpu buffer
-  err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+  err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE,
 			                      buffer.offc * sizeof(cl_double2), buffer.ldc * buffer.N *
                                        sizeof(cl_double2),
 								  buffer.cpuC, 0, NULL, &event_);

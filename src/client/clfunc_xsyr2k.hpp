@@ -324,19 +324,19 @@ public:
     {
         cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(T),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(T),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(T),
                                    buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(T),
                                    buffer_.b_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
                                    buffer_.offC_ * sizeof(T),
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
@@ -347,7 +347,7 @@ public:
     {
         cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_c_, CL_TRUE, 0,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, 0,
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
                                    buffer_.c_, 0, NULL, NULL);
@@ -355,7 +355,7 @@ public:
 	void read_gpu_buffer()
 	{
 		cl_int err;
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
 								  buffer_.offC_ * sizeof(T),
 								  buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
@@ -603,7 +603,7 @@ call_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -634,8 +634,8 @@ roundtrip_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
-	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
 								  buffer_.offC_ * sizeof(float),
 								  buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(float),
@@ -655,7 +655,7 @@ call_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -686,8 +686,8 @@ roundtrip_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
-	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
 								  buffer_.offC_ * sizeof(double),
 								  buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(double),
@@ -707,7 +707,7 @@ call_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -738,8 +738,8 @@ roundtrip_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
-	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
 								  buffer_.offC_ * sizeof(cl_float2),
 								  buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(cl_float2),
@@ -774,7 +774,7 @@ call_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -804,8 +804,8 @@ roundtrip_func()
                       buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                       buffer_.lda_, buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                       buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                      buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
-	err = clEnqueueReadBuffer(queue_, buffer_.buf_c_, CL_TRUE,
+                      buffer_.ldc_, numQueues, queues_, 0, NULL, NULL);
+	err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
 								  buffer_.offC_ * sizeof(cl_double2),
 								  buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(cl_double2),

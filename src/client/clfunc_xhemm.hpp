@@ -117,7 +117,7 @@ public:
   void read_gpu_buffer()
 	{
 		cl_int err;
-		err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE,
+		err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE,
 			                    buffer.offc * sizeof(T),
 								buffer.ldc*buffer.N*sizeof(T),
 								buffer.cpuC,0,NULL,NULL);
@@ -470,16 +470,16 @@ void xHemm<T>::initialize_gpu_buffer()
 {
   cl_int err;
 
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(T),
                               buffer.a_num_vectors * buffer.lda*sizeof(T),
                               buffer.cpuA, 0, NULL, NULL);
 
-  err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE,
 	                          buffer.offb * sizeof(T),
                               buffer.ldb*buffer.N*sizeof(T),
                               buffer.cpuB, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE,
 							  buffer.offc * sizeof(T),
                               buffer.ldc*buffer.N*sizeof(T),
                               buffer.cpuC, 0, NULL, NULL);
@@ -489,7 +489,7 @@ template <typename T>
 void xHemm<T>::reset_gpu_write_buffer()
 {
   cl_int err;
-  err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE, 0,
                               buffer.ldc*buffer.N*sizeof(T),
                               buffer.cpuC, 0, NULL, NULL);
 }
@@ -500,7 +500,7 @@ void xHemm<cl_float2>::call_func()
   timer.Start(timer_id);
   clblasChemm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -523,26 +523,26 @@ void xHemm<cl_float2>::roundtrip_func()
                                     buffer.N*buffer.ldc*sizeof(cl_float2),
                                     NULL, &err);
 	//write gpu buffer
-	err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+	err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(cl_float2),
                               buffer.a_num_vectors * buffer.lda*sizeof(cl_float2),
                               buffer.cpuA, 0, NULL, NULL);
 
-    err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE,
+    err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE,
 	                          buffer.offb * sizeof(cl_float2),
                               buffer.ldb*buffer.N*sizeof(cl_float2),
                               buffer.cpuB, 0, NULL, NULL);
-    err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE,
+    err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE,
 							  buffer.offc * sizeof(cl_float2),
                               buffer.ldc*buffer.N*sizeof(cl_float2),
                               buffer.cpuC, 0, NULL, NULL);
 
 	clblasChemm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,NULL);
 	//read gpu buffer
-	err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE, 
+	err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE, 
 							  buffer.offc * sizeof(cl_float2),
                               buffer.ldc*buffer.N*sizeof(cl_float2),
                               buffer.cpuC, 0, NULL, &event_);
@@ -556,7 +556,7 @@ void xHemm<cl_double2>::call_func()
   timer.Start(timer_id);
   clblasZhemm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -578,26 +578,26 @@ void xHemm<cl_double2>::roundtrip_func()
                                     buffer.N*buffer.ldc*sizeof(cl_double2),
                                     NULL, &err);
 	//write gpu buffer
-	err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+	err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(cl_double2),
                               buffer.a_num_vectors * buffer.lda*sizeof(cl_double2),
                               buffer.cpuA, 0, NULL, NULL);
 
-    err = clEnqueueWriteBuffer(queue_, buffer.B, CL_TRUE,
+    err = clEnqueueWriteBuffer(queues_[0], buffer.B, CL_TRUE,
 	                          buffer.offb * sizeof(cl_double2),
                               buffer.ldb*buffer.N*sizeof(cl_double2),
                               buffer.cpuB, 0, NULL, NULL);
-    err = clEnqueueWriteBuffer(queue_, buffer.C, CL_TRUE,
+    err = clEnqueueWriteBuffer(queues_[0], buffer.C, CL_TRUE,
 							  buffer.offc * sizeof(cl_double2),
                               buffer.ldc*buffer.N*sizeof(cl_double2),
                               buffer.cpuC, 0, NULL, NULL);
 
 	clblasZhemm(buffer.order, buffer.side, buffer.uplo, buffer.M, buffer.N,
       buffer.alpha, buffer.A, buffer.offa, buffer.lda, buffer.B, buffer.offb,
-      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, 1, &queue_,
+      buffer.ldb, buffer.beta, buffer.C, buffer.offc, buffer.ldc, numQueues, queues_,
       0, NULL,NULL);
 	//read gpu buffer
-	err = clEnqueueReadBuffer(queue_, buffer.C, CL_TRUE, 
+	err = clEnqueueReadBuffer(queues_[0], buffer.C, CL_TRUE, 
 							  buffer.offc * sizeof(cl_double2),
                               buffer.ldc*buffer.N*sizeof(cl_double2),
                               buffer.cpuC, 0, NULL, &event_);
