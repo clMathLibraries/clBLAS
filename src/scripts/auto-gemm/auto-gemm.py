@@ -9,9 +9,13 @@
 #   5) list to add to src/library/blas/functor/gcn_zgemm.cc:23
 # TODO
 # - after writing kernel files, make list of valid micro tiles for correct size list
+# - zgemm() call is in xgemm.cc
+# - one functions writes every combination to a file, while one reads from that file, therefore manual intervention for deleting slow kernels
+# - estimating occupancy for a kernel (low occupancy remove it?)
+# - if more threads than loads put in a if statement
+# - can I loop over remaining k partial block
 ################################################################################
 
-#from gemm import GemmTileOpenCLKernel
 import sys
 import getopt
 
@@ -39,8 +43,8 @@ def main(argv):
 def processAllKernelParameterCombinations(argv):
 
 # enumerate which kernels to generate
-  listPrecision = [ "s", "d", "c", "z" ]
-  listOrder = [ "ColumnMajor", "RowMajor" ]
+  precision = "d"
+  listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
   listTrans = [
     [ "N", "N" ],
     [ "T", "N" ],
@@ -100,36 +104,32 @@ def processAllKernelParameterCombinations(argv):
 
   listUnroll = [ 8, 4, 2, 1 ]
 
-  kernelSelectionLogic = KernelSelectionLogic(listPrecision, listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
+  kernelSelectionLogic = KernelSelectionLogic(listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
 
   # for each kernel parameter combination
-  for precision in listPrecision:
-    print precision + "gemm:"
-    kernelSelectionLogic.newPrecision(precision)
-    for order in listOrder:
-      kernelSelectionLogic.newOrder(order)
-      for trans in listTrans:
-        kernelSelectionLogic.newTrans(trans)
-        for beta in listBeta:
-          kernelSelectionLogic.newBeta(beta)
-          for workGroupDim in listWorkGroupDims:
-            for microTileDim in listMicroTileDims:
-              for unroll in listUnroll:
-                # set kernel parameters
-                kernel = GemmTileOpenCLKernel()
-                kernel.precision = precision
-                kernel.order = order
-                kernel.transA = trans[0]
-                kernel.transB = trans[1]
-                kernel.beta = beta
-                kernel.wgNumRows = workGroupDim[0]
-                kernel.wgNumCols = workGroupDim[1]
-                kernel.microTileNumRows = microTileDim[0]
-                kernel.microTileNumCols = microTileDim[1]
-                kernel.unroll = unroll
-                # process kernel parameters
-                processKernel(kernel, kernelSelectionLogic)
-    print "\n"
+  for order in listOrder:
+    kernelSelectionLogic.newOrder(order)
+    for trans in listTrans:
+      kernelSelectionLogic.newTrans(trans)
+      for beta in listBeta:
+        kernelSelectionLogic.newBeta(beta)
+        for workGroupDim in listWorkGroupDims:
+          for microTileDim in listMicroTileDims:
+            for unroll in listUnroll:
+              # set kernel parameters
+              kernel = GemmTileOpenCLKernel()
+              kernel.precision = precision
+              kernel.order = order
+              kernel.transA = trans[0]
+              kernel.transB = trans[1]
+              kernel.beta = beta
+              kernel.wgNumRows = workGroupDim[0]
+              kernel.wgNumCols = workGroupDim[1]
+              kernel.microTileNumRows = microTileDim[0]
+              kernel.microTileNumCols = microTileDim[1]
+              kernel.unroll = unroll
+              # process kernel parameters
+              processKernel(kernel, kernelSelectionLogic)
   kernelSelectionLogic.finish()
   kernelSelectionLogic.writeToFile()
 
@@ -169,6 +169,8 @@ def processKernel(kernel, kernelSelectionLogic):
     #print "Processing: " + kernelName
     validParameterCombinations += 1
   else:
+    errorString = kernel.ks
+    print kernelName + " - ERROR - " + errorString
     #print "ERROR:      " + kernelName + " - skipping"
     return
 
@@ -212,7 +214,7 @@ class GemmTileOpenCLKernel:
   ##############################################################################
   def __init__(self):
     self.precision = "s" # s, d, c, z
-    self.order = "ColumnMajor" # column, row
+    self.order = "clblasColumnMajor" # column, row
     self.transA = "N" # N, T
     self.transB = "N" # N, T
     self.beta = 1
@@ -253,8 +255,11 @@ class GemmTileOpenCLKernel:
   def kernelParamsValid(self):
     numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll)%(self.wgNumRows*self.wgNumCols)
     numBLoadsR = (self.wgNumCols*self.microTileNumCols*self.unroll)%(self.wgNumRows*self.wgNumCols)
-    if (numALoadsR or numALoadsR) > 0:
-      self.ks = "ERROR: mismatch between tile dimentions and unroll; cannot do simple global->local load"
+    if (numALoadsR):
+      self.ks = "(%2d * %d * %d = %3d) A elements can't be loaded by (%2d * %2d = %3d) threads" % (self.wgNumRows,self.microTileNumRows,self.unroll,(self.wgNumRows*self.microTileNumRows*self.unroll),self.wgNumRows,self.wgNumCols,(self.wgNumRows*self.wgNumCols))
+      return False
+    elif (numBLoadsR):
+      self.ks = "(%2d * %d * %d = %3d) B elements can't be loaded by (%2d * %2d = %3d) threads" % (self.wgNumCols,self.microTileNumCols,self.unroll,(self.wgNumCols*self.microTileNumCols*self.unroll),self.wgNumRows,self.wgNumCols,(self.wgNumRows*self.wgNumCols))
       return False
     else:
       return True
@@ -298,17 +303,17 @@ class GemmTileOpenCLKernel:
     # global memory indices
     # A
     self.ks += "\n// global memory indices\n"
-    if (self.order=="ColumnMajor")==(self.transA==0):
+    if (self.order=="clblasColumnMajor")==(self.transA==0):
       self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))\n"
     else:
       self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))\n"
     # B
-    if (self.order=="ColumnMajor")==(self.transB==0):
+    if (self.order=="clblasColumnMajor")==(self.transB==0):
       self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))\n"
     else:
       self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))\n"
     # C
-    if (self.order=="ColumnMajor"):
+    if (self.order=="clblasColumnMajor"):
       self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((COL)*ldc+(ROW))\n"
     else:
       self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((ROW)*ldc+(COL))\n"
@@ -555,7 +560,6 @@ class KernelSelectionLogic:
   # default constructor
   ##############################################################################
   def __init__(self, \
-      listPrecision, \
       listOrder, \
       listTrans, \
       listBeta, \
@@ -566,50 +570,26 @@ class KernelSelectionLogic:
 
     self.listMicroTileSizes = listMicroTileSizes
 
-    self.logic = "" # logic string
-    self.precisionInitialized = False
+    self.logic = "xgemmSelectKernel( " # logic string
     self.orderInitialized = False
     self.transInitialized = False
     self.betaInitialized = False
     self.previousTileSize = 0
 
-
-  ####################################
-  # new precision
-  def newPrecision(self, precision):
-    #self.logic += "// newPrecision\n"
-    if (self.precisionInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab + "}\n" # 4 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
-      self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
-      self.logic += self.zeroIndent
-      self.logic += "} else if (precision == " + precision + ") {\n"
-    else:
-      self.logic += self.zeroIndent
-      self.logic += "if (precision == " + precision + ") {\n"
-      self.precisionInitialized = True
-    self.orderInitialized = False
-    #self.logic += "// uninitialized order " + str(self.orderInitialized) + "\n"
-    self.transInitialized = False
-    self.betaInitialized = False
-    self.previousTileSize = 0
-    self.kernelInitialized = False
 
   ####################################
   # new order
   def newOrder(self, order):
-    #self.logic += "// newOrder " + str(self.orderInitialized) + "\n"
     if (self.orderInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab + "}\n" # 4 tabs
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
       self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
-      self.logic += self.zeroIndent+self.tab # 1 self.tab
-      self.logic += "} else if (order == " + order + ") {\n"
+      self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
+      self.logic += self.zeroIndent
+      self.logic += "} else "
     else:
-      self.logic += self.zeroIndent+self.tab # 1 self.tab
-      self.logic += "if (order == " + order + ") {\n"
-      self.orderInitialized = True
+      self.logic += self.zeroIndent
+    self.logic += "if (order == " + order + ") {\n"
+    self.orderInitialized = True
     self.transInitialized = False
     self.betaInitialized = False
     self.previousTileSize = 0
@@ -618,31 +598,44 @@ class KernelSelectionLogic:
   ####################################
   # new trans
   def newTrans(self, trans):
-    #self.logic += "// newTrans\n"
     if (self.transInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab + "}\n" # 4 tabs
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab # 2 self.tabs
-      self.logic += "} else if (transA == " + trans[0] + " && transB == " + trans[1] + ") {\n"
+      self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
+      self.logic += self.zeroIndent+self.tab # 1 tab
+      self.logic += "} else "
     else:
-      self.logic += self.zeroIndent+self.tab+self.tab # 2 self.tabs
-      self.logic += "if (transA == " + trans[0] + " && transB == " + trans[1] + ") {\n"
-      self.transInitialized = True
+      self.logic += self.zeroIndent+self.tab # 1 tabs
+    self.logic += "if (transA == "
+    if trans[0] == "N":
+      self.logic += "clblasNoTrans"
+    else:
+      self.logic += "clblasTrans"
+    self.logic += " && transB == "
+    if trans[1] == "N":
+      self.logic += "clblasNoTrans"
+    else:
+      self.logic += "clblasTrans"
+    self.logic += ") {\n"
+    self.transInitialized = True
     self.betaInitialized = False
     self.previousTileSize = 0
 
   ####################################
   # new beta
   def newBeta(self, beta):
-    #self.logic += "// newBeta\n"
     if (self.betaInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab + "}\n" # 4 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 self.tabs
-      self.logic += "} else if (beta == " + str(beta) + ") {\n"
+      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
+      self.logic += self.zeroIndent+self.tab+self.tab # 2 tabs
+      self.logic += "} else "
     else:
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 self.tabs
-      self.logic += "if (beta == " + str(beta) + ") {\n"
-      self.betaInitialized = True
+      self.logic += self.zeroIndent+self.tab+self.tab # 2 tabs
+    self.logic += "if ( "
+    if beta == 0:
+      self.logic += "BETA_IS_ZERO(beta)"
+    else:
+      self.logic += "BETA_IS_NONZERO(beta)"
+    self.logic += " ) {\n"
+    self.betaInitialized = True
     self.previousTileSize = 0
 
 
@@ -653,7 +646,7 @@ class KernelSelectionLogic:
 
     # first tile size for beta?
     if self.previousTileSize == 0:
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 self.tabs
+      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
       self.logic += "if (optimalNumElementsPerWorkItem > " + str(self.listMicroTileSizes[0]) + ") {\n"
       self.previousTileSize = self.listMicroTileSizes[0]
       self.kernelInitialized = False
@@ -662,28 +655,27 @@ class KernelSelectionLogic:
     tileSize = kernel.microTileNumRows * kernel.microTileNumCols
     tileSizeIndex = self.listMicroTileSizes.index(tileSize)
     if tileSize != self.previousTileSize:
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 self.tabs
+      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
       self.logic += "}\n"
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 self.tabs
+      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
       self.logic += "if (optimalNumElementsPerWorkItem > " + str(self.listMicroTileSizes[tileSizeIndex+1]) + ") {\n"
       self.kernelInitialized = False
       self.previousTileSize = tileSize
 
     # new kernel
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 self.tabs
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "if ( M%%%d == 0 && N%%%d == 0 && K%%%d == 0) {\n" % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab+self.tab # 6 self.tabs
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     self.logic += "selectedKernel = " + kernel.getKernelName() + ";\n"
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab+self.tab # 6 self.tabs
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     self.logic += "return;\n"
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 self.tabs
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "}\n"
 
 
   ####################################
   # finish (close braces)
   def finish(self):
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab + "}\n" # 4 tabs
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
     self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
     self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
