@@ -38,7 +38,7 @@ def main(argv):
 
 
 ################################################################################
-# Process all kernel parameter combinations
+# Main - Process all kernel parameter combinations
 ################################################################################
 def processAllKernelParameterCombinations(argv):
 
@@ -136,7 +136,7 @@ def processAllKernelParameterCombinations(argv):
 
 
 ################################################################################
-# Order Tile Sizes
+# Main - Order Tile Sizes
 # - process tiles largest -> smallest (elements/work-item)
 # - for same size tile, choose squarer one
 ################################################################################
@@ -157,7 +157,7 @@ def orderTileSizes(tileA, tileB):
 
 
 ################################################################################
-# Process kernel
+# Main - Process kernel
 ################################################################################
 def processKernel(kernel, kernelSelectionLogic):
   global totalParameterCombinations, validParameterCombinations
@@ -198,7 +198,7 @@ def processKernel(kernel, kernelSelectionLogic):
 
 
 ################################################################################
-#  Creates a GEMM OpenCL Kernel
+# Kernel - Creates a GEMM OpenCL Kernel
 ################################################################################
 
 # define gemm data types
@@ -210,7 +210,7 @@ openclDataType = { "s":"float", "d":"double", "c":"float2", "z":"double2" }
 class GemmTileOpenCLKernel:
 
   ##############################################################################
-  #  default constructor
+  # Kernel - default constructor
   ##############################################################################
   def __init__(self):
     self.precision = "s" # s, d, c, z
@@ -229,7 +229,7 @@ class GemmTileOpenCLKernel:
 
 
   ##############################################################################
-  #  get multiples
+  # Kernel - get multiples
   ##############################################################################
   def getMultipleM(self):
     return (self.wgNumRows * self.microTileNumRows)
@@ -240,25 +240,31 @@ class GemmTileOpenCLKernel:
 
 
   ##############################################################################
-  #  get kernel name
+  # Kernel - get kernel name
   ##############################################################################
   def getKernelName(self):
     kernelName = "%sgemm_%1s%1s_%03d_%03d_%01d_%02dx%02d_%01dx%01d" % (hostDataChar[self.precision], self.transA, self.transB, (self.wgNumCols * self.microTileNumCols), (self.wgNumRows * self.microTileNumRows), self.unroll, self.wgNumRows, self.wgNumCols, self.microTileNumRows, self.microTileNumCols)
+    if (self.order=="clblasColumnMajor"):
+      kernelName += "_ColMajor"
+    else:
+      kernelName += "_RowMajor"
     if (self.beta==1):
       kernelName += "__BETA"
     return kernelName
 
 
   ##############################################################################
-  #  are kernel parameters valid?
+  # Kernel - are kernel parameters valid?
   ##############################################################################
   def kernelParamsValid(self):
+    numALoads = (self.wgNumRows*self.microTileNumRows*self.unroll)/(self.wgNumRows*self.wgNumCols)
     numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll)%(self.wgNumRows*self.wgNumCols)
+    numBLoads = (self.wgNumCols*self.microTileNumCols*self.unroll)/(self.wgNumRows*self.wgNumCols)
     numBLoadsR = (self.wgNumCols*self.microTileNumCols*self.unroll)%(self.wgNumRows*self.wgNumCols)
-    if (numALoadsR):
+    if (numALoads>0 and numALoadsR>0):
       self.ks = "(%2d * %d * %d = %3d) A elements can't be loaded by (%2d * %2d = %3d) threads" % (self.wgNumRows,self.microTileNumRows,self.unroll,(self.wgNumRows*self.microTileNumRows*self.unroll),self.wgNumRows,self.wgNumCols,(self.wgNumRows*self.wgNumCols))
       return False
-    elif (numBLoadsR):
+    elif (numBLoads>0 and numBLoadsR>0):
       self.ks = "(%2d * %d * %d = %3d) B elements can't be loaded by (%2d * %2d = %3d) threads" % (self.wgNumCols,self.microTileNumCols,self.unroll,(self.wgNumCols*self.microTileNumCols*self.unroll),self.wgNumRows,self.wgNumCols,(self.wgNumRows*self.wgNumCols))
       return False
     else:
@@ -266,16 +272,13 @@ class GemmTileOpenCLKernel:
 
 
   ##############################################################################
-  #  make gemm kernel based on parameters
+  # Kernel - make gemm kernel based on parameters
   ##############################################################################
   def makeKernelString(self):
 
     ####################################
     # parameters valid?
-    numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll)%(self.wgNumRows*self.wgNumCols)
-    numBLoadsR = (self.wgNumCols*self.microTileNumCols*self.unroll)%(self.wgNumRows*self.wgNumCols)
-    if (numALoadsR or numALoadsR) > 0:
-      self.ks = "NULL: mismatch between tile dimentions and unroll; cannot do simple global->local load"
+    if self.kernelParamsValid() == False:
       return self.ks
 
     ####################################
@@ -285,9 +288,18 @@ class GemmTileOpenCLKernel:
     ####################################
     # kernel parameters
     self.ks += "\n// kernel parameters\n"
-    self.ks += "#define ORDER                %s\n" % self.order
-    self.ks += "#define TRANSPOSE_A          %s\n" % self.transA
-    self.ks += "#define TRANSPOSE_B          %s\n" % self.transB
+    if self.order == "clblasColumnMajor":
+      self.ks += "#define COLUMN_MAJOR          1\n"
+    else:
+      self.ks += "#define COLUMN_MAJOR          0\n"
+    if self.transA == "T":
+      self.ks += "#define TRANSPOSE_A           1\n"
+    else:
+      self.ks += "#define TRANSPOSE_A           0\n"
+    if self.transB == "T":
+      self.ks += "#define TRANSPOSE_B           1\n"
+    else:
+      self.ks += "#define TRANSPOSE_B           0\n"
     self.ks += "\n"
     self.ks += "#define WG_NUM_ROWS          %d\n" % self.wgNumRows
     self.ks += "#define WG_NUM_COLS          %d\n" % self.wgNumCols
@@ -303,15 +315,15 @@ class GemmTileOpenCLKernel:
     # global memory indices
     # A
     self.ks += "\n// global memory indices\n"
-    if (self.order=="clblasColumnMajor")==(self.transA==0):
-      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))\n"
-    else:
+    if (self.order=="clblasColumnMajor")==(self.transA==1):
       self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))\n"
-    # B
-    if (self.order=="clblasColumnMajor")==(self.transB==0):
-      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))\n"
     else:
+      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))\n"
+    # B
+    if (self.order=="clblasColumnMajor")==(self.transB==1):
       self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))\n"
+    else:
+      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))\n"
     # C
     if (self.order=="clblasColumnMajor"):
       self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((COL)*ldc+(ROW))\n"
@@ -322,11 +334,9 @@ class GemmTileOpenCLKernel:
     # local memory indices
     # A
     self.ks += "\n// local memory indices\n"
-    self.ks += "#define GET_LOCAL_INDEX_A(ROW,COL) (ROW + COL*(MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD) )\n"
-    self.ks += "#define GET_LOCAL_STEP_A ( ((MACRO_TILE_NUM_COLS)+(LOCAL_ROW_PAD)) * ((WG_NUM_ROWS)*(WG_NUM_COLS)/(MACRO_TILE_NUM_COLS))\n"
+    self.ks += "#define GET_LOCAL_INDEX_A(ROW,COL) ((ROW) + (COL)*((MACRO_TILE_NUM_ROWS)+(LOCAL_COL_PAD)) )\n"
     # B
-    self.ks += "#define GET_LOCAL_INDEX_B(ROW,COL)   ((COL) + (ROW)*((MACRO_TILE_NUM_COLS)+(LOCAL_ROW_PAD)) )\n"
-    self.ks += "#define GET_LOCAL_STEP_B ( ((MACRO_TILE_NUM_COLS)+(LOCAL_ROW_PAD)) * ((WG_NUM_ROWS)*(WG_NUM_COLS)/(MACRO_TILE_NUM_COLS))\n"
+    self.ks += "#define GET_LOCAL_INDEX_B(ROW,COL) ((COL) + (ROW)*((MACRO_TILE_NUM_COLS)+(LOCAL_ROW_PAD)) )\n"
 
     ####################################
     # data types
@@ -434,17 +444,27 @@ class GemmTileOpenCLKernel:
 
     ####################################
     # global indices being loaded
-    self.ks += (
-      "\n  // global indices begin loaded\n"
-      "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial%MACRO_TILE_NUM_ROWS)\n"
+    self.ks += "\n  // global indices begin loaded\n"
+    if (self.order=="clblasColumnMajor")==(self.transA==1):
+      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial/NUM_UNROLL_ITER)\n"
+      "#define globalACol (localSerial%NUM_UNROLL_ITER)\n"
+      "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER), 0 ) )\n" )
+    else:
+      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial%MACRO_TILE_NUM_ROWS)\n"
       "#define globalACol (localSerial/MACRO_TILE_NUM_ROWS)\n"
-      "#define globalAIdx (GET_GLOBAL_INDEX_A( globalARow, globalACol ) )\n"
-      "  A += globalAIdx;\n"
-      "  // which gBij is this thread responsible for loading?\n"
-      "#define globalBRow (localSerial/MACRO_TILE_NUM_COLS)\n"
+      "#define globalAStride ( GET_GLOBAL_INDEX_A(0, (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) ) )\n" )
+
+    if (self.order=="clblasColumnMajor")==(self.transB==1):
+      self.ks += ( "#define globalBRow (localSerial/MACRO_TILE_NUM_COLS)\n"
       "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial%MACRO_TILE_NUM_COLS)\n"
-      "#define globalBIdx (GET_GLOBAL_INDEX_B( globalBRow, globalBCol ) )\n"
-      "  B += globalBIdx;\n" )
+      "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS), 0 ) )\n" )
+    else:
+      self.ks += ( "#define globalBRow (localSerial%NUM_UNROLL_ITER)\n"
+      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial/NUM_UNROLL_ITER)\n"
+      "#define globalBStride ( GET_GLOBAL_INDEX_B( 0, (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER) ) )\n" )
+
+    self.ks += ( "  A += GET_GLOBAL_INDEX_A( globalARow, globalACol );\n"
+      "  B += GET_GLOBAL_INDEX_B( globalBRow, globalBCol );\n" )
 
     ####################################
     # loop over k
@@ -455,23 +475,29 @@ class GemmTileOpenCLKernel:
 
     ####################################
     # local indices begin written
-    self.ks += (
-      "\n    // local indices begin written\n"
-      "    // which lAij is this thread responsible for writing?\n"
-      "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)\n"
+    self.ks += "\n    // local indices begin written\n"
+    if (self.order=="clblasColumnMajor")==(self.transA==1):
+      self.ks += ( "#define localARow (localSerial / NUM_UNROLL_ITER)\n"
+      "#define localACol (localSerial % NUM_UNROLL_ITER)\n"
+      "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)\n" )
+    else:
+      self.ks += ( "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)\n"
       "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)\n"
-      "#define localAStride ( (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) )\n"
-      "#define globalAStride ( GET_GLOBAL_INDEX_A(0, (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) ) )\n"
-      "#define localAIdx ( GET_LOCAL_INDEX_A(localARow, localACol) )\n"
-      "      __local DATA_TYPE_STR *lA = localA + localAIdx;\n"
-      "      // which lBij is this thread responsible for writing?\n"
-      "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )\n"
+      "#define localAStride ( (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) )\n" )
+
+    if (self.order=="clblasColumnMajor")==(self.transB==1):
+      self.ks += ( "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )\n"
       "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )\n"
-      "#define localBIdx ( GET_LOCAL_INDEX_B(localBRow, localBCol) )\n"
-      "#define localBStride  ( (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS) )\n"
-      "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS), 0 ) )\n"
-      "      __local DATA_TYPE_STR *lB = localB + localBIdx;\n"
-      "      barrier(CLK_LOCAL_MEM_FENCE);\n" )
+      "#define localBStride  ( (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS) )\n" )
+    else:
+      self.ks += ( "#define localBRow ( localSerial % NUM_UNROLL_ITER )\n"
+      "#define localBCol ( localSerial / NUM_UNROLL_ITER )\n"
+      "#define localBStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)\n" )
+
+
+    self.ks += ("    __local DATA_TYPE_STR *lA = localA + GET_LOCAL_INDEX_A(localARow, localACol);\n"
+      "    __local DATA_TYPE_STR *lB = localB + GET_LOCAL_INDEX_B(localBRow, localBCol);\n"
+      "    barrier(CLK_LOCAL_MEM_FENCE);\n" )
 
     ####################################
     # load global -> local
@@ -479,12 +505,28 @@ class GemmTileOpenCLKernel:
     # A elements to be loaded = wgNumRows*microTileNumRows*unroll
     # B elements to be loaded = wgNumCols*microTileNumCols*unroll
     self.ks += "\n    // load global -> local\n"
-    numALoads  = (self.wgNumRows*self.microTileNumRows*self.unroll)/(self.wgNumRows*self.wgNumCols)
-    numBLoads  = (self.wgNumCols*self.microTileNumCols*self.unroll)/(self.wgNumRows*self.wgNumCols)
+    numALoads  = (self.wgNumRows*self.microTileNumRows*self.unroll) \
+        / (self.wgNumRows*self.wgNumCols)
+    numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll) \
+        % (self.wgNumRows*self.wgNumCols)
+    numBLoads  = (self.wgNumCols*self.microTileNumCols*self.unroll) \
+        / (self.wgNumRows*self.wgNumCols)
+    numBLoadsR = (self.wgNumCols*self.microTileNumCols*self.unroll) \
+        % (self.wgNumRows*self.wgNumCols)
+
     for a in range(0, numALoads):
       self.ks += "    lA[ %d*localAStride ] = A[ %d*globalAStride ];\n" % (a, a)
+    if numALoadsR:
+      self.ks += "    if (localSerial < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {\n"
+      self.ks += "      lA[ %d*localAStride ] = A[ %d*globalAStride ];\n" % (numALoads, numALoads)
+      self.ks += "    }\n"
+
     for b in range(0, numBLoads):
       self.ks += "    lB[ %d*localBStride ] = B[ %d*globalBStride ];\n" % (b, b)
+    if numBLoadsR:
+      self.ks += "    if (localSerial < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {\n"
+      self.ks += "      lB[ %d*localBStride ] = B[ %d*globalBStride ];\n" % (numBLoads, numBLoads)
+      self.ks += "    }\n"
     self.ks += (
       "    barrier(CLK_LOCAL_MEM_FENCE);\n\n"
       "    uint offA = localRow;\n"
@@ -499,14 +541,14 @@ class GemmTileOpenCLKernel:
     ####################################
     # shift to next k block
     self.ks += "\n    // shift to next k block\n"
-    if self.transA=="N":
-      self.ks += "    A += lda*NUM_UNROLL_ITER; // transA==N\n"
+    if (self.order=="clblasColumnMajor")==(self.transA==1):
+      self.ks += "    A += NUM_UNROLL_ITER; // transA\n"
     else:
-      self.ks += "    A += NUM_UNROLL_ITER; // transA==T\n"
-    if self.transB=="N":
-      self.ks += "    B += NUM_UNROLL_ITER; // transB==N\n"
+      self.ks += "    A += lda*NUM_UNROLL_ITER; // noTransA\n"
+    if (self.order=="clblasColumnMajor")==(self.transB==1):
+      self.ks += "    B += ldb*NUM_UNROLL_ITER; // transB\n"
     else:
-      self.ks += "    B += ldb*NUM_UNROLL_ITER; // transB==T\n"
+      self.ks += "    B += NUM_UNROLL_ITER; // noTransB\n"
 
     ####################################
     # end loop
@@ -527,13 +569,13 @@ class GemmTileOpenCLKernel:
 
     ####################################
     # end kernel
-    self.ks += "\n\n}\n"
+    self.ks += "\n}\n"
 
     return self.ks
 
 
   ##############################################################################
-  # Write kernel to file
+  # Kernel - Write kernel to file
   ##############################################################################
   def writeKernelToFile(self):
     kernelName = self.getKernelName()
@@ -550,14 +592,14 @@ class GemmTileOpenCLKernel:
 
 
 ################################################################################
-# Kernel Selection Logic
+# KSL - Kernel Selection Logic
 ################################################################################
 class KernelSelectionLogic:
 
   zeroIndent = "  "
   tab = "  "
   ##############################################################################
-  # default constructor
+  # KSL - default constructor
   ##############################################################################
   def __init__(self, \
       listOrder, \
@@ -578,7 +620,7 @@ class KernelSelectionLogic:
 
 
   ####################################
-  # new order
+  # KSL - new order
   def newOrder(self, order):
     if (self.orderInitialized):
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
@@ -596,7 +638,7 @@ class KernelSelectionLogic:
 
 
   ####################################
-  # new trans
+  # KSL - new trans
   def newTrans(self, trans):
     if (self.transInitialized):
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
@@ -621,7 +663,7 @@ class KernelSelectionLogic:
     self.previousTileSize = 0
 
   ####################################
-  # new beta
+  # KSL - new beta
   def newBeta(self, beta):
     if (self.betaInitialized):
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
@@ -640,7 +682,7 @@ class KernelSelectionLogic:
 
 
   ##############################################################################
-  # add new kernel
+  # KSL - add new kernel
   ##############################################################################
   def newKernel(self, kernel):
 
@@ -658,7 +700,12 @@ class KernelSelectionLogic:
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
       self.logic += "}\n"
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
-      self.logic += "if (optimalNumElementsPerWorkItem > " + str(self.listMicroTileSizes[tileSizeIndex+1]) + ") {\n"
+      self.logic += "if (optimalNumElementsPerWorkItem > "
+      if tileSizeIndex+1 < len(self.listMicroTileSizes):
+        self.logic += str(self.listMicroTileSizes[tileSizeIndex+1])
+      else:
+        self.logic += str(0)
+      self.logic += ") {\n"
       self.kernelInitialized = False
       self.previousTileSize = tileSize
 
@@ -674,7 +721,7 @@ class KernelSelectionLogic:
 
 
   ####################################
-  # finish (close braces)
+  # KSL - finish (close braces)
   def finish(self):
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
     self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
@@ -683,7 +730,7 @@ class KernelSelectionLogic:
 
 
   ##############################################################################
-  # write to file
+  # KSL - write to file
   ##############################################################################
   def writeToFile(self):
     selectionFileName = "kernelSelectionLogic.h"
