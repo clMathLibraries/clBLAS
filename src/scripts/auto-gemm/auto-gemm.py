@@ -6,14 +6,13 @@
 #   2) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES
 #   3) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES_GEN
 #   4) list to add to src/library/bingen.cmake:BIN_CL_TEMPLATES_HAWAII_CL2
-#   5) list to add to src/library/blas/functor/gcn_zgemm.cc:23
+#   5) list to add to src/library/blas/functor/gcn_zgemm.cc:23 - DONE
 # TODO
 # - after writing kernel files, make list of valid micro tiles for correct size list
 # - zgemm() call is in xgemm.cc
 # - one functions writes every combination to a file, while one reads from that file, therefore manual intervention for deleting slow kernels
 # - estimating occupancy for a kernel (low occupancy remove it?)
-# - if more threads than loads put in a if statement
-# - can I loop over remaining k partial block
+# - optimize for beta = 0
 ################################################################################
 
 import sys
@@ -106,6 +105,12 @@ def processAllKernelParameterCombinations(argv):
 
   kernelSelectionLogic = KernelSelectionLogic(listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
 
+  # files to write lists to
+  fileSrcClTemplates = open("SRC_CL_TEMPLATES.txt", "w")
+  fileSrcClTemplatesGen = open("SRC_CL_TEMPLATES_GEN.txt", "w")
+  fileBinClTemplates = open("BIN_CL_TEMPLATES.txt", "w")
+
+
   # for each kernel parameter combination
   for order in listOrder:
     kernelSelectionLogic.newOrder(order)
@@ -129,9 +134,18 @@ def processAllKernelParameterCombinations(argv):
               kernel.microTileNumCols = microTileDim[1]
               kernel.unroll = unroll
               # process kernel parameters
-              processKernel(kernel, kernelSelectionLogic)
+              processKernel( \
+                  kernel, \
+                  kernelSelectionLogic, \
+                  fileSrcClTemplates, \
+                  fileSrcClTemplatesGen, \
+                  fileBinClTemplates )
+  # save written files
   kernelSelectionLogic.finish()
   kernelSelectionLogic.writeToFile()
+  fileSrcClTemplates.close()
+  fileSrcClTemplatesGen.close()
+  fileBinClTemplates.close()
 
 
 
@@ -159,7 +173,12 @@ def orderTileSizes(tileA, tileB):
 ################################################################################
 # Main - Process kernel
 ################################################################################
-def processKernel(kernel, kernelSelectionLogic):
+def processKernel( \
+    kernel, \
+    kernelSelectionLogic, \
+    fileSrcClTemplates, \
+    fileSrcClTemplatesGen, \
+    fileBinClTemplates ):
   global totalParameterCombinations, validParameterCombinations
 
   # check if parameter combination is valid
@@ -175,15 +194,18 @@ def processKernel(kernel, kernelSelectionLogic):
     return
 
   print "%s: s = %3d" % (kernelName, kernel.microTileNumRows*kernel.microTileNumCols)
+
   # 1) write kernel to file
   kernel.writeKernelToFile()
 
   # 2) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES
-  #addToSrcClTemplates(kernel)
+  fileSrcClTemplates.write("  %s.cl\n" % kernelName)
 
   # 3) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES_GEN
-  #addToSrcClTemplatesGen
+  fileSrcClTemplatesGen.write("  %s.clHawaii_64.bin.cl\n" % kernelName)
+
   # 4) list to add to src/library/bingen.cmake:BIN_CL_TEMPLATES_HAWAII_CL2
+  fileBinClTemplates.write("  ${CLTEMPLATE_PATH}%s.cl\n" % kernelName)
 
   # 5) list to add to src/library/blas/functor/gcn_zgemm.cc:23
   kernelSelectionLogic.newKernel(kernel)
@@ -612,7 +634,16 @@ class KernelSelectionLogic:
 
     self.listMicroTileSizes = listMicroTileSizes
 
-    self.logic = "xgemmSelectKernel( " # logic string
+    self.logic = ( "xgemmSelectKernel(\n"
+      "  clblasOrder order,\n"
+      "  clblasTranspose transA,\n"
+      "  clblasTranspose transB,\n"
+      "  unsigned int M,\n"
+      "  unsigned int N,\n"
+      "  unsigned int K,\n"
+      "  bool betaIsZero,\n"
+      "  float optimalNumElementsPerWorkItem\n"
+      ") {\n" )
     self.orderInitialized = False
     self.transInitialized = False
     self.betaInitialized = False
@@ -673,9 +704,9 @@ class KernelSelectionLogic:
       self.logic += self.zeroIndent+self.tab+self.tab # 2 tabs
     self.logic += "if ( "
     if beta == 0:
-      self.logic += "BETA_IS_ZERO(beta)"
+      self.logic += "betaIsZero"
     else:
-      self.logic += "BETA_IS_NONZERO(beta)"
+      self.logic += "!betaIsZero"
     self.logic += " ) {\n"
     self.betaInitialized = True
     self.previousTileSize = 0
@@ -727,6 +758,7 @@ class KernelSelectionLogic:
     self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
     self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
     self.logic += self.zeroIndent + "}\n" # 0 tab
+    self.logic += "}\n" # close function
 
 
   ##############################################################################
