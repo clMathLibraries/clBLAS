@@ -104,6 +104,7 @@ def processAllKernelParameterCombinations(argv):
   listUnroll = [ 8, 4, 2, 1 ]
 
   kernelSelectionLogic = KernelSelectionLogic(listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
+  kernelIncludes = KernelIncludes()
 
   # files to write lists to
   fileSrcClTemplates = open("SRC_CL_TEMPLATES.txt", "w")
@@ -139,13 +140,15 @@ def processAllKernelParameterCombinations(argv):
                   kernelSelectionLogic, \
                   fileSrcClTemplates, \
                   fileSrcClTemplatesGen, \
-                  fileBinClTemplates )
+                  fileBinClTemplates, \
+                  kernelIncludes )
   # save written files
   kernelSelectionLogic.finish()
   kernelSelectionLogic.writeToFile()
   fileSrcClTemplates.close()
   fileSrcClTemplatesGen.close()
   fileBinClTemplates.close()
+  kernelIncludes.writeToFile()
 
 
 
@@ -178,7 +181,8 @@ def processKernel( \
     kernelSelectionLogic, \
     fileSrcClTemplates, \
     fileSrcClTemplatesGen, \
-    fileBinClTemplates ):
+    fileBinClTemplates, \
+    kernelIncludes ):
   global totalParameterCombinations, validParameterCombinations
 
   # check if parameter combination is valid
@@ -209,6 +213,7 @@ def processKernel( \
 
   # 5) list to add to src/library/blas/functor/gcn_zgemm.cc:23
   kernelSelectionLogic.newKernel(kernel)
+  kernelIncludes.addKernel(kernel)
 
 
 
@@ -248,6 +253,7 @@ class GemmTileOpenCLKernel:
     self.localColPad = 1
     self.unroll = 8
     self.ks = "haven't called makeKernelString()" # kernel string
+    self.el = "\"\n\""
 
 
   ##############################################################################
@@ -271,7 +277,7 @@ class GemmTileOpenCLKernel:
     else:
       kernelName += "_RowMajor"
     if (self.beta==1):
-      kernelName += "__BETA"
+      kernelName += "_BETA"
     return kernelName
 
 
@@ -309,224 +315,238 @@ class GemmTileOpenCLKernel:
 
     ####################################
     # kernel parameters
-    self.ks += "\n// kernel parameters\n"
+    self.ks += self.el
+    self.ks += "/* kernel parameters */" + self.el
     if self.order == "clblasColumnMajor":
-      self.ks += "#define COLUMN_MAJOR          1\n"
+      self.ks += "#define COLUMN_MAJOR          1" + self.el
     else:
-      self.ks += "#define COLUMN_MAJOR          0\n"
+      self.ks += "#define COLUMN_MAJOR          0" + self.el
     if self.transA == "T":
-      self.ks += "#define TRANSPOSE_A           1\n"
+      self.ks += "#define TRANSPOSE_A           1" + self.el
     else:
-      self.ks += "#define TRANSPOSE_A           0\n"
+      self.ks += "#define TRANSPOSE_A           0" + self.el
     if self.transB == "T":
-      self.ks += "#define TRANSPOSE_B           1\n"
+      self.ks += "#define TRANSPOSE_B           1" + self.el
     else:
-      self.ks += "#define TRANSPOSE_B           0\n"
-    self.ks += "\n"
-    self.ks += "#define WG_NUM_ROWS          %d\n" % self.wgNumRows
-    self.ks += "#define WG_NUM_COLS          %d\n" % self.wgNumCols
-    self.ks += "#define MICRO_TILE_NUM_ROWS  %d\n" % self.microTileNumRows
-    self.ks += "#define MICRO_TILE_NUM_COLS  %d\n" % self.microTileNumCols
-    self.ks += "#define MACRO_TILE_NUM_ROWS  %s\n" % (self.wgNumRows * self.microTileNumRows)
-    self.ks += "#define MACRO_TILE_NUM_COLS  %s\n" % (self.wgNumCols * self.microTileNumCols)
-    self.ks += "\n"
-    self.ks += "#define LOCAL_ROW_PAD        %s\n" % self.localRowPad
-    self.ks += "#define LOCAL_COL_PAD        %s\n" % self.localColPad
+      self.ks += "#define TRANSPOSE_B           0" + self.el
+    self.ks += "" + self.el
+    self.ks += "#define WG_NUM_ROWS          %d%s" % (self.wgNumRows, self.el )
+    self.ks += "#define WG_NUM_COLS          %d%s" % (self.wgNumCols, self.el )
+    self.ks += "#define MICRO_TILE_NUM_ROWS  %d%s" % (self.microTileNumRows, self.el )
+    self.ks += "#define MICRO_TILE_NUM_COLS  %d%s" % (self.microTileNumCols, self.el )
+    self.ks += "#define MACRO_TILE_NUM_ROWS  %s%s" % ((self.wgNumRows * self.microTileNumRows), self.el )
+    self.ks += "#define MACRO_TILE_NUM_COLS  %s%s" % ((self.wgNumCols * self.microTileNumCols), self.el )
+    self.ks += "" + self.el
+    self.ks += "#define LOCAL_ROW_PAD        %s%s" % (self.localRowPad, self.el)
+    self.ks += "#define LOCAL_COL_PAD        %s%s" % (self.localColPad, self.el)
 
     ####################################
     # global memory indices
     # A
-    self.ks += "\n// global memory indices\n"
+    self.ks += self.el
+    self.ks += "/* global memory indices */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA==1):
-      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))\n"
+      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))" + self.el
     else:
-      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))\n"
+      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))" + self.el
     # B
     if (self.order=="clblasColumnMajor")==(self.transB==1):
-      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))\n"
+      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))" + self.el
     else:
-      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))\n"
+      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))" + self.el
     # C
     if (self.order=="clblasColumnMajor"):
-      self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((COL)*ldc+(ROW))\n"
+      self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((COL)*ldc+(ROW))" + self.el
     else:
-      self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((ROW)*ldc+(COL))\n"
+      self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((ROW)*ldc+(COL))" + self.el
 
     ####################################
     # local memory indices
     # A
-    self.ks += "\n// local memory indices\n"
-    self.ks += "#define GET_LOCAL_INDEX_A(ROW,COL) ((ROW) + (COL)*((MACRO_TILE_NUM_ROWS)+(LOCAL_COL_PAD)) )\n"
+    self.ks += self.el
+    self.ks += "/* local memory indices */" + self.el
+    self.ks += "#define GET_LOCAL_INDEX_A(ROW,COL) ((ROW) + (COL)*((MACRO_TILE_NUM_ROWS)+(LOCAL_COL_PAD)) )" + self.el
     # B
-    self.ks += "#define GET_LOCAL_INDEX_B(ROW,COL) ((COL) + (ROW)*((MACRO_TILE_NUM_COLS)+(LOCAL_ROW_PAD)) )\n"
+    self.ks += "#define GET_LOCAL_INDEX_B(ROW,COL) ((COL) + (ROW)*((MACRO_TILE_NUM_COLS)+(LOCAL_ROW_PAD)) )" + self.el
 
     ####################################
     # data types
-    self.ks += "\n// data types\n"
-    self.ks += "#define DATA_TYPE_STR %s\n" % openclDataType[self.precision]
+    self.ks += self.el
+    self.ks += "/* data types */" + self.el
+    self.ks += "#define DATA_TYPE_STR %s%s" % (openclDataType[self.precision], self.el)
     if self.precision==("s" or "d"):
       # real arithmetic
-      self.ks += "#define TYPE_MAD(MUL0,MUL1,DST) DST = mad(MUL0,MUL1,DST);\n"
-      self.ks += "#define TYPE_MAD_WRITE(DST,ALPHA,REG,BETA) DST = (ALPHA)*(REG) + (BETA)*(DST);\n"
+      self.ks += "#define TYPE_MAD(MUL0,MUL1,DST) DST = mad(MUL0,MUL1,DST);" + self.el
+      self.ks += "#define TYPE_MAD_WRITE(DST,ALPHA,REG,BETA) DST = (ALPHA)*(REG) + (BETA)*(DST);" + self.el
     else:
       # complex arithmetic
       self.ks += (
-        "#define TYPE_MAD(MUL0,MUL1,DST) \\\n"
-        "  DST.s0 = mad(  MUL0.s0, MUL1.s0, DST.s0 ); \\\n"
-        "  DST.s0 = mad( -MUL0.s1, MUL1.s1, DST.s0 ); \\\n"
-        "  DST.s1 = mad(  MUL0.s0, MUL1.s1, DST.s1 ); \\\n"
-        "  DST.s1 = mad(  MUL0.s1, MUL1.s0, DST.s1 );\n" )
+        "#define TYPE_MAD(MUL0,MUL1,DST) \\\\" + self.el +
+        "  DST.s0 = mad(  MUL0.s0, MUL1.s0, DST.s0 ); \\\\" + self.el +
+        "  DST.s0 = mad( -MUL0.s1, MUL1.s1, DST.s0 ); \\\\" + self.el +
+        "  DST.s1 = mad(  MUL0.s0, MUL1.s1, DST.s1 ); \\\\" + self.el +
+        "  DST.s1 = mad(  MUL0.s1, MUL1.s0, DST.s1 );" + self.el )
       self.ks += (
-        "#define TYPE_MAD_WRITE( DST, ALPHA, REG, BETA ) \\\n"
-        "  /* (1) */ \\\n"
-        "  type_mad2_tmp = REG.s0; \\\n"
-        "  REG.s0 *= ALPHA.s0; \\\n"
-        "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\n"
-        "  REG.s1 *= ALPHA.s0; \\\n"
-        "  REG.s1 = mad(  ALPHA.s1, type_mad2_tmp, REG.s1 ); \\\n"
-        "  /* (2) */ \\\n"
-        "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\n"
-        "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\n"
-        "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\n"
-        "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\n"
-        "  /* (3) */ \\\n"
-        "  DST = REG;\n" )
+        "#define TYPE_MAD_WRITE( DST, ALPHA, REG, BETA ) \\\\" + self.el +
+        "  /* (1) */ \\\\" + self.el +
+        "  type_mad2_tmp = REG.s0; \\\\" + self.el +
+        "  REG.s0 *= ALPHA.s0; \\\\" + self.el +
+        "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + self.el +
+        "  REG.s1 *= ALPHA.s0; \\\\" + self.el +
+        "  REG.s1 = mad(  ALPHA.s1, type_mad2_tmp, REG.s1 ); \\\\" + self.el +
+        "  /* (2) */ \\\\" + self.el +
+        "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + self.el +
+        "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + self.el +
+        "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + self.el +
+        "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + self.el +
+        "  /* (3) */ \\\\" + self.el +
+        "  DST = REG;" + self.el )
 
     ####################################
     # micro-tile
-    self.ks += "\n// %dx%d micro-tile\n" % (self.microTileNumRows, self.microTileNumCols)
-    self.ks += "#define MICRO_TILE \\\n"
+    self.ks += self.el
+    self.ks += "/* %dx%d micro-tile */%s" % (self.microTileNumRows, self.microTileNumCols, self.el)
+    self.ks += "#define MICRO_TILE \\\\" + self.el
     for a in range(0, self.microTileNumRows):
-      self.ks += "  rA[%d] = localA[offA + %d*WG_NUM_ROWS]; \\\n" % (a, a)
+      self.ks += "  rA[%d] = localA[offA + %d*WG_NUM_ROWS]; \\\\%s" % (a, a, self.el)
     for b in range(0, self.microTileNumCols):
-      self.ks += "  rB[%d] = localB[offB + %d*WG_NUM_COLS]; \\\n" % (b, b)
-    self.ks += "  offA += (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD; \\\n"
-    self.ks += "  offB += (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD; \\\n"
+      self.ks += "  rB[%d] = localB[offB + %d*WG_NUM_COLS]; \\\\%s" % (b, b, self.el)
+    self.ks += "  offA += (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD; \\\\" + self.el
+    self.ks += "  offB += (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD; \\\\" + self.el
     for a in range(0, self.microTileNumRows):
       for b in range(0, self.microTileNumCols):
-        self.ks += "  TYPE_MAD(rA[%d],rB[%d],rC[%d][%d]); \\\n" % (a, b, a, b)
-    self.ks += "  mem_fence(CLK_LOCAL_MEM_FENCE);\n\n"
+        self.ks += "  TYPE_MAD(rA[%d],rB[%d],rC[%d][%d]); \\\\%s" % (a, b, a, b, self.el)
+    self.ks += "  mem_fence(CLK_LOCAL_MEM_FENCE);" + self.el
+    self.ks += self.el
 
     ####################################
     # function signature
     ####################################
-    self.ks += "__attribute__((reqd_work_group_size(WG_NUM_COLS,WG_NUM_ROWS,1)))\n"
+    self.ks += "__attribute__((reqd_work_group_size(WG_NUM_COLS,WG_NUM_ROWS,1)))" + self.el
     self.ks += "__kernel void %s" % ( self.getKernelName() )
-    self.ks += "(\n"
+    self.ks += "(" + self.el
     # arguments
     self.ks += (
-      "  uint const M,\n"
-      "  uint const N,\n"
-      "  uint const K,\n"
-      "  DATA_TYPE_STR const alpha,\n"
-      "  DATA_TYPE_STR const beta,\n"
-      "  __global DATA_TYPE_STR const * restrict A,\n"
-      "  __global DATA_TYPE_STR const * restrict B,\n"
-      "  __global DATA_TYPE_STR       *          C,\n"
-      "  uint const lda,\n"
-      "  uint const ldb,\n"
-      "  uint const ldc,\n"
-      "  uint const offsetA,\n"
-      "  uint const offsetB,\n"
-      "  uint const offsetC\n"
-      ") {\n" )
+      "  uint const M," + self.el +
+      "  uint const N," + self.el +
+      "  uint const K," + self.el +
+      "  DATA_TYPE_STR const alpha," + self.el +
+      "  DATA_TYPE_STR const beta," + self.el +
+      "  __global DATA_TYPE_STR const * restrict A," + self.el +
+      "  __global DATA_TYPE_STR const * restrict B," + self.el +
+      "  __global DATA_TYPE_STR       *          C," + self.el +
+      "  uint const lda," + self.el +
+      "  uint const ldb," + self.el +
+      "  uint const ldc," + self.el +
+      "  uint const offsetA," + self.el +
+      "  uint const offsetB," + self.el +
+      "  uint const offsetC" + self.el +
+      ") {" + self.el )
 
     ####################################
     # apply offsets
+    self.ks += self.el
     self.ks += (
-      "\n  // apply offsets\n"
-      "  A += offsetA;\n"
-      "  B += offsetB;\n"
-      "  C += offsetC;\n" )
+      "  /* apply offsets */" + self.el +
+      "  A += offsetA;" + self.el +
+      "  B += offsetB;" + self.el +
+      "  C += offsetC;" + self.el )
 
     ####################################
     # allocate registers
+    self.ks += self.el
     self.ks += (
-      "\n  // allocate registers\n"
-      "  DATA_TYPE_STR rC[MICRO_TILE_NUM_ROWS][MICRO_TILE_NUM_COLS] = {0};\n"
-      "  DATA_TYPE_STR rA[MICRO_TILE_NUM_ROWS];\n"
-      "  DATA_TYPE_STR rB[MICRO_TILE_NUM_COLS];\n" )
+      "  /* allocate registers */" + self.el +
+      "  DATA_TYPE_STR rC[MICRO_TILE_NUM_ROWS][MICRO_TILE_NUM_COLS] = {0};" + self.el +
+      "  DATA_TYPE_STR rA[MICRO_TILE_NUM_ROWS];" + self.el +
+      "  DATA_TYPE_STR rB[MICRO_TILE_NUM_COLS];" + self.el )
 
     ####################################
     # allocate local memory
+    self.ks += self.el
     self.ks += (
-      "\n  // allocate local memory\n"
-      "  __local DATA_TYPE_STR localA[NUM_UNROLL_ITER*(MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD)];\n"
-      "  __local DATA_TYPE_STR localB[NUM_UNROLL_ITER*(MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD)];\n" )
+      "  /* allocate local memory */" + self.el +
+      "  __local DATA_TYPE_STR localA[NUM_UNROLL_ITER*(MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD)];" + self.el +
+      "  __local DATA_TYPE_STR localB[NUM_UNROLL_ITER*(MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD)];" + self.el )
 
     ####################################
     # work item indices
+    self.ks += self.el
     self.ks += (
-      "\n  // work item indices\n"
-      "  uint groupRow = get_group_id(0);\n"
-      "  uint groupCol = get_group_id(1);\n"
-      "  uint localRow = get_local_id(0);\n"
-      "  uint localCol = get_local_id(1);\n"
-      "  uint localSerial = localRow + localCol*WG_NUM_ROWS;\n" )
+      "  /* work item indices */" + self.el +
+      "  uint groupRow = get_group_id(0);" + self.el +
+      "  uint groupCol = get_group_id(1);" + self.el +
+      "  uint localRow = get_local_id(0);" + self.el +
+      "  uint localCol = get_local_id(1);" + self.el +
+      "  uint localSerial = localRow + localCol*WG_NUM_ROWS;" + self.el )
 
     ####################################
     # global indices being loaded
-    self.ks += "\n  // global indices begin loaded\n"
+    self.ks += self.el
+    self.ks += "  /* global indices begin loaded */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA==1):
-      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial/NUM_UNROLL_ITER)\n"
-      "#define globalACol (localSerial%NUM_UNROLL_ITER)\n"
-      "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER), 0 ) )\n" )
+      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial/NUM_UNROLL_ITER)" + self.el +
+      "#define globalACol (localSerial%NUM_UNROLL_ITER)" + self.el +
+      "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER), 0 ) )" + self.el )
     else:
-      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial%MACRO_TILE_NUM_ROWS)\n"
-      "#define globalACol (localSerial/MACRO_TILE_NUM_ROWS)\n"
-      "#define globalAStride ( GET_GLOBAL_INDEX_A(0, (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) ) )\n" )
+      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial%MACRO_TILE_NUM_ROWS)" + self.el +
+      "#define globalACol (localSerial/MACRO_TILE_NUM_ROWS)" + self.el +
+      "#define globalAStride ( GET_GLOBAL_INDEX_A(0, (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) ) )" + self.el )
 
     if (self.order=="clblasColumnMajor")==(self.transB==1):
-      self.ks += ( "#define globalBRow (localSerial/MACRO_TILE_NUM_COLS)\n"
-      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial%MACRO_TILE_NUM_COLS)\n"
-      "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS), 0 ) )\n" )
+      self.ks += ( "#define globalBRow (localSerial/MACRO_TILE_NUM_COLS)" + self.el +
+      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial%MACRO_TILE_NUM_COLS)" + self.el +
+      "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS), 0 ) )" + self.el )
     else:
-      self.ks += ( "#define globalBRow (localSerial%NUM_UNROLL_ITER)\n"
-      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial/NUM_UNROLL_ITER)\n"
-      "#define globalBStride ( GET_GLOBAL_INDEX_B( 0, (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER) ) )\n" )
+      self.ks += ( "#define globalBRow (localSerial%NUM_UNROLL_ITER)" + self.el +
+      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial/NUM_UNROLL_ITER)" + self.el +
+      "#define globalBStride ( GET_GLOBAL_INDEX_B( 0, (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER) ) )" + self.el )
 
-    self.ks += ( "  A += GET_GLOBAL_INDEX_A( globalARow, globalACol );\n"
-      "  B += GET_GLOBAL_INDEX_B( globalBRow, globalBCol );\n" )
+    self.ks += ( "  A += GET_GLOBAL_INDEX_A( globalARow, globalACol );" + self.el +
+      "  B += GET_GLOBAL_INDEX_B( globalBRow, globalBCol );" + self.el )
 
     ####################################
     # loop over k
+    self.ks += self.el
     self.ks += (
-      "\n  // loop over k\n"
-      "  uint block_k = K / NUM_UNROLL_ITER;\n"
-      "  do {\n" )
+      "  /* loop over k */" + self.el +
+      "  uint block_k = K / NUM_UNROLL_ITER;" + self.el +
+      "  do {" + self.el )
 
     ####################################
     # local indices begin written
-    self.ks += "\n    // local indices begin written\n"
+    self.ks += self.el
+    self.ks += "    /* local indices begin written */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA==1):
-      self.ks += ( "#define localARow (localSerial / NUM_UNROLL_ITER)\n"
-      "#define localACol (localSerial % NUM_UNROLL_ITER)\n"
-      "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)\n" )
+      self.ks += ( "#define localARow (localSerial / NUM_UNROLL_ITER)" + self.el +
+      "#define localACol (localSerial % NUM_UNROLL_ITER)" + self.el +
+      "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
     else:
-      self.ks += ( "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)\n"
-      "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)\n"
-      "#define localAStride ( (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) )\n" )
+      self.ks += ( "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)" + self.el +
+      "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)" + self.el +
+      "#define localAStride ( (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_ROWS) )" + self.el )
 
     if (self.order=="clblasColumnMajor")==(self.transB==1):
-      self.ks += ( "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )\n"
-      "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )\n"
-      "#define localBStride  ( (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS) )\n" )
+      self.ks += ( "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
+      "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
+      "#define localBStride  ( (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD) * (WG_NUM_ROWS*WG_NUM_COLS/MACRO_TILE_NUM_COLS) )" + self.el )
     else:
-      self.ks += ( "#define localBRow ( localSerial % NUM_UNROLL_ITER )\n"
-      "#define localBCol ( localSerial / NUM_UNROLL_ITER )\n"
-      "#define localBStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)\n" )
+      self.ks += ( "#define localBRow ( localSerial % NUM_UNROLL_ITER )" + self.el +
+      "#define localBCol ( localSerial / NUM_UNROLL_ITER )" + self.el +
+      "#define localBStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
 
 
-    self.ks += ("    __local DATA_TYPE_STR *lA = localA + GET_LOCAL_INDEX_A(localARow, localACol);\n"
-      "    __local DATA_TYPE_STR *lB = localB + GET_LOCAL_INDEX_B(localBRow, localBCol);\n"
-      "    barrier(CLK_LOCAL_MEM_FENCE);\n" )
+    self.ks += ("    __local DATA_TYPE_STR *lA = localA + GET_LOCAL_INDEX_A(localARow, localACol);" + self.el +
+      "    __local DATA_TYPE_STR *lB = localB + GET_LOCAL_INDEX_B(localBRow, localBCol);" + self.el +
+      "    barrier(CLK_LOCAL_MEM_FENCE);" + self.el )
 
     ####################################
     # load global -> local
     # threads to do loading = (wgNumRows*wgNumCols)
     # A elements to be loaded = wgNumRows*microTileNumRows*unroll
     # B elements to be loaded = wgNumCols*microTileNumCols*unroll
-    self.ks += "\n    // load global -> local\n"
+    self.ks += self.el
+    self.ks += "    /* load global -> local */" + self.el
     numALoads  = (self.wgNumRows*self.microTileNumRows*self.unroll) \
         / (self.wgNumRows*self.wgNumCols)
     numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll) \
@@ -537,61 +557,68 @@ class GemmTileOpenCLKernel:
         % (self.wgNumRows*self.wgNumCols)
 
     for a in range(0, numALoads):
-      self.ks += "    lA[ %d*localAStride ] = A[ %d*globalAStride ];\n" % (a, a)
+      self.ks += "    lA[ %d*localAStride ] = A[ %d*globalAStride ];%s" % (a, a, self.el)
     if numALoadsR:
-      self.ks += "    if (localSerial < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {\n"
-      self.ks += "      lA[ %d*localAStride ] = A[ %d*globalAStride ];\n" % (numALoads, numALoads)
-      self.ks += "    }\n"
+      self.ks += "    if (localSerial < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {" + self.el
+      self.ks += "      lA[ %d*localAStride ] = A[ %d*globalAStride ];%s" % (numALoads, numALoads, self.el)
+      self.ks += "    }" + self.el
 
     for b in range(0, numBLoads):
-      self.ks += "    lB[ %d*localBStride ] = B[ %d*globalBStride ];\n" % (b, b)
+      self.ks += "    lB[ %d*localBStride ] = B[ %d*globalBStride ];%s" % (b, b, self.el)
     if numBLoadsR:
-      self.ks += "    if (localSerial < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {\n"
-      self.ks += "      lB[ %d*localBStride ] = B[ %d*globalBStride ];\n" % (numBLoads, numBLoads)
-      self.ks += "    }\n"
+      self.ks += "    if (localSerial < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {" + self.el
+      self.ks += "      lB[ %d*localBStride ] = B[ %d*globalBStride ];%s" % (numBLoads, numBLoads, self.el)
+      self.ks += "    }" + self.el
     self.ks += (
-      "    barrier(CLK_LOCAL_MEM_FENCE);\n\n"
-      "    uint offA = localRow;\n"
-      "    uint offB = localCol;\n" )
+      "    barrier(CLK_LOCAL_MEM_FENCE);" + self.el +
+      "    uint offA = localRow;" + self.el +
+      "    uint offB = localCol;" + self.el )
 
     ####################################
     # do mads
-    self.ks += "\n    // do mads\n"
+    self.ks += self.el
+    self.ks += "    /* do mads */" + self.el
     for u in range(0, self.unroll):
-      self.ks += "    MICRO_TILE\n"
+      self.ks += "    MICRO_TILE" + self.el
 
     ####################################
     # shift to next k block
-    self.ks += "\n    // shift to next k block\n"
+    self.ks += self.el
+    self.ks += "    /* shift to next k block */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA==1):
-      self.ks += "    A += NUM_UNROLL_ITER; // transA\n"
+      self.ks += "    A += NUM_UNROLL_ITER;" + self.el
     else:
-      self.ks += "    A += lda*NUM_UNROLL_ITER; // noTransA\n"
+      self.ks += "    A += lda*NUM_UNROLL_ITER;" + self.el
     if (self.order=="clblasColumnMajor")==(self.transB==1):
-      self.ks += "    B += ldb*NUM_UNROLL_ITER; // transB\n"
+      self.ks += "    B += ldb*NUM_UNROLL_ITER;" + self.el
     else:
-      self.ks += "    B += NUM_UNROLL_ITER; // noTransB\n"
+      self.ks += "    B += NUM_UNROLL_ITER;" + self.el
 
     ####################################
     # end loop
-    self.ks += "\n  } while (--block_k > 0);\n\n"
+    self.ks += self.el
+    self.ks += "  } while (--block_k > 0);" + self.el
+    self.ks += self.el
 
     ####################################
     # which global Cij index
-    self.ks += "\n  // which global Cij index\n"
-    self.ks += "  uint globalCRow = groupRow * MACRO_TILE_NUM_ROWS + localRow;\n"
-    self.ks += "  uint globalCCol = groupCol * MACRO_TILE_NUM_COLS + localCol;\n"
+    self.ks += self.el
+    self.ks += "  /* which global Cij index */" + self.el
+    self.ks += "  uint globalCRow = groupRow * MACRO_TILE_NUM_ROWS + localRow;" + self.el
+    self.ks += "  uint globalCCol = groupCol * MACRO_TILE_NUM_COLS + localCol;" + self.el
 
     ####################################
     # write global Cij
-    self.ks += "\n  // write global Cij\n"
+    self.ks += self.el
+    self.ks += "  /* write global Cij */" + self.el
     for a in range(0, self.microTileNumRows):
       for b in range(0, self.microTileNumCols):
-        self.ks += "  TYPE_MAD_WRITE( C[ GET_GLOBAL_INDEX_C( globalCRow+%d*WG_NUM_ROWS, globalCCol+%d*WG_NUM_COLS) ], alpha, rC[%d][%d], beta )\n" % (a, b, a, b)
+        self.ks += "  TYPE_MAD_WRITE( C[ GET_GLOBAL_INDEX_C( globalCRow+%d*WG_NUM_ROWS, globalCCol+%d*WG_NUM_COLS) ], alpha, rC[%d][%d], beta )%s" % (a, b, a, b, self.el)
 
     ####################################
     # end kernel
-    self.ks += "\n}\n"
+    self.ks += self.el
+    self.ks += "}" + self.el
 
     return self.ks
 
@@ -602,9 +629,9 @@ class GemmTileOpenCLKernel:
   def writeKernelToFile(self):
     kernelName = self.getKernelName()
     kernelString = self.makeKernelString()
-    kernelFileName = kernelName+".cl"
+    kernelFileName = "gemmKernels/" + kernelName+"_src.h"
     kernelFile = open(kernelFileName, "w")
-    kernelFile.write("static const char * %s = \"\n\n" % kernelName)
+    kernelFile.write("static const char * %s_src =\"" % (kernelName) )
     kernelFile.write(kernelString)
     kernelFile.write("\";\n")
     kernelFile.close()
@@ -614,10 +641,40 @@ class GemmTileOpenCLKernel:
 
 
 ################################################################################
-# KSL - Kernel Selection Logic
+# INC - Kernel Includes
+################################################################################
+class KernelIncludes:
+
+  ##############################################################################
+  # INC - default constructor
+  ##############################################################################
+  def __init__(self):
+    self.includeSourceFileName = "GemmSourceIncludes.h"
+    self.includeBinaryFileName = "GemmBinaryIncludes.h"
+    self.srcStr = ""
+    self.binStr = ""
+
+  def addKernel(self, kernel):
+    kernelName = kernel.getKernelName()
+    self.srcStr += "#include \"gemmKernels/%s_src.h\"\n" % kernelName
+    self.binStr += "#include \"gemmKernels/%s_bin.h\"\n" % kernelName
+
+  def writeToFile(self):
+    srcFile = open(self.includeSourceFileName, "w")
+    srcFile.write( self.srcStr )
+    srcFile.close()
+    binFile = open(self.includeBinaryFileName, "w")
+    binFile.write( self.binStr )
+    binFile.close()
+
+
+
+################################################################################
+# KSL - Kernel Selection Logic File
 ################################################################################
 class KernelSelectionLogic:
 
+  kernelSelectionFileName = "GemmKernelSelection.h"
   zeroIndent = "  "
   tab = "  "
   ##############################################################################
@@ -634,14 +691,19 @@ class KernelSelectionLogic:
 
     self.listMicroTileSizes = listMicroTileSizes
 
-    self.logic = ( "xgemmSelectKernel(\n"
+    self.logic = (
+      "#include \"GemmSourceIncludes.h\"\n"
+      "// #include \"GemmBinaryIncludes.h\"\n"
+      "\n"
+      "// kernel selection logic\n"
+      "xgemmSelectKernel(\n"
       "  clblasOrder order,\n"
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
       "  unsigned int M,\n"
       "  unsigned int N,\n"
       "  unsigned int K,\n"
-      "  bool betaIsZero,\n"
+      "  bool betaNonZero,\n"
       "  float optimalNumElementsPerWorkItem\n"
       ") {\n" )
     self.orderInitialized = False
@@ -704,9 +766,9 @@ class KernelSelectionLogic:
       self.logic += self.zeroIndent+self.tab+self.tab # 2 tabs
     self.logic += "if ( "
     if beta == 0:
-      self.logic += "betaIsZero"
+      self.logic += "!betaNonZero"
     else:
-      self.logic += "!betaIsZero"
+      self.logic += "betaNonZero"
     self.logic += " ) {\n"
     self.betaInitialized = True
     self.previousTileSize = 0
@@ -765,9 +827,7 @@ class KernelSelectionLogic:
   # KSL - write to file
   ##############################################################################
   def writeToFile(self):
-    selectionFileName = "kernelSelectionLogic.h"
-    selectionFile = open(selectionFileName, "w")
-    selectionFile.write("// kernel selection logic\n")
+    selectionFile = open(self.kernelSelectionFileName, "w")
     selectionFile.write(self.logic)
     selectionFile.write("\n")
     selectionFile.close()
