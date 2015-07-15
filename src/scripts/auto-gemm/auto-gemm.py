@@ -42,7 +42,7 @@ def main(argv):
 def processAllKernelParameterCombinations(argv):
 
 # enumerate which kernels to generate
-  precision = "d"
+  precision = "s"
   listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
   listTrans = [
     [ "N", "N" ],
@@ -103,14 +103,14 @@ def processAllKernelParameterCombinations(argv):
 
   listUnroll = [ 8, 4, 2, 1 ]
 
-  kernelSelectionLogic = KernelSelectionLogic(listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
-  kernelIncludes = KernelIncludes()
+  kernelSelectionLogic = KernelSelectionLogic(precision, listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
+  kernelIncludes = KernelIncludes(precision)
 
   # files to write lists to
-  fileSrcClTemplates = open("SRC_CL_TEMPLATES.txt", "w")
-  fileSrcClTemplatesGen = open("SRC_CL_TEMPLATES_GEN.txt", "w")
-  fileBinClTemplates = open("BIN_CL_TEMPLATES.txt", "w")
-  fileCppKernelParameters = open("cppKernelParameters.h", "w")
+  fileSrcClTemplates = open(precision + "gemm_SRC_CL_TEMPLATES.txt", "w")
+  fileSrcClTemplatesGen = open(precision + "gemm_SRC_CL_TEMPLATES_GEN.txt", "w")
+  fileBinClTemplates = open(precision + "gemm_BIN_CL_TEMPLATES.txt", "w")
+  fileCppKernelParameters = open(precision + "gemm_cppKernelParameters.h", "w")
 
 
   # for each kernel parameter combination
@@ -419,7 +419,11 @@ class GemmTileOpenCLKernel:
     if self.precision=="s" or self.precision=="d":
       # real arithmetic
       self.ks += "#define TYPE_MAD(MUL0,MUL1,DST) DST = mad(MUL0,MUL1,DST);" + self.el
-      self.ks += "#define TYPE_MAD_WRITE(DST,ALPHA,REG,BETA) DST = (ALPHA)*(REG) + (BETA)*(DST);" + self.el
+      if self.beta==1:
+        self.ks += "#define TYPE_MAD_WRITE(DST,ALPHA,REG,BETA) DST = (ALPHA)*(REG) + (BETA)*(DST);" + self.el
+      else:
+        self.ks += "#define TYPE_MAD_WRITE(DST,ALPHA,REG,BETA) DST = (ALPHA)*(REG);" + self.el
+
     else:
       # complex arithmetic
       self.ks += (
@@ -428,21 +432,38 @@ class GemmTileOpenCLKernel:
         "  DST.s0 = mad( -MUL0.s1, MUL1.s1, DST.s0 ); \\\\" + self.el +
         "  DST.s1 = mad(  MUL0.s0, MUL1.s1, DST.s1 ); \\\\" + self.el +
         "  DST.s1 = mad(  MUL0.s1, MUL1.s0, DST.s1 );" + self.el )
-      self.ks += (
-        "#define TYPE_MAD_WRITE( DST, ALPHA, REG, BETA ) \\\\" + self.el +
-        "  /* (1) */ \\\\" + self.el +
-        "  type_mad2_tmp = REG.s0; \\\\" + self.el +
-        "  REG.s0 *= ALPHA.s0; \\\\" + self.el +
-        "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + self.el +
-        "  REG.s1 *= ALPHA.s0; \\\\" + self.el +
-        "  REG.s1 = mad(  ALPHA.s1, type_mad2_tmp, REG.s1 ); \\\\" + self.el +
-        "  /* (2) */ \\\\" + self.el +
-        "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + self.el +
-        "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + self.el +
-        "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + self.el +
-        "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + self.el +
-        "  /* (3) */ \\\\" + self.el +
-        "  DST = REG;" + self.el )
+      if self.beta==1:
+        self.ks += (
+          "#define TYPE_MAD_WRITE( DST, ALPHA, REG, BETA ) \\\\" + self.el +
+          "  /* (1) */ \\\\" + self.el +
+          "  type_mad_tmp = REG.s0; \\\\" + self.el +
+          "  REG.s0 *= ALPHA.s0; \\\\" + self.el +
+          "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + self.el +
+          "  REG.s1 *= ALPHA.s0; \\\\" + self.el +
+          "  REG.s1 = mad(  ALPHA.s1, type_mad_tmp, REG.s1 ); \\\\" + self.el +
+          "  /* (2) */ \\\\" + self.el +
+          "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + self.el +
+          "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + self.el +
+          "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + self.el +
+          "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + self.el +
+          "  /* (3) */ \\\\" + self.el +
+          "  DST = REG;" + self.el )
+      else:
+        self.ks += (
+          "#define TYPE_MAD_WRITE( DST, ALPHA, REG, BETA ) \\\\" + self.el +
+          "  /* (1) */ \\\\" + self.el +
+          "  type_mad_tmp = REG.s0; \\\\" + self.el +
+          "  REG.s0 *= ALPHA.s0; \\\\" + self.el +
+          "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + self.el +
+          "  REG.s1 *= ALPHA.s0; \\\\" + self.el +
+          "  REG.s1 = mad(  ALPHA.s1, type_mad_tmp, REG.s1 ); \\\\" + self.el +
+          #"  /* (2) */ \\\\" + self.el +
+          #"  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + self.el +
+          #"  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + self.el +
+          #"  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + self.el +
+          #"  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + self.el +
+          "  /* (3) */ \\\\" + self.el +
+          "  DST = REG;" + self.el )
 
     ####################################
     # micro-tile
@@ -654,6 +675,12 @@ class GemmTileOpenCLKernel:
     # write global Cij
     self.ks += self.el
     self.ks += "  /* write global Cij */" + self.el
+    if self.precision=="c":
+      self.ks += "  float type_mad_tmp;" + self.el
+    if self.precision=="z":
+      self.ks += "  double type_mad_tmp;" + self.el
+
+
     for a in range(0, self.microTileNumRows):
       for b in range(0, self.microTileNumCols):
         self.ks += "  TYPE_MAD_WRITE( C[ GET_GLOBAL_INDEX_C( globalCRow+%d*WG_NUM_ROWS, globalCCol+%d*WG_NUM_COLS) ], alpha, rC[%d][%d], beta )%s" % (a, b, a, b, self.el)
@@ -691,11 +718,15 @@ class KernelIncludes:
   ##############################################################################
   # INC - default constructor
   ##############################################################################
-  def __init__(self):
-    self.includeSourceFileName = "GemmSourceIncludes.h"
-    self.includeBinaryFileName = "GemmBinaryIncludes.h"
-    self.srcStr = ""
-    self.binStr = ""
+  def __init__(self, precision):
+    self.includeSourceFileName = precision+"gemmSourceIncludes.h"
+    self.includeBinaryFileName = precision+"gemmBinaryIncludes.h"
+    self.srcStr = "#ifndef " + precision + "gemm_SOURCE_INCLUDES_H\n"
+    self.srcStr += "#define " + precision + "gemm_SOURCE_INCLUDES_H\n"
+    self.srcStr += "\n"
+    self.binStr = "#ifndef " + precision + "gemm_BINARY_INCLUDES_H\n"
+    self.binStr += "#define " + precision + "gemm_BINARY_INCLUDES_H\n"
+    self.binStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
@@ -705,9 +736,11 @@ class KernelIncludes:
   def writeToFile(self):
     srcFile = open(self.includeSourceFileName, "w")
     srcFile.write( self.srcStr )
+    srcFile.write( "\n#endif\n" )
     srcFile.close()
     binFile = open(self.includeBinaryFileName, "w")
     binFile.write( self.binStr )
+    binFile.write( "\n#endif\n" )
     binFile.close()
 
 
@@ -717,13 +750,13 @@ class KernelIncludes:
 ################################################################################
 class KernelSelectionLogic:
 
-  kernelSelectionFileName = "GemmKernelSelection.h"
   zeroIndent = "  "
   tab = "  "
   ##############################################################################
   # KSL - default constructor
   ##############################################################################
   def __init__(self, \
+      precision, \
       listOrder, \
       listTrans, \
       listBeta, \
@@ -732,14 +765,15 @@ class KernelSelectionLogic:
       listUnroll, \
       listMicroTileSizes ):
 
+    self.kernelSelectionFileName = precision + "gemmKernelSelection.h"
     self.listMicroTileSizes = listMicroTileSizes
 
     self.logic = (
-      "#include \"GemmSourceIncludes.h\"\n"
-      "// #include \"GemmBinaryIncludes.h\"\n"
+      "#include \"" + precision + "gemmSourceIncludes.h\"\n"
+      "// #include \"" + precision + "gemmBinaryIncludes.h\"\n"
       "\n"
       "// kernel selection logic\n"
-      "void xgemmSelectKernel(\n"
+      "void " + precision + "gemmSelectKernel(\n"
       "  clblasOrder order,\n"
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
