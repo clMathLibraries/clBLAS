@@ -2,17 +2,19 @@
 # Auto-Gemm
 # - Automatically generate gemm kernels based on tile parameters
 # - This script generates the following to ease integration into clBLAS:
-#   1) generate all the kernel files
-#   2) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES
-#   3) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES_GEN
-#   4) list to add to src/library/bingen.cmake:BIN_CL_TEMPLATES_HAWAII_CL2
-#   5) list to add to src/library/blas/functor/gcn_zgemm.cc:23 - DONE
+#   - generate all the kernel files
+#   - list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES
+#   - list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES_GEN
+#   - list to add to src/library/bingen.cmake:BIN_CL_TEMPLATES_HAWAII_CL2
+#   - kernel selection logic
+#   - include files for kernel strings
+#
 # TODO
 # - after writing kernel files, make list of valid micro tiles for correct size list
 # - zgemm() call is in xgemm.cc
 # - one functions writes every combination to a file, while one reads from that file, therefore manual intervention for deleting slow kernels
-# - estimating occupancy for a kernel (low occupancy remove it?)
-# - optimize for beta = 0
+# - max tile size product for a given precision
+# - fuse together unroll=8 and unroll=1 in same kernel
 ################################################################################
 
 import sys
@@ -42,7 +44,7 @@ def main(argv):
 def processAllKernelParameterCombinations(argv):
 
 # enumerate which kernels to generate
-  precision = "s"
+  precision = "d"
   listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
   listTrans = [
     [ "N", "N" ],
@@ -197,8 +199,7 @@ def processKernel( \
     validParameterCombinations += 1
   else:
     errorString = kernel.ks
-    print kernelName + " - ERROR - " + errorString
-    #print "ERROR:      " + kernelName + " - skipping"
+    print kernelName + " - SKIPPING - " + errorString
     return
 
   print "%s: s = %3d" % (kernelName, kernel.microTileNumRows*kernel.microTileNumCols)
@@ -230,35 +231,6 @@ def processKernel( \
       kernel.wgNumRows, \
       kernel.wgNumCols, \
       kernel.unroll ) )
-
-
-"""  fileCppKernelParameters.write("  { ")
-  if kernel.order=="clblasColumnMajor":
-    fileCppKernelParameters.write("1, ")
-  else:
-    fileCppKernelParameters.write("0, ")
-
-  if kernel.transA=="T":
-    fileCppKernelParameters.write("1, ")
-  else:
-    fileCppKernelParameters.write("0, ")
-
-  if kernel.transB=="T":
-    fileCppKernelParameters.write("1, ")
-  else:
-    fileCppKernelParameters.write("0, ")
-
-  if kernel.beta > 0:
-    fileCppKernelParameters.write("1, ")
-  else:
-    fileCppKernelParameters.write("0, ")
-
-  fileCppKernelParameters.write("%d, %d, %d, %d, %d }" % (kernel.microTileNumRows, kernel.microTileNumCols, kernel.wgNumRows, kernel.wgNumCols, kernel.unroll ) )
-"""
-
-
-
-
 
 
 
@@ -782,7 +754,11 @@ class KernelSelectionLogic:
       "  unsigned int K,\n"
       "  bool betaNonZero,\n"
       "  float optimalNumElementsPerWorkItem,\n"
-      "  const char **kernelSource\n"
+      "  const char **kernelSource,\n"
+      "  unsigned int *workGroupNumRows,\n"
+      "  unsigned int *workGroupNumCols,\n"
+      "  unsigned int *microTileNumRows,\n"
+      "  unsigned int *microTileNumCols\n"
       ") {\n" )
     self.orderInitialized = False
     self.transInitialized = False
@@ -883,12 +859,28 @@ class KernelSelectionLogic:
     # new kernel
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "if ( M%%%d == 0 && N%%%d == 0 && K%%%d == 0) {\n" % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
+
     #self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     #self.logic += "printf(\"selected kernel: " + kernel.getKernelName() + "\\n\");\n"
+
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     self.logic += "*kernelSource= " + kernel.getKernelName() + "_src;\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*microTileNumRows = " + str(kernel.microTileNumRows) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*microTileNumCols = " + str(kernel.microTileNumCols) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*workGroupNumRows = " + str(kernel.wgNumRows) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*workGroupNumRows = " + str(kernel.wgNumRows) + ";\n"
+
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     self.logic += "return;\n"
+
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "}\n"
 
