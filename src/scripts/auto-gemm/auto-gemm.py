@@ -349,7 +349,10 @@ class GemmTileOpenCLKernel:
 
     ####################################
     # initializations
-    self.ks = "/* %s */" % self.getKernelName()
+    self.ks = ""
+    self.ks += self.el
+    self.ks += "/* %s */" % self.getKernelName()
+    self.ks += self.el
 
     ####################################
     # kernel parameters
@@ -384,15 +387,15 @@ class GemmTileOpenCLKernel:
     # A
     self.ks += self.el
     self.ks += "/* global memory indices */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA==1):
+    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
       self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))" + self.el
     else:
       self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))" + self.el
     # B
-    if (self.order=="clblasColumnMajor")==(self.transB==1):
-      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))" + self.el
-    else:
+    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
       self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))" + self.el
+    else:
+      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))" + self.el
     # C
     if (self.order=="clblasColumnMajor"):
       self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((COL)*ldc+(ROW))" + self.el
@@ -523,7 +526,7 @@ class GemmTileOpenCLKernel:
     # global indices being loaded
     self.ks += self.el
     self.ks += "  /* global indices being loaded */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA==1):
+    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
       self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial/NUM_UNROLL_ITER)" + self.el +
       "#define globalACol (localSerial%NUM_UNROLL_ITER)" + self.el +
       "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER, (WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER ) )" + self.el )
@@ -532,7 +535,7 @@ class GemmTileOpenCLKernel:
       "#define globalACol (localSerial/MACRO_TILE_NUM_ROWS)" + self.el +
       "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS ) )" + self.el )
 
-    if (self.order=="clblasColumnMajor")==(self.transB==1):
+    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
       self.ks += ( "#define globalBRow (localSerial/MACRO_TILE_NUM_COLS)" + self.el +
       "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial%MACRO_TILE_NUM_COLS)" + self.el +
       "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_COLS, (WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS) )" + self.el )
@@ -556,7 +559,7 @@ class GemmTileOpenCLKernel:
     # local indices being written
     self.ks += self.el
     self.ks += "    /* local indices being written */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA==1):
+    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
       self.ks += ( "#define localARow (localSerial / NUM_UNROLL_ITER)" + self.el +
       "#define localACol (localSerial % NUM_UNROLL_ITER)" + self.el +
       "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
@@ -565,7 +568,8 @@ class GemmTileOpenCLKernel:
       "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)" + self.el +
       "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
 
-    if (self.order=="clblasColumnMajor")==(self.transB==1):
+    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
+      print "transB == T"
       self.ks += ( "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
       "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
       "#define localBStride  (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
@@ -624,11 +628,11 @@ class GemmTileOpenCLKernel:
     # shift to next k block
     self.ks += self.el
     self.ks += "    /* shift to next k block */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA==1):
+    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
       self.ks += "    A += NUM_UNROLL_ITER;" + self.el
     else:
       self.ks += "    A += lda*NUM_UNROLL_ITER;" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transB==1):
+    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
       self.ks += "    B += ldb*NUM_UNROLL_ITER;" + self.el
     else:
       self.ks += "    B += NUM_UNROLL_ITER;" + self.el
