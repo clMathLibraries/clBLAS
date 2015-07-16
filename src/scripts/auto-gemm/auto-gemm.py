@@ -43,7 +43,7 @@ def main(argv):
 ################################################################################
 def processAllKernelParameterCombinations(argv):
 
-# enumerate which kernels to generate
+  # non-tile kernel parameters
   precision = "d"
   listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
   listTrans = [
@@ -53,59 +53,42 @@ def processAllKernelParameterCombinations(argv):
     [ "T", "T" ],
     ]
   listBeta = [ 0, 1 ]
+
+  # tile parameters
+  microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
+  microTileMaxProduct = microTileMaxProductDict[ precision ]
+  microTileMaxEdgeLengthDict = { "s":8, "d":8, "c":8, "z":8 }
+  microTileMaxEdgeLength = microTileMaxEdgeLengthDict[ precision ]
+  listUnroll = [ 8, 4, 2, 1 ]
   listWorkGroupDims = [ [16, 16] ]
-  listMicroTileDims = [
-
-    [4, 8], [8, 4], # 32
-    [3, 8], [8, 3], # 24
-    [2, 8], [8, 2], # 16
-    [1, 8], [8, 1], #  8
-
-    [5, 7], [7, 5], # 35
-    [4, 7], [7, 4], # 28
-    [3, 7], [7, 3], # 21
-    [2, 7], [7, 2], # 14
-    [1, 7], [7, 1], #  7
-
-    [6, 6],         # 36
-    [5, 6], [6, 5], # 30
-    [4, 6], [6, 4], # 24
-    [3, 6], [6, 3], # 18
-    [2, 6], [6, 2], # 12
-    [1, 6], [6, 1], #  6
-
-    [5, 5],         # 25
-    [4, 5], [5, 4], # 20
-    [3, 5], [5, 3], # 15
-    [2, 5], [5, 2], # 10
-    [1, 5], [5, 1], #  5
-
-    [4, 4],         # 16
-    [3, 4], [4, 3], # 12
-    [2, 4], [4, 2], #  8
-    [1, 4], [4, 1], #  4
-
-    [3, 3],         #  9
-    [2, 3], [3, 2], #  6
-    [1, 3], [3, 1], #  3
-
-    [2, 2],         #  4
-    [1, 2], [2, 1], #  2
-
-    [1, 1],         #  1
-
-    ]
-  listMicroTileDims.sort(orderTileSizes, reverse=True)
+  listTileKernelParameters = []
+  listEdgeKernelParameters = []
+  # list all valid tile parameter combinations
+  for microTileNumRows in range(1, microTileMaxEdgeLength):
+    for microTileNumCols in range(1, microTileMaxEdgeLength):
+      if microTileNumRows*microTileNumCols <= microTileMaxProduct:
+        for workGroupDim in listWorkGroupDims:
+          for unroll in listUnroll:
+            kernel = GemmTileOpenCLKernel()
+            kernel.workGroupNumRows = workGroupDim[0]
+            kernel.workGroupNumCols = workGroupDim[1]
+            kernel.microTileNumRows = microTileNumRows
+            kernel.microTileNumCols = microTileNumCols
+            kernel.unroll = unroll
+            if kernel.kernelParamsValid():
+              listTileKernelParameters.append( \
+                  [workGroupDim[0], workGroupDim[1], \
+                  microTileNumRows, microTileNumCols, unroll] )
+  listTileKernelParameters.sort(orderTileSizes, reverse=True)
+  print( listTileKernelParameters )
   # make list of unique tile sizes
   listMicroTileSizes = []
-  for tile in listMicroTileDims:
-    size = tile[0]*tile[1]
+  for tile in listTileKernelParameters:
+    size = tile[2]*tile[3]
     if size not in listMicroTileSizes:
       listMicroTileSizes.append(size)
 
-  listUnroll = [ 8, 4, 2, 1 ]
-
-  kernelSelectionLogic = KernelSelectionLogic(precision, listOrder, listTrans, listBeta, listWorkGroupDims, listMicroTileDims, listUnroll, listMicroTileSizes);
+  kernelSelectionLogic = KernelSelectionLogic(precision, listOrder, listTrans, listBeta, listMicroTileSizes);
   kernelIncludes = KernelIncludes(precision)
 
   # files to write lists to
@@ -122,30 +105,30 @@ def processAllKernelParameterCombinations(argv):
       kernelSelectionLogic.newTrans(trans)
       for beta in listBeta:
         kernelSelectionLogic.newBeta(beta)
-        for workGroupDim in listWorkGroupDims:
-          for microTileDim in listMicroTileDims:
-            for unroll in listUnroll:
-              # set kernel parameters
-              kernel = GemmTileOpenCLKernel()
-              kernel.precision = precision
-              kernel.order = order
-              kernel.transA = trans[0]
-              kernel.transB = trans[1]
-              kernel.beta = beta
-              kernel.wgNumRows = workGroupDim[0]
-              kernel.wgNumCols = workGroupDim[1]
-              kernel.microTileNumRows = microTileDim[0]
-              kernel.microTileNumCols = microTileDim[1]
-              kernel.unroll = unroll
-              # process kernel parameters
-              processKernel( \
-                  kernel, \
-                  kernelSelectionLogic, \
-                  fileSrcClTemplates, \
-                  fileSrcClTemplatesGen, \
-                  fileBinClTemplates, \
-                  kernelIncludes, \
-                  fileCppKernelParameters )
+        for tile in listTileKernelParameters:
+          # set kernel parameters
+          kernel = GemmTileOpenCLKernel()
+          kernel.precision = precision
+          kernel.order = order
+          kernel.transA = trans[0]
+          kernel.transB = trans[1]
+          kernel.beta = beta
+          kernel.workGroupNumRows = tile[0]
+          kernel.workGroupNumCols = tile[1]
+          kernel.microTileNumRows = tile[2]
+          kernel.microTileNumCols = tile[3]
+          kernel.macroTileNumRows = tile[0]*tile[2]
+          kernel.macroTileNumCols = tile[1]*tile[3]
+          kernel.unroll = tile[4]
+          # process kernel parameters
+          processKernel( \
+              kernel, \
+              kernelSelectionLogic, \
+              fileSrcClTemplates, \
+              fileSrcClTemplatesGen, \
+              fileBinClTemplates, \
+              kernelIncludes, \
+              fileCppKernelParameters )
   # save written files
   kernelSelectionLogic.finish()
   kernelSelectionLogic.writeToFile()
@@ -159,23 +142,39 @@ def processAllKernelParameterCombinations(argv):
 
 ################################################################################
 # Main - Order Tile Sizes
+# - returns 1 if tileA should come first
 # - process tiles largest -> smallest (elements/work-item)
 # - for same size tile, choose squarer one
 ################################################################################
 def orderTileSizes(tileA, tileB):
-  tileASize = tileA[0] * tileA[1]
-  tileBSize = tileB[0] * tileB[1]
+  tileAWorkGroupSize = tileA[0] * tileA[1]
+  tileAMicroTileSize = tileA[2] * tileA[3]
+  tileASize = tileAWorkGroupSize*tileAMicroTileSize
+
+  tileBWorkGroupSize = tileB[0] * tileB[1]
+  tileBMicroTileSize = tileB[2] * tileB[3]
+  tileBSize = tileBWorkGroupSize*tileBMicroTileSize
+  # choose larger macro tile
   if (tileASize > tileBSize):
     return 1
   elif (tileBSize > tileASize):
     return -1
-  else:
-    if (tileB[0]+tileB[1]) > (tileA[0]+tileA[1]):
+  else: # macro tile same
+    tileANumRows = tileA[0] + tileA[2]
+    tileANumCols = tileA[1] + tileA[3]
+    tileBNumRows = tileB[0] + tileB[2]
+    tileBNumCols = tileB[1] + tileB[3]
+    # choose the squarer one
+    if (tileANumRows+tileANumCols) < (tileBNumRows+tileBNumCols):
       return 1
-    elif (tileA[0]+tileA[1]) > (tileB[0]+tileB[1]):
+    elif (tileBNumRows+tileBNumCols) < (tileANumRows+tileANumCols):
       return -1
-    else:
-      return 0
+    else: #same macro tile dimensions
+      # choose larger unroll
+      if tileA[4] > tileB[4]:
+        return 1
+      else:
+        return -1
 
 
 ################################################################################
@@ -220,7 +219,7 @@ def processKernel( \
   kernelSelectionLogic.newKernel(kernel)
   kernelIncludes.addKernel(kernel)
 
-  # 5) list to add to ktest for automated kernel testing
+  # 6) list to add to ktest for automated kernel testing
   fileCppKernelParameters.write("  { %u, %u, %u, %u, %u, %u, %u, %u, %u },\n" % ( \
       1 if kernel.order=="clblasColumnMajor" else 0, \
       1 if kernel.transA=="T" else 0, \
@@ -228,9 +227,24 @@ def processKernel( \
       1 if kernel.beta>0 else 0, \
       kernel.microTileNumRows, \
       kernel.microTileNumCols, \
-      kernel.wgNumRows, \
-      kernel.wgNumCols, \
+      kernel.workGroupNumRows, \
+      kernel.workGroupNumCols, \
       kernel.unroll ) )
+
+  # 7) write kernel to file
+  macroTileNumRows = kernel.macroTileNumRows
+  macroTileNumCols = kernel.macroTileNumCols
+  # row kernel
+  kernel.macroTileNumRows = 1
+  kernel.writeKernelToFile()
+  # col kernel
+  kernel.macroTileNumRows = macroTileNumRows
+  kernel.macroTileNumCols = 1
+  kernel.writeKernelToFile()
+  # corner kernel
+  kernel.macroTileNumRows = 1
+  kernel.macroTileNumCols = 1
+  kernel.writeKernelToFile()
 
 
 
@@ -255,10 +269,12 @@ class GemmTileOpenCLKernel:
     self.transA = "N" # N, T
     self.transB = "N" # N, T
     self.beta = 1
-    self.wgNumRows = 16
-    self.wgNumCols = 16
+    self.workGroupNumRows = 16
+    self.workGroupNumCols = 16
     self.microTileNumRows = 1
     self.microTileNumCols = 1
+    self.macroTileNumRows = 1
+    self.macroTileNumCols = 1
     self.localRowPad = 0
     self.localColPad = 0
     self.unroll = 8
@@ -270,18 +286,82 @@ class GemmTileOpenCLKernel:
   # Kernel - get multiples
   ##############################################################################
   def getMultipleM(self):
-    return (self.wgNumRows * self.microTileNumRows)
+    return (self.workGroupNumRows * self.microTileNumRows)
   def getMultipleN(self):
-    return (self.wgNumCols * self.microTileNumCols)
+    return (self.workGroupNumCols * self.microTileNumCols)
   def getMultipleK(self):
     return (self.unroll)
+
+  ##############################################################################
+  # Row Kernel
+  # - macroTileNumRows = 1
+  # - guards around gA -> lA
+  # - guards around gC[gRow,:] = rC[row,:]
+  ##############################################################################
+  def isRowKernel(self):
+    if self.workGroupNumRows * self.microTileNumRows == self.macroTileNumRows:
+      return False; # normal tile kernel
+    else:
+      if self.macroTileNumRows == 1:
+        return True; # single row kernel
+      else:
+        printf("ERROR: workGroupNumRows=%u, microTileNumRows=%u and macroTileNumRows=%u doesn't make sense\n" % (self.workGroupNumRows, self.microTileNumRows, self.macroTileNumRows) );
+        return False; # ERROR
+
+
+  ##############################################################################
+  # Col Kernel
+  # - macroTileNumCols = 1
+  # - guards around gB -> lB
+  # - guards around gC[:,gCol] = rC[:,col]
+  ##############################################################################
+  def isColKernel(self):
+    if self.workGroupNumCols * self.microTileNumCols == self.macroTileNumCols:
+      return False; # normal tile kernel
+    else:
+      if self.macroTileNumCols == 1:
+        return True; # single row kernel
+      else:
+        printf("ERROR: workGroupNumCols=%u, microTileNumCols=%u and macroTileNumCols=%u doesn't make sense\n" % (self.workGroupNumCols, self.microTileNumCols, self.macroTileNumCols) );
+        return False; # ERROR
+
 
 
   ##############################################################################
   # Kernel - get kernel name
   ##############################################################################
   def getKernelName(self):
-    kernelName = "%sgemm_%1s%1s_%03d_%03d_%01d_%02dx%02d_%01dx%01d" % (hostDataChar[self.precision], self.transA, self.transB, (self.wgNumRows * self.microTileNumRows), (self.wgNumCols * self.microTileNumCols), self.unroll, self.wgNumRows, self.wgNumCols, self.microTileNumRows, self.microTileNumCols)
+    kernelName = "%sgemm_%1s%1s_%03d_%03d_%01d_%02dx%02d_%01dx%01d" % (hostDataChar[self.precision], self.transA, self.transB, self.macroTileNumRows, self.macroTileNumCols, self.unroll, self.workGroupNumRows, self.workGroupNumCols, self.microTileNumRows, self.microTileNumCols)
+    if (self.order=="clblasColumnMajor"):
+      kernelName += "_ColMajor"
+    else:
+      kernelName += "_RowMajor"
+    if (self.beta==1):
+      kernelName += "_BETA"
+    return kernelName
+
+  def getRowKernelName(self):
+    kernelName = "%sgemm_%1s%1s_%03d_%03d_%01d_%02dx%02d_%01dx%01d" % (hostDataChar[self.precision], self.transA, self.transB, 1, self.macroTileNumCols, self.unroll, self.workGroupNumRows, self.workGroupNumCols, self.microTileNumRows, self.microTileNumCols)
+    if (self.order=="clblasColumnMajor"):
+      kernelName += "_ColMajor"
+    else:
+      kernelName += "_RowMajor"
+    if (self.beta==1):
+      kernelName += "_BETA"
+    return kernelName
+
+  def getColKernelName(self):
+    kernelName = "%sgemm_%1s%1s_%03d_%03d_%01d_%02dx%02d_%01dx%01d" % (hostDataChar[self.precision], self.transA, self.transB, self.macroTileNumRows, 1, self.unroll, self.workGroupNumRows, self.workGroupNumCols, self.microTileNumRows, self.microTileNumCols)
+    if (self.order=="clblasColumnMajor"):
+      kernelName += "_ColMajor"
+    else:
+      kernelName += "_RowMajor"
+    if (self.beta==1):
+      kernelName += "_BETA"
+    return kernelName
+
+  def getCornerKernelName(self):
+    kernelName = "%sgemm_%1s%1s_%03d_%03d_%01d_%02dx%02d_%01dx%01d" % (hostDataChar[self.precision], self.transA, self.transB, 1, 1, self.unroll, self.workGroupNumRows, self.workGroupNumCols, self.microTileNumRows, self.microTileNumCols)
     if (self.order=="clblasColumnMajor"):
       kernelName += "_ColMajor"
     else:
@@ -291,19 +371,23 @@ class GemmTileOpenCLKernel:
     return kernelName
 
 
+
+
+
+
   ##############################################################################
   # Kernel - are kernel parameters valid?
   ##############################################################################
   def kernelParamsValid(self):
-    numALoads = (self.wgNumRows*self.microTileNumRows*self.unroll)/(self.wgNumRows*self.wgNumCols)
-    numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll)%(self.wgNumRows*self.wgNumCols)
-    numBLoads = (self.wgNumCols*self.microTileNumCols*self.unroll)/(self.wgNumRows*self.wgNumCols)
-    numBLoadsR = (self.wgNumCols*self.microTileNumCols*self.unroll)%(self.wgNumRows*self.wgNumCols)
+    numALoads = (self.workGroupNumRows*self.microTileNumRows*self.unroll)/(self.workGroupNumRows*self.workGroupNumCols)
+    numALoadsR = (self.workGroupNumRows*self.microTileNumRows*self.unroll)%(self.workGroupNumRows*self.workGroupNumCols)
+    numBLoads = (self.workGroupNumCols*self.microTileNumCols*self.unroll)/(self.workGroupNumRows*self.workGroupNumCols)
+    numBLoadsR = (self.workGroupNumCols*self.microTileNumCols*self.unroll)%(self.workGroupNumRows*self.workGroupNumCols)
     if (numALoads>0 and numALoadsR>0):
-      self.ks = "(%2d * %d * %d = %3d) A elements can't be loaded by (%2d * %2d = %3d) threads" % (self.wgNumRows,self.microTileNumRows,self.unroll,(self.wgNumRows*self.microTileNumRows*self.unroll),self.wgNumRows,self.wgNumCols,(self.wgNumRows*self.wgNumCols))
+      self.ks = "(%2d * %d * %d = %3d) A elements can't be loaded by (%2d * %2d = %3d) threads" % (self.workGroupNumRows,self.microTileNumRows,self.unroll,(self.workGroupNumRows*self.microTileNumRows*self.unroll),self.workGroupNumRows,self.workGroupNumCols,(self.workGroupNumRows*self.workGroupNumCols))
       return False
     elif (numBLoads>0 and numBLoadsR>0):
-      self.ks = "(%2d * %d * %d = %3d) B elements can't be loaded by (%2d * %2d = %3d) threads" % (self.wgNumCols,self.microTileNumCols,self.unroll,(self.wgNumCols*self.microTileNumCols*self.unroll),self.wgNumRows,self.wgNumCols,(self.wgNumRows*self.wgNumCols))
+      self.ks = "(%2d * %d * %d = %3d) B elements can't be loaded by (%2d * %2d = %3d) threads" % (self.workGroupNumCols,self.microTileNumCols,self.unroll,(self.workGroupNumCols*self.microTileNumCols*self.unroll),self.workGroupNumRows,self.workGroupNumCols,(self.workGroupNumRows*self.workGroupNumCols))
       return False
     else:
       return True
@@ -343,12 +427,12 @@ class GemmTileOpenCLKernel:
     else:
       self.ks += "#define TRANSPOSE_B           0" + self.el
     self.ks += "" + self.el
-    self.ks += "#define WG_NUM_ROWS          %d%s" % (self.wgNumRows, self.el )
-    self.ks += "#define WG_NUM_COLS          %d%s" % (self.wgNumCols, self.el )
+    self.ks += "#define WG_NUM_ROWS          %d%s" % (self.workGroupNumRows, self.el )
+    self.ks += "#define WG_NUM_COLS          %d%s" % (self.workGroupNumCols, self.el )
     self.ks += "#define MICRO_TILE_NUM_ROWS  %d%s" % (self.microTileNumRows, self.el )
     self.ks += "#define MICRO_TILE_NUM_COLS  %d%s" % (self.microTileNumCols, self.el )
-    self.ks += "#define MACRO_TILE_NUM_ROWS  %s%s" % ((self.wgNumRows * self.microTileNumRows), self.el )
-    self.ks += "#define MACRO_TILE_NUM_COLS  %s%s" % ((self.wgNumCols * self.microTileNumCols), self.el )
+    self.ks += "#define MACRO_TILE_NUM_ROWS  %s%s" % ((self.workGroupNumRows * self.microTileNumRows), self.el )
+    self.ks += "#define MACRO_TILE_NUM_COLS  %s%s" % ((self.workGroupNumCols * self.microTileNumCols), self.el )
     self.ks += "#define NUM_UNROLL_ITER      %s%s" % (self.unroll, self.el )
     self.ks += "" + self.el
     self.ks += "#define LOCAL_ROW_PAD        %s%s" % (self.localRowPad, self.el)
@@ -507,10 +591,16 @@ class GemmTileOpenCLKernel:
     ####################################
     # work item indices
     self.ks += self.el
+    self.ks += "  /* work item indices */" + self.el
+    if self.isRowKernel():
+      self.ks += "  uint groupRow = " + str(self.workGroupNumRows*self.microTileNumRows) + ";" + self.el
+    else:
+      self.ks += "  uint groupRow = get_group_id(0);" + self.el
+    if self.isColKernel():
+      self.ks += "  uint groupCol = " + str(self.workGroupNumCols*self.microTileNumCols) + ";" + self.el
+    else:
+      self.ks += "  uint groupCol = get_group_id(1);" + self.el
     self.ks += (
-      "  /* work item indices */" + self.el +
-      "  uint groupRow = get_group_id(0);" + self.el +
-      "  uint groupCol = get_group_id(1);" + self.el +
       "  uint localRow = get_local_id(0);" + self.el +
       "  uint localCol = get_local_id(1);" + self.el +
       "  uint localSerial = localRow + localCol*WG_NUM_ROWS;" + self.el )
@@ -562,7 +652,6 @@ class GemmTileOpenCLKernel:
       "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
 
     if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      print "transB == T"
       self.ks += ( "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
       "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
       "#define localBStride  (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
@@ -578,32 +667,49 @@ class GemmTileOpenCLKernel:
 
     ####################################
     # load global -> local
-    # threads to do loading = (wgNumRows*wgNumCols)
-    # A elements to be loaded = wgNumRows*microTileNumRows*unroll
-    # B elements to be loaded = wgNumCols*microTileNumCols*unroll
+    # threads to do loading = (workGroupNumRows*workGroupNumCols)
+    # A elements to be loaded = workGroupNumRows*microTileNumRows*unroll
+    # B elements to be loaded = workGroupNumCols*microTileNumCols*unroll
     self.ks += self.el
     self.ks += "    /* load global -> local */" + self.el
-    numALoads  = (self.wgNumRows*self.microTileNumRows*self.unroll) \
-        / (self.wgNumRows*self.wgNumCols)
-    numALoadsR = (self.wgNumRows*self.microTileNumRows*self.unroll) \
-        % (self.wgNumRows*self.wgNumCols)
-    numBLoads  = (self.wgNumCols*self.microTileNumCols*self.unroll) \
-        / (self.wgNumRows*self.wgNumCols)
-    numBLoadsR = (self.wgNumCols*self.microTileNumCols*self.unroll) \
-        % (self.wgNumRows*self.wgNumCols)
+    numALoads  = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
+        / (self.workGroupNumRows*self.workGroupNumCols)
+    numALoadsR = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
+        % (self.workGroupNumRows*self.workGroupNumCols)
+    numBLoads  = (self.workGroupNumCols*self.microTileNumCols*self.unroll) \
+        / (self.workGroupNumRows*self.workGroupNumCols)
+    numBLoadsR = (self.workGroupNumCols*self.microTileNumCols*self.unroll) \
+        % (self.workGroupNumRows*self.workGroupNumCols)
 
+    # TODO - zeroString for real and complex
+    if self.precision == "s" or self.precision == "d":
+      zeroString = "0.0"
+    else:
+      zeroString = "0.0"
     for a in range(0, numALoads):
-      self.ks += "    lA[ %d*localAStride ] = A[ %d*globalAStride ];%s" % (a, a, self.el)
+      self.ks += "    lA[ %d*localAStride ] = " % a
+      if self.isRowKernel():
+        self.ks += "(groupRow*WG_NUM_ROWS*MICRO_TILE_NUM_ROWS+localRow+%u*globalAStride >= M) ? %s : " % ( a, zeroString )
+      self.ks += "A[ %d*globalAStride ];%s" % (a, self.el)
     if numALoadsR:
       self.ks += "    if (localSerial < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {" + self.el
-      self.ks += "      lA[ %d*localAStride ] = A[ %d*globalAStride ];%s" % (numALoads, numALoads, self.el)
+      self.ks += "      lA[ %d*localAStride ] = " % numALoads
+      if self.isRowKernel():
+        self.ks += "(groupRow*WG_NUM_ROWS*MICRO_TILE_NUM_ROWS+localRow+%u*globalAStride >= M) ? %s : " % ( numALoads, zeroString )
+      self.ks += "A[ %d*globalAStride ];%s" % (numALoads, self.el)
       self.ks += "    }" + self.el
 
     for b in range(0, numBLoads):
-      self.ks += "    lB[ %d*localBStride ] = B[ %d*globalBStride ];%s" % (b, b, self.el)
+      self.ks += "    lB[ %d*localBStride ] = " % b
+      if self.isColKernel():
+        self.ks += "(groupCol*WG_NUM_COLS*MICRO_TILE_NUM_COLS+localCol+%u*globalBStride >= N) ? %s : " % ( b, zeroString )
+      self.ks += "B[ %d*globalBStride ];%s" % (b, self.el)
     if numBLoadsR:
       self.ks += "    if (localSerial < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {" + self.el
-      self.ks += "      lB[ %d*localBStride ] = B[ %d*globalBStride ];%s" % (numBLoads, numBLoads, self.el)
+      self.ks += "      lB[ %d*localBStride ] = " % numBLoads
+      if self.isColKernel():
+        self.ks += "(groupCol*WG_NUM_COLS*MICRO_TILE_NUM_COLS+localCol+%u*globalBStride >= N) ? %s : " % ( numBLoads, zeroString )
+      self.ks += "B[ %d*globalBStride ];%s" % (numBLoads, self.el)
       self.ks += "    }" + self.el
     self.ks += (
       "    barrier(CLK_LOCAL_MEM_FENCE);" + self.el +
@@ -652,9 +758,12 @@ class GemmTileOpenCLKernel:
     if self.precision=="z":
       self.ks += "  double type_mad_tmp;" + self.el
 
-
     for a in range(0, self.microTileNumRows):
       for b in range(0, self.microTileNumCols):
+        if self.isRowKernel():
+          self.ks += "  if (globalCRow+%d*WG_NUM_ROWS < M)" % a
+        if self.isColKernel():
+          self.ks += "  if (globalCCol+%d*WG_NUM_COLS < N)" % b
         self.ks += "  TYPE_MAD_WRITE( C[ GET_GLOBAL_INDEX_C( globalCRow+%d*WG_NUM_ROWS, globalCCol+%d*WG_NUM_COLS) ], alpha, rC[%d][%d], beta )%s" % (a, b, a, b, self.el)
 
     ####################################
@@ -732,9 +841,6 @@ class KernelSelectionLogic:
       listOrder, \
       listTrans, \
       listBeta, \
-      listWorkGroupDims, \
-      listMicroTileDims, \
-      listUnroll, \
       listMicroTileSizes ):
 
     self.kernelSelectionFileName = precision + "gemmKernelSelection.h"
@@ -754,11 +860,15 @@ class KernelSelectionLogic:
       "  unsigned int K,\n"
       "  bool betaNonZero,\n"
       "  float optimalNumElementsPerWorkItem,\n"
-      "  const char **kernelSource,\n"
+      "  const char **tileKernelSource,\n"
+      "  const char **rowKernelSource,\n"
+      "  const char **colKernelSource,\n"
+      "  const char **cornerKernelSource,\n"
       "  unsigned int *workGroupNumRows,\n"
       "  unsigned int *workGroupNumCols,\n"
       "  unsigned int *microTileNumRows,\n"
-      "  unsigned int *microTileNumCols\n"
+      "  unsigned int *microTileNumCols,\n"
+      "  unsigned int *unroll\n"
       ") {\n" )
     self.orderInitialized = False
     self.transInitialized = False
@@ -864,19 +974,31 @@ class KernelSelectionLogic:
     #self.logic += "printf(\"selected kernel: " + kernel.getKernelName() + "\\n\");\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*kernelSource= " + kernel.getKernelName() + "_src;\n"
+    self.logic += "*tileKernelSource   = " + kernel.getKernelName()       + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*microTileNumRows = " + str(kernel.microTileNumRows) + ";\n"
+    self.logic += "*rowKernelSource    = " + kernel.getRowKernelName()    + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*microTileNumCols = " + str(kernel.microTileNumCols) + ";\n"
+    self.logic += "*colKernelSource    = " + kernel.getColKernelName()    + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*workGroupNumRows = " + str(kernel.wgNumRows) + ";\n"
+    self.logic += "*cornerKernelSource = " + kernel.getCornerKernelName() + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*workGroupNumRows = " + str(kernel.wgNumRows) + ";\n"
+    self.logic += "*workGroupNumRows   = " + str(kernel.workGroupNumRows) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*workGroupNumCols   = " + str(kernel.workGroupNumCols) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*microTileNumRows   = " + str(kernel.microTileNumRows) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*microTileNumCols   = " + str(kernel.microTileNumCols) + ";\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
+    self.logic += "*unroll             = " + str(kernel.unroll)           + ";\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     self.logic += "return;\n"
