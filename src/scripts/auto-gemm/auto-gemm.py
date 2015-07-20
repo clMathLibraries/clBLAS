@@ -660,18 +660,18 @@ class GemmOpenCLKernelSource:
     self.ks += self.el
     self.ks += "  /* global indices being loaded */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += (
+      self.ks += ( # TODO
         "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER)" + self.el +
         "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el )
     else:
       self.ks += (
         "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS)" + self.el +
-        "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_COLS*WG_NUM_ROWS)/MACRO_TILE_NUM_ROWS)" + self.el )
+        "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS)" + self.el )
 
     if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += (
+      self.ks += ( # TODO
         "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_COLS)" + self.el +
-        "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS)" + self.el )
+        "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS)" + self.el )
     else:
       self.ks += (
         "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el +
