@@ -119,12 +119,12 @@ def processAllKernelParameterCombinations(argv):
   clKernelIncludes = ClKernelIncludes(precision)
   kernelSourceBuildOptions = KernelSourceBuildOptions(precision)
   kernelBinaryBuildOptions = KernelBinaryBuildOptions(precision)
+  cppKernelEnumeration = CppKernelEnumeration(precision)
 
   # files to write lists to
   fileSrcClTemplates = open(precision.capitalize() + "gemm_SRC_CL_TEMPLATES.txt", "w")
   fileSrcClTemplatesGen = open(precision.capitalize() + "gemm_SRC_CL_TEMPLATES_GEN.txt", "w")
   fileBinClTemplates = open(precision.capitalize() + "gemm_BIN_CL_TEMPLATES.txt", "w")
-  fileCppKernelParameters = open(precision.capitalize() + "gemm_CppKernelParameters.h", "w")
 
 
   # for each kernel parameter combination
@@ -161,7 +161,8 @@ def processAllKernelParameterCombinations(argv):
               fileSrcClTemplates, \
               fileSrcClTemplatesGen, \
               fileBinClTemplates, \
-              fileCppKernelParameters )
+              cppKernelEnumeration )
+
   # save written files
   kernelSelectionLogic.finish()
   kernelSelectionLogic.writeToFile()
@@ -170,11 +171,11 @@ def processAllKernelParameterCombinations(argv):
   clKernelIncludes.writeToFile()
   kernelSourceBuildOptions.writeToFile()
   kernelBinaryBuildOptions.writeToFile()
+  cppKernelEnumeration.writeToFile()
 
   fileSrcClTemplates.close()
   fileSrcClTemplatesGen.close()
   fileBinClTemplates.close()
-  fileCppKernelParameters.close()
 
 
 
@@ -229,7 +230,7 @@ def processKernel( \
     fileSrcClTemplates, \
     fileSrcClTemplatesGen, \
     fileBinClTemplates, \
-    fileCppKernelParameters ):
+    cppKernelEnumeration ):
   global totalParameterCombinations, validParameterCombinations
 
   # check if parameter combination is valid
@@ -265,21 +266,8 @@ def processKernel( \
   kernelBinaryBuildOptions.addKernel(kernel)
   clKernelIncludes.addKernel(kernel)
 
-  # 6) list to add to ktest for automated kernel testing
-  for mSpill in range(0, 2):
-    for nSpill in range(0, 2):
-      fileCppKernelParameters.write("  { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u },\n" % ( \
-          1 if kernel.order=="clblasColumnMajor" else 0, \
-          1 if kernel.transA=="T" else 0, \
-          1 if kernel.transB=="T" else 0, \
-          1 if kernel.beta>0 else 0, \
-          kernel.microTileNumRows, \
-          kernel.microTileNumCols, \
-          kernel.workGroupNumRows, \
-          kernel.workGroupNumCols, \
-          kernel.unroll, \
-          mSpill, \
-          nSpill ) )
+  # 6) write cpp kernel parameter enumeration
+  cppKernelEnumeration.addKernel(kernel)
 
   # 7) write kernel to file
   macroTileNumRows = kernel.macroTileNumRows
@@ -967,13 +955,14 @@ class KernelSourceBuildOptions:
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
-    self.fileStr += "char *%s_srcBuildOptions = NULL;\n" % kernelName
+    self.fileStr += "char *%s_srcBuildOptions = \"-cl-std=CL2.0\";\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
     incFile.write( self.fileStr )
     incFile.write( "\n#endif\n" )
     incFile.close()
+
 
 ################################################################################
 # KBSO - Kernel Binary Build Options
@@ -997,6 +986,45 @@ class KernelBinaryBuildOptions:
     incFile = open(self.fileName, "w")
     incFile.write( self.fileStr )
     incFile.write( "\n#endif\n" )
+    incFile.close()
+
+
+################################################################################
+# CPPKE - Cpp Kernel enumeration
+################################################################################
+class CppKernelEnumeration:
+
+  ##############################################################################
+  # CPPKE - default constructor
+  ##############################################################################
+  def __init__(self, precision):
+    self.fileName = precision.capitalize()+"gemmKernelEnumeration.h"
+    self.fileStr = "unsigned int gemmKernelEnumeration[][11] = {\n"
+    self.count = 0
+
+  def addKernel(self, kernel):
+    # 6) list to add to ktest for automated kernel testing
+    for mSpill in range(0, 2):
+      for nSpill in range(0, 2):
+        self.fileStr += "  { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u },\n" % ( \
+          1 if kernel.order=="clblasColumnMajor" else 0, \
+          1 if kernel.transA=="T" else 0, \
+          1 if kernel.transB=="T" else 0, \
+          1 if kernel.beta>0 else 0, \
+          kernel.microTileNumRows, \
+          kernel.microTileNumCols, \
+          kernel.workGroupNumRows, \
+          kernel.workGroupNumCols, \
+          kernel.unroll, \
+          mSpill, \
+          nSpill )
+    self.count += 4
+
+  def writeToFile(self):
+    incFile = open(self.fileName, "w")
+    incFile.write( self.fileStr )
+    incFile.write( "};\n" )
+    incFile.write( "unsigned int numKernels = %d;\n" % self.count )
     incFile.close()
 
 
