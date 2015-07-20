@@ -1664,7 +1664,7 @@ void testKernelParameterCombination(
             tileKernelGlobalWorkSize, localWorkSize, 0, NULL, &kernelEvents[kernelIdx]);
         CL_CHECK(err);
         kernelIdx++;
-#if 0
+#if 1
         // row kernel
         if (mSpill) {
           printf("launching rowKernel %ux%u threads b/c M=%u\n", rowKernelGlobalWorkSize[0], rowKernelGlobalWorkSize[1], M);

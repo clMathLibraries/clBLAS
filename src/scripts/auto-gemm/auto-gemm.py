@@ -660,25 +660,26 @@ class GemmOpenCLKernelSource:
     self.ks += self.el
     self.ks += "  /* global indices being loaded */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial/NUM_UNROLL_ITER)" + self.el +
-      "#define globalACol (localSerial%NUM_UNROLL_ITER)" + self.el +
-      "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER, (WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER ) )" + self.el )
+      self.ks += (
+        "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER)" + self.el +
+        "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el )
     else:
-      self.ks += ( "#define globalARow (groupRow*MACRO_TILE_NUM_ROWS + localSerial%MACRO_TILE_NUM_ROWS)" + self.el +
-      "#define globalACol (localSerial/MACRO_TILE_NUM_ROWS)" + self.el +
-      "#define globalAStride ( GET_GLOBAL_INDEX_A( (WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS ) )" + self.el )
+      self.ks += (
+        "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS)" + self.el +
+        "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_COLS*WG_NUM_ROWS)/MACRO_TILE_NUM_ROWS)" + self.el )
 
     if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += ( "#define globalBRow (localSerial/MACRO_TILE_NUM_COLS)" + self.el +
-      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial%MACRO_TILE_NUM_COLS)" + self.el +
-      "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_COLS, (WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS) )" + self.el )
+      self.ks += (
+        "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_COLS)" + self.el +
+        "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS)" + self.el )
     else:
-      self.ks += ( "#define globalBRow (localSerial%NUM_UNROLL_ITER)" + self.el +
-      "#define globalBCol (groupCol*MACRO_TILE_NUM_COLS + localSerial/NUM_UNROLL_ITER)" + self.el +
-      "#define globalBStride ( GET_GLOBAL_INDEX_B( (WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, (WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) )" + self.el )
+      self.ks += (
+        "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el +
+        "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER)" + self.el )
 
-    self.ks += ( "  A += GET_GLOBAL_INDEX_A( globalARow, globalACol );" + self.el +
-      "  B += GET_GLOBAL_INDEX_B( globalBRow, globalBCol );" + self.el )
+    #self.ks += (
+    #  "  A += GET_GLOBAL_INDEX_A( globalARow, globalACol );" + self.el +
+    #  "  B += GET_GLOBAL_INDEX_B( globalBRow, globalBCol );" + self.el )
 
     ####################################
     # loop over k
@@ -693,25 +694,30 @@ class GemmOpenCLKernelSource:
     self.ks += self.el
     self.ks += "    /* local indices being written */" + self.el
     if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += ( "#define localARow (localSerial / NUM_UNROLL_ITER)" + self.el +
-      "#define localACol (localSerial % NUM_UNROLL_ITER)" + self.el +
-      "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
+      self.ks += (
+        "#define localARow (localSerial / NUM_UNROLL_ITER)" + self.el +
+        "#define localACol (localSerial % NUM_UNROLL_ITER)" + self.el +
+        "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
     else:
-      self.ks += ( "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)" + self.el +
-      "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)" + self.el +
-      "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
+      self.ks += (
+        "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)" + self.el +
+        "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)" + self.el +
+        "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
 
     if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += ( "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
-      "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
-      "#define localBStride  (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
+      self.ks += (
+        "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
+        "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
+        "#define localBStride  (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
     else:
-      self.ks += ( "#define localBRow ( localSerial % NUM_UNROLL_ITER )" + self.el +
-      "#define localBCol ( localSerial / NUM_UNROLL_ITER )" + self.el +
-      "#define localBStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
+      self.ks += (
+        "#define localBRow ( localSerial % NUM_UNROLL_ITER )" + self.el +
+        "#define localBCol ( localSerial / NUM_UNROLL_ITER )" + self.el +
+        "#define localBStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
 
 
-    self.ks += ("    __local DATA_TYPE_STR *lA = localA + GET_LOCAL_INDEX_A(localARow, localACol);" + self.el +
+    self.ks += (
+      "    __local DATA_TYPE_STR *lA = localA + GET_LOCAL_INDEX_A(localARow, localACol);" + self.el +
       "    __local DATA_TYPE_STR *lB = localB + GET_LOCAL_INDEX_B(localBRow, localBCol);" + self.el +
       "    barrier(CLK_LOCAL_MEM_FENCE);" + self.el )
 
@@ -739,27 +745,27 @@ class GemmOpenCLKernelSource:
     for a in range(0, numALoads):
       self.ks += "    lA[ %d*localAStride ] = " % a
       if self.isRowKernel():
-        self.ks += "(groupRow*WG_NUM_ROWS*MICRO_TILE_NUM_ROWS+localRow+%u*globalAStride >= M) ? %s : " % ( a, zeroString )
-      self.ks += "A[ %d*globalAStride ];%s" % (a, self.el)
+        self.ks += "( globalARow(%d) >= M) ? %s : " % ( a, zeroString )
+      self.ks += "A[ GET_GLOBAL_INDEX_A( globalARow(%d), globalACol(%d) ) ];%s" % (a, a, self.el)
     if numALoadsR:
       self.ks += "    if (localSerial < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {" + self.el
       self.ks += "      lA[ %d*localAStride ] = " % numALoads
       if self.isRowKernel():
-        self.ks += "(groupRow*WG_NUM_ROWS*MICRO_TILE_NUM_ROWS+localRow+%u*globalAStride >= M) ? %s : " % ( numALoads, zeroString )
-      self.ks += "A[ %d*globalAStride ];%s" % (numALoads, self.el)
+        self.ks += "( globalARow(%d) >= M) ? %s : " % ( numALoads, zeroString )
+      self.ks += "A[ GET_GLOBAL_INDEX_A( globalARow(%d), globalACol(%d) ) ];%s" % (numALoads, numALoads, self.el)
       self.ks += "    }" + self.el
 
     for b in range(0, numBLoads):
       self.ks += "    lB[ %d*localBStride ] = " % b
       if self.isColKernel():
-        self.ks += "(groupCol*WG_NUM_COLS*MICRO_TILE_NUM_COLS+localCol+%u*globalBStride >= N) ? %s : " % ( b, zeroString )
-      self.ks += "B[ %d*globalBStride ];%s" % (b, self.el)
+        self.ks += "( globalBCol(%d) >= N) ? %s : " % ( b, zeroString )
+      self.ks += "B[ GET_GLOBAL_INDEX_B( globalBRow(%d), globalBCol(%d) ) ];%s" % (b, b, self.el)
     if numBLoadsR:
       self.ks += "    if (localSerial < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {" + self.el
       self.ks += "      lB[ %d*localBStride ] = " % numBLoads
       if self.isColKernel():
-        self.ks += "(groupCol*WG_NUM_COLS*MICRO_TILE_NUM_COLS+localCol+%u*globalBStride >= N) ? %s : " % ( numBLoads, zeroString )
-      self.ks += "B[ %d*globalBStride ];%s" % (numBLoads, self.el)
+        self.ks += "(globalBCol(%d) >= N) ? %s : " % ( numBLoads, zeroString )
+      self.ks += "B[ GET_GLOBAL_INDEX_B( globalBRow(%d), globalBCol(%d) ) ];%s" % (numBLoads, numBLoads, self.el)
       self.ks += "    }" + self.el
     self.ks += (
       "    barrier(CLK_LOCAL_MEM_FENCE);" + self.el +
@@ -1252,3 +1258,11 @@ class KernelSelectionLogic:
 ################################################################################
 if __name__ == "__main__":
   main(sys.argv[1:])
+
+
+#lA[ 0*localAStride ] = A[ GET_GLOBAL_INDEX_A( groupRow*MACRO_TILE_NUM_ROWS+(localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS) ];
+#lA[ 1*localAStride ] = A[ GET_GLOBAL_INDEX_A( groupRow*MACRO_TILE_NUM_ROWS+(localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS) ];
+#lA[ 2*localAStride ] = A[ GET_GLOBAL_INDEX_A( groupRow*MACRO_TILE_NUM_ROWS+(localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS) ];
+#lB[ 0*localBStride ] = B[ GET_GLOBAL_INDEX_B( (localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, groupCol*MACRO_TILE_NUM_COLS+(localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) ];
+#lB[ 1*localBStride ] = B[ GET_GLOBAL_INDEX_B( (localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, groupCol*MACRO_TILE_NUM_COLS+(localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) ];
+#lB[ 2*localBStride ] = B[ GET_GLOBAL_INDEX_B( (localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, groupCol*MACRO_TILE_NUM_COLS+(localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) ];
