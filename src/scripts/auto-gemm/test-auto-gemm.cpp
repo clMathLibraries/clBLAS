@@ -25,12 +25,12 @@ typedef enum clblasTranspose_ {
 using namespace NaiveBlas;
 
 #define SGEMM 0
-#define DGEMM 1
+#define DGEMM 0
 #define CGEMM 0
-#define ZGEMM 0
+#define ZGEMM 1
 
 #define RANDOM_DATA   1
-#define DO_VALIDATION 0
+#define DO_VALIDATION 1
 
 #if SGEMM
 #define DATA_TYPE float
@@ -60,78 +60,7 @@ using namespace NaiveBlas;
 #include "ZgemmKernelEnumeration.h"
 #endif
 
-
-
-#if 0
-// only colMajor supported
-#define COLUMN_MAJOR  1
-// 0 - not trans
-// 1 - yes trans
-#define TRANS_A       0
-#define TRANS_B       1
-
-#define MICRO_TILE_NUM_ROWS 1
-#define MICRO_TILE_NUM_COLS 1
-//#define MICRO_TILE_NUM_ROWS 2
-//#define MICRO_TILE_NUM_COLS 4
-#define WG_NUM_ROWS         16
-#define WG_NUM_COLS         16
-
-#if DO_VALIDATION
-#define M (  1*(WG_NUM_ROWS*MICRO_TILE_NUM_ROWS)  )
-#define N (  1*(WG_NUM_COLS*MICRO_TILE_NUM_COLS)  )
-#define K (  1*8  )
-#else
-// 44 cus * 12 waves = 528 = 22*24
-#define M (  (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS)*22*2  )
-#define N (  (WG_NUM_COLS*MICRO_TILE_NUM_COLS)*24*2  )
-#define K (  64*90  )
-#endif
-
-// Matrix A
-#if TRANS_A
-const clblasTranspose transA = clblasTrans;
-const cl_uint numRowsA = K;
-const cl_uint numColsA = M;
-#else
-const clblasTranspose transA = clblasNoTrans;
-const cl_uint numRowsA = M;
-const cl_uint numColsA = K;
-#endif
-
-// Matrix B
-#if TRANS_B
-const clblasTranspose transB = clblasTrans;
-const cl_uint numRowsB = N;
-const cl_uint numColsB = K;
-#else
-const clblasTranspose transB = clblasNoTrans;
-const cl_uint numRowsB = K;
-const cl_uint numColsB = N;
-#endif
-
-// Matrix C
-const cl_uint numRowsC = M;
-const cl_uint numColsC = N;
-
-// leading dimension
-#if COLUMN_MAJOR
-const clblasOrder order = clblasColumnMajor;
-const cl_uint lda = numRowsA;
-const cl_uint ldb = numRowsB;
-const cl_uint ldc = numRowsC;
-#else
-const clblasOrder order = clblasRowMajor;
-const cl_uint lda = numColsA;
-const cl_uint ldb = numColsB;
-const cl_uint ldc = numColsC;
-#endif
-#endif
-
-
-
 #define _CRT_SECURE_NO_WARNINGS
-
 
 #define CL_CHECK(RET) \
   if(RET != CL_SUCCESS) { \
@@ -188,8 +117,11 @@ compareMatrices(
             }
             if (blasVal != naiveVal) {
               equal = false;
+            }
+            
+            if (blasVal != naiveVal) {
               if (numPrint-- > 0) {
-#if 0
+#if CGEMM || ZGEMM
                 printf("MISMATCH C[%u][%u]: gpu= %4.1f + %4.1fi, cpu= %4.1f + %4.1fi\n",
                   r, c,
                   blasVal.s[0], blasVal.s[1],
@@ -212,7 +144,11 @@ compareMatrices(
 
 const char PLATFORM_NAME[] = "AMD Accelerated Parallel Processing";
 const char DEVICE_NAME[] = "Hawaii";
-const float peakGflops = 2.62e3; // for W9100
+#if SGEMM || CGEMM
+const float peakGflops = 5.24e3; // sp for W9100
+#else
+const float peakGflops = 2.62e3; // dp for W9100
+#endif
 //const float peakGflops = 696; // for R9 290 "Hawaii"
 
 
@@ -277,7 +213,16 @@ void testKernelParameterCombination(
   unsigned int macroTileNumCols = workGroupNumCols*microTileNumCols;
 
 #if 1
-  printf("Testing: dgemm_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s%s_%u_%u\n",
+  printf("Testing: %sgemm_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s%s_%u_%u\n",
+#if SGEMM
+    "s",
+#elif DGEMM
+    "d",
+#elif CGEMM
+    "c",
+#else
+    "z",
+#endif
     transAInt ? "T" : "N",
     transBInt ? "T" : "N",
     macroTileNumRows,
@@ -735,7 +680,7 @@ void testKernelParameterCombination(
 #if DO_VALIDATION
     bool equal = compareMatrices(order, numRowsC, numColsC, C + offC, naiveC + offC, ldc);
 
-    printf("%s_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s",
+    printf("%s_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u%s%s%s%s",
 #if SGEMM
       "sgemm",
 #endif
@@ -757,7 +702,9 @@ void testKernelParameterCombination(
     workGroupNumCols,
     microTileNumRows,
     microTileNumCols,
-    columnMajorInt ? "ColumnMajor" : "RowMajor",
+    columnMajorInt ? "_ColumnMajor" : "_RowMajor",
+    mSpill ? "_1" : "_0",
+    nSpill ? "_1" : "_0",
     betaNonZero ? "_BETA" : "" );
 
     if (equal) {
@@ -765,6 +712,7 @@ void testKernelParameterCombination(
     }
     else {
         printf(" - failed\n\n");
+        printf("%s", tileKernelSource );
     }
     fflush(stdout);
 #endif

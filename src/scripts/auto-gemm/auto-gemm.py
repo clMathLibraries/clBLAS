@@ -45,7 +45,7 @@ def main(argv):
 def processAllKernelParameterCombinations(argv):
 
   # create directories
-  precision = "d"
+  precision = "c"
   kernelSourcePath = precision.capitalize() + "gemmKernelSources"
   kernelBinaryPath = precision.capitalize() + "gemmKernelBinaries"
   if not os.path.exists(kernelSourcePath):
@@ -551,11 +551,11 @@ class GemmOpenCLKernelSource:
           "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + self.el +
           "  REG.s1 *= ALPHA.s0; \\\\" + self.el +
           "  REG.s1 = mad(  ALPHA.s1, type_mad_tmp, REG.s1 ); \\\\" + self.el +
-          #"  /* (2) */ \\\\" + self.el +
-          #"  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + self.el +
-          #"  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + self.el +
-          #"  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + self.el +
-          #"  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + self.el +
+          "  /* (2) */ \\\\" + self.el +
+          "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + self.el +
+          "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + self.el +
+          "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + self.el +
+          "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + self.el +
           "  /* (3) */ \\\\" + self.el +
           "  DST = REG;" + self.el )
 
@@ -726,8 +726,10 @@ class GemmOpenCLKernelSource:
         % (self.workGroupNumRows*self.workGroupNumCols)
 
     # TODO - zeroString for real and complex
-    if self.precision == "s" or self.precision == "d":
-      zeroString = "0.0"
+    if self.precision == "c":
+      zeroString = "(float2)(0.f, 0.f)"
+    elif self.precision == "z":
+      zeroString = "(double2)(0.0, 0.0)"
     else:
       zeroString = "0.0"
     for a in range(0, numALoads):
@@ -808,7 +810,12 @@ class GemmOpenCLKernelSource:
           self.ks += "  if (globalCRow+%d*WG_NUM_ROWS < M)" % a
         if self.isColKernel():
           self.ks += "  if (globalCCol+%d*WG_NUM_COLS < N)" % b
-        self.ks += "  TYPE_MAD_WRITE( C[ GET_GLOBAL_INDEX_C( globalCRow+%d*WG_NUM_ROWS, globalCCol+%d*WG_NUM_COLS) ], alpha, rC[%d][%d], beta )%s" % (a, b, a, b, self.el)
+        if self.isRowKernel() or self.isColKernel():
+          self.ks += "{"
+        self.ks += "  TYPE_MAD_WRITE( C[ GET_GLOBAL_INDEX_C( globalCRow+%d*WG_NUM_ROWS, globalCCol+%d*WG_NUM_COLS) ], alpha, rC[%d][%d], beta )" % (a, b, a, b)
+        if self.isRowKernel() or self.isColKernel():
+          self.ks += "}"
+        self.ks += self.el
 
     ####################################
     # end kernel
