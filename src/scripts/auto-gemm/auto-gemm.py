@@ -12,9 +12,7 @@
 # TODO
 # - after writing kernel files, make list of valid micro tiles for correct size list
 # - zgemm() call is in xgemm.cc
-# - one functions writes every combination to a file, while one reads from that file, therefore manual intervention for deleting slow kernels
-# - max tile size product for a given precision
-# - fuse together unroll=8 and unroll=1 in same kernel
+# - fuse together unroll=8 and unroll=1 in same kernel ?
 ################################################################################
 
 import os
@@ -45,15 +43,15 @@ def main(argv):
 def processAllKernelParameterCombinations(argv):
 
   # create directories
-  precision = "c"
-  kernelSourcePath = precision.capitalize() + "gemmKernelSources"
-  kernelBinaryPath = precision.capitalize() + "gemmKernelBinaries"
+  kernelSourcePath = "GemmKernelSources"
+  kernelBinaryPath = "GemmKernelBinaries"
   if not os.path.exists(kernelSourcePath):
     os.makedirs(kernelSourcePath)
   if not os.path.exists(kernelBinaryPath):
     os.makedirs(kernelBinaryPath)
 
   # non-tile parameters
+  listPrecision = ["s", "d", "c", "z"]
   listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
   listTrans = [
     [ "N", "N" ],
@@ -65,15 +63,13 @@ def processAllKernelParameterCombinations(argv):
 
   # tile parameters
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
-  microTileMaxProduct = microTileMaxProductDict[ precision ]
   microTileMaxEdgeLengthDict = { "s":8, "d":8, "c":8, "z":8 }
-  microTileMaxEdgeLength = microTileMaxEdgeLengthDict[ precision ]
   listUnroll = [ 8, 1 ]
   listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []
   # list all valid tile parameter combinations
-  listMicroTileSizes = [
+  listMicroTileDims = [
       [ 6, 6 ], # 36
       [ 8, 4 ], # 32
       #[ 7, 4 ], # 28
@@ -88,80 +84,91 @@ def processAllKernelParameterCombinations(argv):
       [ 1, 1 ]  # 1
       ]
 
-  for microTileSize in listMicroTileSizes:
-    if microTileSize[0]*microTileSize[1] <= microTileMaxProduct:
-      for workGroupDim in listWorkGroupDims:
-        for unroll in listUnroll:
-          kernel = GemmOpenCLKernelSource()
-          kernel.workGroupNumRows = workGroupDim[0]
-          kernel.workGroupNumCols = workGroupDim[1]
-          kernel.microTileNumRows = microTileSize[0]
-          kernel.microTileNumCols = microTileSize[0]
-          kernel.unroll = unroll
-          if kernel.kernelParamsValid():
-            listTileKernelParameters.append( \
-                [workGroupDim[0], workGroupDim[1], \
-                microTileSize[0], microTileSize[1], unroll] )
-          else:
-            print kernel.getkernelName() + " - SKIPPING - "
-  listTileKernelParameters.sort(orderTileSizes, reverse=True)
-  print( listTileKernelParameters )
-  # make list of unique tile sizes
-  listMicroTileSizes = []
-  for tile in listTileKernelParameters:
-    size = tile[2]*tile[3]
-    if size not in listMicroTileSizes:
-      listMicroTileSizes.append(size)
 
-  kernelSelectionLogic = KernelSelectionLogic(precision, listOrder, listTrans, listBeta, listMicroTileSizes);
-  kernelSourceIncludes = KernelSourceIncludes(precision)
-  kernelBinaryIncludes = KernelBinaryIncludes(precision)
-  clKernelIncludes = ClKernelIncludes(precision)
-  kernelSourceBuildOptions = KernelSourceBuildOptions(precision)
-  kernelBinaryBuildOptions = KernelBinaryBuildOptions(precision)
-  cppKernelEnumeration = CppKernelEnumeration(precision)
+  kernelSelectionLogic = KernelSelectionLogic(listOrder, listTrans, listBeta);
+  kernelSourceIncludes = KernelSourceIncludes()
+  kernelBinaryIncludes = KernelBinaryIncludes()
+  clKernelIncludes = ClKernelIncludes()
+  kernelSourceBuildOptions = KernelSourceBuildOptions()
+  kernelBinaryBuildOptions = KernelBinaryBuildOptions()
+  cppKernelEnumeration = CppKernelEnumeration()
 
   # files to write lists to
-  fileSrcClTemplates = open(precision.capitalize() + "gemm_SRC_CL_TEMPLATES.txt", "w")
-  fileSrcClTemplatesGen = open(precision.capitalize() + "gemm_SRC_CL_TEMPLATES_GEN.txt", "w")
-  fileBinClTemplates = open(precision.capitalize() + "gemm_BIN_CL_TEMPLATES.txt", "w")
+  fileSrcClTemplates = open("gemm_SRC_CL_TEMPLATES.txt", "w")
+  fileSrcClTemplatesGen = open("gemm_SRC_CL_TEMPLATES_GEN.txt", "w")
+  fileBinClTemplates = open("gemm_BIN_CL_TEMPLATES.txt", "w")
 
 
   # for each kernel parameter combination
-  for order in listOrder:
-    kernelSelectionLogic.newOrder(order)
-    for trans in listTrans:
-      kernelSelectionLogic.newTrans(trans)
-      for beta in listBeta:
-        kernelSelectionLogic.newBeta(beta)
-        for tile in listTileKernelParameters:
-          # set kernel parameters
-          kernel = GemmOpenCLKernelSource()
-          kernel.precision = precision
-          kernel.order = order
-          kernel.transA = trans[0]
-          kernel.transB = trans[1]
-          kernel.beta = beta
-          kernel.workGroupNumRows = tile[0]
-          kernel.workGroupNumCols = tile[1]
-          kernel.microTileNumRows = tile[2]
-          kernel.microTileNumCols = tile[3]
-          kernel.macroTileNumRows = tile[0]*tile[2]
-          kernel.macroTileNumCols = tile[1]*tile[3]
-          kernel.unroll = tile[4]
-          # process kernel parameters
-          processKernel( \
-              kernel, \
-              kernelSelectionLogic, \
-              kernelSourceIncludes, \
-              kernelBinaryIncludes, \
-              clKernelIncludes, \
-              kernelSourceBuildOptions, \
-              kernelBinaryBuildOptions, \
-              fileSrcClTemplates, \
-              fileSrcClTemplatesGen, \
-              fileBinClTemplates, \
-              cppKernelEnumeration )
+  for precision in listPrecision:
+    cppKernelEnumeration.newPrecision(precision)
+
+    # valid tiles for this precision
+    microTileMaxProduct = microTileMaxProductDict[ precision ]
+    microTileMaxEdgeLength = microTileMaxEdgeLengthDict[ precision ]
+    listTileKernelParameters = []
+    for microTileSize in listMicroTileDims:
+      print microTileSize
+      if microTileSize[0]*microTileSize[1] <= microTileMaxProduct:
+        for workGroupDim in listWorkGroupDims:
+          for unroll in listUnroll:
+            kernel = GemmOpenCLKernelSource()
+            kernel.workGroupNumRows = workGroupDim[0]
+            kernel.workGroupNumCols = workGroupDim[1]
+            kernel.microTileNumRows = microTileSize[0]
+            kernel.microTileNumCols = microTileSize[1]
+            kernel.unroll = unroll
+            if kernel.kernelParamsValid():
+              listTileKernelParameters.append( \
+                [workGroupDim[0], workGroupDim[1], \
+                microTileSize[0], microTileSize[1], unroll] )
+            else:
+              print kernel.getkernelName() + " - SKIPPING - "
+    listTileKernelParameters.sort(orderTileSizes, reverse=True)
+    print( listTileKernelParameters )
+    # make list of unique tile sizes
+    listMicroTileSizes = []
+    for tile in listTileKernelParameters:
+      size = tile[2]*tile[3]
+      if size not in listMicroTileSizes:
+        listMicroTileSizes.append(size)
+    kernelSelectionLogic.newPrecision(precision, listMicroTileSizes)
+
+
+    for order in listOrder:
+      kernelSelectionLogic.newOrder(order)
+      for trans in listTrans:
+        kernelSelectionLogic.newTrans(trans)
+        for beta in listBeta:
+          kernelSelectionLogic.newBeta(beta)
+          for tile in listTileKernelParameters:
+            # set kernel parameters
+            kernel = GemmOpenCLKernelSource()
+            kernel.precision = precision
+            kernel.order = order
+            kernel.transA = trans[0]
+            kernel.transB = trans[1]
+            kernel.beta = beta
+            kernel.workGroupNumRows = tile[0]
+            kernel.workGroupNumCols = tile[1]
+            kernel.microTileNumRows = tile[2]
+            kernel.microTileNumCols = tile[3]
+            kernel.macroTileNumRows = tile[0]*tile[2]
+            kernel.macroTileNumCols = tile[1]*tile[3]
+            kernel.unroll = tile[4]
+            # process kernel parameters
+            processKernel( \
+                kernel, \
+                kernelSelectionLogic, \
+                kernelSourceIncludes, \
+                kernelBinaryIncludes, \
+                clKernelIncludes, \
+                kernelSourceBuildOptions, \
+                kernelBinaryBuildOptions, \
+                fileSrcClTemplates, \
+                fileSrcClTemplatesGen, \
+                fileBinClTemplates, \
+                cppKernelEnumeration )
 
   # save written files
   kernelSelectionLogic.finish()
@@ -831,11 +838,14 @@ class GemmOpenCLKernelSource:
   def writeKernelToFile(self):
     kernelName = self.getKernelName()
     kernelString = self.makeKernelString()
-    kernelFileName = self.precision.capitalize() + "gemmKernelSources/" + kernelName+"_src.h"
+    kernelFileName = "GemmKernelSources/" + kernelName+"_src.h"
     kernelFile = open(kernelFileName, "w")
+    kernelFile.write("#ifndef " + kernelName.upper() + "_SRC_H\n")
+    kernelFile.write("#define " + kernelName.upper() + "_SRC_H\n\n")
     kernelFile.write("static const char * const %s_src =\"" % (kernelName) )
     kernelFile.write(kernelString)
-    kernelFile.write("\";\n")
+    kernelFile.write("\";\n\n")
+    kernelFile.write("#endif\n")
     kernelFile.close()
 
 
@@ -848,21 +858,21 @@ class KernelSourceIncludes:
   ##############################################################################
   # SINC - default constructor
   ##############################################################################
-  def __init__(self, precision):
-    self.fileName = precision.capitalize()+"gemmSourceIncludes.h"
-    self.fileStr = "#ifndef " + precision.capitalize() + "gemm_SOURCE_INCLUDES_H\n"
-    self.fileStr += "#define " + precision.capitalize() + "gemm_SOURCE_INCLUDES_H\n"
+  def __init__(self):
+    self.fileName = "GemmSourceIncludes.h"
+    self.fileStr = "#ifndef GEMM_SOURCE_INCLUDES_H\n"
+    self.fileStr += "#define GEMM_SOURCE_INCLUDES_H\n"
     self.fileStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
-    self.fileStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
     kernelName = kernel.getRowKernelName()
-    self.fileStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
     kernelName = kernel.getColKernelName()
-    self.fileStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
     kernelName = kernel.getCornerKernelName()
-    self.fileStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
@@ -879,29 +889,29 @@ class KernelBinaryIncludes:
   ##############################################################################
   # BINC - default constructor
   ##############################################################################
-  def __init__(self, precision):
-    self.incFileName = precision.capitalize()+"gemmBinaryIncludes.h"
-    self.incStr = "#ifndef " + precision.capitalize() + "gemm_BINARY_INCLUDES_H\n"
-    self.incStr += "#define " + precision.capitalize() + "gemm_BINARY_INCLUDES_H\n"
+  def __init__(self):
+    self.incFileName = "GemmBinaryIncludes.h"
+    self.incStr = "#ifndef GEMM_BINARY_INCLUDES_H\n"
+    self.incStr += "#define GEMM_BINARY_INCLUDES_H\n"
     self.incStr += "\n"
-    self.nullFileName = precision.capitalize()+"gemmBinaryNulls.h"
-    self.nullStr = "#ifndef " + precision.capitalize() + "gemm_BINARY_NULLS_H\n"
-    self.nullStr += "#define " + precision.capitalize() + "gemm_BINARY_NULLS_H\n"
+    self.nullFileName = "GemmBinaryNulls.h"
+    self.nullStr = "#ifndef GEMM_BINARY_NULLS_H\n"
+    self.nullStr += "#define GEMM_BINARY_NULLS_H\n"
     self.nullStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
-    self.incStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "char *%s_bin = NULL;\n" % kernelName
+    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
     kernelName = kernel.getRowKernelName()
-    self.incStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "char *%s_bin = NULL;\n" % kernelName
+    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
     kernelName = kernel.getColKernelName()
-    self.incStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "char *%s_bin = NULL;\n" % kernelName
+    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
     kernelName = kernel.getCornerKernelName()
-    self.incStr += "#include \"" + kernel.precision.capitalize() + "gemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "char *%s_bin = NULL;\n" % kernelName
+    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.incFileName, "w")
@@ -922,10 +932,10 @@ class ClKernelIncludes:
   ##############################################################################
   # CINC - default constructor
   ##############################################################################
-  def __init__(self, precision):
-    self.fileName = precision.capitalize()+"gemmClKernels.h"
-    self.fileStr = "#ifndef " + precision.capitalize() + "gemm_CL_KERNELS_H\n"
-    self.fileStr += "#define " + precision.capitalize() + "gemm_CL_KERNELS_H\n"
+  def __init__(self):
+    self.fileName = "GemmClKernels.h"
+    self.fileStr = "#ifndef GEMM_CL_KERNELS_H\n"
+    self.fileStr += "#define GEMM_CL_KERNELS_H\n"
     self.fileStr += "#include \"CL/cl.h\"\n"
     self.fileStr += "\n"
 
@@ -954,15 +964,15 @@ class KernelSourceBuildOptions:
   ##############################################################################
   # KSBO - default constructor
   ##############################################################################
-  def __init__(self, precision):
-    self.fileName = precision.capitalize()+"gemmKernelSourceBuildOptions.h"
-    self.fileStr = "#ifndef " + precision.capitalize() + "gemm_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
-    self.fileStr += "#define " + precision.capitalize() + "gemm_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
+  def __init__(self):
+    self.fileName = "GemmKernelSourceBuildOptions.h"
+    self.fileStr = "#ifndef GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
+    self.fileStr += "#define GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
     self.fileStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
-    self.fileStr += "char *%s_srcBuildOptions = \"-cl-std=CL2.0\";\n" % kernelName
+    self.fileStr += "char *%s_srcBuildOptions = \"-cl-std=CL2.0 -save-temps=T_\";\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
@@ -979,10 +989,10 @@ class KernelBinaryBuildOptions:
   ##############################################################################
   # KBSO - default constructor
   ##############################################################################
-  def __init__(self, precision):
-    self.fileName = precision.capitalize()+"gemmKernelBinaryBuildOptions.h"
-    self.fileStr = "#ifndef " + precision.capitalize() + "gemm_KERNEL_BINARY_BUILD_OPTIONS_H\n"
-    self.fileStr += "#define " + precision.capitalize() + "gemm_KERNEL_BINARY_BUILD_OPTIONS_H\n"
+  def __init__(self):
+    self.fileName = "GemmKernelBinaryBuildOptions.h"
+    self.fileStr = "#ifndef GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
+    self.fileStr += "#define GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
     self.fileStr += "\n"
 
   def addKernel(self, kernel):
@@ -1004,10 +1014,20 @@ class CppKernelEnumeration:
   ##############################################################################
   # CPPKE - default constructor
   ##############################################################################
-  def __init__(self, precision):
-    self.fileName = precision.capitalize()+"gemmKernelEnumeration.h"
-    self.fileStr = "unsigned int gemmKernelEnumeration[][11] = {\n"
+  def __init__(self):
+    self.fileName = "GemmKernelEnumeration.h"
+    self.fileStr = ""
     self.count = 0
+    self.precision = ""
+    self.precisionInitialized = False
+
+  def newPrecision(self, precision):
+    if self.precisionInitialized:
+      self.fileStr += "};\n"
+      self.fileStr +="unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.count)
+      self.precisionInitialized
+    self.precision = precision
+    self.fileStr = "unsigned int " + precision + "gemmKernelEnumeration[][11] = {\n"
 
   def addKernel(self, kernel):
     # 6) list to add to ktest for automated kernel testing
@@ -1031,7 +1051,7 @@ class CppKernelEnumeration:
     incFile = open(self.fileName, "w")
     incFile.write( self.fileStr )
     incFile.write( "};\n" )
-    incFile.write( "unsigned int numKernels = %d;\n" % self.count )
+    incFile.write( "unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.count) )
     incFile.close()
 
 
@@ -1047,28 +1067,26 @@ class KernelSelectionLogic:
   # KSL - default constructor
   ##############################################################################
   def __init__(self, \
-      precision, \
       listOrder, \
       listTrans, \
-      listBeta, \
-      listMicroTileSizes ):
+      listBeta ):
 
-    self.kernelSelectionFileName = precision.capitalize() + "gemmKernelSelection.h"
-    self.listMicroTileSizes = listMicroTileSizes
+    self.kernelSelectionFileName = "GemmKernelSelection.h"
 
     self.logic = (
-      "#include \"" + precision.capitalize() + "gemmSourceIncludes.h\"\n"
+      "#include \"GemmSourceIncludes.h\"\n"
       "#if USE_GEMM_KERNEL_BINARIES\n"
-      "#include \"" + precision.capitalize() + "gemmBinaryIncludes.h\"\n"
+      "#include \"GemmBinaryIncludes.h\"\n"
       "#else\n"
-      "#include \"" + precision.capitalize() + "gemmBinaryNulls.h\"\n"
+      "#include \"GemmBinaryNulls.h\"\n"
       "#endif\n"
-      "#include \"" + precision.capitalize() + "gemmKernelSourceBuildOptions.h\"\n"
-      "#include \"" + precision.capitalize() + "gemmKernelBinaryBuildOptions.h\"\n"
-      "#include \"" + precision.capitalize() + "gemmClKernels.h\"\n"
+      "#include \"GemmKernelSourceBuildOptions.h\"\n"
+      "#include \"GemmKernelBinaryBuildOptions.h\"\n"
+      "#include \"GemmClKernels.h\"\n"
       "\n"
-      "// kernel selection logic\n"
-      "void " + precision + "gemmSelectKernel(\n"
+      "// kernel selection logic template\n"
+      "template<typename Precision>\n"
+      "void gemmSelectKernel(\n"
       "  clblasOrder order,\n"
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
@@ -1082,21 +1100,82 @@ class KernelSelectionLogic:
       "  const char **colKernelSource,\n"
       "  const char **cornerKernelSource,\n"
       "  const char **sourceBuildOptions,\n"
-      "  const char **tileKernelBinary,\n"
-      "  const char **rowKernelBinary,\n"
-      "  const char **colKernelBinary,\n"
-      "  const char **cornerKernelBinary,\n"
+      "  const unsigned char **tileKernelBinary,\n"
+      "  const unsigned char **rowKernelBinary,\n"
+      "  const unsigned char **colKernelBinary,\n"
+      "  const unsigned char **cornerKernelBinary,\n"
       "  const char **binaryBuildOptions,\n"
-      "  cl_kernel  *tileClKernel,\n"
-      "  cl_kernel  *rowClKernel,\n"
-      "  cl_kernel  *colClKernel,\n"
-      "  cl_kernel  *cornerClKernel,\n"
+      "  cl_kernel  **tileClKernel,\n"
+      "  cl_kernel  **rowClKernel,\n"
+      "  cl_kernel  **colClKernel,\n"
+      "  cl_kernel  **cornerClKernel,\n"
+      "  unsigned int *workGroupNumRows,\n"
+      "  unsigned int *workGroupNumCols,\n"
+      "  unsigned int *microTileNumRows,\n"
+      "  unsigned int *microTileNumCols,\n"
+      "  unsigned int *unroll\n"
+      ");\n\n" )
+    self.precisionInitialized = False
+    self.orderInitialized = False
+    self.transInitialized = False
+    self.betaInitialized = False
+    self.previousTileSize = 0
+
+  def newPrecision(self, precision, listMicroTileSizes ):
+    self.listMicroTileSizes = listMicroTileSizes
+    if self.precisionInitialized:
+      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
+      self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
+      self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
+      self.logic += self.zeroIndent+"}\n"
+      self.logic += "}\n\n"
+    else:
+      self.logic += self.zeroIndent
+
+    self.logic += (
+      "// " + precision + "gemm kernel selection logic\n"
+      "template<>\n"
+      "void gemmSelectKernel<" )
+    if precision == "s":
+      self.logic += "float"
+    elif precision == "d":
+      self.logic += "double"
+    elif precision == "c":
+      self.logic += "FloatComplex"
+    else:
+      self.logic += "DoubleComplex"
+
+    self.logic += (
+      ">(\n"
+      "  clblasOrder order,\n"
+      "  clblasTranspose transA,\n"
+      "  clblasTranspose transB,\n"
+      "  unsigned int M,\n"
+      "  unsigned int N,\n"
+      "  unsigned int K,\n"
+      "  bool betaNonZero,\n"
+      "  float optimalNumElementsPerWorkItem,\n"
+      "  const char **tileKernelSource,\n"
+      "  const char **rowKernelSource,\n"
+      "  const char **colKernelSource,\n"
+      "  const char **cornerKernelSource,\n"
+      "  const char **sourceBuildOptions,\n"
+      "  const unsigned char **tileKernelBinary,\n"
+      "  const unsigned char **rowKernelBinary,\n"
+      "  const unsigned char **colKernelBinary,\n"
+      "  const unsigned char **cornerKernelBinary,\n"
+      "  const char **binaryBuildOptions,\n"
+      "  cl_kernel  **tileClKernel,\n"
+      "  cl_kernel  **rowClKernel,\n"
+      "  cl_kernel  **colClKernel,\n"
+      "  cl_kernel  **cornerClKernel,\n"
       "  unsigned int *workGroupNumRows,\n"
       "  unsigned int *workGroupNumCols,\n"
       "  unsigned int *microTileNumRows,\n"
       "  unsigned int *microTileNumCols,\n"
       "  unsigned int *unroll\n"
       ") {\n" )
+    self.precisionInitialized = True
     self.orderInitialized = False
     self.transInitialized = False
     self.betaInitialized = False
@@ -1231,16 +1310,16 @@ class KernelSelectionLogic:
     self.logic += "*binaryBuildOptions = " + kernel.getKernelName() + "_binBuildOptions;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*tileClKernel       = " + kernel.getKernelName()       + "_clKernel;\n"
+    self.logic += "*tileClKernel       = &" + kernel.getKernelName()       + "_clKernel;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*rowClKernel        = " + kernel.getRowKernelName()    + "_clKernel;\n"
+    self.logic += "*rowClKernel        = &" + kernel.getRowKernelName()    + "_clKernel;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*colClKernel        = " + kernel.getColKernelName()    + "_clKernel;\n"
+    self.logic += "*colClKernel        = &" + kernel.getColKernelName()    + "_clKernel;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*cornerClKernel     = " + kernel.getCornerKernelName() + "_clKernel;\n"
+    self.logic += "*cornerClKernel     = &" + kernel.getCornerKernelName() + "_clKernel;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     self.logic += "*workGroupNumRows   = " + str(kernel.workGroupNumRows) + ";\n"

@@ -8,6 +8,7 @@
 #include <Windows.h>
 #include <CL/cl.h>
 #include "naive_blas.cpp"
+using namespace NaiveBlas;
 #if 0
 // from clBLAS.h
 typedef enum clblasOrder_ {
@@ -22,15 +23,14 @@ typedef enum clblasTranspose_ {
                     
 } clblasTranspose;
 #endif
-using namespace NaiveBlas;
 
-#define SGEMM 0
+#define SGEMM 1
 #define DGEMM 0
 #define CGEMM 0
-#define ZGEMM 1
+#define ZGEMM 0
 
 #define RANDOM_DATA   1
-#define DO_VALIDATION 1
+#define DO_VALIDATION 0
 
 #if SGEMM
 #define DATA_TYPE float
@@ -174,9 +174,9 @@ const unsigned int numEnqueuesPerFlush = 1;
 const unsigned int numFlushesPerFinish = 1;
 const unsigned int numFinishes = 1;
 #else
-const unsigned int numEnqueuesPerFlush = 1;
-const unsigned int numFlushesPerFinish = 1;
-const unsigned int numFinishes = 1;
+const unsigned int numEnqueuesPerFlush = 2;
+const unsigned int numFlushesPerFinish = 2;
+const unsigned int numFinishes = 2;
 #endif
 
 char* loadFile(const char* path);
@@ -212,6 +212,26 @@ void testKernelParameterCombination(
   unsigned int macroTileNumRows = workGroupNumRows*microTileNumRows;
   unsigned int macroTileNumCols = workGroupNumCols*microTileNumCols;
 
+
+  // how large of a matrix to test?
+#if DO_VALIDATION
+  unsigned int M = 1*macroTileNumRows;
+  unsigned int N = 1*macroTileNumCols;
+  unsigned int K = 1*unroll;
+#else
+  if (mSpill || nSpill || unroll==1 || transAInt==1 || transBInt==0) return;
+  unsigned int M = 22*macroTileNumRows;
+  unsigned int N = 24*macroTileNumCols;
+  unsigned int K = 2*64*90+unroll;
+#endif
+  if (mSpill) {
+    M += 1;
+  }
+  if (nSpill) {
+    N += 1;
+  }
+
+  
 #if 1
   printf("Testing: %sgemm_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s%s_%u_%u\n",
 #if SGEMM
@@ -238,23 +258,6 @@ void testKernelParameterCombination(
     nSpill );
 #endif
 
-  // how large of a matrix to test?
-#if DO_VALIDATION
-  unsigned int M = 1*macroTileNumRows;
-  unsigned int N = 1*macroTileNumCols;
-  unsigned int K = 1*unroll;
-#else
-  if (mSpill || nSpill || unroll==1) return;
-  unsigned int M = 22*macroTileNumRows;
-  unsigned int N = 24*macroTileNumCols;
-  unsigned int K = 64*90+unroll;
-#endif
-  if (mSpill) {
-    M += 1;
-  }
-  if (nSpill) {
-    N += 1;
-  }
   //printf("M=%u, N=%u, K=%u\n", M, N, K);
   // matrix A parameters
   clblasTranspose transA;
