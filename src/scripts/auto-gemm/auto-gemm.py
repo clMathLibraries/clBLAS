@@ -53,12 +53,7 @@ def processAllKernelParameterCombinations(argv):
   # non-tile parameters
   listPrecision = ["s", "d", "c", "z"]
   listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
-  listTrans = [
-    [ "N", "N" ],
-    [ "T", "N" ],
-    [ "N", "T" ],
-    [ "T", "T" ],
-    ]
+  dictTrans = { "s":["N", "T"], "d":["N", "T"], "c":["N", "T", "C"], "z":["N", "T", "C"] }
   listBeta = [ 0, 1 ]
 
   # tile parameters
@@ -85,7 +80,7 @@ def processAllKernelParameterCombinations(argv):
       ]
 
 
-  kernelSelectionLogic = KernelSelectionLogic(listOrder, listTrans, listBeta);
+  kernelSelectionLogic = KernelSelectionLogic();
   kernelSourceIncludes = KernelSourceIncludes()
   kernelBinaryIncludes = KernelBinaryIncludes()
   clKernelIncludes = ClKernelIncludes()
@@ -134,41 +129,43 @@ def processAllKernelParameterCombinations(argv):
         listMicroTileSizes.append(size)
     kernelSelectionLogic.newPrecision(precision, listMicroTileSizes)
 
+    listTrans = dictTrans[precision]
 
     for order in listOrder:
       kernelSelectionLogic.newOrder(order)
-      for trans in listTrans:
-        kernelSelectionLogic.newTrans(trans)
-        for beta in listBeta:
-          kernelSelectionLogic.newBeta(beta)
-          for tile in listTileKernelParameters:
-            # set kernel parameters
-            kernel = GemmOpenCLKernelSource()
-            kernel.precision = precision
-            kernel.order = order
-            kernel.transA = trans[0]
-            kernel.transB = trans[1]
-            kernel.beta = beta
-            kernel.workGroupNumRows = tile[0]
-            kernel.workGroupNumCols = tile[1]
-            kernel.microTileNumRows = tile[2]
-            kernel.microTileNumCols = tile[3]
-            kernel.macroTileNumRows = tile[0]*tile[2]
-            kernel.macroTileNumCols = tile[1]*tile[3]
-            kernel.unroll = tile[4]
-            # process kernel parameters
-            processKernel( \
-                kernel, \
-                kernelSelectionLogic, \
-                kernelSourceIncludes, \
-                kernelBinaryIncludes, \
-                clKernelIncludes, \
-                kernelSourceBuildOptions, \
-                kernelBinaryBuildOptions, \
-                fileSrcClTemplates, \
-                fileSrcClTemplatesGen, \
-                fileBinClTemplates, \
-                cppKernelEnumeration )
+      for transA in listTrans:
+        for transB in listTrans:
+          kernelSelectionLogic.newTrans(transA, transB)
+          for beta in listBeta:
+            kernelSelectionLogic.newBeta(beta)
+            for tile in listTileKernelParameters:
+              # set kernel parameters
+              kernel = GemmOpenCLKernelSource()
+              kernel.precision = precision
+              kernel.order = order
+              kernel.transA = transA
+              kernel.transB = transB
+              kernel.beta = beta
+              kernel.workGroupNumRows = tile[0]
+              kernel.workGroupNumCols = tile[1]
+              kernel.microTileNumRows = tile[2]
+              kernel.microTileNumCols = tile[3]
+              kernel.macroTileNumRows = tile[0]*tile[2]
+              kernel.macroTileNumCols = tile[1]*tile[3]
+              kernel.unroll = tile[4]
+              # process kernel parameters
+              processKernel( \
+                  kernel, \
+                  kernelSelectionLogic, \
+                  kernelSourceIncludes, \
+                  kernelBinaryIncludes, \
+                  clKernelIncludes, \
+                  kernelSourceBuildOptions, \
+                  kernelBinaryBuildOptions, \
+                  fileSrcClTemplates, \
+                  fileSrcClTemplatesGen, \
+                  fileBinClTemplates, \
+                  cppKernelEnumeration )
 
   # save written files
   kernelSelectionLogic.finish()
@@ -488,15 +485,15 @@ class GemmOpenCLKernelSource:
     # A
     self.ks += self.el
     self.ks += "/* global memory indices */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))" + self.el
-    else:
+    if (self.order=="clblasColumnMajor")==(self.transA=="N"):
       self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((COL)*lda+(ROW))" + self.el
-    # B
-    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))" + self.el
     else:
+      self.ks += "#define GET_GLOBAL_INDEX_A(ROW,COL) ((ROW)*lda+(COL))" + self.el
+    # B
+    if (self.order=="clblasColumnMajor")==(self.transB=="N"):
       self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((COL)*ldb+(ROW))" + self.el
+    else:
+      self.ks += "#define GET_GLOBAL_INDEX_B(ROW,COL) ((ROW)*ldb+(COL))" + self.el
     # C
     if (self.order=="clblasColumnMajor"):
       self.ks += "#define GET_GLOBAL_INDEX_C(ROW,COL) ((COL)*ldc+(ROW))" + self.el
@@ -519,7 +516,7 @@ class GemmOpenCLKernelSource:
     self.ks += "#define DATA_TYPE_STR %s%s" % (openclDataType[self.precision], self.el)
     if self.precision=="s" or self.precision=="d":
       # real arithmetic
-      self.ks += "#define TYPE_MAD(MUL0,MUL1,DST) DST = mad(MUL0,MUL1,DST);" + self.el
+      self.ks += "#define TYPE_MAD(MULA,MULB,DST) DST = mad(MULA,MULB,DST);" + self.el
       if self.beta==1:
         self.ks += "#define TYPE_MAD_WRITE(DST,ALPHA,REG,BETA) DST = (ALPHA)*(REG) + (BETA)*(DST);" + self.el
       else:
@@ -527,12 +524,38 @@ class GemmOpenCLKernelSource:
 
     else:
       # complex arithmetic
-      self.ks += (
-        "#define TYPE_MAD(MUL0,MUL1,DST) \\\\" + self.el +
-        "  DST.s0 = mad(  MUL0.s0, MUL1.s0, DST.s0 ); \\\\" + self.el +
-        "  DST.s0 = mad( -MUL0.s1, MUL1.s1, DST.s0 ); \\\\" + self.el +
-        "  DST.s1 = mad(  MUL0.s0, MUL1.s1, DST.s1 ); \\\\" + self.el +
-        "  DST.s1 = mad(  MUL0.s1, MUL1.s0, DST.s1 );" + self.el )
+      if self.transA!="C" and self.transB!="C":
+        # neither conjugate
+        self.ks += (
+          "#define TYPE_MAD(MULA,MULB,DST) \\\\" + self.el +
+          "  DST.s0 = mad(  MULA.s0, MULB.s0, DST.s0 ); \\\\" + self.el +
+          "  DST.s0 = mad( -MULA.s1, MULB.s1, DST.s0 ); \\\\" + self.el +
+          "  DST.s1 = mad(  MULA.s0, MULB.s1, DST.s1 ); \\\\" + self.el +
+          "  DST.s1 = mad(  MULA.s1, MULB.s0, DST.s1 );" + self.el )
+      elif self.transA=="C" and self.transB!="C":
+        # A conjugate (negate imaginary A.s1)
+        self.ks += (
+          "#define TYPE_MAD(MULA,MULB,DST) \\\\" + self.el +
+          "  DST.s0 = mad(  MULA.s0, MULB.s0, DST.s0 ); \\\\" + self.el +
+          "  DST.s0 = mad(  MULA.s1, MULB.s1, DST.s0 ); \\\\" + self.el +
+          "  DST.s1 = mad(  MULA.s0, MULB.s1, DST.s1 ); \\\\" + self.el +
+          "  DST.s1 = mad( -MULA.s1, MULB.s0, DST.s1 );" + self.el )
+      elif self.transA!="C" and self.transB=="C":
+        # B conjugate (negate imaginary B.s1)
+        self.ks += (
+          "#define TYPE_MAD(MULA,MULB,DST) \\\\" + self.el +
+          "  DST.s0 = mad(  MULA.s0,  MULB.s0, DST.s0 ); \\\\" + self.el +
+          "  DST.s0 = mad( -MULA.s1, -MULB.s1, DST.s0 ); \\\\" + self.el +
+          "  DST.s1 = mad(  MULA.s0, -MULB.s1, DST.s1 ); \\\\" + self.el +
+          "  DST.s1 = mad(  MULA.s1,  MULB.s0, DST.s1 );" + self.el )
+      else:
+        # A & B conjugate (negate imaginary .s1)
+        self.ks += (
+          "#define TYPE_MAD(MULA,MULB,DST) \\\\" + self.el +
+          "  DST.s0 = mad(  MULA.s0,  MULB.s0, DST.s0 ); \\\\" + self.el +
+          "  DST.s0 = mad(  MULA.s1, -MULB.s1, DST.s0 ); \\\\" + self.el +
+          "  DST.s1 = mad(  MULA.s0, -MULB.s1, DST.s1 ); \\\\" + self.el +
+          "  DST.s1 = mad( -MULA.s1,  MULB.s0, DST.s1 );" + self.el )
       if self.beta==1:
         self.ks += (
           "#define TYPE_MAD_WRITE( DST, ALPHA, REG, BETA ) \\\\" + self.el +
@@ -654,23 +677,23 @@ class GemmOpenCLKernelSource:
     # global indices being loaded
     self.ks += self.el
     self.ks += "  /* global indices being loaded */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += ( # TODO
-        "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER)" + self.el +
-        "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el )
-    else:
+    if (self.order=="clblasColumnMajor")==(self.transA=="N"):
       self.ks += (
         "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS)" + self.el +
         "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS)" + self.el )
-
-    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += ( # TODO
-        "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_COLS)" + self.el +
-        "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS)" + self.el )
     else:
+      self.ks += (
+        "#define globalARow(LID) (groupRow*MACRO_TILE_NUM_ROWS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER)" + self.el +
+        "#define globalACol(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el )
+
+    if (self.order=="clblasColumnMajor")==(self.transB=="N"):
       self.ks += (
         "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER)" + self.el +
         "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER)" + self.el )
+    else:
+      self.ks += (
+        "#define globalBRow(LID) ((localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_COLS)" + self.el +
+        "#define globalBCol(LID) (groupCol*MACRO_TILE_NUM_COLS + (localSerial+(LID)*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_COLS)" + self.el )
 
     #self.ks += (
     #  "  A += GET_GLOBAL_INDEX_A( globalARow, globalACol );" + self.el +
@@ -688,27 +711,27 @@ class GemmOpenCLKernelSource:
     # local indices being written
     self.ks += self.el
     self.ks += "    /* local indices being written */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += (
-        "#define localARow (localSerial / NUM_UNROLL_ITER)" + self.el +
-        "#define localACol (localSerial % NUM_UNROLL_ITER)" + self.el +
-        "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
-    else:
+    if (self.order=="clblasColumnMajor")==(self.transA=="N"):
       self.ks += (
         "#define localARow (localSerial % MACRO_TILE_NUM_ROWS)" + self.el +
         "#define localACol (localSerial / MACRO_TILE_NUM_ROWS)" + self.el +
         "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
-
-    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += (
-        "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
-        "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
-        "#define localBStride  (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
     else:
+      self.ks += (
+        "#define localARow (localSerial / NUM_UNROLL_ITER)" + self.el +
+        "#define localACol (localSerial % NUM_UNROLL_ITER)" + self.el +
+        "#define localAStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
+
+    if (self.order=="clblasColumnMajor")==(self.transB=="N"):
       self.ks += (
         "#define localBRow ( localSerial % NUM_UNROLL_ITER )" + self.el +
         "#define localBCol ( localSerial / NUM_UNROLL_ITER )" + self.el +
         "#define localBStride (WG_NUM_ROWS*WG_NUM_COLS/NUM_UNROLL_ITER)" + self.el )
+    else:
+      self.ks += (
+        "#define localBRow ( localSerial / MACRO_TILE_NUM_COLS )" + self.el +
+        "#define localBCol ( localSerial % MACRO_TILE_NUM_COLS )" + self.el +
+        "#define localBStride  (WG_NUM_ROWS*WG_NUM_COLS)" + self.el )
 
 
     self.ks += (
@@ -780,14 +803,14 @@ class GemmOpenCLKernelSource:
     # shift to next k block
     self.ks += self.el
     self.ks += "    /* shift to next k block */" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transA=="T"):
-      self.ks += "    A += NUM_UNROLL_ITER;" + self.el
-    else:
+    if (self.order=="clblasColumnMajor")==(self.transA=="N"):
       self.ks += "    A += lda*NUM_UNROLL_ITER;" + self.el
-    if (self.order=="clblasColumnMajor")==(self.transB=="T"):
-      self.ks += "    B += ldb*NUM_UNROLL_ITER;" + self.el
     else:
+      self.ks += "    A += NUM_UNROLL_ITER;" + self.el
+    if (self.order=="clblasColumnMajor")==(self.transB=="N"):
       self.ks += "    B += NUM_UNROLL_ITER;" + self.el
+    else:
+      self.ks += "    B += ldb*NUM_UNROLL_ITER;" + self.el
 
     ####################################
     # end loop
@@ -941,13 +964,13 @@ class ClKernelIncludes:
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
-    self.fileStr += "cl_kernel %s_clKernel;\n" % kernelName
+    self.fileStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
     kernelName = kernel.getRowKernelName()
-    self.fileStr += "cl_kernel %s_clKernel;\n" % kernelName
+    self.fileStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
     kernelName = kernel.getColKernelName()
-    self.fileStr += "cl_kernel %s_clKernel;\n" % kernelName
+    self.fileStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
     kernelName = kernel.getCornerKernelName()
-    self.fileStr += "cl_kernel %s_clKernel;\n" % kernelName
+    self.fileStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
@@ -1035,8 +1058,8 @@ class CppKernelEnumeration:
       for nSpill in range(0, 2):
         self.fileStr += "  { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u },\n" % ( \
           1 if kernel.order=="clblasColumnMajor" else 0, \
-          1 if kernel.transA=="T" else 0, \
-          1 if kernel.transB=="T" else 0, \
+          0 if kernel.transA=="N" else 1 if kernel.transA=="T" else 2 , \
+          0 if kernel.transB=="N" else 1 if kernel.transB=="T" else 2, \
           1 if kernel.beta>0 else 0, \
           kernel.microTileNumRows, \
           kernel.microTileNumCols, \
@@ -1066,10 +1089,7 @@ class KernelSelectionLogic:
   ##############################################################################
   # KSL - default constructor
   ##############################################################################
-  def __init__(self, \
-      listOrder, \
-      listTrans, \
-      listBeta ):
+  def __init__(self):
 
     self.kernelSelectionFileName = "GemmKernelSelection.h"
 
@@ -1090,9 +1110,9 @@ class KernelSelectionLogic:
       "  clblasOrder order,\n"
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
-      "  unsigned int M,\n"
-      "  unsigned int N,\n"
-      "  unsigned int K,\n"
+      "  size_t M,\n"
+      "  size_t N,\n"
+      "  size_t K,\n"
       "  bool betaNonZero,\n"
       "  float optimalNumElementsPerWorkItem,\n"
       "  const char **tileKernelSource,\n"
@@ -1150,9 +1170,9 @@ class KernelSelectionLogic:
       "  clblasOrder order,\n"
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
-      "  unsigned int M,\n"
-      "  unsigned int N,\n"
-      "  unsigned int K,\n"
+      "  size_t M,\n"
+      "  size_t N,\n"
+      "  size_t K,\n"
       "  bool betaNonZero,\n"
       "  float optimalNumElementsPerWorkItem,\n"
       "  const char **tileKernelSource,\n"
@@ -1202,7 +1222,7 @@ class KernelSelectionLogic:
 
   ####################################
   # KSL - new trans
-  def newTrans(self, trans):
+  def newTrans(self, transA, transB):
     if (self.transInitialized):
       self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
       self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
@@ -1211,15 +1231,19 @@ class KernelSelectionLogic:
     else:
       self.logic += self.zeroIndent+self.tab # 1 tabs
     self.logic += "if (transA == "
-    if trans[0] == "N":
+    if transA == "N":
       self.logic += "clblasNoTrans"
-    else:
+    elif transA == "T":
       self.logic += "clblasTrans"
+    else:
+      self.logic += "clblasConjTrans"
     self.logic += " && transB == "
-    if trans[1] == "N":
+    if transB == "N":
       self.logic += "clblasNoTrans"
-    else:
+    elif transB == "T":
       self.logic += "clblasTrans"
+    else:
+      self.logic += "clblasConjTrans"
     self.logic += ") {\n"
     self.transInitialized = True
     self.betaInitialized = False
@@ -1373,10 +1397,3 @@ class KernelSelectionLogic:
 if __name__ == "__main__":
   main(sys.argv[1:])
 
-
-#lA[ 0*localAStride ] = A[ GET_GLOBAL_INDEX_A( groupRow*MACRO_TILE_NUM_ROWS+(localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS) ];
-#lA[ 1*localAStride ] = A[ GET_GLOBAL_INDEX_A( groupRow*MACRO_TILE_NUM_ROWS+(localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS) ];
-#lA[ 2*localAStride ] = A[ GET_GLOBAL_INDEX_A( groupRow*MACRO_TILE_NUM_ROWS+(localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)%MACRO_TILE_NUM_ROWS, (localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)/MACRO_TILE_NUM_ROWS) ];
-#lB[ 0*localBStride ] = B[ GET_GLOBAL_INDEX_B( (localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, groupCol*MACRO_TILE_NUM_COLS+(localSerial+0*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) ];
-#lB[ 1*localBStride ] = B[ GET_GLOBAL_INDEX_B( (localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, groupCol*MACRO_TILE_NUM_COLS+(localSerial+1*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) ];
-#lB[ 2*localBStride ] = B[ GET_GLOBAL_INDEX_B( (localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)%NUM_UNROLL_ITER, groupCol*MACRO_TILE_NUM_COLS+(localSerial+2*WG_NUM_ROWS*WG_NUM_COLS)/NUM_UNROLL_ITER) ];

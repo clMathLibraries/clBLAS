@@ -347,6 +347,9 @@ include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}/library/blas/functor/include
     ${clBLAS_SOURCE_DIR}/library/tools/tune
     ${clBLAS_BINARY_DIR}/include
+    ${clBLAS_SOURCE_DIR}/library/blas/gemm
+    ${clBLAS_SOURCE_DIR}/library/blas/GemmKernelSources
+    ${clBLAS_SOURCE_DIR}/library/blas/GemmKernelBinaries
 )
 
 option( BLAS_DUMP_CLBLAS_KERNELS "Force the library to dump OpenCL kernels to disk" OFF )
