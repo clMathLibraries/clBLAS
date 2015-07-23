@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * This file was auto-generated using the auto-gemm.py python script.
+ * NO NOT modify this file! Instead, make changes to
+ *   clBLAS/src/scripts/auto-gemm/auto-gemm.py then re-generate files
+ *   (otherwise local changes will be lost after re-generation).
+ * - David Tanner
+ ******************************************************************************/
+
 unsigned int zgemmKernelEnumeration[][11] = {
   { 1, 0, 0, 0, 4, 2, 16, 16, 8, 0, 0 },
   { 1, 0, 0, 0, 4, 2, 16, 16, 8, 0, 1 },

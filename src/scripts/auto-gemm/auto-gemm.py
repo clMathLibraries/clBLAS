@@ -9,10 +9,10 @@
 #   - kernel selection logic
 #   - include files for kernel strings
 #
-# TODO
-# - after writing kernel files, make list of valid micro tiles for correct size list
-# - zgemm() call is in xgemm.cc
+# TODO Now
+# TODO Future
 # - fuse together unroll=8 and unroll=1 in same kernel ?
+#     functionally works fine, but lowers performance by ~10%; better compiler needed
 ################################################################################
 
 import os
@@ -25,6 +25,16 @@ import getopt
 totalParameterCombinations = 0
 validParameterCombinations = 0
 
+def getAutoGemmHeader():
+  return (
+      "/*******************************************************************************\n"
+      " * This file was auto-generated using the auto-gemm.py python script.\n"
+      " * NO NOT modify this file! Instead, make changes to\n"
+      " *   clBLAS/src/scripts/auto-gemm/auto-gemm.py then re-generate files\n"
+      " *   (otherwise local changes will be lost after re-generation).\n"
+      " * - David Tanner\n"
+      " ******************************************************************************/\n\n"
+      )
 
 
 ################################################################################
@@ -87,11 +97,6 @@ def processAllKernelParameterCombinations(argv):
   kernelSourceBuildOptions = KernelSourceBuildOptions()
   kernelBinaryBuildOptions = KernelBinaryBuildOptions()
   cppKernelEnumeration = CppKernelEnumeration()
-
-  # files to write lists to
-  fileSrcClTemplates = open("gemm_SRC_CL_TEMPLATES.txt", "w")
-  fileSrcClTemplatesGen = open("gemm_SRC_CL_TEMPLATES_GEN.txt", "w")
-  fileBinClTemplates = open("gemm_BIN_CL_TEMPLATES.txt", "w")
 
 
   # for each kernel parameter combination
@@ -162,9 +167,6 @@ def processAllKernelParameterCombinations(argv):
                   clKernelIncludes, \
                   kernelSourceBuildOptions, \
                   kernelBinaryBuildOptions, \
-                  fileSrcClTemplates, \
-                  fileSrcClTemplatesGen, \
-                  fileBinClTemplates, \
                   cppKernelEnumeration )
 
   # save written files
@@ -176,11 +178,6 @@ def processAllKernelParameterCombinations(argv):
   kernelSourceBuildOptions.writeToFile()
   kernelBinaryBuildOptions.writeToFile()
   cppKernelEnumeration.writeToFile()
-
-  fileSrcClTemplates.close()
-  fileSrcClTemplatesGen.close()
-  fileBinClTemplates.close()
-
 
 
 ################################################################################
@@ -231,9 +228,6 @@ def processKernel( \
     clKernelIncludes, \
     kernelSourceBuildOptions, \
     kernelBinaryBuildOptions, \
-    fileSrcClTemplates, \
-    fileSrcClTemplatesGen, \
-    fileBinClTemplates, \
     cppKernelEnumeration ):
   global totalParameterCombinations, validParameterCombinations
 
@@ -250,43 +244,32 @@ def processKernel( \
 
   print "%s: s = %3d" % (kernelName, kernel.microTileNumRows*kernel.microTileNumCols)
 
-  # 1) write kernel to file
-  kernel.writeKernelToFile()
+  # write kernel to file
+  kernel.writeToFile()
 
-  # 2) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES
-  fileSrcClTemplates.write("  %s.cl\n" % kernelName)
-
-  # 3) list to add to src/library/CMakeLists.txt:SRC_CL_TEMPLATES_GEN
-  fileSrcClTemplatesGen.write("  %s.clHawaii_64.bin.cl\n" % kernelName)
-
-  # 4) list to add to src/library/bingen.cmake:BIN_CL_TEMPLATES_HAWAII_CL2
-  fileBinClTemplates.write("  ${CLTEMPLATE_PATH}%s.cl\n" % kernelName)
-
-  # 5) list to add to src/library/blas/functor/gcn_zgemm.cc:23
+  # addk kernel to include files
   kernelSelectionLogic.newKernel(kernel)
   kernelSourceIncludes.addKernel(kernel)
   kernelBinaryIncludes.addKernel(kernel)
   kernelSourceBuildOptions.addKernel(kernel)
   kernelBinaryBuildOptions.addKernel(kernel)
   clKernelIncludes.addKernel(kernel)
-
-  # 6) write cpp kernel parameter enumeration
   cppKernelEnumeration.addKernel(kernel)
 
-  # 7) write kernel to file
+  # write associate kernels to file
   macroTileNumRows = kernel.macroTileNumRows
   macroTileNumCols = kernel.macroTileNumCols
   # row kernel
   kernel.macroTileNumRows = 1
-  kernel.writeKernelToFile()
+  kernel.writeToFile()
   # col kernel
   kernel.macroTileNumRows = macroTileNumRows
   kernel.macroTileNumCols = 1
-  kernel.writeKernelToFile()
+  kernel.writeToFile()
   # corner kernel
   kernel.macroTileNumRows = 1
   kernel.macroTileNumCols = 1
-  kernel.writeKernelToFile()
+  kernel.writeToFile()
 
 
 
@@ -858,11 +841,12 @@ class GemmOpenCLKernelSource:
   ##############################################################################
   # Kernel - Write kernel to file
   ##############################################################################
-  def writeKernelToFile(self):
+  def writeToFile(self):
     kernelName = self.getKernelName()
     kernelString = self.makeKernelString()
     kernelFileName = "GemmKernelSources/" + kernelName+"_src.h"
     kernelFile = open(kernelFileName, "w")
+    kernelFile.write( getAutoGemmHeader() )
     kernelFile.write("#ifndef " + kernelName.upper() + "_SRC_H\n")
     kernelFile.write("#define " + kernelName.upper() + "_SRC_H\n\n")
     kernelFile.write("static const char * const %s_src =\"" % (kernelName) )
@@ -899,6 +883,7 @@ class KernelSourceIncludes:
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
+    incFile.write( getAutoGemmHeader() )
     incFile.write( self.fileStr )
     incFile.write( "\n#endif\n" )
     incFile.close()
@@ -938,10 +923,12 @@ class KernelBinaryIncludes:
 
   def writeToFile(self):
     incFile = open(self.incFileName, "w")
+    incFile.write( getAutoGemmHeader() )
     incFile.write( self.incStr )
     incFile.write( "\n#endif\n" )
     incFile.close()
     nullFile = open(self.nullFileName, "w")
+    nullFile.write( getAutoGemmHeader() )
     nullFile.write( self.nullStr )
     nullFile.write( "\n#endif\n" )
     nullFile.close()
@@ -974,6 +961,7 @@ class ClKernelIncludes:
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
+    incFile.write( getAutoGemmHeader() )
     incFile.write( self.fileStr )
     incFile.write( "\n#endif\n" )
     incFile.close()
@@ -999,6 +987,7 @@ class KernelSourceBuildOptions:
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
+    incFile.write( getAutoGemmHeader() )
     incFile.write( self.fileStr )
     incFile.write( "\n#endif\n" )
     incFile.close()
@@ -1024,6 +1013,7 @@ class KernelBinaryBuildOptions:
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
+    incFile.write( getAutoGemmHeader() )
     incFile.write( self.fileStr )
     incFile.write( "\n#endif\n" )
     incFile.close()
@@ -1072,6 +1062,7 @@ class CppKernelEnumeration:
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
+    incFile.write( getAutoGemmHeader() )
     incFile.write( self.fileStr )
     incFile.write( "};\n" )
     incFile.write( "unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.count) )
@@ -1382,6 +1373,7 @@ class KernelSelectionLogic:
   ##############################################################################
   def writeToFile(self):
     selectionFile = open(self.kernelSelectionFileName, "w")
+    selectionFile.write( getAutoGemmHeader() )
     selectionFile.write(self.logic)
     selectionFile.write("\n")
     selectionFile.close()
