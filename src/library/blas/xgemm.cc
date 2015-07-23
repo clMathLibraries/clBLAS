@@ -204,9 +204,9 @@ void makeGemmKernel(
    for (unsigned int i = 0; i < numKernelArgs; i++) {
      CL_CHECK( clSetKernelArg( clKernel, i, kernelArgSizes[i], kernelArgs[i]) )
    }
-   printf("global={%llu, %llu} local={%llu, %llu}\n",
+   /*printf("global={%llu, %llu} local={%llu, %llu}\n",
      globalWorkSize[0], globalWorkSize[1],
-     localWorkSize[0], localWorkSize[1] );
+     localWorkSize[0], localWorkSize[1] );*/
    CL_CHECK( clEnqueueNDRangeKernel( clQueue, clKernel,
       2, NULL, globalWorkSize, localWorkSize,
       0, NULL, clEvent ) )
