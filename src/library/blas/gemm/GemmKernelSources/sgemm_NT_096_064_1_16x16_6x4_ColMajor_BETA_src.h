@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * This file was auto-generated using the auto-gemm.py python script.
+ * NO NOT modify this file! Instead, make changes to
+ *   clBLAS/src/scripts/auto-gemm/auto-gemm.py then re-generate files
+ *   (otherwise local changes will be lost after re-generation).
+ * - David Tanner
+ ******************************************************************************/
+
 #ifndef SGEMM_NT_096_064_1_16X16_6X4_COLMAJOR_BETA_SRC_H
 #define SGEMM_NT_096_064_1_16X16_6X4_COLMAJOR_BETA_SRC_H
 

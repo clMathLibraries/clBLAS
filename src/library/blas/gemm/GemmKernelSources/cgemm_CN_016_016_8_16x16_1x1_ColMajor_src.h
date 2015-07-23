@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * This file was auto-generated using the auto-gemm.py python script.
+ * NO NOT modify this file! Instead, make changes to
+ *   clBLAS/src/scripts/auto-gemm/auto-gemm.py then re-generate files
+ *   (otherwise local changes will be lost after re-generation).
+ * - David Tanner
+ ******************************************************************************/
+
 #ifndef CGEMM_CN_016_016_8_16X16_1X1_COLMAJOR_SRC_H
 #define CGEMM_CN_016_016_8_16X16_1X1_COLMAJOR_SRC_H
 

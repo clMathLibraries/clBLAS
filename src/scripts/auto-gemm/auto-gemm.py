@@ -62,7 +62,8 @@ def processAllKernelParameterCombinations(argv):
 
   # non-tile parameters
   listPrecision = ["s", "d", "c", "z"]
-  listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
+  #listOrder = [ "clblasColumnMajor", "clblasRowMajor" ]
+  listOrder = [ "clblasColumnMajor" ]
   dictTrans = { "s":["N", "T"], "d":["N", "T"], "c":["N", "T", "C"], "z":["N", "T", "C"] }
   listBeta = [ 0, 1 ]
 
