@@ -192,13 +192,15 @@ void makeGemmKernel(
  * Enqueue Gemm Kernel
  *****************************************************************************/
  void enqueueGemmKernel(
-   cl_kernel clKernel,
    cl_command_queue clQueue,
+   cl_kernel clKernel,
    void **kernelArgs,
    size_t *kernelArgSizes,
    unsigned int numKernelArgs,
-   const size_t *localWorkSize,
    const size_t *globalWorkSize,
+   const size_t *localWorkSize,
+   cl_uint numEventsInWaitList,
+   const cl_event *eventWaitList,
    cl_event *clEvent)
  {
    for (unsigned int i = 0; i < numKernelArgs; i++) {
@@ -209,7 +211,7 @@ void makeGemmKernel(
      localWorkSize[0], localWorkSize[1] );*/
    CL_CHECK( clEnqueueNDRangeKernel( clQueue, clKernel,
       2, NULL, globalWorkSize, localWorkSize,
-      0, NULL, clEvent ) )
+      numEventsInWaitList, eventWaitList, clEvent ) )
  }
 
 
@@ -391,6 +393,8 @@ clblasGemm(
           &unroll);
     return clblasNotImplemented;
   }
+
+
   unsigned int macroTileNumRows = workGroupNumRows*microTileNumRows;
   unsigned int macroTileNumCols = workGroupNumCols*microTileNumCols;
   bool needTileKernel = M/macroTileNumRows > 0
@@ -398,7 +402,17 @@ clblasGemm(
   bool needRowKernel = M%macroTileNumRows > 0 && N/macroTileNumCols > 0;
   bool needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
   bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
-
+#if 0
+  printf("selected tile: wg=%ux%u, microTile=%ux%u, macroTile=%ux%u kernelsNeeded=%u,%u,%u,%u\n",
+    workGroupNumRows, workGroupNumCols,
+    microTileNumRows, microTileNumCols,
+    macroTileNumRows, macroTileNumCols,
+    needTileKernel ? 1 : 0,
+    needRowKernel ? 1 : 0,
+    needColKernel ? 1 : 0,
+    needCornerKernel ? 1 : 0
+    );
+#endif
 
 /******************************************************************************
  * Build kernels
@@ -435,9 +449,10 @@ clblasGemm(
   if (needTileKernel) {
     //printf("enqueueing tile kernel\n");
     size_t globalWorkSize[2] = {(M/macroTileNumRows)*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    enqueueGemmKernel( *tileClKernel, commandQueues[numKernelsEnqueued%numCommandQueues],
+    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *tileClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
-      localWorkSize, globalWorkSize,
+      globalWorkSize, localWorkSize,
+      numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
     numKernelsEnqueued++;
   }
@@ -448,9 +463,10 @@ clblasGemm(
   if (needRowKernel) {
     //printf("enqueueing row kernel\n");
     size_t globalWorkSize[2] = {1*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    enqueueGemmKernel( *rowClKernel, commandQueues[numKernelsEnqueued%numCommandQueues],
+    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *rowClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
-      localWorkSize, globalWorkSize,
+      globalWorkSize, localWorkSize,
+      numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
     numKernelsEnqueued++;
   }
@@ -461,9 +477,10 @@ clblasGemm(
   if (needColKernel) {
     //printf("enqueueing col kernel\n");
     size_t globalWorkSize[2] = { (M/macroTileNumRows)*workGroupNumRows, 1*workGroupNumCols };
-    enqueueGemmKernel( *colClKernel, commandQueues[numKernelsEnqueued%numCommandQueues],
+    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *colClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
-      localWorkSize, globalWorkSize,
+      globalWorkSize, localWorkSize,
+      numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
     numKernelsEnqueued++;
   }
@@ -474,9 +491,10 @@ clblasGemm(
   if (needCornerKernel) {
     //printf("enqueueing corner kernel\n");
     size_t globalWorkSize[2] = { 1*workGroupNumRows, 1*workGroupNumCols };
-    enqueueGemmKernel( *cornerClKernel, commandQueues[numKernelsEnqueued%numCommandQueues],
+    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *cornerClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
-      localWorkSize, globalWorkSize,
+      globalWorkSize, localWorkSize,
+      numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
     numKernelsEnqueued++;
   }

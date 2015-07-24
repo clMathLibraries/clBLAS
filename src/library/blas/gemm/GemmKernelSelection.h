@@ -16,6 +16,8 @@
 #include "GemmKernelBinaryBuildOptions.h"
 #include "GemmClKernels.h"
 
+#define EXACT_MULTIPLES(MULTIPLE_STR)
+
 // kernel selection logic template
 template<typename Precision>
 void gemmSelectKernel(
@@ -83,7 +85,7 @@ void gemmSelectKernel<float>(
     if (transA == clblasNoTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_NN_096_001_8_16x16_6x6_ColMajor_src;
@@ -105,7 +107,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_NN_096_001_1_16x16_6x6_ColMajor_src;
@@ -129,7 +131,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_NN_128_001_8_16x16_8x4_ColMajor_src;
@@ -151,7 +153,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_NN_128_001_1_16x16_8x4_ColMajor_src;
@@ -175,7 +177,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_NN_096_001_8_16x16_6x4_ColMajor_src;
@@ -197,7 +199,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_NN_096_001_1_16x16_6x4_ColMajor_src;
@@ -221,7 +223,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_NN_064_001_8_16x16_4x4_ColMajor_src;
@@ -243,7 +245,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_NN_064_001_1_16x16_4x4_ColMajor_src;
@@ -267,7 +269,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_NN_064_001_8_16x16_4x2_ColMajor_src;
@@ -289,7 +291,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_NN_064_001_1_16x16_4x2_ColMajor_src;
@@ -313,7 +315,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_NN_032_001_8_16x16_2x2_ColMajor_src;
@@ -335,7 +337,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_NN_032_001_1_16x16_2x2_ColMajor_src;
@@ -359,7 +361,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_NN_032_001_8_16x16_2x1_ColMajor_src;
@@ -381,7 +383,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_NN_032_001_1_16x16_2x1_ColMajor_src;
@@ -405,7 +407,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_NN_016_001_8_16x16_1x1_ColMajor_src;
@@ -427,7 +429,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_NN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_NN_016_001_1_16x16_1x1_ColMajor_src;
@@ -452,7 +454,7 @@ void gemmSelectKernel<float>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -474,7 +476,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -498,7 +500,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -520,7 +522,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -544,7 +546,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -566,7 +568,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -590,7 +592,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -612,7 +614,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -636,7 +638,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -658,7 +660,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -682,7 +684,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -704,7 +706,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -728,7 +730,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -750,7 +752,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -774,7 +776,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -796,7 +798,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -823,7 +825,7 @@ void gemmSelectKernel<float>(
     } else if (transA == clblasNoTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_NT_096_001_8_16x16_6x6_ColMajor_src;
@@ -845,7 +847,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_NT_096_001_1_16x16_6x6_ColMajor_src;
@@ -869,7 +871,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_NT_128_001_8_16x16_8x4_ColMajor_src;
@@ -891,7 +893,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_NT_128_001_1_16x16_8x4_ColMajor_src;
@@ -915,7 +917,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_NT_096_001_8_16x16_6x4_ColMajor_src;
@@ -937,7 +939,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_NT_096_001_1_16x16_6x4_ColMajor_src;
@@ -961,7 +963,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_NT_064_001_8_16x16_4x4_ColMajor_src;
@@ -983,7 +985,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_NT_064_001_1_16x16_4x4_ColMajor_src;
@@ -1007,7 +1009,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_NT_064_001_8_16x16_4x2_ColMajor_src;
@@ -1029,7 +1031,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_NT_064_001_1_16x16_4x2_ColMajor_src;
@@ -1053,7 +1055,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_NT_032_001_8_16x16_2x2_ColMajor_src;
@@ -1075,7 +1077,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_NT_032_001_1_16x16_2x2_ColMajor_src;
@@ -1099,7 +1101,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_NT_032_001_8_16x16_2x1_ColMajor_src;
@@ -1121,7 +1123,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_NT_032_001_1_16x16_2x1_ColMajor_src;
@@ -1145,7 +1147,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_NT_016_001_8_16x16_1x1_ColMajor_src;
@@ -1167,7 +1169,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_NT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_NT_016_001_1_16x16_1x1_ColMajor_src;
@@ -1192,7 +1194,7 @@ void gemmSelectKernel<float>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -1214,7 +1216,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -1238,7 +1240,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -1260,7 +1262,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -1284,7 +1286,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -1306,7 +1308,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -1330,7 +1332,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -1352,7 +1354,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -1376,7 +1378,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -1398,7 +1400,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -1422,7 +1424,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -1444,7 +1446,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -1468,7 +1470,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -1490,7 +1492,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -1514,7 +1516,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_NT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -1536,7 +1538,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_NT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_NT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_NT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -1563,7 +1565,7 @@ void gemmSelectKernel<float>(
     } else if (transA == clblasTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_TN_096_001_8_16x16_6x6_ColMajor_src;
@@ -1585,7 +1587,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_TN_096_001_1_16x16_6x6_ColMajor_src;
@@ -1609,7 +1611,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_TN_128_001_8_16x16_8x4_ColMajor_src;
@@ -1631,7 +1633,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_TN_128_001_1_16x16_8x4_ColMajor_src;
@@ -1655,7 +1657,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_TN_096_001_8_16x16_6x4_ColMajor_src;
@@ -1677,7 +1679,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_TN_096_001_1_16x16_6x4_ColMajor_src;
@@ -1701,7 +1703,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_TN_064_001_8_16x16_4x4_ColMajor_src;
@@ -1723,7 +1725,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_TN_064_001_1_16x16_4x4_ColMajor_src;
@@ -1747,7 +1749,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_TN_064_001_8_16x16_4x2_ColMajor_src;
@@ -1769,7 +1771,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_TN_064_001_1_16x16_4x2_ColMajor_src;
@@ -1793,7 +1795,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_TN_032_001_8_16x16_2x2_ColMajor_src;
@@ -1815,7 +1817,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_TN_032_001_1_16x16_2x2_ColMajor_src;
@@ -1839,7 +1841,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_TN_032_001_8_16x16_2x1_ColMajor_src;
@@ -1861,7 +1863,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_TN_032_001_1_16x16_2x1_ColMajor_src;
@@ -1885,7 +1887,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_TN_016_001_8_16x16_1x1_ColMajor_src;
@@ -1907,7 +1909,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_TN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_TN_016_001_1_16x16_1x1_ColMajor_src;
@@ -1932,7 +1934,7 @@ void gemmSelectKernel<float>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -1954,7 +1956,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -1978,7 +1980,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -2000,7 +2002,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -2024,7 +2026,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -2046,7 +2048,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -2070,7 +2072,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -2092,7 +2094,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -2116,7 +2118,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -2138,7 +2140,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -2162,7 +2164,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -2184,7 +2186,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -2208,7 +2210,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -2230,7 +2232,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -2254,7 +2256,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -2276,7 +2278,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -2303,7 +2305,7 @@ void gemmSelectKernel<float>(
     } else if (transA == clblasTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_TT_096_001_8_16x16_6x6_ColMajor_src;
@@ -2325,7 +2327,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = sgemm_TT_096_001_1_16x16_6x6_ColMajor_src;
@@ -2349,7 +2351,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_TT_128_001_8_16x16_8x4_ColMajor_src;
@@ -2371,7 +2373,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = sgemm_TT_128_001_1_16x16_8x4_ColMajor_src;
@@ -2395,7 +2397,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_TT_096_001_8_16x16_6x4_ColMajor_src;
@@ -2417,7 +2419,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = sgemm_TT_096_001_1_16x16_6x4_ColMajor_src;
@@ -2441,7 +2443,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_TT_064_001_8_16x16_4x4_ColMajor_src;
@@ -2463,7 +2465,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = sgemm_TT_064_001_1_16x16_4x4_ColMajor_src;
@@ -2487,7 +2489,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_TT_064_001_8_16x16_4x2_ColMajor_src;
@@ -2509,7 +2511,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = sgemm_TT_064_001_1_16x16_4x2_ColMajor_src;
@@ -2533,7 +2535,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_TT_032_001_8_16x16_2x2_ColMajor_src;
@@ -2555,7 +2557,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = sgemm_TT_032_001_1_16x16_2x2_ColMajor_src;
@@ -2579,7 +2581,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_TT_032_001_8_16x16_2x1_ColMajor_src;
@@ -2601,7 +2603,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = sgemm_TT_032_001_1_16x16_2x1_ColMajor_src;
@@ -2625,7 +2627,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_TT_016_001_8_16x16_1x1_ColMajor_src;
@@ -2647,7 +2649,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = sgemm_TT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = sgemm_TT_016_001_1_16x16_1x1_ColMajor_src;
@@ -2672,7 +2674,7 @@ void gemmSelectKernel<float>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -2694,7 +2696,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -2718,7 +2720,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -2740,7 +2742,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -2764,7 +2766,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -2786,7 +2788,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -2810,7 +2812,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -2832,7 +2834,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -2856,7 +2858,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -2878,7 +2880,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -2902,7 +2904,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -2924,7 +2926,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -2948,7 +2950,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -2970,7 +2972,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -2994,7 +2996,7 @@ void gemmSelectKernel<float>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = sgemm_TT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -3016,7 +3018,7 @@ void gemmSelectKernel<float>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = sgemm_TT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = sgemm_TT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = sgemm_TT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -3079,7 +3081,7 @@ void gemmSelectKernel<double>(
     if (transA == clblasNoTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_NN_096_001_8_16x16_6x6_ColMajor_src;
@@ -3101,7 +3103,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_NN_096_001_1_16x16_6x6_ColMajor_src;
@@ -3125,7 +3127,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_NN_128_001_8_16x16_8x4_ColMajor_src;
@@ -3147,7 +3149,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_NN_128_001_1_16x16_8x4_ColMajor_src;
@@ -3171,7 +3173,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_NN_096_001_8_16x16_6x4_ColMajor_src;
@@ -3193,7 +3195,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_NN_096_001_1_16x16_6x4_ColMajor_src;
@@ -3217,7 +3219,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_NN_064_001_8_16x16_4x4_ColMajor_src;
@@ -3239,7 +3241,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_NN_064_001_1_16x16_4x4_ColMajor_src;
@@ -3263,7 +3265,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_NN_064_001_8_16x16_4x2_ColMajor_src;
@@ -3285,7 +3287,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_NN_064_001_1_16x16_4x2_ColMajor_src;
@@ -3309,7 +3311,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_NN_032_001_8_16x16_2x2_ColMajor_src;
@@ -3331,7 +3333,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_NN_032_001_1_16x16_2x2_ColMajor_src;
@@ -3355,7 +3357,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_NN_032_001_8_16x16_2x1_ColMajor_src;
@@ -3377,7 +3379,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_NN_032_001_1_16x16_2x1_ColMajor_src;
@@ -3401,7 +3403,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_NN_016_001_8_16x16_1x1_ColMajor_src;
@@ -3423,7 +3425,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_NN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_NN_016_001_1_16x16_1x1_ColMajor_src;
@@ -3448,7 +3450,7 @@ void gemmSelectKernel<double>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -3470,7 +3472,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -3494,7 +3496,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -3516,7 +3518,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -3540,7 +3542,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -3562,7 +3564,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -3586,7 +3588,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -3608,7 +3610,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -3632,7 +3634,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -3654,7 +3656,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -3678,7 +3680,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -3700,7 +3702,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -3724,7 +3726,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -3746,7 +3748,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -3770,7 +3772,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -3792,7 +3794,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -3819,7 +3821,7 @@ void gemmSelectKernel<double>(
     } else if (transA == clblasNoTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_NT_096_001_8_16x16_6x6_ColMajor_src;
@@ -3841,7 +3843,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_NT_096_001_1_16x16_6x6_ColMajor_src;
@@ -3865,7 +3867,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_NT_128_001_8_16x16_8x4_ColMajor_src;
@@ -3887,7 +3889,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_NT_128_001_1_16x16_8x4_ColMajor_src;
@@ -3911,7 +3913,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_NT_096_001_8_16x16_6x4_ColMajor_src;
@@ -3933,7 +3935,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_NT_096_001_1_16x16_6x4_ColMajor_src;
@@ -3957,7 +3959,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_NT_064_001_8_16x16_4x4_ColMajor_src;
@@ -3979,7 +3981,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_NT_064_001_1_16x16_4x4_ColMajor_src;
@@ -4003,7 +4005,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_NT_064_001_8_16x16_4x2_ColMajor_src;
@@ -4025,7 +4027,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_NT_064_001_1_16x16_4x2_ColMajor_src;
@@ -4049,7 +4051,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_NT_032_001_8_16x16_2x2_ColMajor_src;
@@ -4071,7 +4073,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_NT_032_001_1_16x16_2x2_ColMajor_src;
@@ -4095,7 +4097,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_NT_032_001_8_16x16_2x1_ColMajor_src;
@@ -4117,7 +4119,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_NT_032_001_1_16x16_2x1_ColMajor_src;
@@ -4141,7 +4143,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_NT_016_001_8_16x16_1x1_ColMajor_src;
@@ -4163,7 +4165,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_NT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_NT_016_001_1_16x16_1x1_ColMajor_src;
@@ -4188,7 +4190,7 @@ void gemmSelectKernel<double>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -4210,7 +4212,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -4234,7 +4236,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -4256,7 +4258,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -4280,7 +4282,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -4302,7 +4304,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -4326,7 +4328,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -4348,7 +4350,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -4372,7 +4374,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -4394,7 +4396,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -4418,7 +4420,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -4440,7 +4442,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -4464,7 +4466,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -4486,7 +4488,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -4510,7 +4512,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_NT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -4532,7 +4534,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_NT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_NT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_NT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -4559,7 +4561,7 @@ void gemmSelectKernel<double>(
     } else if (transA == clblasTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_TN_096_001_8_16x16_6x6_ColMajor_src;
@@ -4581,7 +4583,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_TN_096_001_1_16x16_6x6_ColMajor_src;
@@ -4605,7 +4607,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_TN_128_001_8_16x16_8x4_ColMajor_src;
@@ -4627,7 +4629,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_TN_128_001_1_16x16_8x4_ColMajor_src;
@@ -4651,7 +4653,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_TN_096_001_8_16x16_6x4_ColMajor_src;
@@ -4673,7 +4675,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_TN_096_001_1_16x16_6x4_ColMajor_src;
@@ -4697,7 +4699,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_TN_064_001_8_16x16_4x4_ColMajor_src;
@@ -4719,7 +4721,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_TN_064_001_1_16x16_4x4_ColMajor_src;
@@ -4743,7 +4745,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_TN_064_001_8_16x16_4x2_ColMajor_src;
@@ -4765,7 +4767,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_TN_064_001_1_16x16_4x2_ColMajor_src;
@@ -4789,7 +4791,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_TN_032_001_8_16x16_2x2_ColMajor_src;
@@ -4811,7 +4813,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_TN_032_001_1_16x16_2x2_ColMajor_src;
@@ -4835,7 +4837,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_TN_032_001_8_16x16_2x1_ColMajor_src;
@@ -4857,7 +4859,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_TN_032_001_1_16x16_2x1_ColMajor_src;
@@ -4881,7 +4883,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_TN_016_001_8_16x16_1x1_ColMajor_src;
@@ -4903,7 +4905,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_TN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_TN_016_001_1_16x16_1x1_ColMajor_src;
@@ -4928,7 +4930,7 @@ void gemmSelectKernel<double>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -4950,7 +4952,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -4974,7 +4976,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -4996,7 +4998,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -5020,7 +5022,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -5042,7 +5044,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -5066,7 +5068,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -5088,7 +5090,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -5112,7 +5114,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -5134,7 +5136,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -5158,7 +5160,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -5180,7 +5182,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -5204,7 +5206,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -5226,7 +5228,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -5250,7 +5252,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -5272,7 +5274,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -5299,7 +5301,7 @@ void gemmSelectKernel<double>(
     } else if (transA == clblasTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_096_096_8_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_096_8_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_TT_096_001_8_16x16_6x6_ColMajor_src;
@@ -5321,7 +5323,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_096_096_1_16x16_6x6_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_096_1_16x16_6x6_ColMajor_src;
             *colKernelSource    = dgemm_TT_096_001_1_16x16_6x6_ColMajor_src;
@@ -5345,7 +5347,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_128_064_8_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_064_8_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_TT_128_001_8_16x16_8x4_ColMajor_src;
@@ -5367,7 +5369,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_128_064_1_16x16_8x4_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_064_1_16x16_8x4_ColMajor_src;
             *colKernelSource    = dgemm_TT_128_001_1_16x16_8x4_ColMajor_src;
@@ -5391,7 +5393,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_096_064_8_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_064_8_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_TT_096_001_8_16x16_6x4_ColMajor_src;
@@ -5413,7 +5415,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_096_064_1_16x16_6x4_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_064_1_16x16_6x4_ColMajor_src;
             *colKernelSource    = dgemm_TT_096_001_1_16x16_6x4_ColMajor_src;
@@ -5437,7 +5439,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_TT_064_001_8_16x16_4x4_ColMajor_src;
@@ -5459,7 +5461,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = dgemm_TT_064_001_1_16x16_4x4_ColMajor_src;
@@ -5483,7 +5485,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_TT_064_001_8_16x16_4x2_ColMajor_src;
@@ -5505,7 +5507,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = dgemm_TT_064_001_1_16x16_4x2_ColMajor_src;
@@ -5529,7 +5531,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_TT_032_001_8_16x16_2x2_ColMajor_src;
@@ -5551,7 +5553,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = dgemm_TT_032_001_1_16x16_2x2_ColMajor_src;
@@ -5575,7 +5577,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_TT_032_001_8_16x16_2x1_ColMajor_src;
@@ -5597,7 +5599,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = dgemm_TT_032_001_1_16x16_2x1_ColMajor_src;
@@ -5621,7 +5623,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_TT_016_001_8_16x16_1x1_ColMajor_src;
@@ -5643,7 +5645,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = dgemm_TT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = dgemm_TT_016_001_1_16x16_1x1_ColMajor_src;
@@ -5668,7 +5670,7 @@ void gemmSelectKernel<double>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 32) {
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_096_096_8_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_096_8_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_096_001_8_16x16_6x6_ColMajor_BETA_src;
@@ -5690,7 +5692,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%96 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%96 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_096_096_1_16x16_6x6_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_096_1_16x16_6x6_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_096_001_1_16x16_6x6_ColMajor_BETA_src;
@@ -5714,7 +5716,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 24) {
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_128_064_8_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_064_8_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_128_001_8_16x16_8x4_ColMajor_BETA_src;
@@ -5736,7 +5738,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%128 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%128 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_128_064_1_16x16_8x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_064_1_16x16_8x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_128_001_1_16x16_8x4_ColMajor_BETA_src;
@@ -5760,7 +5762,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 16) {
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_096_064_8_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_064_8_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_096_001_8_16x16_6x4_ColMajor_BETA_src;
@@ -5782,7 +5784,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%96 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%96 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_096_064_1_16x16_6x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_064_1_16x16_6x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_096_001_1_16x16_6x4_ColMajor_BETA_src;
@@ -5806,7 +5808,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -5828,7 +5830,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -5852,7 +5854,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -5874,7 +5876,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -5898,7 +5900,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -5920,7 +5922,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -5944,7 +5946,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -5966,7 +5968,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -5990,7 +5992,7 @@ void gemmSelectKernel<double>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = dgemm_TT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -6012,7 +6014,7 @@ void gemmSelectKernel<double>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = dgemm_TT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = dgemm_TT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = dgemm_TT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -6075,7 +6077,7 @@ void gemmSelectKernel<FloatComplex>(
     if (transA == clblasNoTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_NN_064_001_8_16x16_4x4_ColMajor_src;
@@ -6097,7 +6099,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_NN_064_001_1_16x16_4x4_ColMajor_src;
@@ -6121,7 +6123,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_NN_064_001_8_16x16_4x2_ColMajor_src;
@@ -6143,7 +6145,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_NN_064_001_1_16x16_4x2_ColMajor_src;
@@ -6167,7 +6169,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_NN_032_001_8_16x16_2x2_ColMajor_src;
@@ -6189,7 +6191,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_NN_032_001_1_16x16_2x2_ColMajor_src;
@@ -6213,7 +6215,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_NN_032_001_8_16x16_2x1_ColMajor_src;
@@ -6235,7 +6237,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_NN_032_001_1_16x16_2x1_ColMajor_src;
@@ -6259,7 +6261,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_NN_016_001_8_16x16_1x1_ColMajor_src;
@@ -6281,7 +6283,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_NN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_NN_016_001_1_16x16_1x1_ColMajor_src;
@@ -6306,7 +6308,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -6328,7 +6330,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -6352,7 +6354,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -6374,7 +6376,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -6398,7 +6400,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -6420,7 +6422,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -6444,7 +6446,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -6466,7 +6468,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -6490,7 +6492,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -6512,7 +6514,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -6539,7 +6541,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasNoTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_NT_064_001_8_16x16_4x4_ColMajor_src;
@@ -6561,7 +6563,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_NT_064_001_1_16x16_4x4_ColMajor_src;
@@ -6585,7 +6587,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_NT_064_001_8_16x16_4x2_ColMajor_src;
@@ -6607,7 +6609,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_NT_064_001_1_16x16_4x2_ColMajor_src;
@@ -6631,7 +6633,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_NT_032_001_8_16x16_2x2_ColMajor_src;
@@ -6653,7 +6655,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_NT_032_001_1_16x16_2x2_ColMajor_src;
@@ -6677,7 +6679,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_NT_032_001_8_16x16_2x1_ColMajor_src;
@@ -6699,7 +6701,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_NT_032_001_1_16x16_2x1_ColMajor_src;
@@ -6723,7 +6725,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_NT_016_001_8_16x16_1x1_ColMajor_src;
@@ -6745,7 +6747,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_NT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_NT_016_001_1_16x16_1x1_ColMajor_src;
@@ -6770,7 +6772,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -6792,7 +6794,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -6816,7 +6818,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -6838,7 +6840,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -6862,7 +6864,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -6884,7 +6886,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -6908,7 +6910,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -6930,7 +6932,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -6954,7 +6956,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -6976,7 +6978,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -7003,7 +7005,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasNoTrans && transB == clblasConjTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_NC_064_001_8_16x16_4x4_ColMajor_src;
@@ -7025,7 +7027,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_NC_064_001_1_16x16_4x4_ColMajor_src;
@@ -7049,7 +7051,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_NC_064_001_8_16x16_4x2_ColMajor_src;
@@ -7071,7 +7073,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_NC_064_001_1_16x16_4x2_ColMajor_src;
@@ -7095,7 +7097,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_NC_032_001_8_16x16_2x2_ColMajor_src;
@@ -7117,7 +7119,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_NC_032_001_1_16x16_2x2_ColMajor_src;
@@ -7141,7 +7143,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_NC_032_001_8_16x16_2x1_ColMajor_src;
@@ -7163,7 +7165,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_NC_032_001_1_16x16_2x1_ColMajor_src;
@@ -7187,7 +7189,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_NC_016_001_8_16x16_1x1_ColMajor_src;
@@ -7209,7 +7211,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_NC_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_NC_016_001_1_16x16_1x1_ColMajor_src;
@@ -7234,7 +7236,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -7256,7 +7258,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -7280,7 +7282,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -7302,7 +7304,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -7326,7 +7328,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -7348,7 +7350,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -7372,7 +7374,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -7394,7 +7396,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -7418,7 +7420,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_NC_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -7440,7 +7442,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_NC_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_NC_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_NC_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -7467,7 +7469,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_TN_064_001_8_16x16_4x4_ColMajor_src;
@@ -7489,7 +7491,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_TN_064_001_1_16x16_4x4_ColMajor_src;
@@ -7513,7 +7515,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_TN_064_001_8_16x16_4x2_ColMajor_src;
@@ -7535,7 +7537,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_TN_064_001_1_16x16_4x2_ColMajor_src;
@@ -7559,7 +7561,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_TN_032_001_8_16x16_2x2_ColMajor_src;
@@ -7581,7 +7583,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_TN_032_001_1_16x16_2x2_ColMajor_src;
@@ -7605,7 +7607,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_TN_032_001_8_16x16_2x1_ColMajor_src;
@@ -7627,7 +7629,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_TN_032_001_1_16x16_2x1_ColMajor_src;
@@ -7651,7 +7653,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_TN_016_001_8_16x16_1x1_ColMajor_src;
@@ -7673,7 +7675,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_TN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_TN_016_001_1_16x16_1x1_ColMajor_src;
@@ -7698,7 +7700,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -7720,7 +7722,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -7744,7 +7746,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -7766,7 +7768,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -7790,7 +7792,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -7812,7 +7814,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -7836,7 +7838,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -7858,7 +7860,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -7882,7 +7884,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -7904,7 +7906,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -7931,7 +7933,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_TT_064_001_8_16x16_4x4_ColMajor_src;
@@ -7953,7 +7955,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_TT_064_001_1_16x16_4x4_ColMajor_src;
@@ -7977,7 +7979,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_TT_064_001_8_16x16_4x2_ColMajor_src;
@@ -7999,7 +8001,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_TT_064_001_1_16x16_4x2_ColMajor_src;
@@ -8023,7 +8025,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_TT_032_001_8_16x16_2x2_ColMajor_src;
@@ -8045,7 +8047,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_TT_032_001_1_16x16_2x2_ColMajor_src;
@@ -8069,7 +8071,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_TT_032_001_8_16x16_2x1_ColMajor_src;
@@ -8091,7 +8093,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_TT_032_001_1_16x16_2x1_ColMajor_src;
@@ -8115,7 +8117,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_TT_016_001_8_16x16_1x1_ColMajor_src;
@@ -8137,7 +8139,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_TT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_TT_016_001_1_16x16_1x1_ColMajor_src;
@@ -8162,7 +8164,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -8184,7 +8186,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -8208,7 +8210,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -8230,7 +8232,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -8254,7 +8256,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -8276,7 +8278,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -8300,7 +8302,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -8322,7 +8324,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -8346,7 +8348,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -8368,7 +8370,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -8395,7 +8397,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasTrans && transB == clblasConjTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_TC_064_001_8_16x16_4x4_ColMajor_src;
@@ -8417,7 +8419,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_TC_064_001_1_16x16_4x4_ColMajor_src;
@@ -8441,7 +8443,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_TC_064_001_8_16x16_4x2_ColMajor_src;
@@ -8463,7 +8465,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_TC_064_001_1_16x16_4x2_ColMajor_src;
@@ -8487,7 +8489,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_TC_032_001_8_16x16_2x2_ColMajor_src;
@@ -8509,7 +8511,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_TC_032_001_1_16x16_2x2_ColMajor_src;
@@ -8533,7 +8535,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_TC_032_001_8_16x16_2x1_ColMajor_src;
@@ -8555,7 +8557,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_TC_032_001_1_16x16_2x1_ColMajor_src;
@@ -8579,7 +8581,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_TC_016_001_8_16x16_1x1_ColMajor_src;
@@ -8601,7 +8603,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_TC_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_TC_016_001_1_16x16_1x1_ColMajor_src;
@@ -8626,7 +8628,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -8648,7 +8650,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -8672,7 +8674,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -8694,7 +8696,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -8718,7 +8720,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -8740,7 +8742,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -8764,7 +8766,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -8786,7 +8788,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -8810,7 +8812,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_TC_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -8832,7 +8834,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_TC_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_TC_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_TC_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -8859,7 +8861,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasConjTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_CN_064_001_8_16x16_4x4_ColMajor_src;
@@ -8881,7 +8883,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_CN_064_001_1_16x16_4x4_ColMajor_src;
@@ -8905,7 +8907,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_CN_064_001_8_16x16_4x2_ColMajor_src;
@@ -8927,7 +8929,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_CN_064_001_1_16x16_4x2_ColMajor_src;
@@ -8951,7 +8953,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_CN_032_001_8_16x16_2x2_ColMajor_src;
@@ -8973,7 +8975,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_CN_032_001_1_16x16_2x2_ColMajor_src;
@@ -8997,7 +8999,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_CN_032_001_8_16x16_2x1_ColMajor_src;
@@ -9019,7 +9021,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_CN_032_001_1_16x16_2x1_ColMajor_src;
@@ -9043,7 +9045,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_CN_016_001_8_16x16_1x1_ColMajor_src;
@@ -9065,7 +9067,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_CN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_CN_016_001_1_16x16_1x1_ColMajor_src;
@@ -9090,7 +9092,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -9112,7 +9114,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -9136,7 +9138,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -9158,7 +9160,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -9182,7 +9184,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -9204,7 +9206,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -9228,7 +9230,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -9250,7 +9252,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -9274,7 +9276,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -9296,7 +9298,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -9323,7 +9325,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasConjTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_CT_064_001_8_16x16_4x4_ColMajor_src;
@@ -9345,7 +9347,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_CT_064_001_1_16x16_4x4_ColMajor_src;
@@ -9369,7 +9371,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_CT_064_001_8_16x16_4x2_ColMajor_src;
@@ -9391,7 +9393,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_CT_064_001_1_16x16_4x2_ColMajor_src;
@@ -9415,7 +9417,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_CT_032_001_8_16x16_2x2_ColMajor_src;
@@ -9437,7 +9439,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_CT_032_001_1_16x16_2x2_ColMajor_src;
@@ -9461,7 +9463,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_CT_032_001_8_16x16_2x1_ColMajor_src;
@@ -9483,7 +9485,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_CT_032_001_1_16x16_2x1_ColMajor_src;
@@ -9507,7 +9509,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_CT_016_001_8_16x16_1x1_ColMajor_src;
@@ -9529,7 +9531,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_CT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_CT_016_001_1_16x16_1x1_ColMajor_src;
@@ -9554,7 +9556,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -9576,7 +9578,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -9600,7 +9602,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -9622,7 +9624,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -9646,7 +9648,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -9668,7 +9670,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -9692,7 +9694,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -9714,7 +9716,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -9738,7 +9740,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -9760,7 +9762,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -9787,7 +9789,7 @@ void gemmSelectKernel<FloatComplex>(
     } else if (transA == clblasConjTrans && transB == clblasConjTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_064_064_8_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_064_8_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_CC_064_001_8_16x16_4x4_ColMajor_src;
@@ -9809,7 +9811,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_064_064_1_16x16_4x4_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_064_1_16x16_4x4_ColMajor_src;
             *colKernelSource    = cgemm_CC_064_001_1_16x16_4x4_ColMajor_src;
@@ -9833,7 +9835,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_CC_064_001_8_16x16_4x2_ColMajor_src;
@@ -9855,7 +9857,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = cgemm_CC_064_001_1_16x16_4x2_ColMajor_src;
@@ -9879,7 +9881,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_CC_032_001_8_16x16_2x2_ColMajor_src;
@@ -9901,7 +9903,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = cgemm_CC_032_001_1_16x16_2x2_ColMajor_src;
@@ -9925,7 +9927,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_CC_032_001_8_16x16_2x1_ColMajor_src;
@@ -9947,7 +9949,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = cgemm_CC_032_001_1_16x16_2x1_ColMajor_src;
@@ -9971,7 +9973,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_CC_016_001_8_16x16_1x1_ColMajor_src;
@@ -9993,7 +9995,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = cgemm_CC_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = cgemm_CC_016_001_1_16x16_1x1_ColMajor_src;
@@ -10018,7 +10020,7 @@ void gemmSelectKernel<FloatComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 8) {
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_064_064_8_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_064_8_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_064_001_8_16x16_4x4_ColMajor_BETA_src;
@@ -10040,7 +10042,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%64 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%64 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_064_064_1_16x16_4x4_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_064_1_16x16_4x4_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_064_001_1_16x16_4x4_ColMajor_BETA_src;
@@ -10064,7 +10066,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -10086,7 +10088,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -10110,7 +10112,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -10132,7 +10134,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -10156,7 +10158,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -10178,7 +10180,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -10202,7 +10204,7 @@ void gemmSelectKernel<FloatComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = cgemm_CC_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -10224,7 +10226,7 @@ void gemmSelectKernel<FloatComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = cgemm_CC_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = cgemm_CC_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = cgemm_CC_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -10287,7 +10289,7 @@ void gemmSelectKernel<DoubleComplex>(
     if (transA == clblasNoTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_NN_064_001_8_16x16_4x2_ColMajor_src;
@@ -10309,7 +10311,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_NN_064_001_1_16x16_4x2_ColMajor_src;
@@ -10333,7 +10335,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_NN_032_001_8_16x16_2x2_ColMajor_src;
@@ -10355,7 +10357,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_NN_032_001_1_16x16_2x2_ColMajor_src;
@@ -10379,7 +10381,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_NN_032_001_8_16x16_2x1_ColMajor_src;
@@ -10401,7 +10403,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_NN_032_001_1_16x16_2x1_ColMajor_src;
@@ -10425,7 +10427,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_NN_016_001_8_16x16_1x1_ColMajor_src;
@@ -10447,7 +10449,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_NN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_NN_016_001_1_16x16_1x1_ColMajor_src;
@@ -10472,7 +10474,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -10494,7 +10496,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -10518,7 +10520,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -10540,7 +10542,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -10564,7 +10566,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -10586,7 +10588,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -10610,7 +10612,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -10632,7 +10634,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -10659,7 +10661,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasNoTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_NT_064_001_8_16x16_4x2_ColMajor_src;
@@ -10681,7 +10683,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_NT_064_001_1_16x16_4x2_ColMajor_src;
@@ -10705,7 +10707,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_NT_032_001_8_16x16_2x2_ColMajor_src;
@@ -10727,7 +10729,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_NT_032_001_1_16x16_2x2_ColMajor_src;
@@ -10751,7 +10753,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_NT_032_001_8_16x16_2x1_ColMajor_src;
@@ -10773,7 +10775,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_NT_032_001_1_16x16_2x1_ColMajor_src;
@@ -10797,7 +10799,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_NT_016_001_8_16x16_1x1_ColMajor_src;
@@ -10819,7 +10821,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_NT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_NT_016_001_1_16x16_1x1_ColMajor_src;
@@ -10844,7 +10846,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -10866,7 +10868,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -10890,7 +10892,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -10912,7 +10914,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -10936,7 +10938,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -10958,7 +10960,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -10982,7 +10984,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -11004,7 +11006,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -11031,7 +11033,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasNoTrans && transB == clblasConjTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_NC_064_001_8_16x16_4x2_ColMajor_src;
@@ -11053,7 +11055,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_NC_064_001_1_16x16_4x2_ColMajor_src;
@@ -11077,7 +11079,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_NC_032_001_8_16x16_2x2_ColMajor_src;
@@ -11099,7 +11101,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_NC_032_001_1_16x16_2x2_ColMajor_src;
@@ -11123,7 +11125,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_NC_032_001_8_16x16_2x1_ColMajor_src;
@@ -11145,7 +11147,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_NC_032_001_1_16x16_2x1_ColMajor_src;
@@ -11169,7 +11171,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_NC_016_001_8_16x16_1x1_ColMajor_src;
@@ -11191,7 +11193,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_NC_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_NC_016_001_1_16x16_1x1_ColMajor_src;
@@ -11216,7 +11218,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -11238,7 +11240,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -11262,7 +11264,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -11284,7 +11286,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -11308,7 +11310,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -11330,7 +11332,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -11354,7 +11356,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_NC_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -11376,7 +11378,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_NC_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_NC_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_NC_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -11403,7 +11405,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_TN_064_001_8_16x16_4x2_ColMajor_src;
@@ -11425,7 +11427,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_TN_064_001_1_16x16_4x2_ColMajor_src;
@@ -11449,7 +11451,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_TN_032_001_8_16x16_2x2_ColMajor_src;
@@ -11471,7 +11473,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_TN_032_001_1_16x16_2x2_ColMajor_src;
@@ -11495,7 +11497,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_TN_032_001_8_16x16_2x1_ColMajor_src;
@@ -11517,7 +11519,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_TN_032_001_1_16x16_2x1_ColMajor_src;
@@ -11541,7 +11543,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_TN_016_001_8_16x16_1x1_ColMajor_src;
@@ -11563,7 +11565,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_TN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_TN_016_001_1_16x16_1x1_ColMajor_src;
@@ -11588,7 +11590,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -11610,7 +11612,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -11634,7 +11636,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -11656,7 +11658,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -11680,7 +11682,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -11702,7 +11704,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -11726,7 +11728,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -11748,7 +11750,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -11775,7 +11777,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_TT_064_001_8_16x16_4x2_ColMajor_src;
@@ -11797,7 +11799,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_TT_064_001_1_16x16_4x2_ColMajor_src;
@@ -11821,7 +11823,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_TT_032_001_8_16x16_2x2_ColMajor_src;
@@ -11843,7 +11845,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_TT_032_001_1_16x16_2x2_ColMajor_src;
@@ -11867,7 +11869,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_TT_032_001_8_16x16_2x1_ColMajor_src;
@@ -11889,7 +11891,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_TT_032_001_1_16x16_2x1_ColMajor_src;
@@ -11913,7 +11915,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_TT_016_001_8_16x16_1x1_ColMajor_src;
@@ -11935,7 +11937,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_TT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_TT_016_001_1_16x16_1x1_ColMajor_src;
@@ -11960,7 +11962,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -11982,7 +11984,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -12006,7 +12008,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -12028,7 +12030,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -12052,7 +12054,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -12074,7 +12076,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -12098,7 +12100,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -12120,7 +12122,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -12147,7 +12149,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasTrans && transB == clblasConjTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_TC_064_001_8_16x16_4x2_ColMajor_src;
@@ -12169,7 +12171,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_TC_064_001_1_16x16_4x2_ColMajor_src;
@@ -12193,7 +12195,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_TC_032_001_8_16x16_2x2_ColMajor_src;
@@ -12215,7 +12217,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_TC_032_001_1_16x16_2x2_ColMajor_src;
@@ -12239,7 +12241,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_TC_032_001_8_16x16_2x1_ColMajor_src;
@@ -12261,7 +12263,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_TC_032_001_1_16x16_2x1_ColMajor_src;
@@ -12285,7 +12287,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_TC_016_001_8_16x16_1x1_ColMajor_src;
@@ -12307,7 +12309,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_TC_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_TC_016_001_1_16x16_1x1_ColMajor_src;
@@ -12332,7 +12334,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -12354,7 +12356,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -12378,7 +12380,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -12400,7 +12402,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -12424,7 +12426,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -12446,7 +12448,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -12470,7 +12472,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_TC_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -12492,7 +12494,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_TC_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_TC_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_TC_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -12519,7 +12521,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasConjTrans && transB == clblasNoTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_CN_064_001_8_16x16_4x2_ColMajor_src;
@@ -12541,7 +12543,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_CN_064_001_1_16x16_4x2_ColMajor_src;
@@ -12565,7 +12567,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_CN_032_001_8_16x16_2x2_ColMajor_src;
@@ -12587,7 +12589,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_CN_032_001_1_16x16_2x2_ColMajor_src;
@@ -12611,7 +12613,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_CN_032_001_8_16x16_2x1_ColMajor_src;
@@ -12633,7 +12635,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_CN_032_001_1_16x16_2x1_ColMajor_src;
@@ -12657,7 +12659,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_CN_016_001_8_16x16_1x1_ColMajor_src;
@@ -12679,7 +12681,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_CN_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_CN_016_001_1_16x16_1x1_ColMajor_src;
@@ -12704,7 +12706,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -12726,7 +12728,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -12750,7 +12752,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -12772,7 +12774,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -12796,7 +12798,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -12818,7 +12820,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -12842,7 +12844,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CN_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -12864,7 +12866,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CN_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CN_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CN_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -12891,7 +12893,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasConjTrans && transB == clblasTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_CT_064_001_8_16x16_4x2_ColMajor_src;
@@ -12913,7 +12915,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_CT_064_001_1_16x16_4x2_ColMajor_src;
@@ -12937,7 +12939,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_CT_032_001_8_16x16_2x2_ColMajor_src;
@@ -12959,7 +12961,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_CT_032_001_1_16x16_2x2_ColMajor_src;
@@ -12983,7 +12985,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_CT_032_001_8_16x16_2x1_ColMajor_src;
@@ -13005,7 +13007,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_CT_032_001_1_16x16_2x1_ColMajor_src;
@@ -13029,7 +13031,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_CT_016_001_8_16x16_1x1_ColMajor_src;
@@ -13051,7 +13053,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_CT_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_CT_016_001_1_16x16_1x1_ColMajor_src;
@@ -13076,7 +13078,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -13098,7 +13100,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -13122,7 +13124,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -13144,7 +13146,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -13168,7 +13170,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -13190,7 +13192,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -13214,7 +13216,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CT_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -13236,7 +13238,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CT_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CT_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CT_016_001_1_16x16_1x1_ColMajor_BETA_src;
@@ -13263,7 +13265,7 @@ void gemmSelectKernel<DoubleComplex>(
     } else if (transA == clblasConjTrans && transB == clblasConjTrans) {
       if ( !betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_064_032_8_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_032_8_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_CC_064_001_8_16x16_4x2_ColMajor_src;
@@ -13285,7 +13287,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_064_032_1_16x16_4x2_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_032_1_16x16_4x2_ColMajor_src;
             *colKernelSource    = zgemm_CC_064_001_1_16x16_4x2_ColMajor_src;
@@ -13309,7 +13311,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_032_032_8_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_032_8_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_CC_032_001_8_16x16_2x2_ColMajor_src;
@@ -13331,7 +13333,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_032_032_1_16x16_2x2_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_032_1_16x16_2x2_ColMajor_src;
             *colKernelSource    = zgemm_CC_032_001_1_16x16_2x2_ColMajor_src;
@@ -13355,7 +13357,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_032_016_8_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_016_8_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_CC_032_001_8_16x16_2x1_ColMajor_src;
@@ -13377,7 +13379,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_032_016_1_16x16_2x1_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_016_1_16x16_2x1_ColMajor_src;
             *colKernelSource    = zgemm_CC_032_001_1_16x16_2x1_ColMajor_src;
@@ -13401,7 +13403,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_016_016_8_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_016_8_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_CC_016_001_8_16x16_1x1_ColMajor_src;
@@ -13423,7 +13425,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_016_016_1_16x16_1x1_ColMajor_src;
             *rowKernelSource    = zgemm_CC_001_016_1_16x16_1x1_ColMajor_src;
             *colKernelSource    = zgemm_CC_016_001_1_16x16_1x1_ColMajor_src;
@@ -13448,7 +13450,7 @@ void gemmSelectKernel<DoubleComplex>(
         }
       } else if ( betaNonZero ) {
         if (optimalNumElementsPerWorkItem > 4) {
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_064_032_8_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_032_8_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_064_001_8_16x16_4x2_ColMajor_BETA_src;
@@ -13470,7 +13472,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%64 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%64 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_064_032_1_16x16_4x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_032_1_16x16_4x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_064_001_1_16x16_4x2_ColMajor_BETA_src;
@@ -13494,7 +13496,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 2) {
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_032_032_8_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_032_8_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_032_001_8_16x16_2x2_ColMajor_BETA_src;
@@ -13516,7 +13518,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%32 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%32 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_032_032_1_16x16_2x2_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_032_1_16x16_2x2_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_032_001_1_16x16_2x2_ColMajor_BETA_src;
@@ -13540,7 +13542,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 1) {
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_032_016_8_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_016_8_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_032_001_8_16x16_2x1_ColMajor_BETA_src;
@@ -13562,7 +13564,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%32 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%32 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_032_016_1_16x16_2x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_016_1_16x16_2x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_032_001_1_16x16_2x1_ColMajor_BETA_src;
@@ -13586,7 +13588,7 @@ void gemmSelectKernel<DoubleComplex>(
           }
         }
         if (optimalNumElementsPerWorkItem > 0) {
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%8 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%8 == 0) {
             *tileKernelSource   = zgemm_CC_016_016_8_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_016_8_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_016_001_8_16x16_1x1_ColMajor_BETA_src;
@@ -13608,7 +13610,7 @@ void gemmSelectKernel<DoubleComplex>(
             *unroll             = 8;
             return;
           }
-          if ( /*M%16 == 0 && N%16 == 0 &&*/ K%1 == 0) {
+          if ( EXACT_MULTIPLES(M%16 == 0 && N%16 == 0 &&) K%1 == 0) {
             *tileKernelSource   = zgemm_CC_016_016_1_16x16_1x1_ColMajor_BETA_src;
             *rowKernelSource    = zgemm_CC_001_016_1_16x16_1x1_ColMajor_BETA_src;
             *colKernelSource    = zgemm_CC_016_001_1_16x16_1x1_ColMajor_BETA_src;

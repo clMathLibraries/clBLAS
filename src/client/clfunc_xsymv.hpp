@@ -172,17 +172,17 @@ public:
     {
         cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(T),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(T),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_x_, CL_TRUE, 0,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_x_, CL_TRUE, 0,
                                    buffer_.n_*sizeof(T),
                                    buffer_.x_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_y_, CL_TRUE, 0,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_y_, CL_TRUE, 0,
                                    buffer_.n_*sizeof(T),
                                    buffer_.y_, 0, NULL, NULL);
     }
@@ -191,7 +191,7 @@ public:
     {
         cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_y_, CL_TRUE, 0,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_y_, CL_TRUE, 0,
                                    buffer_.n_*sizeof(T),
                                    buffer_.y_, 0, NULL, NULL);
     }
@@ -237,7 +237,7 @@ call_func()
     clblasSsymv(order_, buffer_.uplo_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_x_, 0, 1, buffer_.beta_, buffer_.buf_y_,
-                     0, 1, 1, &queue_, 0, NULL, &event_);
+                     0, 1, numQueues, queues_, 0, NULL, &event_);
 
 	clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -253,7 +253,7 @@ call_func()
 	clblasDsymv(order_, buffer_.uplo_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_x_, 0, 1, buffer_.beta_, buffer_.buf_y_,
-                     0, 1, 1, &queue_, 0, NULL, &event_);
+                     0, 1, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);

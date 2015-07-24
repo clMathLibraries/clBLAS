@@ -10,6 +10,10 @@
 #   - include files for kernel strings
 #
 # TODO Now
+# - 8x8 kernel for smallest matrices
+# - 4 queues
+# - more micro tile dimensions (single kernel much faster than multiple kernels)
+# - logic to choose small microtile over large partial tile
 # TODO Future
 # - fuse together unroll=8 and unroll=1 in same kernel ?
 #     functionally works fine, but lowers performance by ~10%; better compiler needed
@@ -43,7 +47,7 @@ def getAutoGemmHeader():
 def main(argv):
   global totalParameterCombinations, validParameterCombinations
   processAllKernelParameterCombinations(argv)
-  print "%d / %d parameter combinations valid" % (validParameterCombinations, totalParameterCombinations)
+  print "%d / %d kernels valid" % (validParameterCombinations, totalParameterCombinations)
 
 
 
@@ -233,11 +237,11 @@ def processKernel( \
   global totalParameterCombinations, validParameterCombinations
 
   # check if parameter combination is valid
-  totalParameterCombinations += 1
+  totalParameterCombinations += 4
   kernelName = kernel.getKernelName()
   if kernel.kernelParamsValid():
     #print "Processing: " + kernelName
-    validParameterCombinations += 1
+    validParameterCombinations += 4
   else:
     errorString = kernel.ks
     print kernelName + " - SKIPPING - " + errorString
@@ -984,7 +988,7 @@ class KernelSourceBuildOptions:
 
   def addKernel(self, kernel):
     kernelName = kernel.getKernelName()
-    self.fileStr += "char *%s_srcBuildOptions = \"-cl-std=CL2.0 -save-temps=T_\";\n" % kernelName
+    self.fileStr += "char *%s_srcBuildOptions = \"-cl-std=CL2.0\";\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
@@ -1095,6 +1099,8 @@ class KernelSelectionLogic:
       "#include \"GemmKernelSourceBuildOptions.h\"\n"
       "#include \"GemmKernelBinaryBuildOptions.h\"\n"
       "#include \"GemmClKernels.h\"\n"
+      "\n"
+      "#define EXACT_MULTIPLES(MULTIPLE_STR) MULTIPLE_STR\n"
       "\n"
       "// kernel selection logic template\n"
       "template<typename Precision>\n"
@@ -1290,7 +1296,8 @@ class KernelSelectionLogic:
 
     # new kernel
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "if ( /*M%%%d == 0 && N%%%d == 0 &&*/ K%%%d == 0) {\n" % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
+    self.logic += "if ( EXACT_MULTIPLES(M%%%d == 0 && N%%%d == 0 &&) K%%%d == 0) {\n" \
+        % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
 
     #self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     #self.logic += "printf(\"selected kernel: " + kernel.getKernelName() + "\\n\");\n"
