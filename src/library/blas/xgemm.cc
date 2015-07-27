@@ -295,6 +295,7 @@ clblasGemm(
   CL_CHECK(err)
   unsigned int deviceIdealNumThreads = (8 /*waves per CU*/)*(64 /*threads per wave*/)*clDeviceNumCUs;
   float optimalNumElementsPerThread = ((float)M*N) / deviceIdealNumThreads;
+  //optimalNumElementsPerThread = 32;
   bool betaNonZero = !isZero(beta);
 
 #if 0
@@ -403,7 +404,8 @@ clblasGemm(
   bool needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
   bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
 #if 0
-  printf("selected tile: wg=%ux%u, microTile=%ux%u, macroTile=%ux%u kernelsNeeded=%u,%u,%u,%u\n",
+  printf("For M,N,K = %u,%u,%u and %u CUs selected tile is wg=%ux%u, microTile=%ux%u, macroTile=%ux%u kernelsNeeded=%u,%u,%u,%u\n",
+    M, N, K, clDeviceNumCUs,
     workGroupNumRows, workGroupNumCols,
     microTileNumRows, microTileNumCols,
     macroTileNumRows, macroTileNumCols,

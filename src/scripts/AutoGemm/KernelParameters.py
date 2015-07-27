@@ -7,6 +7,8 @@ import Common
 ################################################################################
 class TileParameters:
 
+  nameFormat = "%03d_%03d_%02d_%02dx%02d_%01dx%01d"
+
   ##############################################################################
   # Tile - constructors
   ##############################################################################
@@ -75,23 +77,25 @@ class TileParameters:
   # Tile - get Name
   ##############################################################################
   def getName(self):
-    return "%03d_%03d_%02d_%02dx%02d_%01dx%01d" \
+    return self.nameFormat \
         % ( self.macroTileNumRows, self.macroTileNumCols, self.unroll, \
         self.workGroupNumRows, self.workGroupNumCols, \
         self.microTileNumRows, self.microTileNumCols)
   def getRowName(self):
-    tmp = copy.copy(self)
-    tmp.macroTileNumRows = 1
-    return tmp.getName()
+    return self.nameFormat \
+        % ( 1, self.macroTileNumCols, self.unroll, \
+        self.workGroupNumRows, self.workGroupNumCols, \
+        self.microTileNumRows, self.microTileNumCols)
   def getColName(self):
-    tmp = copy.copy(self)
-    tmp.macroTileNumCols = 1
-    return tmp.getName()
+    return self.nameFormat \
+        % ( self.macroTileNumRows, 1, self.unroll, \
+        self.workGroupNumRows, self.workGroupNumCols, \
+        self.microTileNumRows, self.microTileNumCols)
   def getCornerName(self):
-    tmp = copy.copy(self)
-    tmp.macroTileNumRows = 1
-    tmp.macroTileNumCols = 1
-    return tmp.getName()
+    return self.nameFormat \
+        % ( 1, 1, self.unroll, \
+        self.workGroupNumRows, self.workGroupNumCols, \
+        self.microTileNumRows, self.microTileNumCols)
 
   ##############################################################################
   # Row Kernel
