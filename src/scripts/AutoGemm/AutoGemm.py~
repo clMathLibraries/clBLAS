@@ -182,7 +182,9 @@ def processAllKernelParameterCombinations(argv):
               kernelSelectionSpecific.newKernel(kernel)
 
   # save written files
+  kernelSelectionLogic.finish()
   kernelSelectionLogic.writeToFile()
+  kernelSelectionSpecific.finish()
   kernelSelectionSpecific.writeToFile()
   kernelSourceIncludes.writeToFile()
   kernelBinaryIncludes.writeToFile()
