@@ -176,42 +176,88 @@ class CppKernelEnumeration:
   ##############################################################################
   def __init__(self):
     self.fileName = Common.getOutputPath() + "GemmKernelEnumeration.h"
-    self.fileStr = ""
-    self.count = 0
+    self.kernelStr = ""
+    self.tileStr = ""
+    self.nonTileStr = ""
+    self.kernelCount = 0
+    self.tileCount = 0
+    self.nonTileCount = 0
     self.precision = ""
     self.precisionInitialized = False
 
   def newPrecision(self, precision):
     if self.precisionInitialized:
-      self.fileStr += "};\n"
-      self.fileStr +="unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.count)
-      self.precisionInitialized
+      self.kernelStr += "};\n"
+      self.kernelStr += "unsigned int %sgemmNumKernels = %d;\n\n" \
+          % (self.precision, self.kernelCount)
+      self.tileStr += "};\n"
+      self.tileStr += "unsigned int %sgemmNumTiles = %d;\n\n" \
+          % (self.precision, self.tileCount)
+      self.nonTileStr += "};\n"
+      self.nonTileStr += "unsigned int %sgemmNumNonTiles = %d;\n\n" \
+          % (self.precision, self.nonTileCount)
+    self.precisionInitialized = True
     self.precision = precision
-    self.fileStr = "unsigned int " + precision + "gemmKernelEnumeration[][11] = {\n"
+
+    self.kernelStr += "// order, transA, transB, beta, workGroupNumRows, workGroupNumCols, microTileNumRows, microTileNumCols, unroll, mSpill, nSpill\n"
+    self.kernelStr += "unsigned int " + precision + "gemmKernelEnumeration[][11] = {\n"
+
+    self.tileStr += "// workGroupNumRows, workGroupNumCols, microTileNumRows, microTileNumCols, macroTileNumRows, macroTileNumCols, unroll\n"
+    self.tileStr += "unsigned int " + precision + "gemmTileEnumeration[][7] = {\n"
+
+    self.nonTileStr += "// order, transA, transB, beta\n"
+    self.nonTileStr += "unsigned int " + precision + "gemmNonTileEnumeration[][4] = {\n"
+
+  def addTile(self, tile):
+    self.tileStr += "  { %2u, %2u, %1u, %1u, %3u, %3u, %1u },\n" % ( \
+        tile.workGroupNumRows, \
+        tile.workGroupNumCols, \
+        tile.microTileNumRows, \
+        tile.microTileNumCols, \
+        tile.macroTileNumRows, \
+        tile.macroTileNumCols, \
+        tile.unroll )
+    self.tileCount += 1
+
+  def addNonTile(self, nonTile):
+    self.nonTileStr += "  { %1u, %1u, %1u, %1u },\n" % ( \
+        1 if nonTile.order=="clblasColumnMajor" else 0, \
+        0 if nonTile.transA=="N" else 1 if nonTile.transA=="T" else 2 , \
+        0 if nonTile.transB=="N" else 1 if nonTile.transB=="T" else 2, \
+        1 if nonTile.beta>0 else 0 )
+    self.nonTileCount += 1
 
   def addKernel(self, kernel):
     # 6) list to add to ktest for automated kernel testing
     for mSpill in range(0, 2):
       for nSpill in range(0, 2):
-        self.fileStr += "  { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u },\n" % ( \
+        self.kernelStr += "  { %1u, %1u, %1u, %1u, %2u, %2u, %1u, %1u, %2u, %1u, %1u },\n" % ( \
           1 if kernel.order=="clblasColumnMajor" else 0, \
           0 if kernel.transA=="N" else 1 if kernel.transA=="T" else 2 , \
           0 if kernel.transB=="N" else 1 if kernel.transB=="T" else 2, \
           1 if kernel.beta>0 else 0, \
-          kernel.microTileNumRows, \
-          kernel.microTileNumCols, \
           kernel.workGroupNumRows, \
           kernel.workGroupNumCols, \
+          kernel.microTileNumRows, \
+          kernel.microTileNumCols, \
           kernel.unroll, \
           mSpill, \
           nSpill )
-    self.count += 4
+    self.kernelCount += 4
 
   def writeToFile(self):
+    self.kernelStr += "};\n"
+    self.kernelStr += "unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.kernelCount)
+    self.tileStr += "};\n"
+    self.tileStr += "unsigned int %sgemmNumTiles = %d;\n" % (self.precision, self.tileCount)
+    self.nonTileStr += "};\n"
+    self.nonTileStr += "unsigned int %sgemmNumNonTiles = %d;\n" % (self.precision, self.nonTileCount)
     incFile = open(self.fileName, "w")
     incFile.write( Common.getAutoGemmHeader() )
-    incFile.write( self.fileStr )
-    incFile.write( "};\n" )
-    incFile.write( "unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.count) )
+    incFile.write( self.tileStr )
+    incFile.write( "\n\n" )
+    incFile.write( self.nonTileStr )
+    incFile.write( "\n\n" )
+    incFile.write( self.kernelStr )
     incFile.close()
 

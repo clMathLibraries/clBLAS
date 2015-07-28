@@ -14,9 +14,9 @@ def getKernelBinaryPath():
 def getAutoGemmHeader():
   return (
       "/*******************************************************************************\n"
-      " * This file was auto-generated using the auto-gemm.py python script.\n"
-      " * NO NOT modify this file! Instead, make changes to\n"
-      " *   clBLAS/src/scripts/auto-gemm/auto-gemm.py then re-generate files\n"
+      " * This file was auto-generated using the AutoGemm.py python script.\n"
+      " * DO NOT modify this file! Instead, make changes to\n"
+      " *   clBLAS/src/scripts/AutoGemm/AutoGemm.py then re-generate files\n"
       " *   (otherwise local changes will be lost after re-generation).\n"
       " * - David Tanner\n"
       " ******************************************************************************/\n\n"

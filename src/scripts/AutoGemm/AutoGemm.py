@@ -62,7 +62,8 @@ def processAllKernelParameterCombinations(argv):
   # non-tile parameters
   listPrecision = ["s", "d", "c", "z"]
   listOrder = [ "clblasColumnMajor" ]
-  dictTrans = { "s":["N", "T"], "d":["N", "T"], "c":["N", "T", "C"], "z":["N", "T", "C"] }
+  dictTrans = { "s":["N", "T"], "d":["N", "T"], \
+      "c":["N", "T", "C"], "z":["N", "T", "C"] }
   listBeta = [ 0, 1 ]
 
   # tile parameters
@@ -140,6 +141,10 @@ def processAllKernelParameterCombinations(argv):
 
     listTrans = dictTrans[precision]
 
+    # add tiles for this precision to Cpp
+    for tile in listTileKernelParameters:
+      cppKernelEnumeration.addTile(tile)
+
     # for non tile parameters
     for order in listOrder:
       kernel.order = order
@@ -152,6 +157,9 @@ def processAllKernelParameterCombinations(argv):
           for beta in listBeta:
             kernel.beta = beta
             kernelSelectionLogic.newBeta(beta)
+
+            # add this nonTile combo for this precision to Cpp
+            cppKernelEnumeration.addNonTile(kernel)
 
             # for tile parameters
             for tile in listTileKernelParameters:
