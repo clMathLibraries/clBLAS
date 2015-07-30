@@ -687,56 +687,60 @@ float benchmarkKernel(
     fflush(stdout);
 #endif
 
-    //err = clReleaseMemObject(bufA); CL_CHECK(err);
-    //err = clReleaseMemObject(bufB); CL_CHECK(err);
-    //err = clReleaseMemObject(bufC); CL_CHECK(err);
-    //err = clReleaseKernel(kernel); CL_CHECK(err);
-    //err = clReleaseCommandQueue(queue); CL_CHECK(err);
-    //err = clReleaseContext(context); CL_CHECK(err);
 
-    //free(A);
-    //free(B);
-    //free(C);
-    //free(naiveC);
-    //free(source);
     return gFlops;
 }
 
 
 
+  /****************************************************************************
+   * Main
+   ***************************************************************************/
 int main(void) {
   file.open("benchmark.csv", std::ios_base::out); // or ::app for append
   file << "size, M, N, K, ";
-  
-      for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
-        unsigned int *tile =
+  bool printDetails = false;
+  // load tiles for precision
+  unsigned int **tiles;
+  tiles = new unsigned int*[numTiles];
+  for (unsigned int i = 0; i < numTiles; i++) {
+    tiles[i] = 
 #if SGEMM
-          sgemmTileEnumeration[tileIdx];
+          sgemmTileEnumeration[i];
 #elif DGEMM
-          dgemmTileEnumeration[tileIdx];
+          dgemmTileEnumeration[i];
 #elif CGEMM
-          cgemmTileEnumeration[tileIdx];
+          cgemmTileEnumeration[i];
 #elif ZGEMM
-          zgemmTileEnumeration[tileIdx];
+          zgemmTileEnumeration[i];
 #endif
+  }
+
+      for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
+        unsigned int *tile = tiles[tileIdx];
         file << tile[2] << "x" << tile[3] << ", ";
       }
       file << "<-F|T->, ";
       for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
-        unsigned int *tile =
-#if SGEMM
-          sgemmTileEnumeration[tileIdx];
-#elif DGEMM
-          dgemmTileEnumeration[tileIdx];
-#elif CGEMM
-          cgemmTileEnumeration[tileIdx];
-#elif ZGEMM
-          zgemmTileEnumeration[tileIdx];
-#endif
+        unsigned int *tile = tiles[tileIdx];
         file << tile[2] << "x" << tile[3] << ", ";
       }
       file << "fallback, fastest tile, also valid tiles\n";
       
+
+  int *fallbackBegin = new int[numTiles]; // size at which tile starts being fallback
+  int   *fallbackEnd = new int[numTiles]; // size at which tile stops being fallback
+  int    *validBegin = new int[numTiles]; // size at which tile starts being valid
+  int      *validEnd = new int[numTiles]; // size at which tile stops being valid
+  float *fallbackScore = new float[numTiles]; // fallback score for a size
+  float     *tileScore = new float[numTiles]; // tile score for a size
+  unsigned int *validTiles = new unsigned int[numTiles];
+  for (unsigned int i = 0; i < numTiles; i++) {
+    fallbackBegin[i] = -1;
+      fallbackEnd[i] = -1;
+       validBegin[i] = -1;
+         validEnd[i] = -1;
+  }
   
   platform = getPlatform(PLATFORM_NAME);
   assert(platform != NULL);
@@ -748,31 +752,27 @@ int main(void) {
   queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
   assert(queue != NULL);
 
-  //printf("Allocating matrices.\n");
-
-
-
-
+  
   clblasOrder order = clblasColumnMajor;
   clblasTranspose transA = clblasNoTrans;
   clblasTranspose transB = clblasTrans;
   bool beta = false;
 
-  unsigned int systemSizeMin = 32;
-  unsigned int systemSizeMax = 6144;
-  unsigned int systemSizeStep = 32;
-
-  int ratios[] = { 1 }; // M/=ratio, N*=ratio
-  unsigned int numRatios = 1;
-  
-  unsigned int kValues[] = {8, 32, 128, 512, 1024+64, 4096-64};
-  unsigned int numKValues = 6;
+  unsigned int systemSizeMin = 16;
+  unsigned int systemSizeMax = 8000;
+  unsigned int systemSizeStep = systemSizeMin;
+    
+  unsigned int kValues[] = {64, 512, 2048};
+  unsigned int numKValues = 3;
   //unsigned int kValues[] = {4032};
   //unsigned int numKValues = 1;
   unsigned int kMax = kValues[numKValues-1];
 
-
-    cl_uint numRowsA;
+  
+  /******************************************************************
+   * Largest Matrix Dimension
+   *****************************************************************/
+  cl_uint numRowsA;
   cl_uint numColsA;
   if (transA == clblasTrans) {
     numRowsA = kMax;
@@ -810,6 +810,7 @@ int main(void) {
     ldb = numColsB;
     ldc = numColsC;
   }
+
   /******************************************************************
    * Allocate Matrices
    *****************************************************************/
@@ -852,84 +853,38 @@ int main(void) {
   CL_CHECK(err);
   assert(err == CL_SUCCESS);
 
-  // for each system size
+  // (1) for each system size
   for (unsigned int systemSize = systemSizeMin; systemSize <= systemSizeMax; systemSize += systemSizeStep) {
+          
+    unsigned int M = systemSize;
+    unsigned int N = systemSize;
 
-    // for each ratio
-    for (unsigned int ratioIdx = 0; ratioIdx < numRatios; ratioIdx++) {
+    // reset scores for this system size
+    for (unsigned int i = 0; i < numTiles; i++) {
+      fallbackScore[i] = 0.f;
+      tileScore[i] = 0.f;
+    }
+
+    // (2) for each k size
+    for (unsigned int kIdx = 0; kIdx < numKValues; kIdx++) {
+      unsigned int K = kValues[kIdx];
       
-      int ratio = ratios[ratioIdx];
-      unsigned int M = systemSize ;
-      unsigned int N = systemSize;
-      unsigned int roundToNearest = 32;
+      // (3) for each tile
+      for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
+        unsigned int *tile = tiles[tileIdx];
+        unsigned int workGroupNumRows = tile[0];
+        unsigned int workGroupNumCols = tile[1];
+        unsigned int microTileNumRows = tile[2];
+        unsigned int microTileNumCols = tile[3];
+        unsigned int macroTileNumRows = tile[4];
+        unsigned int macroTileNumCols = tile[5];
+        unsigned int unroll = tile[6];
+        if (printDetails) printf("%4ux%4ux%4u; %ux%u; ", M, N, K, microTileNumRows, microTileNumCols );
 
-      if (ratio > 0) {
-        M /= (ratio);
-        // round up to multiple of systemSizeStep
-        if (M%roundToNearest > 0) {
-          M += roundToNearest - M%roundToNearest;
-        }
-        if (M < roundToNearest) {
-          M = roundToNearest;
-        }
-        float floatRatio = ((float)systemSize / M); 
-        N *= floatRatio;
-        if (N%roundToNearest > 0) {
-          N += roundToNearest - N%roundToNearest;
-        }
-      } else {
-        N /= (-ratio);
-        if (N%roundToNearest > 0) {
-          N += roundToNearest - N%roundToNearest;
-        }
-        if (N < roundToNearest) {
-          N = roundToNearest;
-        }
-        float floatRatio = ((float)systemSize / N);
-        M *= floatRatio; 
-        if (M%roundToNearest > 0) {
-          M += roundToNearest - M%roundToNearest;
-        }
-      }
-      //printf("Size=%u, ratio=%i, MxN=%ux%u\n", systemSize, ratio, M, N);
-
-      // for each k size
-      for (unsigned int kIdx = 0; kIdx < numKValues; kIdx++) {
-        unsigned int K = kValues[kIdx];
-
-        float *tileSpeeds = new float[numTiles];
-        float *fallbackSpeeds = new float[numTiles];
-
-        float fastestTileSpeed = 0;
-        float fastestFallbackSpeed = 0;
-
-        /**************************************************************
-         * fastest fallback tile size
-         *************************************************************/
-        unsigned int ffnr;
-        unsigned int ffnc;
-        for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
-          unsigned int *tile =
-#if SGEMM
-            sgemmTileEnumeration[tileIdx];
-#elif DGEMM
-            dgemmTileEnumeration[tileIdx];
-#elif CGEMM
-            cgemmTileEnumeration[tileIdx];
-#elif ZGEMM
-            zgemmTileEnumeration[tileIdx];
-#endif
-          unsigned int workGroupNumRows = tile[0];
-          unsigned int workGroupNumCols = tile[1];
-          unsigned int microTileNumRows = tile[2];
-          unsigned int microTileNumCols = tile[3];
-          unsigned int macroTileNumRows = tile[4];
-          unsigned int macroTileNumCols = tile[5];
-          unsigned int unroll = tile[6];
-          printf("%4u; %7ux%7ux%4u; fallback %ux%u; ", systemSize, M, N, K, microTileNumRows, microTileNumCols );
-
-          // how fast would this tile be for this system size as the "fallback" tile?
-          float fallbackSpeed = benchmarkKernel(
+        /******************************************************************
+         * (4) fallback speed
+         *****************************************************************/
+        float fallbackSpeed = benchmarkKernel(
             // non-tile
             order, transA, transB, false,
             // tile
@@ -939,73 +894,33 @@ int main(void) {
             // system
             M-1, N-1, K
             );
-          printf(" %8.3f\n", fallbackSpeed );
-
-          // how fast is this fallback tile for this sytem size
-          fallbackSpeeds[tileIdx] = fallbackSpeed;
-          if (fallbackSpeed > fastestFallbackSpeed) {
-            fastestFallbackSpeed = fallbackSpeed;
-            ffnr = microTileNumRows;
-            ffnc = microTileNumCols;
-          }
-
-        } // fallback tile sizes
+        fallbackScore[tileIdx] += fallbackSpeed;
         
-        /**************************************************************
-         * fastest tile size
-         *************************************************************/
-        unsigned int ftnr;
-        unsigned int ftnc;
-        for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
-          unsigned int *tile =
-#if SGEMM
-            sgemmTileEnumeration[tileIdx];
-#elif DGEMM
-            dgemmTileEnumeration[tileIdx];
-#elif CGEMM
-            cgemmTileEnumeration[tileIdx];
-#elif ZGEMM
-            zgemmTileEnumeration[tileIdx];
-#endif
-          unsigned int workGroupNumRows = tile[0];
-          unsigned int workGroupNumCols = tile[1];
-          unsigned int microTileNumRows = tile[2];
-          unsigned int microTileNumCols = tile[3];
-          unsigned int macroTileNumRows = tile[4];
-          unsigned int macroTileNumCols = tile[5];
-          unsigned int unroll = tile[6];
-          printf("%4u; %7ux%7ux%4u;     tile %ux%u; ", systemSize, M, N, K, microTileNumRows, microTileNumCols );
+        /******************************************************************
+         * (5) tile speed
+         *****************************************************************/
+        float tileSpeed = 0.f;
+        if (M%macroTileNumRows==0 && N%macroTileNumCols==0) {
+          tileSpeed = benchmarkKernel(
+              // non-tile
+              order, transA, transB, false,
+              // tile
+              workGroupNumRows, workGroupNumCols,
+              microTileNumRows, microTileNumCols,
+              unroll,
+              // system
+              M, N, K
+              );
+          tileScore[tileIdx] += tileSpeed;
+        }
 
-          // how fast would this tile be for this system size as the "fallback" tile?
-          float tileSpeed = 0;
-          if (M%macroTileNumRows==0 && N%macroTileNumCols==0) {
-            tileSpeed = benchmarkKernel(
-                // non-tile
-                order, transA, transB, false,
-                // tile
-                workGroupNumRows, workGroupNumCols,
-                microTileNumRows, microTileNumCols,
-                unroll,
-                // system
-                M, N, K
-                );
-          }
-          printf(" %8.3f\n", tileSpeed );
+        if (printDetails) printf("fs=%8.3f, ts=%8.3f\n", fallbackSpeed, tileSpeed );
+      } // tile sizes
+      
 
-          // how fast is this fallback tile for this sytem size
-          tileSpeeds[tileIdx] = tileSpeed;
-          if (tileSpeed > fastestTileSpeed) {
-            fastestTileSpeed = tileSpeed;
-            ftnr = microTileNumRows;
-            ftnc = microTileNumCols;
-          }
+      
 
-        } // tile sizes
-
-        
-        /**************************************************************
-         * print fallback speeds
-         *************************************************************/
+#if 0
         char line[4096];
         sprintf(line, "%4u, %7u, %7u, %4u, ", systemSize, M, N, K);
         file << line;
@@ -1041,16 +956,7 @@ int main(void) {
          * - any tile which handles multiples which the fastest doesn't and is faster than fallback
          *************************************************************/
         for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
-          unsigned int *tile =
-#if SGEMM
-            sgemmTileEnumeration[tileIdx];
-#elif DGEMM
-            dgemmTileEnumeration[tileIdx];
-#elif CGEMM
-            cgemmTileEnumeration[tileIdx];
-#elif ZGEMM
-            zgemmTileEnumeration[tileIdx];
-#endif
+          unsigned int *tile = tiles[tileIdx];
           if (tileSpeeds[tileIdx] > fastestFallbackSpeed
             && (tile[2]%ftnr>0 || tile[3]%ftnc>0) 
             ) {
@@ -1060,15 +966,120 @@ int main(void) {
   
         file << "\n";
         file.flush();
-        
+#endif
   
-        delete[] tileSpeeds;
-        delete[] fallbackSpeeds;
-      } // for k
-    } // for ratio
+    } // for k
+
+    /**************************************************************
+       * (6) score is gbps averaged over k values
+       *************************************************************/
+      for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
+        fallbackScore[tileIdx] /= numKValues;
+        tileScore[tileIdx] /= numKValues;
+      }
+
+      /**************************************************************
+       * (7) get fastest fallback speed for this system size
+       *************************************************************/
+      float fastestFallbackScore = 0;
+      unsigned int fastestFallbackIdx = 0;
+      for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
+        if (fallbackScore[tileIdx] > fastestFallbackScore) {
+          fastestFallbackScore = fallbackScore[tileIdx];
+          fastestFallbackIdx = tileIdx;
+        }
+      }
+      
+      /**************************************************************
+       * (8) ensure fallback tile has begun/ended
+       *************************************************************/
+      if (fallbackBegin[fastestFallbackIdx] == -1) {
+        fallbackBegin[fastestFallbackIdx] = static_cast<int>(systemSize);
+      }
+      fallbackEnd[fastestFallbackIdx] = static_cast<int>(systemSize); // push the end back farther
+
+      
+      /**************************************************************
+       * (9) which tiles are valid for this system size
+       * - tile must be faster than fallback
+       * - there must not exist a faster tile which covers the same multiples
+       *************************************************************/
+      unsigned int numValidTiles = 0;
+      float priorFastestTileScore = 99999999;
+      for (unsigned int checkIter = 0; checkIter < numTiles; checkIter++) {
+        // find the next fastest tile
+        float fastestTileScore = -1.f;
+        int fastestTileIdx = -1;
+        for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
+          if (tileScore[tileIdx] > fastestTileScore && tileScore[tileIdx] < priorFastestTileScore) {
+            fastestTileScore = tileScore[tileIdx];
+            fastestTileIdx = tileIdx;
+          }
+        }
+        priorFastestTileScore = fastestTileScore;
+
+        // if next fastest tile isn't faster than fallback, then quit
+        if (fastestTileScore < fastestFallbackScore) break;
+
+        // if the coverage of this tile is already handled by prior (faster) valid tiles, then skip it
+        bool uniqueCoverage = true;
+        for (unsigned int i = 0; i < numValidTiles; i++) {
+          if ( tiles[fastestTileIdx][4] % tiles[ validTiles[i] ][4] == 0
+            && tiles[fastestTileIdx][5] % tiles[ validTiles[i] ][5] == 0 )
+          {
+            uniqueCoverage = false;
+            break;
+          }
+        }
+        if (!uniqueCoverage) continue;
+
+        // this tile valid
+        validTiles[numValidTiles] = fastestTileIdx;
+        numValidTiles++;
+      }
+
+      /**************************************************************
+       * (10) ensure valid tiles have begun/ended
+       *************************************************************/
+      for (unsigned int i = 0; i < numValidTiles; i++) {
+        if (validBegin[ validTiles[i] ] == -1) {
+          validBegin[ validTiles[i] ] = static_cast<int>(systemSize);
+        }
+        validEnd[ validTiles[i] ] = static_cast<int>(systemSize); // push the end back farther
+      }
+
+      // print valid tiles
+      printf("%4ux%4u; fallback = %ux%u; validTiles = ", M, N, tiles[fastestFallbackIdx][2], tiles[fastestFallbackIdx][3]);
+      for (unsigned int i = 0; i < numValidTiles; i++) {
+        printf("%ux%u, ", tiles[ validTiles[i] ][2], tiles[ validTiles[i] ][3]);
+      }
+      printf("\n");
+
+      // print tile ranges
+      for (unsigned int i = 0; i < numTiles; i++) {
+        printf("%4u; %ux%u fallback=[%4i, %4i] tile=[%4i, %4i]\n",
+          systemSize, tiles[i][2], tiles[i][3],
+          fallbackBegin[i], fallbackEnd[i],
+          validBegin[i], validEnd[i] );
+      }
+      printf("\n");
+
+
   } // for system size
 
   file.close();
+    //err = clReleaseMemObject(bufA); CL_CHECK(err);
+    //err = clReleaseMemObject(bufB); CL_CHECK(err);
+    //err = clReleaseMemObject(bufC); CL_CHECK(err);
+    //err = clReleaseKernel(kernel); CL_CHECK(err);
+    //err = clReleaseCommandQueue(queue); CL_CHECK(err);
+    //err = clReleaseContext(context); CL_CHECK(err);
+
+    //free(A);
+    //free(B);
+    //free(C);
+    //free(naiveC);
+    //free(source);
   
     //system("PAUSE");
     //Sleep(5000); // ms
@@ -1114,6 +1125,7 @@ getPlatform(const char *name)
     }
 
     free(list);
+
     return platform;
 }
 
