@@ -207,6 +207,9 @@ class CppKernelEnumeration:
 
     self.nonTileStr += "// order, transA, transB, beta\n"
     self.nonTileStr += "unsigned int " + precision + "gemmNonTileEnumeration[][4] = {\n"
+    self.tileCount = 0
+    self.nonTileCount = 0
+    self.kernelCount = 0
 
   def addTile(self, tile):
     self.tileStr += "  { %2u, %2u, %1u, %1u, %3u, %3u, %1u },\n" % ( \

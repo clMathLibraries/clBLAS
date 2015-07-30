@@ -14,8 +14,8 @@ using namespace NaiveBlas;
 #include "GemmKernelSelectionSpecific.h"
 #include "GemmKernelEnumeration.h"
 
-#define SGEMM 1
-#define DGEMM 0
+#define SGEMM 0
+#define DGEMM 1
 #define CGEMM 0
 #define ZGEMM 0
 
@@ -34,16 +34,25 @@ unsigned int numKernels = sgemmNumKernels;
 #if DGEMM
 #define DATA_TYPE double
 #define DATA_TYPE_CONSTRUCTOR(X,Y) X
+unsigned int numTiles = dgemmNumTiles;
+unsigned int numNonTiles = dgemmNumNonTiles;
+unsigned int numKernels = dgemmNumKernels;
 #endif
 
 #if CGEMM
 #define DATA_TYPE FloatComplex
 #define DATA_TYPE_CONSTRUCTOR floatComplex
+unsigned int numTiles = cgemmNumTiles;
+unsigned int numNonTiles = cgemmNumNonTiles;
+unsigned int numKernels = cgemmNumKernels;
 #endif
 
 #if ZGEMM
 #define DATA_TYPE DoubleComplex
 #define DATA_TYPE_CONSTRUCTOR doubleComplex
+unsigned int numTiles = zgemmNumTiles;
+unsigned int numNonTiles = zgemmNumNonTiles;
+unsigned int numKernels = zgemmNumKernels;
 #endif
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -179,6 +188,10 @@ void makeGemmKernel(
   }
 }
 
+ 
+/****************************************************************************
+ * Compare Matrices
+ ***************************************************************************/
 template<typename T>
 bool
 compareMatrices(
@@ -274,13 +287,17 @@ cl_kernel createKernel(const char *source, cl_context context,
     const char* options, cl_int *error);
 
 
-  cl_int err;
-  cl_platform_id platform;
-  cl_device_id device;
-  cl_context_properties props[3] = { CL_CONTEXT_PLATFORM, 0, 0 };
-  cl_context context;
-  cl_command_queue queue;
+cl_int err;
+cl_platform_id platform;
+cl_device_id device;
+cl_context_properties props[3] = { CL_CONTEXT_PLATFORM, 0, 0 };
+cl_context context;
+cl_command_queue queue;
 
+
+/****************************************************************************
+ * Benchmark Kernel
+ ***************************************************************************/
 float benchmarkKernel(
   clblasOrder order,
   clblasTranspose transA,
@@ -379,36 +396,6 @@ float benchmarkKernel(
     ldb = numColsB;
     ldc = numColsC;
   }
-
-  //printf("globalWorkSize initially %u x %u threads\n", globalWorkSize[0], globalWorkSize[1]);
-  //  
-  //if ( globalWorkSize[0] * microTileNumRows < M) {
-  //  printf("adding a row of work-groups\n");
-  //  globalWorkSize[0]+=localWorkSize[0];
-  //}
-  //if ( globalWorkSize[1] * microTileNumCols < N) {
-  //  printf("adding a col of work-groups\n");
-  //  globalWorkSize[1]+=localWorkSize[1];
-  //}
-  //printf("C[ %d rows x %d cols] = A[ %d rows x %d cols ] * B[ %d rows x %d cols ]\n",
-  //  numRowsC, numColsC,
-  //  numRowsA, numColsA,
-  //  numRowsB, numColsB );
-  //printf("M(%4u) = %3u * %3u + %3u\n", M, M / microTileNumRows, microTileNumRows, M % microTileNumRows);
-  //printf("N(%4u) = %3u * %3u + %3u\n", N, N / microTileNumCols, microTileNumCols, N % microTileNumCols);
-
-
-  //naiveC = (DATA_TYPE*)malloc((offC + numRowsC * numColsC) * sizeof(*naiveC));
-  //assert(naiveC != NULL);
-  //memcpy(naiveC, C, (offC + numRowsC * numColsC) * sizeof(*C));
-
-#if DO_VALIDATION
-  //printf("Running naive gemm.\n");
-  NaiveBlas::gemm(order, transA, transB, M, N, K, alpha, A + offA, lda, B + offB, ldb, beta, naiveC + offC, ldc);
-#endif
-  
-
-    
 
   const char *tileKernelSource;
   const char *rowKernelSource;
@@ -583,7 +570,6 @@ float benchmarkKernel(
           CL_CHECK(err);
           kernelIdx++;
         }
-#if 1
         // row kernel
         if (needRowKernel) {
           //printf("launching rowKernel %ux%u threads b/c M=%u\n", rowKernelGlobalWorkSize[0], rowKernelGlobalWorkSize[1], M);
@@ -608,7 +594,6 @@ float benchmarkKernel(
           CL_CHECK(err);
           kernelIdx++;
         }
-#endif
       }
       err = clFlush(queue);
       CL_CHECK(err);
@@ -624,8 +609,6 @@ float benchmarkKernel(
       totalFlops *= 4;
 #endif
 
-#if DO_VALIDATION
-#else
     cl_ulong start, end;
     for (kernelIdx = 0; kernelIdx < totalEnqueues; kernelIdx++) {
       err = clGetEventProfilingInfo(kernelEvents[kernelIdx], CL_PROFILING_COMMAND_START,
@@ -638,68 +621,18 @@ float benchmarkKernel(
       totalNs += timeNs;
     }
     double gFlops = (1.0*totalFlops) / (1.0*totalNs);
-
-#endif
-
-#if DO_VALIDATION
-
-    err = clEnqueueReadBuffer(queue, bufC, CL_TRUE, 0,
-        (offC + numRowsC * numColsC) * sizeof(*C), C,
-        0, NULL, NULL);
-    CL_CHECK(err);
-
-    bool equal = compareMatrices(order, numRowsC, numColsC, C + offC, naiveC + offC, ldc);
-
-    printf("%s_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u%s%s%s%s",
-#if SGEMM
-      "sgemm",
-#endif
-#if DGEMM
-      "dgemm",
-#endif
-#if CGEMM
-      "cgemm",
-#endif
-#if ZGEMM
-      "zgemm",
-#endif
-    transAInt ? "T" : "N",
-    transBInt ? "T" : "N",
-    macroTileNumRows,
-    macroTileNumCols,
-    unroll,
-    workGroupNumRows,
-    workGroupNumCols,
-    microTileNumRows,
-    microTileNumCols,
-    columnMajorInt ? "_ColumnMajor" : "_RowMajor",
-    mSpill ? "_1" : "_0",
-    nSpill ? "_1" : "_0",
-    betaNonZero ? "_BETA" : "" );
-
-    if (equal) {
-        printf(" - passed\n\n");
-    }
-    else {
-        printf(" - failed\n\n");
-        printf("%s", tileKernelSource );
-    }
-    fflush(stdout);
-#endif
-
-
     return gFlops;
 }
 
 
 
-  /****************************************************************************
-   * Main
-   ***************************************************************************/
+/****************************************************************************
+ * Main
+ ***************************************************************************/
 int main(void) {
   file.open("benchmark.csv", std::ios_base::out); // or ::app for append
   file << "size, M, N, K, ";
-  bool printDetails = false;
+  bool printDetails = true;
   // load tiles for precision
   unsigned int **tiles;
   tiles = new unsigned int*[numTiles];
@@ -759,7 +692,7 @@ int main(void) {
   bool beta = false;
 
   unsigned int systemSizeMin = 16;
-  unsigned int systemSizeMax = 8000;
+  unsigned int systemSizeMax = 7000;
   unsigned int systemSizeStep = systemSizeMin;
     
   unsigned int kValues[] = {64, 512, 2048};
@@ -1011,7 +944,7 @@ int main(void) {
         float fastestTileScore = -1.f;
         int fastestTileIdx = -1;
         for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
-          if (tileScore[tileIdx] > fastestTileScore && tileScore[tileIdx] < priorFastestTileScore) {
+          if (tileScore[tileIdx] > fastestTileScore && (tileScore[tileIdx] < priorFastestTileScore || priorFastestTileScore < 0) ) {
             fastestTileScore = tileScore[tileIdx];
             fastestTileIdx = tileIdx;
           }
@@ -1019,7 +952,7 @@ int main(void) {
         priorFastestTileScore = fastestTileScore;
 
         // if next fastest tile isn't faster than fallback, then quit
-        if (fastestTileScore < fastestFallbackScore) break;
+        if (fastestTileScore < fastestFallbackScore-1) break;
 
         // if the coverage of this tile is already handled by prior (faster) valid tiles, then skip it
         bool uniqueCoverage = true;
@@ -1036,6 +969,10 @@ int main(void) {
         // this tile valid
         validTiles[numValidTiles] = fastestTileIdx;
         numValidTiles++;
+      }
+      // for now, just pay attention to the fastest tile
+      if (numValidTiles > 1) {
+        numValidTiles = 1;
       }
 
       /**************************************************************

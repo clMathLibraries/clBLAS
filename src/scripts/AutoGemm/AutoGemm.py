@@ -14,8 +14,26 @@
 # - offline compilation
 # TODO Future
 # - fuse together unroll=8 and unroll=1 in same kernel ?
-#     functionally works fine, but lowers performance by ~10%; better compiler needed
+#     functionally works fine, but lowers performance by ~10%
 ################################################################################
+
+kernelSelectionData = {
+# prec, tile, fallback range, valid range
+    "S":[
+      [ [6, 6], [4096,   -1], [864,   -1] ],
+      [ [2,10], [  -1,   -1], [800, 3040] ],
+      [ [4, 4], [  48, 5424], [640,   -1] ],
+      [ [2, 2], [  32, 1376], [288, 1952] ],
+      [ [1, 1], [   0,  304], [ 16,  784] ],
+      ],
+    "d":[
+      ],
+    "c":[
+      ],
+    "z":[
+      ],
+    }
+
 
 import os
 import sys
@@ -68,30 +86,22 @@ def processAllKernelParameterCombinations(argv):
 
   # tile parameters
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
-  microTileMaxEdgeLengthDict = { "s":8, "d":8, "c":8, "z":8 }
+  microTileMaxEdgeLengthDict = { "s":12, "d":12, "c":12, "z":12 }
   listUnroll = [ 8 ]
   listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []
   # list all valid tile parameter combinations
-  listMicroTileDims = [
-      [ 6, 6 ], # 36
-      [ 8, 4 ], # 32
-     #[ 7, 4 ], # 28
-      [ 6, 4 ], # 24
-     #[ 5, 4 ], # 20
-      [ 4, 4 ], # 16
-     # [ 4, 3 ], # 12
-      [ 4, 2 ], # 8
-     #[ 3, 2 ], # 6
-      [ 2, 2 ], # 4
-     #[ 4, 1 ], # 3
-     #[ 3, 1 ], # 3
-      [ 2, 1 ], # 2
-      [ 1, 1 ]  # 1
-      ]
-
-
+  #listMicroTileDims = [
+  #    [ 6, 6 ], # 36
+  #    [ 8, 4 ], # 32
+  #    [ 6, 4 ], # 24
+  #    [ 4, 4 ], # 16
+  #    [ 4, 2 ], # 8
+  #    [ 2, 2 ], # 4
+  #    [ 2, 1 ], # 2
+  #    [ 1, 1 ]  # 1
+  #    ]
 
   kernelSelectionLogic     = KernelSelection.KernelSelection();
   kernelSelectionSpecific  = KernelSelection.KernelSelectionSpecific();
@@ -108,6 +118,14 @@ def processAllKernelParameterCombinations(argv):
   for precision in listPrecision:
     kernel.precision = precision
     cppKernelEnumeration.newPrecision(precision)
+
+    # exhaustive micro tiles
+    listMicroTileDims = []
+    for numRows in range(1, microTileMaxEdgeLengthDict[precision]):
+      for numCols in range(1, microTileMaxEdgeLengthDict[precision]):
+        if numRows*numCols <= microTileMaxProductDict:
+          listMicroTileDims.append( [numRows, numCols] )
+    print listMicroTileDims
 
     # valid tiles for this precision
     microTileMaxProduct = microTileMaxProductDict[ precision ]
@@ -129,7 +147,7 @@ def processAllKernelParameterCombinations(argv):
             if tile.isValid():
               listTileKernelParameters.append( tile )
             else:
-              print kernel.getkernelName() + " - SKIPPING - "
+              print tile.getName() + " - SKIPPING - "
     listTileKernelParameters.sort(orderTileSizes, reverse=True)
     print( listTileKernelParameters )
     # make list of unique tile sizes
