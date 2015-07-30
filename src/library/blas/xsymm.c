@@ -54,14 +54,6 @@ doSymm(	CLBlasKargs *kargs, clblasOrder order, clblasUplo uplo, clblasSide side,
         return retCode;
     }
 
-
-    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, B, offb, ldb, B_MAT_ERRSET))) {
-        return retCode;
-    }
-
-    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, C, offc, ldc, C_MAT_ERRSET))) {
-        return retCode;
-    }
 	if (side == clblasLeft)
 	{
 		// MxM x MxN
@@ -74,6 +66,12 @@ doSymm(	CLBlasKargs *kargs, clblasOrder order, clblasUplo uplo, clblasSide side,
             return retCode;
     	}
 	}
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, B, offb, ldb, B_MAT_ERRSET))) {
+        return retCode;
+    }
+    if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, C, offc, ldc, C_MAT_ERRSET))) {
+        return retCode;
+    }
 
 	#ifdef DEBUG_SYMM
 	printf("DoSymm being called...\n");
