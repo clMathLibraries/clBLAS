@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-project(TestAutoGemm)
+project(AutoGemm)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING
@@ -43,7 +43,8 @@ else()
     set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
 endif()
 
-set(AUTO-GEMM_SRC TestAutoGemm.cpp)
+set(TEST_AUTOGEMM_SRC TestAutoGemm.cpp)
+set(PROFILE_AUTOGEMM_SRC ProfileAutoGemm.cpp)
 
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -75,12 +76,17 @@ endif()
 include_directories(
     ${OPENCL_INCLUDE_DIRS}
     ${KTEST_INCLUDE_DIR}
+    ../output/
+    ../output/GemmKernelSources
+    ../output/GemmKernelBinaries
     #${clAmdBlas_DIR}
     #${clAmdBlas_DIR}/include
     #${clAmdBlas_DIR}/tests/include
     .)
 
-add_executable(TestAutoGemm ${AUTO-GEMM_SRC})
+add_executable(TestAutoGemm ${TEST_AUTOGEMM_SRC})
+add_executable(ProfileAutoGemm ${PROFILE_AUTOGEMM_SRC})
 target_link_libraries(TestAutoGemm ${OPENCL_LIBRARIES})
+target_link_libraries(ProfileAutoGemm ${OPENCL_LIBRARIES})
 message(STATUS "OpenCL libraries: ${OPENCL_LIBRARIES}")
 

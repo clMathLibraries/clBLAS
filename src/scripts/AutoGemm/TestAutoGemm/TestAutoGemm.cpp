@@ -9,6 +9,8 @@
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
+#include "GemmKernelSelection.h"
+#include "GemmKernelEnumeration.h"
 #if 0
 // from clBLAS.h
 typedef enum clblasOrder_ {
@@ -35,29 +37,21 @@ typedef enum clblasTranspose_ {
 #if SGEMM
 #define DATA_TYPE float
 #define DATA_TYPE_CONSTRUCTOR(X,Y) X
-#include "SgemmKernelSelection.h"
-#include "SgemmKernelEnumeration.h"
 #endif
 
 #if DGEMM
 #define DATA_TYPE double
 #define DATA_TYPE_CONSTRUCTOR(X,Y) X
-#include "DgemmKernelSelection.h"
-#include "DgemmKernelEnumeration.h"
 #endif
 
 #if CGEMM
 #define DATA_TYPE FloatComplex
 #define DATA_TYPE_CONSTRUCTOR floatComplex
-#include "CgemmKernelSelection.h"
-#include "CgemmKernelEnumeration.h"
 #endif
 
 #if ZGEMM
 #define DATA_TYPE DoubleComplex
 #define DATA_TYPE_CONSTRUCTOR doubleComplex
-#include "ZgemmKernelSelection.h"
-#include "ZgemmKernelEnumeration.h"
 #endif
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -193,10 +187,10 @@ void testKernelParameterCombination(
   unsigned int transAInt,
   unsigned int transBInt,
   unsigned int betaNonZero,
-  unsigned int microTileNumRows,
-  unsigned int microTileNumCols,
   unsigned int workGroupNumRows,
   unsigned int workGroupNumCols,
+  unsigned int microTileNumRows,
+  unsigned int microTileNumCols,
   unsigned int unroll,
   unsigned int mSpill,
   unsigned int nSpill ) {
@@ -215,14 +209,14 @@ void testKernelParameterCombination(
 
   // how large of a matrix to test?
 #if DO_VALIDATION
-  unsigned int M = 1*macroTileNumRows;
-  unsigned int N = 1*macroTileNumCols;
-  unsigned int K = 1*unroll;
+  size_t M = 1*macroTileNumRows;
+  size_t N = 1*macroTileNumCols;
+  size_t K = 1*unroll;
 #else
   if (mSpill || nSpill || unroll==1 || transAInt==1 || transBInt==0) return;
-  unsigned int M = 22*macroTileNumRows;
-  unsigned int N = 24*macroTileNumCols;
-  unsigned int K = 2*64*90+unroll;
+  size_t M = 22*macroTileNumRows;
+  size_t N = 24*macroTileNumCols;
+  size_t K = 2*64*90+unroll;
 #endif
   if (mSpill) {
     M += 1;
@@ -403,15 +397,15 @@ void testKernelParameterCombination(
   const char *colKernelSource;
   const char *cornerKernelSource;
   const char *sourceBuildOptions;
-  const char *tileKernelBinary;
-  const char *rowKernelBinary;
-  const char *colKernelBinary;
-  const char *cornerKernelBinary;
+  const unsigned char *tileKernelBinary;
+  const unsigned char *rowKernelBinary;
+  const unsigned char *colKernelBinary;
+  const unsigned char *cornerKernelBinary;
   const char *binaryBuildOptions;
-  cl_kernel  tileClKernel;
-  cl_kernel  rowClKernel;
-  cl_kernel  colClKernel;
-  cl_kernel  cornerClKernel;
+  cl_kernel  *tileClKernel;
+  cl_kernel  *rowClKernel;
+  cl_kernel  *colClKernel;
+  cl_kernel  *cornerClKernel;
   unsigned int retWorkGroupNumRows;
   unsigned int retWorkGroupNumCols;
   unsigned int retMicroTileNumRows;
@@ -420,7 +414,7 @@ void testKernelParameterCombination(
 
     //printf("Creating kernel.\n");
 #if SGEMM
-  sgemmSelectKernel(
+  gemmSelectKernel<float>(
 #endif
 #if DGEMM
   dgemmSelectKernel(
@@ -737,21 +731,21 @@ void testKernelParameterCombination(
 
 
 int main(void) {
-  for (unsigned int kernelIdx = 0; kernelIdx < numKernels; kernelIdx++) {
+  for (unsigned int kernelIdx = 0; kernelIdx < sgemmNumKernels; kernelIdx++) {
     
     srand((unsigned int)time(NULL));
 
-    /* {isColumnMajor, transA, transB, betaNonZero, mtNumRows, mtNumCols, wgNumRows, wgNumCols}*/
-    unsigned int *kernelParameters = gemmKernelEnumeration[kernelIdx];
+    /* {isColumnMajor, transA, transB, betaNonZero, wgNumRows, wgNumCols, mtNumRows, mtNumCols, }*/
+    unsigned int *kernelParameters = sgemmKernelEnumeration[kernelIdx];
 
     unsigned int columnMajor = kernelParameters[0];
     unsigned int transA = kernelParameters[1];
     unsigned int transB = kernelParameters[2];
     unsigned int betaNonZero = kernelParameters[3];
-    unsigned int microTileNumRows = kernelParameters[4];
-    unsigned int microTileNumCols = kernelParameters[5];
-    unsigned int workGroupNumRows = kernelParameters[6];
-    unsigned int workGroupNumCols = kernelParameters[7];
+    unsigned int workGroupNumRows = kernelParameters[4];
+    unsigned int workGroupNumCols = kernelParameters[5];
+    unsigned int microTileNumRows = kernelParameters[6];
+    unsigned int microTileNumCols = kernelParameters[7];
     unsigned int unroll = kernelParameters[8];
     unsigned int mSpill = kernelParameters[9];
     unsigned int nSpill = kernelParameters[10];
@@ -761,10 +755,10 @@ int main(void) {
       transA,
       transB,
       betaNonZero,
-      microTileNumRows,
-      microTileNumCols,
       workGroupNumRows,
       workGroupNumCols,
+      microTileNumRows,
+      microTileNumCols,
       unroll,
       mSpill,
       nSpill );

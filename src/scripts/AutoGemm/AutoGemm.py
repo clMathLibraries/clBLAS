@@ -69,7 +69,7 @@ def processAllKernelParameterCombinations(argv):
   # tile parameters
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
   microTileMaxEdgeLengthDict = { "s":8, "d":8, "c":8, "z":8 }
-  listUnroll = [ 8, 1 ]
+  listUnroll = [ 8 ]
   listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []

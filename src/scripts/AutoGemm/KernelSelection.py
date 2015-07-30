@@ -362,7 +362,7 @@ class KernelSelectionSpecific:
       "  cl_kernel  **tileClKernel,\n"
       "  cl_kernel  **rowClKernel,\n"
       "  cl_kernel  **colClKernel,\n"
-      "  cl_kernel  **cornerClKernel,\n"
+      "  cl_kernel  **cornerClKernel\n"
       ");\n\n" )
     self.precisionInitialized = False
     self.orderInitialized = False
@@ -397,15 +397,12 @@ class KernelSelectionSpecific:
       "  clblasOrder order,\n"
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
-      "  size_t M,\n"
-      "  size_t N,\n"
-      "  size_t K,\n"
       "  bool betaNonZero,\n"
       "  unsigned int workGroupNumRows,\n"
       "  unsigned int workGroupNumCols,\n"
       "  unsigned int microTileNumRows,\n"
       "  unsigned int microTileNumCols,\n"
-      "  unsigned int unroll\n"
+      "  unsigned int unroll,\n"
       "  const char **tileKernelSource,\n"
       "  const char **rowKernelSource,\n"
       "  const char **colKernelSource,\n"
@@ -419,7 +416,7 @@ class KernelSelectionSpecific:
       "  cl_kernel  **tileClKernel,\n"
       "  cl_kernel  **rowClKernel,\n"
       "  cl_kernel  **colClKernel,\n"
-      "  cl_kernel  **cornerClKernel,\n"
+      "  cl_kernel  **cornerClKernel\n"
       ") {\n" )
     self.precisionInitialized = True
     self.orderInitialized = False
