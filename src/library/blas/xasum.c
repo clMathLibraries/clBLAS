@@ -59,24 +59,32 @@ doAsum(
 
 		retCode = checkMemObjects(scratchBuff, asum, X, true, X_VEC_ERRSET, X_VEC_ERRSET, X_VEC_ERRSET );
 		if (retCode) {
-			printf("Invalid mem object..\n");
+			#ifdef DEBUG_ASUM
+            printf("Invalid mem object..\n");
+            #endif
             return retCode;
 		}
 
 		// Check wheather enough memory was allocated
 
 		if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET ))) {
-			printf("Invalid Size for X\n");
+			#ifdef DEBUG_ASUM
+            printf("Invalid Size for X\n");
+            #endif
             return retCode;
 		}
 		// Minimum size of scratchBuff is N
 		if ((retCode = checkVectorSizes(kargs->dtype, N, scratchBuff, 0, 1, X_VEC_ERRSET ))) {
-			printf("Insufficient ScratchBuff\n");
+			#ifdef DEBUG_ASUM
+            printf("Insufficient ScratchBuff\n");
+            #endif
             return retCode;
 		}
 
 		if ((retCode = checkVectorSizes(asumType, 1, asum, offAsum, 1, X_VEC_ERRSET ))) {
-			printf("Invalid Size for asum\n");
+			#ifdef DEBUG_ASUM
+            printf("Invalid Size for asum\n");
+            #endif
             return retCode;
 		}
 		///////////////////////////////////////////////////////////////
