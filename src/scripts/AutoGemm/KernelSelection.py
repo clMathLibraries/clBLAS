@@ -33,14 +33,31 @@ kernelSelectionData = [
       ],
     ]
 
+def indent(il):
+  returnTabs = ""
+  for i in range(0, il):
+    returnTabs += "  "
+  return returnTabs
+
+def tileInRange( tileMin, tileMax, rangeMin, rangeMax):
+  if ( tileMax < 0 or (tileMax >= rangeMax and rangeMax>0) ) and tileMin <= rangeMin :
+    valid = True
+  else:
+    valid = False
+  #print "Range [%4ux%4u]: [%4u,%4u] is %s b/c" \
+  #    % (rangeMin, rangeMax, tileMin, tileMax, "valid" if valid else "INVALID" )
+  #print "if ( %i<0 or (%u >= %u and %u>0) and %u <= %u" \
+  #    %( tileMax, tileMax, rangeMax, rangeMax, tileMin, rangeMin )
+  return valid
+
 
 ################################################################################
 # KSL - Kernel Selection Logic File
 ################################################################################
 class KernelSelection:
 
-  zeroIndent = "  "
-  tab = "  "
+
+
   ##############################################################################
   # KSL - default constructor
   ##############################################################################
@@ -52,7 +69,6 @@ class KernelSelection:
       betaList, \
       unrollList, \
       kernelSelectionData):
-
     self.kernelSelectionFileName = Common.getOutputPath() + "GemmKernelSelection.h"
 
     self.logic = (
@@ -102,22 +118,25 @@ class KernelSelection:
 
     ####################################
     # precision
+    kernel = KernelParameters.KernelParameters()
     for precision in precisionList:
+      #print precision + "gemm"
+      kernel.precision = precision
       tilesForPrecision = kernelSelectionData[precision]
       self.logic += (
           "// " + precision + "gemm kernel selection logic\n"
           "template<>\n"
           "void gemmSelectKernel<" )
-        if precision == "s":
-          self.logic += "float"
-        elif precision == "d":
-          self.logic += "double"
-        elif precision == "c":
-          self.logic += "FloatComplex"
-        else:
-          self.logic += "DoubleComplex"
+      if precision == "s":
+        self.logic += "float"
+      elif precision == "d":
+        self.logic += "double"
+      elif precision == "c":
+        self.logic += "FloatComplex"
+      else:
+        self.logic += "DoubleComplex"
 
-        self.logic += (
+      self.logic += (
           ">(\n"
           "  clblasOrder order,\n"
           "  clblasTranspose transA,\n"
@@ -151,13 +170,17 @@ class KernelSelection:
       ####################################
       # order
       for order in orderList:
-        self.logic += "if (order == " + order + ") {\n"
+        #print precision + "gemm" + "_" + order
+        kernel.order = order
+        self.logic += indent(1) + "if (order == " + order + ") {\n"
         transList = transDict[precision]
 
         ####################################
         # transA
         for transA in transList:
-          self.logic += "if (transA == "
+          #print precision + "gemm" + "_" + order + "_" + transA
+          kernel.transA = transA
+          self.logic += indent(2) + "if (transA == "
           if transA == "N":
             self.logic += "clblasNoTrans"
           elif transA == "T":
@@ -169,7 +192,9 @@ class KernelSelection:
           ####################################
           # transB
           for transB in transList:
-            self.logic += "if (transB == "
+            #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB
+            kernel.transB = transB
+            self.logic += indent(3) + "if (transB == "
             if transA == "N":
               self.logic += "clblasNoTrans"
             elif transA == "T":
@@ -181,7 +206,9 @@ class KernelSelection:
             ####################################
             # beta
             for beta in betaList:
-              self.logic += "if ( "
+              #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta)
+              kernel.beta = beta
+              self.logic += indent(4) + "if ( "
               if beta == 0:
                 self.logic += "!betaNonZero"
               else:
@@ -192,130 +219,130 @@ class KernelSelection:
               ####################################
               # list the size events
               sizeEvents = []
-	      for tileData in tilesForPrecision:
-	        fallbackRange = tileData[1]
-	        validRange = tileData[2]
-	        sizeEvents.append(fallbackRange[0])
-	        sizeEvents.append(fallbackRange[1])
-	        sizeEvents.append(validRange[0])
-	        sizeEvents.append(validRange[1])
-	      sizeEvents.sort(unique=True)
-	      # remove -1 from beginiing of list and ? append to end
+              for tileData in tilesForPrecision:
+                fallbackRange = tileData[1]
+                validRange = tileData[2]
+                sizeEvents.append(fallbackRange[0])
+                sizeEvents.append(fallbackRange[1])
+                sizeEvents.append(validRange[0])
+                sizeEvents.append(validRange[1])
+              sizeEvents = list(set( sizeEvents )) # unique
+              sizeEvents.sort(reverse=True) # largest to smallest
+              sizeEvents.remove(-1)
+              sizeEvents.insert(0, -1)
+              print precision + "gemm sizeEvents: " + sizeEvents
+              # remove -1 from beginiing of list and ? append to end
 
               ####################################
-              # size event
-              numSizeEvents = sizeEvents.length()
-	      for eventIdx in range(0, numSizeEvents):
-	        beginSize = sizeEvents[eventIdx]
-		if eventIdx+1 < numSizeEvents:
-		  endSize = sizeEvents[eventIdx+1]
-                else:
-		  endSize = -1 # infinite
-		self.logic += "if ( M*N >= " + str(beginSize*beginSize)
-		if endSize > 0:
-		  self.logic += "&& M*N <= " + str(endSize*endSize)
-		self.logic += ") {\n"
+              # if size event
+              numSizeEvents = len(sizeEvents)
+              for eventIdx in range(0, numSizeEvents-1):
+                sizeMax = sizeEvents[eventIdx]
+                sizeMin = sizeEvents[eventIdx+1]
+                self.logic += indent(5) + "if ( M*N >= " + str(sizeMin) + "*" + str(sizeMin)
+                if sizeMax > 0:
+                  self.logic += " && M*N <= " + str(sizeMax) + "*" + str(sizeMax)
+                self.logic += ") {\n"
+                #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta) + "_" + str(sizeMin) + "->" + str(sizeMax)
+
+                ####################################
+                # valid tiles
+                self.logic += indent(6)+"// valid tiles\n"
+                #print "\nValid [%i, %i]"%(sizeMin, sizeMax)
+                for tileData in tilesForPrecision:
+                  tileParams = tileData[0]
+                  #tileFallbackRange = tileData[1]
+                  tileValidRange = tileData[2]
+                  tileValidRangeMin = tileValidRange[0]
+                  tileValidRangeMax = tileValidRange[1]
+                  if tileInRange(tileValidRangeMin, tileValidRangeMax, sizeMin, sizeMax ):
+                    # this tile is valid for this size range
+                    kernel.workGroupNumRows = tileParams[0]
+                    kernel.workGroupNumCols = tileParams[1]
+                    kernel.microTileNumRows = tileParams[2]
+                    kernel.microTileNumCols = tileParams[3]
+                    kernel.macroTileNumRows = tileParams[0]*tileParams[2]
+                    kernel.macroTileNumCols = tileParams[1]*tileParams[3]
+                    for unroll in unrollList:
+                      kernel.unroll = unroll
+                      self.logic += indent(6)+"if ( M%%%d == 0 && N%%%d == 0 && K%%%d == 0) {\n" \
+                          % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
+                      self.addBodyForKernel( kernel )
+                      self.logic += indent(6) + "}\n"
+
+                ####################################
+                # fallback tile - TODO all tiles begin added
+                self.logic += indent(6)+"// fallback tile\n"
+                #print "\nFallback[%i, %i]"%(sizeMin, sizeMax)
+                for tileData in tilesForPrecision:
+                  tileParams = tileData[0]
+                  tileFallbackRange = tileData[1]
+                  #tileValidRange = tileData[2]
+                  tileFallbackRangeMin = tileFallbackRange[0]
+                  tileFallbackRangeMax = tileFallbackRange[1]
+                  if tileInRange(tileFallbackRangeMin, tileFallbackRangeMax, sizeMin, sizeMax):
+                    # this is the fallback tile
+                    kernel.workGroupNumRows = tileParams[0]
+                    kernel.workGroupNumCols = tileParams[1]
+                    kernel.microTileNumRows = tileParams[2]
+                    kernel.microTileNumRows = tileParams[3]
+                    kernel.macroTileNumRows = tileParams[0]*tileParams[2]
+                    kernel.macroTileNumCols = tileParams[1]*tileParams[3]
+                    for unroll in unrollList:
+                      kernel.unroll = unroll
+                      self.logic += indent(6)+"if ( K%%%d == 0 ) {\n" \
+                          % (kernel.getMultipleK())
+                      self.addBodyForKernel( kernel )
+                      self.logic += indent(6) + "}\n"
+
+                ####################################
+                # end size event
+                self.logic += indent(5) + "} // end size\n"
 
               ####################################
-              # valid tiles
-	      for tileData in tilesForPrecision:
+              # end beta
+              self.logic += indent(4) + "} // end beta\n"
+
+            ####################################
+            # end transB
+            self.logic += indent(3) + "} // end transB\n"
+
+          ####################################
+          # end transA
+          self.logic += indent(2) + "} // end transA\n"
+
+        ####################################
+        # end order
+        self.logic += indent(1) + "} // end order\n"
+
+      ####################################
+      # end precision
+      self.logic += indent(0) + "} // end precision function\n"
 
 
 
-
-    # first tile size for beta?
-    if self.previousTileSize == 0:
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
-      self.logic += "if (optimalNumElementsPerWorkItem > " + str(self.listMicroTileSizes[1]) + ") {\n"
-      self.previousTileSize = self.listMicroTileSizes[0]
-      self.kernelInitialized = False
-
-    # new tile size?
-    tileSize = kernel.microTileNumRows * kernel.microTileNumCols
-    tileSizeIndex = self.listMicroTileSizes.index(tileSize)
-    if tileSize != self.previousTileSize:
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
-      self.logic += "}\n"
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
-      self.logic += "if (optimalNumElementsPerWorkItem > "
-      if tileSizeIndex+1 < len(self.listMicroTileSizes):
-        self.logic += str(self.listMicroTileSizes[tileSizeIndex+1])
-      else:
-        self.logic += str(0)
-      self.logic += ") {\n"
-      self.kernelInitialized = False
-      self.previousTileSize = tileSize
-
-    # new kernel
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "if ( EXACT_MULTIPLES(M%%%d == 0 && N%%%d == 0 &&) K%%%d == 0) {\n" \
-        % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
-
-    #self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    #self.logic += "printf(\"selected kernel: " + kernel.getName() + "\\n\");\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*tileKernelSource   = " + kernel.getName()       + "_src;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*rowKernelSource    = " + kernel.getRowName()    + "_src;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*colKernelSource    = " + kernel.getColName()    + "_src;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*cornerKernelSource = " + kernel.getCornerName() + "_src;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*sourceBuildOptions = " + kernel.getName() + "_srcBuildOptions;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*tileKernelBinary   = " + kernel.getName()       + "_bin;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*rowKernelBinary    = " + kernel.getRowName()    + "_bin;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*colKernelBinary    = " + kernel.getColName()    + "_bin;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*cornerKernelBinary = " + kernel.getCornerName() + "_bin;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*binaryBuildOptions = " + kernel.getName() + "_binBuildOptions;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*tileClKernel       = &" + kernel.getName()       + "_clKernel;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*rowClKernel        = &" + kernel.getRowName()    + "_clKernel;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*colClKernel        = &" + kernel.getColName()    + "_clKernel;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*cornerClKernel     = &" + kernel.getCornerName() + "_clKernel;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*workGroupNumRows   = " + str(kernel.workGroupNumRows) + ";\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*workGroupNumCols   = " + str(kernel.workGroupNumCols) + ";\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*microTileNumRows   = " + str(kernel.microTileNumRows) + ";\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*microTileNumCols   = " + str(kernel.microTileNumCols) + ";\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "*unroll             = " + str(kernel.unroll)           + ";\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
-    self.logic += "return;\n"
-
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "}\n"
+  def addBodyForKernel( self, kernel ):
+    #self.logic += indent(7) + "printf(\"selected kernel: " + kernel.getName() + "\\n\");\n"
+    self.logic += indent(7) + "*tileKernelSource   = " + kernel.getName()       + "_src;\n"
+    self.logic += indent(7) + "*rowKernelSource    = " + kernel.getRowName()    + "_src;\n"
+    self.logic += indent(7) + "*colKernelSource    = " + kernel.getColName()    + "_src;\n"
+    self.logic += indent(7) + "*cornerKernelSource = " + kernel.getCornerName() + "_src;\n"
+    self.logic += indent(7) + "*sourceBuildOptions = " + kernel.getName() + "_srcBuildOptions;\n"
+    self.logic += indent(7) + "*tileKernelBinary   = " + kernel.getName()       + "_bin;\n"
+    self.logic += indent(7) + "*rowKernelBinary    = " + kernel.getRowName()    + "_bin;\n"
+    self.logic += indent(7) + "*colKernelBinary    = " + kernel.getColName()    + "_bin;\n"
+    self.logic += indent(7) + "*cornerKernelBinary = " + kernel.getCornerName() + "_bin;\n"
+    self.logic += indent(7) + "*binaryBuildOptions = " + kernel.getName() + "_binBuildOptions;\n"
+    self.logic += indent(7) + "*tileClKernel       = &" + kernel.getName()       + "_clKernel;\n"
+    self.logic += indent(7) + "*rowClKernel        = &" + kernel.getRowName()    + "_clKernel;\n"
+    self.logic += indent(7) + "*colClKernel        = &" + kernel.getColName()    + "_clKernel;\n"
+    self.logic += indent(7) + "*cornerClKernel     = &" + kernel.getCornerName() + "_clKernel;\n"
+    self.logic += indent(7) + "*workGroupNumRows   = " + str(kernel.workGroupNumRows) + ";\n"
+    self.logic += indent(7) + "*workGroupNumCols   = " + str(kernel.workGroupNumCols) + ";\n"
+    self.logic += indent(7) + "*microTileNumRows   = " + str(kernel.microTileNumRows) + ";\n"
+    self.logic += indent(7) + "*microTileNumCols   = " + str(kernel.microTileNumCols) + ";\n"
+    self.logic += indent(7) + "*unroll             = " + str(kernel.unroll)           + ";\n"
+    self.logic += indent(7) + "return;\n"
 
 
 
@@ -323,12 +350,6 @@ class KernelSelection:
   # KSL - write to file
   ##############################################################################
   def writeToFile(self):
-    self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-    self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
-    self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
-    self.logic += self.zeroIndent + "}\n" # 0 tab
-    self.logic += "}\n" # close function
-
     selectionFile = open(self.kernelSelectionFileName, "w")
     selectionFile.write( Common.getAutoGemmHeader() )
     selectionFile.write(self.logic)

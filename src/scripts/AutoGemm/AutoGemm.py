@@ -7,10 +7,8 @@
 #   - include files for kernel strings
 #
 # TODO Now
-# - 8x8 kernel for smallest matrices
-# - 4 queues
-# - more micro tile dimensions (single kernel much faster than multiple kernels)
-# - logic to choose small microtile over large partial tile
+# - profiler to spit out data to be refined by hand
+# - pull tiles from kernelSelectionData
 # - offline compilation
 # TODO Future
 # - fuse together unroll=8 and unroll=1 in same kernel ?
@@ -20,32 +18,20 @@
 kernelSelectionData = {
 # prec, tile, fallback range, valid range
     "s":[
-      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
-      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
-      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
-      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
+      [ [16, 16, 6, 6], [4096,   -1], [784,   -1] ],
+      [ [16, 16, 2,10], [   0,    0], [784, 3040] ],
+      [ [16, 16, 4, 4], [1376, 4096], [640,   -1] ],
+      [ [16, 16, 2, 2], [ 304, 1376], [288, 1952] ],
       [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
       ],
     "d":[
-      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
-      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
-      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
-      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
-      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
+      [ [16, 16, 4, 4], [0, -1], [0, -1] ],
       ],
     "c":[
-      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
-      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
-      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
-      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
-      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
+      [ [16, 16, 4, 4], [0, -1], [0, -1] ],
       ],
     "z":[
-      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
-      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
-      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
-      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
-      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
+      [ [16, 16, 4, 4], [0, -1], [0, -1] ],
       ],
     }
 
@@ -103,10 +89,20 @@ def processAllKernelParameterCombinations(argv):
   # tile parameters
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
   microTileMaxEdgeLengthDict = { "s":12, "d":12, "c":12, "z":12 }
-  listUnroll = [ 8 ]
+  listUnroll = [ 8, 1 ]
   listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []
+
+  kernelSelectionLogic = KernelSelection.KernelSelection( \
+      listPrecision, \
+      listOrder, \
+      dictTrans, \
+      listBeta, \
+      listUnroll, \
+      kernelSelectionData )
+  kernelSelectionLogic.writeToFile()
+
   # list all valid tile parameter combinations
   #listMicroTileDims = [
   #    [ 6, 6 ], # 36
@@ -216,14 +212,6 @@ def processAllKernelParameterCombinations(argv):
   kernelBinaryBuildOptions.writeToFile()
   cppKernelEnumeration.writeToFile()
 
-  kernelSelectionLogic = KernelSelection.KernelSelection( \
-      listPrecision, \
-      listOrder, \
-      listtransDict, \
-      listBeta, \
-      listUnroll, \
-      kernelSelectionData )
-  kernelSelectionLogic.writeToFile()
 
 
 
