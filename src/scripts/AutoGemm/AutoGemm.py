@@ -19,18 +19,33 @@
 
 kernelSelectionData = {
 # prec, tile, fallback range, valid range
-    "S":[
-      [ [6, 6], [4096,   -1], [864,   -1] ],
-      [ [2,10], [  -1,   -1], [800, 3040] ],
-      [ [4, 4], [  48, 5424], [640,   -1] ],
-      [ [2, 2], [  32, 1376], [288, 1952] ],
-      [ [1, 1], [   0,  304], [ 16,  784] ],
+    "s":[
+      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
+      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
+      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
+      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
+      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
       ],
     "d":[
+      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
+      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
+      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
+      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
+      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
       ],
     "c":[
+      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
+      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
+      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
+      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
+      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
       ],
     "z":[
+      [ [16, 16, 6, 6], [4096,   -1], [864,   -1] ],
+      [ [16, 16, 2,10], [  -1,   -1], [800, 3040] ],
+      [ [16, 16, 4, 4], [  48, 5424], [640,   -1] ],
+      [ [16, 16, 2, 2], [  32, 1376], [288, 1952] ],
+      [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
       ],
     }
 
@@ -76,6 +91,7 @@ def main(argv):
 # Main - Process all kernel parameter combinations
 ################################################################################
 def processAllKernelParameterCombinations(argv):
+  global kernelSelectionData
 
   # non-tile parameters
   listPrecision = ["s", "d", "c", "z"]
@@ -103,7 +119,6 @@ def processAllKernelParameterCombinations(argv):
   #    [ 1, 1 ]  # 1
   #    ]
 
-  kernelSelectionLogic     = KernelSelection.KernelSelection();
   kernelSelectionSpecific  = KernelSelection.KernelSelectionSpecific();
   kernelSourceIncludes     = Includes.KernelSourceIncludes()
   kernelBinaryIncludes     = Includes.KernelBinaryIncludes()
@@ -125,14 +140,12 @@ def processAllKernelParameterCombinations(argv):
       for numCols in range(1, microTileMaxEdgeLengthDict[precision]):
         if numRows*numCols <= microTileMaxProductDict:
           listMicroTileDims.append( [numRows, numCols] )
-    print listMicroTileDims
 
     # valid tiles for this precision
     microTileMaxProduct = microTileMaxProductDict[ precision ]
     microTileMaxEdgeLength = microTileMaxEdgeLengthDict[ precision ]
     listTileKernelParameters = []
     for microTileSize in listMicroTileDims:
-      print microTileSize
       if microTileSize[0]*microTileSize[1] <= microTileMaxProduct:
         for workGroupDim in listWorkGroupDims:
           for unroll in listUnroll:
@@ -156,7 +169,6 @@ def processAllKernelParameterCombinations(argv):
       microTileSize = tile.microTileNumRows*tile.microTileNumCols
       if microTileSize not in listMicroTileSizes:
         listMicroTileSizes.append( microTileSize )
-    kernelSelectionLogic.newPrecision(precision, listMicroTileSizes)
     kernelSelectionSpecific.newPrecision(precision)
 
     listTrans = dictTrans[precision]
@@ -168,17 +180,14 @@ def processAllKernelParameterCombinations(argv):
     # for non tile parameters
     for order in listOrder:
       kernel.order = order
-      kernelSelectionLogic.newOrder(order)
       kernelSelectionSpecific.newOrder(order)
       for transA in listTrans:
         kernel.transA = transA
         for transB in listTrans:
           kernel.transB = transB
-          kernelSelectionLogic.newTrans(transA, transB)
           kernelSelectionSpecific.newTrans(transA, transB)
           for beta in listBeta:
             kernel.beta = beta
-            kernelSelectionLogic.newBeta(beta)
             kernelSelectionSpecific.newBeta(beta)
 
             # add this nonTile combo for this precision to Cpp
@@ -196,11 +205,9 @@ def processAllKernelParameterCombinations(argv):
                   kernelSourceBuildOptions, \
                   kernelBinaryBuildOptions, \
                   cppKernelEnumeration )
-              kernelSelectionLogic.newKernel(kernel)
               kernelSelectionSpecific.newKernel(kernel)
 
   # save written files
-  kernelSelectionLogic.writeToFile()
   kernelSelectionSpecific.writeToFile()
   kernelSourceIncludes.writeToFile()
   kernelBinaryIncludes.writeToFile()
@@ -209,6 +216,14 @@ def processAllKernelParameterCombinations(argv):
   kernelBinaryBuildOptions.writeToFile()
   cppKernelEnumeration.writeToFile()
 
+  kernelSelectionLogic = KernelSelection.KernelSelection( \
+      listPrecision, \
+      listOrder, \
+      listtransDict, \
+      listBeta, \
+      listUnroll, \
+      kernelSelectionData )
+  kernelSelectionLogic.writeToFile()
 
 
 

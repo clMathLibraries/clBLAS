@@ -1,6 +1,39 @@
 import Common
 import KernelParameters
 
+kernelSelectionData = [
+# prec, tile, fallback range, valid range
+    ["s",
+      [ [6, 6], [4096,   -1], [864,   -1] ],
+      [ [2,10], [  -1,   -1], [800, 3040] ],
+      [ [4, 4], [  48, 5424], [640,   -1] ],
+      [ [2, 2], [  32, 1376], [288, 1952] ],
+      [ [1, 1], [   0,  304], [ 16,  784] ],
+      ],
+    ["d",
+      [ [6, 6], [4096,   -1], [864,   -1] ],
+      [ [2,10], [  -1,   -1], [800, 3040] ],
+      [ [4, 4], [  48, 5424], [640,   -1] ],
+      [ [2, 2], [  32, 1376], [288, 1952] ],
+      [ [1, 1], [   0,  304], [ 16,  784] ],
+      ],
+    ["c",
+      [ [6, 6], [4096,   -1], [864,   -1] ],
+      [ [2,10], [  -1,   -1], [800, 3040] ],
+      [ [4, 4], [  48, 5424], [640,   -1] ],
+      [ [2, 2], [  32, 1376], [288, 1952] ],
+      [ [1, 1], [   0,  304], [ 16,  784] ],
+      ],
+    ["z",
+      [ [6, 6], [4096,   -1], [864,   -1] ],
+      [ [2,10], [  -1,   -1], [800, 3040] ],
+      [ [4, 4], [  48, 5424], [640,   -1] ],
+      [ [2, 2], [  32, 1376], [288, 1952] ],
+      [ [1, 1], [   0,  304], [ 16,  784] ],
+      ],
+    ]
+
+
 ################################################################################
 # KSL - Kernel Selection Logic File
 ################################################################################
@@ -11,7 +44,14 @@ class KernelSelection:
   ##############################################################################
   # KSL - default constructor
   ##############################################################################
-  def __init__(self):
+  def __init__( \
+      self, \
+      precisionList, \
+      orderList, \
+      transDict, \
+      betaList, \
+      unrollList, \
+      kernelSelectionData):
 
     self.kernelSelectionFileName = Common.getOutputPath() + "GemmKernelSelection.h"
 
@@ -59,143 +99,129 @@ class KernelSelection:
       "  unsigned int *microTileNumCols,\n"
       "  unsigned int *unroll\n"
       ");\n\n" )
-    self.precisionInitialized = False
-    self.orderInitialized = False
-    self.transInitialized = False
-    self.betaInitialized = False
-    self.previousTileSize = 0
 
-  def newPrecision(self, precision, listMicroTileSizes ):
-    self.listMicroTileSizes = listMicroTileSizes
-    if self.precisionInitialized:
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
-      self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
-      self.logic += self.zeroIndent+"}\n"
-      self.logic += "}\n\n"
-    else:
-      self.logic += self.zeroIndent
+    ####################################
+    # precision
+    for precision in precisionList:
+      tilesForPrecision = kernelSelectionData[precision]
+      self.logic += (
+          "// " + precision + "gemm kernel selection logic\n"
+          "template<>\n"
+          "void gemmSelectKernel<" )
+        if precision == "s":
+          self.logic += "float"
+        elif precision == "d":
+          self.logic += "double"
+        elif precision == "c":
+          self.logic += "FloatComplex"
+        else:
+          self.logic += "DoubleComplex"
 
-    self.logic += (
-      "// " + precision + "gemm kernel selection logic\n"
-      "template<>\n"
-      "void gemmSelectKernel<" )
-    if precision == "s":
-      self.logic += "float"
-    elif precision == "d":
-      self.logic += "double"
-    elif precision == "c":
-      self.logic += "FloatComplex"
-    else:
-      self.logic += "DoubleComplex"
+        self.logic += (
+          ">(\n"
+          "  clblasOrder order,\n"
+          "  clblasTranspose transA,\n"
+          "  clblasTranspose transB,\n"
+          "  size_t M,\n"
+          "  size_t N,\n"
+          "  size_t K,\n"
+          "  bool betaNonZero,\n"
+          "  float optimalNumElementsPerWorkItem,\n"
+          "  const char **tileKernelSource,\n"
+          "  const char **rowKernelSource,\n"
+          "  const char **colKernelSource,\n"
+          "  const char **cornerKernelSource,\n"
+          "  const char **sourceBuildOptions,\n"
+          "  const unsigned char **tileKernelBinary,\n"
+          "  const unsigned char **rowKernelBinary,\n"
+          "  const unsigned char **colKernelBinary,\n"
+          "  const unsigned char **cornerKernelBinary,\n"
+          "  const char **binaryBuildOptions,\n"
+          "  cl_kernel  **tileClKernel,\n"
+          "  cl_kernel  **rowClKernel,\n"
+          "  cl_kernel  **colClKernel,\n"
+          "  cl_kernel  **cornerClKernel,\n"
+          "  unsigned int *workGroupNumRows,\n"
+          "  unsigned int *workGroupNumCols,\n"
+          "  unsigned int *microTileNumRows,\n"
+          "  unsigned int *microTileNumCols,\n"
+          "  unsigned int *unroll\n"
+          ") {\n" )
 
-    self.logic += (
-      ">(\n"
-      "  clblasOrder order,\n"
-      "  clblasTranspose transA,\n"
-      "  clblasTranspose transB,\n"
-      "  size_t M,\n"
-      "  size_t N,\n"
-      "  size_t K,\n"
-      "  bool betaNonZero,\n"
-      "  float optimalNumElementsPerWorkItem,\n"
-      "  const char **tileKernelSource,\n"
-      "  const char **rowKernelSource,\n"
-      "  const char **colKernelSource,\n"
-      "  const char **cornerKernelSource,\n"
-      "  const char **sourceBuildOptions,\n"
-      "  const unsigned char **tileKernelBinary,\n"
-      "  const unsigned char **rowKernelBinary,\n"
-      "  const unsigned char **colKernelBinary,\n"
-      "  const unsigned char **cornerKernelBinary,\n"
-      "  const char **binaryBuildOptions,\n"
-      "  cl_kernel  **tileClKernel,\n"
-      "  cl_kernel  **rowClKernel,\n"
-      "  cl_kernel  **colClKernel,\n"
-      "  cl_kernel  **cornerClKernel,\n"
-      "  unsigned int *workGroupNumRows,\n"
-      "  unsigned int *workGroupNumCols,\n"
-      "  unsigned int *microTileNumRows,\n"
-      "  unsigned int *microTileNumCols,\n"
-      "  unsigned int *unroll\n"
-      ") {\n" )
-    self.precisionInitialized = True
-    self.orderInitialized = False
-    self.transInitialized = False
-    self.betaInitialized = False
-    self.previousTileSize = 0
+      ####################################
+      # order
+      for order in orderList:
+        self.logic += "if (order == " + order + ") {\n"
+        transList = transDict[precision]
 
+        ####################################
+        # transA
+        for transA in transList:
+          self.logic += "if (transA == "
+          if transA == "N":
+            self.logic += "clblasNoTrans"
+          elif transA == "T":
+            self.logic += "clblasTrans"
+          else:
+            self.logic += "clblasConjTrans"
+          self.logic += ") {\n"
 
-  ####################################
-  # KSL - new order
-  def newOrder(self, order):
-    if (self.orderInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
-      self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
-      self.logic += self.zeroIndent
-      self.logic += "} else "
-    else:
-      self.logic += self.zeroIndent
-    self.logic += "if (order == " + order + ") {\n"
-    self.orderInitialized = True
-    self.transInitialized = False
-    self.betaInitialized = False
-    self.previousTileSize = 0
+          ####################################
+          # transB
+          for transB in transList:
+            self.logic += "if (transB == "
+            if transA == "N":
+              self.logic += "clblasNoTrans"
+            elif transA == "T":
+              self.logic += "clblasTrans"
+            else:
+              self.logic += "clblasConjTrans"
+            self.logic += ") {\n"
 
-
-  ####################################
-  # KSL - new trans
-  def newTrans(self, transA, transB):
-    if (self.transInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
-      self.logic += self.zeroIndent+self.tab # 1 tab
-      self.logic += "} else "
-    else:
-      self.logic += self.zeroIndent+self.tab # 1 tabs
-    self.logic += "if (transA == "
-    if transA == "N":
-      self.logic += "clblasNoTrans"
-    elif transA == "T":
-      self.logic += "clblasTrans"
-    else:
-      self.logic += "clblasConjTrans"
-    self.logic += " && transB == "
-    if transB == "N":
-      self.logic += "clblasNoTrans"
-    elif transB == "T":
-      self.logic += "clblasTrans"
-    else:
-      self.logic += "clblasConjTrans"
-    self.logic += ") {\n"
-    self.transInitialized = True
-    self.betaInitialized = False
-    self.previousTileSize = 0
-
-  ####################################
-  # KSL - new beta
-  def newBeta(self, beta):
-    if (self.betaInitialized):
-      self.logic += self.zeroIndent+self.tab+self.tab+self.tab + "}\n" # 3 tabs
-      self.logic += self.zeroIndent+self.tab+self.tab # 2 tabs
-      self.logic += "} else "
-    else:
-      self.logic += self.zeroIndent+self.tab+self.tab # 2 tabs
-    self.logic += "if ( "
-    if beta == 0:
-      self.logic += "!betaNonZero"
-    else:
-      self.logic += "betaNonZero"
-    self.logic += " ) {\n"
-    self.betaInitialized = True
-    self.previousTileSize = 0
+            ####################################
+            # beta
+            for beta in betaList:
+              self.logic += "if ( "
+              if beta == 0:
+                self.logic += "!betaNonZero"
+              else:
+                self.logic += "betaNonZero"
+              self.logic += " ) {\n"
 
 
-  ##############################################################################
-  # KSL - add new kernel
-  ##############################################################################
-  def newKernel(self, kernel):
+              ####################################
+              # list the size events
+              sizeEvents = []
+	      for tileData in tilesForPrecision:
+	        fallbackRange = tileData[1]
+	        validRange = tileData[2]
+	        sizeEvents.append(fallbackRange[0])
+	        sizeEvents.append(fallbackRange[1])
+	        sizeEvents.append(validRange[0])
+	        sizeEvents.append(validRange[1])
+	      sizeEvents.sort(unique=True)
+	      # remove -1 from beginiing of list and ? append to end
+
+              ####################################
+              # size event
+              numSizeEvents = sizeEvents.length()
+	      for eventIdx in range(0, numSizeEvents):
+	        beginSize = sizeEvents[eventIdx]
+		if eventIdx+1 < numSizeEvents:
+		  endSize = sizeEvents[eventIdx+1]
+                else:
+		  endSize = -1 # infinite
+		self.logic += "if ( M*N >= " + str(beginSize*beginSize)
+		if endSize > 0:
+		  self.logic += "&& M*N <= " + str(endSize*endSize)
+		self.logic += ") {\n"
+
+              ####################################
+              # valid tiles
+	      for tileData in tilesForPrecision:
+
+
+
 
     # first tile size for beta?
     if self.previousTileSize == 0:
