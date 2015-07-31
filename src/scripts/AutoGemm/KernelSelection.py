@@ -230,7 +230,7 @@ class KernelSelection:
               sizeEvents.sort(reverse=True) # largest to smallest
               sizeEvents.remove(-1)
               sizeEvents.insert(0, -1)
-              print precision + "gemm sizeEvents: " + sizeEvents
+              print precision + "gemm sizeEvents: " + str(sizeEvents)
               # remove -1 from beginiing of list and ? append to end
 
               ####################################

@@ -8,7 +8,6 @@
 #
 # TODO Now
 # - profiler to spit out data to be refined by hand
-# - pull tiles from kernelSelectionData
 # - offline compilation
 # TODO Future
 # - fuse together unroll=8 and unroll=1 in same kernel ?
@@ -90,7 +89,7 @@ def processAllKernelParameterCombinations(argv):
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
   microTileMaxEdgeLengthDict = { "s":12, "d":12, "c":12, "z":12 }
   listUnroll = [ 8, 1 ]
-  listWorkGroupDims = [ [16, 16] ]
+  #listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []
 
@@ -129,45 +128,26 @@ def processAllKernelParameterCombinations(argv):
   for precision in listPrecision:
     kernel.precision = precision
     cppKernelEnumeration.newPrecision(precision)
-
-    # exhaustive micro tiles
-    listMicroTileDims = []
-    for numRows in range(1, microTileMaxEdgeLengthDict[precision]):
-      for numCols in range(1, microTileMaxEdgeLengthDict[precision]):
-        if numRows*numCols <= microTileMaxProductDict:
-          listMicroTileDims.append( [numRows, numCols] )
+    kernelSelectionSpecific.newPrecision(precision)
+    listTrans = dictTrans[precision]
 
     # valid tiles for this precision
-    microTileMaxProduct = microTileMaxProductDict[ precision ]
-    microTileMaxEdgeLength = microTileMaxEdgeLengthDict[ precision ]
     listTileKernelParameters = []
-    for microTileSize in listMicroTileDims:
-      if microTileSize[0]*microTileSize[1] <= microTileMaxProduct:
-        for workGroupDim in listWorkGroupDims:
-          for unroll in listUnroll:
-            tile = KernelParameters.TileParameters()
-            tile.workGroupNumRows = workGroupDim[0]
-            tile.workGroupNumCols = workGroupDim[1]
-            tile.microTileNumRows = microTileSize[0]
-            tile.microTileNumCols = microTileSize[1]
-            tile.macroTileNumRows = workGroupDim[0]*microTileSize[0]
-            tile.macroTileNumCols = workGroupDim[1]*microTileSize[1]
-            tile.unroll = unroll
-            if tile.isValid():
-              listTileKernelParameters.append( tile )
-            else:
-              print tile.getName() + " - SKIPPING - "
-    listTileKernelParameters.sort(orderTileSizes, reverse=True)
-    print( listTileKernelParameters )
-    # make list of unique tile sizes
-    listMicroTileSizes = []
-    for tile in listTileKernelParameters:
-      microTileSize = tile.microTileNumRows*tile.microTileNumCols
-      if microTileSize not in listMicroTileSizes:
-        listMicroTileSizes.append( microTileSize )
-    kernelSelectionSpecific.newPrecision(precision)
-
-    listTrans = dictTrans[precision]
+    tile = KernelParameters.TileParameters()
+    for tileData in kernelSelectionData[precision]:
+      tileParams = tileData[0]
+      tile.workGroupNumRows = tileParams[0]
+      tile.workGroupNumCols = tileParams[1]
+      tile.microTileNumRows = tileParams[2]
+      tile.microTileNumCols = tileParams[3]
+      tile.macroTileNumRows = tile.workGroupNumRows*tile.microTileNumRows
+      tile.macroTileNumCols = tile.workGroupNumCols*tile.microTileNumCols
+      for unroll in listUnroll:
+        tile.unroll = unroll
+        if tile.isValid():
+          listTileKernelParameters.append( tile )
+        else:
+          print tile.getName() + " - SKIPPING - "
 
     # add tiles for this precision to Cpp
     for tile in listTileKernelParameters:
