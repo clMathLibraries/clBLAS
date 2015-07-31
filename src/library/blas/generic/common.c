@@ -667,7 +667,7 @@ checkMatrixSizes(
     //  It is possible to allocate a buffer, and set up lda & ldb such that it looks like it will access outside of the allocated buffer, but if
     //  M & N are kept small enough, no out of bounds access will occur.  Compensate for the offset values and the unused tail memory caused by lda & ldb.
     //  Ex: BuffSize=6 floats, M=1, N=2, lda=ldb=3, offA = 0, offB = 2 :  |A[0,0]|unused|B[0,0]|A[0,1]|unused|B[0,1]|
-    memUsed = (( offA + matrSize ) > unusedTail) ? offA + matrSize - unusedTail: 0;
+    memUsed = (( offA + matrSize ) > unusedTail) ? offA + matrSize - unusedTail : offA + matrSize;
     if (( memUsed > memSize ) || (offA + matrSize < offA)) {
         switch( err )
         {
@@ -756,7 +756,7 @@ checkBandedMatrixSizes(
     //  It is possible to allocate a buffer, and set up lda & ldb such that it looks like it will access outside of the allocated buffer, but if
     //  M & N are kept small, no out of bounds access will occur.  Compensate for the offset values and the unused tail memory caused by lda & ldb.
     //  Ex: BuffSize=6 floats, M=1, N=2, lda=ldb=3, offA = 0, offB = 2 :  |A[0,0]|unused|B[0,0]|A[0,1]|unused|B[0,1]|
-    memUsed = (( offA + matrSize ) > unusedTail) ? offA + matrSize - unusedTail: 0;
+    memUsed = (( offA + matrSize ) > unusedTail) ? offA + matrSize - unusedTail : offA + matrSize;
     if (memUsed > memSize) {
         switch( err )
         {
