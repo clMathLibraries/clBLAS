@@ -14,23 +14,59 @@
 #     functionally works fine, but lowers performance by ~10%
 ################################################################################
 
+"""
+sgemm
+6x6  fallback=[4096,   -1] tile=[ 864,   -1]*
+4x4  fallback=[1408, 4096] tile=[ 576, 5888] needs upper bounds
+2x10 fallback=[  -1,   -1] tile=[ 800, 3680]*
+2x2  fallback=[ 304, 1408] tile=[ 288, 1952]*
+1x1  fallback=[   0,  304] tile=[  16,  784]*
+2x6?
+2x8?
+2x12?
+"""
+
 kernelSelectionData = {
 # prec, tile, fallback range, valid range
     "s":[
       [ [16, 16, 6, 6], [4096,   -1], [784,   -1] ],
-      [ [16, 16, 2,10], [   0,    0], [784, 3040] ],
       [ [16, 16, 4, 4], [1376, 4096], [640,   -1] ],
+      [ [16, 16, 2,14], [   0,    0], [784, 3040] ],
+      [ [16, 16, 2,12], [   0,    0], [784, 3040] ],
+      [ [16, 16, 2,10], [   0,    0], [784, 3040] ],
+      [ [16, 16, 2, 8], [   0,    0], [784, 3040] ],
       [ [16, 16, 2, 2], [ 304, 1376], [288, 1952] ],
       [ [16, 16, 1, 1], [   0,  304], [  0,  784] ],
       ],
     "d":[
+      [ [16, 16, 6, 6], [0, -1], [0, -1] ],
+      [ [16, 16, 4, 8], [0, -1], [0, -1] ],
+      [ [16, 16, 2,10], [0, -1], [0, -1] ],
       [ [16, 16, 4, 4], [0, -1], [0, -1] ],
+      [ [16, 16, 2, 4], [0, -1], [0, -1] ],
+      [ [16, 16, 2, 2], [0, -1], [0, -1] ],
+      [ [16, 16, 1, 2], [0, -1], [0, -1] ],
+      [ [16, 16, 1, 1], [0, -1], [0, -1] ],
       ],
     "c":[
+      [ [16, 16, 6, 6], [0, -1], [0, -1] ],
+      [ [16, 16, 4, 8], [0, -1], [0, -1] ],
+      [ [16, 16, 2,10], [0, -1], [0, -1] ],
       [ [16, 16, 4, 4], [0, -1], [0, -1] ],
+      [ [16, 16, 2, 4], [0, -1], [0, -1] ],
+      [ [16, 16, 2, 2], [0, -1], [0, -1] ],
+      [ [16, 16, 1, 2], [0, -1], [0, -1] ],
+      [ [16, 16, 1, 1], [0, -1], [0, -1] ],
       ],
     "z":[
+      [ [16, 16, 6, 6], [0, -1], [0, -1] ],
+      [ [16, 16, 4, 8], [0, -1], [0, -1] ],
+      [ [16, 16, 2,10], [0, -1], [0, -1] ],
       [ [16, 16, 4, 4], [0, -1], [0, -1] ],
+      [ [16, 16, 2, 4], [0, -1], [0, -1] ],
+      [ [16, 16, 2, 2], [0, -1], [0, -1] ],
+      [ [16, 16, 1, 2], [0, -1], [0, -1] ],
+      [ [16, 16, 1, 1], [0, -1], [0, -1] ],
       ],
     }
 
@@ -88,11 +124,12 @@ def processAllKernelParameterCombinations(argv):
   # tile parameters
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
   microTileMaxEdgeLengthDict = { "s":12, "d":12, "c":12, "z":12 }
-  listUnroll = [ 8, 1 ]
+  listUnroll = [ 8 ]
   #listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []
 
+  """
   kernelSelectionLogic = KernelSelection.KernelSelection( \
       listPrecision, \
       listOrder, \
@@ -101,6 +138,7 @@ def processAllKernelParameterCombinations(argv):
       listUnroll, \
       kernelSelectionData )
   kernelSelectionLogic.writeToFile()
+  """
 
   # list all valid tile parameter combinations
   #listMicroTileDims = [
@@ -135,22 +173,34 @@ def processAllKernelParameterCombinations(argv):
     listTileKernelParameters = []
     tile = KernelParameters.TileParameters()
     for tileData in kernelSelectionData[precision]:
+      #print tileData
       tileParams = tileData[0]
+      #print tileParams
       tile.workGroupNumRows = tileParams[0]
       tile.workGroupNumCols = tileParams[1]
       tile.microTileNumRows = tileParams[2]
       tile.microTileNumCols = tileParams[3]
       tile.macroTileNumRows = tile.workGroupNumRows*tile.microTileNumRows
       tile.macroTileNumCols = tile.workGroupNumCols*tile.microTileNumCols
+      #print tile.getName()
       for unroll in listUnroll:
         tile.unroll = unroll
         if tile.isValid():
-          listTileKernelParameters.append( tile )
+          print "appending " + tile.getName()
+          listTileKernelParameters.append( copy.copy(tile) )
         else:
           print tile.getName() + " - SKIPPING - "
 
     # add tiles for this precision to Cpp
     for tile in listTileKernelParameters:
+      #print tile.getName() + " %ux%u, %ux%u, %ux%u, %u" % ( \
+      #    tile.workGroupNumRows, \
+      #    tile.workGroupNumCols, \
+      #    tile.microTileNumRows, \
+      #    tile.microTileNumCols, \
+      #    tile.macroTileNumRows, \
+      #    tile.macroTileNumCols, \
+      #    tile.unroll )
       cppKernelEnumeration.addTile(tile)
 
     # for non tile parameters

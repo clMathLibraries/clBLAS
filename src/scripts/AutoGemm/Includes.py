@@ -188,13 +188,13 @@ class CppKernelEnumeration:
   def newPrecision(self, precision):
     if self.precisionInitialized:
       self.kernelStr += "};\n"
-      self.kernelStr += "unsigned int %sgemmNumKernels = %d;\n\n" \
+      self.kernelStr += "const unsigned int %sgemmNumKernels = %d;\n\n" \
           % (self.precision, self.kernelCount)
       self.tileStr += "};\n"
-      self.tileStr += "unsigned int %sgemmNumTiles = %d;\n\n" \
+      self.tileStr += "const unsigned int %sgemmNumTiles = %d;\n\n" \
           % (self.precision, self.tileCount)
       self.nonTileStr += "};\n"
-      self.nonTileStr += "unsigned int %sgemmNumNonTiles = %d;\n\n" \
+      self.nonTileStr += "const unsigned int %sgemmNumNonTiles = %d;\n\n" \
           % (self.precision, self.nonTileCount)
     self.precisionInitialized = True
     self.precision = precision
@@ -250,11 +250,11 @@ class CppKernelEnumeration:
 
   def writeToFile(self):
     self.kernelStr += "};\n"
-    self.kernelStr += "unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.kernelCount)
+    self.kernelStr += "const unsigned int %sgemmNumKernels = %d;\n" % (self.precision, self.kernelCount)
     self.tileStr += "};\n"
-    self.tileStr += "unsigned int %sgemmNumTiles = %d;\n" % (self.precision, self.tileCount)
+    self.tileStr += "const unsigned int %sgemmNumTiles = %d;\n" % (self.precision, self.tileCount)
     self.nonTileStr += "};\n"
-    self.nonTileStr += "unsigned int %sgemmNumNonTiles = %d;\n" % (self.precision, self.nonTileCount)
+    self.nonTileStr += "const unsigned int %sgemmNumNonTiles = %d;\n" % (self.precision, self.nonTileCount)
     incFile = open(self.fileName, "w")
     incFile.write( Common.getAutoGemmHeader() )
     incFile.write( self.tileStr )
