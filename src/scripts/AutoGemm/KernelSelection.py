@@ -122,7 +122,7 @@ class KernelSelection:
     for precision in precisionList:
       #print precision + "gemm"
       kernel.precision = precision
-      tilesForPrecision = kernelSelectionData[precision]
+      sizeEvents = kernelSelectionData[precision]
       self.logic += (
           "// " + precision + "gemm kernel selection logic\n"
           "template<>\n"
@@ -215,85 +215,49 @@ class KernelSelection:
                 self.logic += "betaNonZero"
               self.logic += " ) {\n"
 
-
-              ####################################
-              # list the size events
-              sizeEvents = []
-              for tileData in tilesForPrecision:
-                fallbackRange = tileData[1]
-                validRange = tileData[2]
-                sizeEvents.append(fallbackRange[0])
-                sizeEvents.append(fallbackRange[1])
-                sizeEvents.append(validRange[0])
-                sizeEvents.append(validRange[1])
-              sizeEvents = list(set( sizeEvents )) # unique
-              sizeEvents.sort(reverse=True) # largest to smallest
-              sizeEvents.remove(-1)
-              sizeEvents.insert(0, -1)
-              print precision + "gemm sizeEvents: " + str(sizeEvents)
-              # remove -1 from beginiing of list and ? append to end
-
               ####################################
               # if size event
-              numSizeEvents = len(sizeEvents)
-              for eventIdx in range(0, numSizeEvents-1):
-                sizeMax = sizeEvents[eventIdx]
-                sizeMin = sizeEvents[eventIdx+1]
-                self.logic += indent(5) + "if ( M*N >= " + str(sizeMin) + "*" + str(sizeMin)
-                if sizeMax > 0:
-                  self.logic += " && M*N <= " + str(sizeMax) + "*" + str(sizeMax)
-                self.logic += ") {\n"
+              for sizeEvent in sizeEvents:
+                sizeMin = sizeEvent[0]
+                fallbackTile = sizeEvent[1]
+                validTiles = sizeEvent[2]
+                self.logic += indent(5)+"if ( M*N >= "+str(sizeMin)+"*"+str(sizeMin) + ") {\n"
                 #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta) + "_" + str(sizeMin) + "->" + str(sizeMax)
 
                 ####################################
                 # valid tiles
                 self.logic += indent(6)+"// valid tiles\n"
-                #print "\nValid [%i, %i]"%(sizeMin, sizeMax)
-                for tileData in tilesForPrecision:
+                for tileParams in validTiles:
                   tileParams = tileData[0]
-                  #tileFallbackRange = tileData[1]
-                  tileValidRange = tileData[2]
-                  tileValidRangeMin = tileValidRange[0]
-                  tileValidRangeMax = tileValidRange[1]
-                  if tileInRange(tileValidRangeMin, tileValidRangeMax, sizeMin, sizeMax ):
-                    # this tile is valid for this size range
-                    kernel.workGroupNumRows = tileParams[0]
-                    kernel.workGroupNumCols = tileParams[1]
-                    kernel.microTileNumRows = tileParams[2]
-                    kernel.microTileNumCols = tileParams[3]
-                    kernel.macroTileNumRows = tileParams[0]*tileParams[2]
-                    kernel.macroTileNumCols = tileParams[1]*tileParams[3]
-                    for unroll in unrollList:
-                      kernel.unroll = unroll
-                      self.logic += indent(6)+"if ( M%%%d == 0 && N%%%d == 0 && K%%%d == 0) {\n" \
-                          % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
-                      self.addBodyForKernel( kernel )
-                      self.logic += indent(6) + "}\n"
+                  kernel.workGroupNumRows = tileParams[0]
+                  kernel.workGroupNumCols = tileParams[1]
+                  kernel.microTileNumRows = tileParams[2]
+                  kernel.microTileNumCols = tileParams[3]
+                  kernel.macroTileNumRows = kernel.workGroupNumRows*kernel.microTileNumRows
+                  kernel.macroTileNumCols = kernel.workGroupNumCols*kernel.microTileNumCols
+                  for unroll in unrollList:
+                    kernel.unroll = unroll
+                    self.logic += indent(6)+"if ( M%%%d == 0 && N%%%d == 0 && K%%%d == 0) {\n" \
+                        % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
+                    self.addBodyForKernel( kernel )
+                    self.logic += indent(6) + "}\n"
 
                 ####################################
                 # fallback tile - TODO all tiles begin added
                 self.logic += indent(6)+"// fallback tile\n"
                 #print "\nFallback[%i, %i]"%(sizeMin, sizeMax)
-                for tileData in tilesForPrecision:
-                  tileParams = tileData[0]
-                  tileFallbackRange = tileData[1]
-                  #tileValidRange = tileData[2]
-                  tileFallbackRangeMin = tileFallbackRange[0]
-                  tileFallbackRangeMax = tileFallbackRange[1]
-                  if tileInRange(tileFallbackRangeMin, tileFallbackRangeMax, sizeMin, sizeMax):
-                    # this is the fallback tile
-                    kernel.workGroupNumRows = tileParams[0]
-                    kernel.workGroupNumCols = tileParams[1]
-                    kernel.microTileNumRows = tileParams[2]
-                    kernel.microTileNumRows = tileParams[3]
-                    kernel.macroTileNumRows = tileParams[0]*tileParams[2]
-                    kernel.macroTileNumCols = tileParams[1]*tileParams[3]
-                    for unroll in unrollList:
-                      kernel.unroll = unroll
-                      self.logic += indent(6)+"if ( K%%%d == 0 ) {\n" \
-                          % (kernel.getMultipleK())
-                      self.addBodyForKernel( kernel )
-                      self.logic += indent(6) + "}\n"
+                kernel.workGroupNumRows = fallbackTile[0]
+                kernel.workGroupNumCols = fallbackTile[1]
+                kernel.microTileNumRows = fallbackTile[2]
+                kernel.microTileNumRows = fallbackTile[3]
+                kernel.macroTileNumRows = kernel.workGroupNumRows*kernel.microTileNumRows
+                kernel.macroTileNumCols = kernel.workGroupNumCols*kernel.microTileNumCols
+                for unroll in unrollList:
+                  kernel.unroll = unroll
+                  self.logic += indent(6)+"if ( K%%%d == 0 ) {\n" \
+                      % (kernel.getMultipleK())
+                  self.addBodyForKernel( kernel )
+                  self.logic += indent(6) + "}\n"
 
                 ####################################
                 # end size event
