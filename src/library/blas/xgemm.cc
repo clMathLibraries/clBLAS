@@ -17,7 +17,7 @@
 
 #include <string.h>
 #include <clBLAS.h>
-#include "GemmKernelSelection.h"
+#include "AutoGemmKernelSelection.h"
 
  #include <functor.h>
 // #include <functor_selector.h>
