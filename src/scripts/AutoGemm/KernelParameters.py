@@ -7,7 +7,7 @@ import Common
 ################################################################################
 class TileParameters:
 
-  nameFormat = "%03d_%03d_%02d_%02dx%02d_%01dx%01d"
+  nameFormat = "%03d_%03d_%02d_%02dx%02d_%02dx%02d"
 
   ##############################################################################
   # Tile - constructors
@@ -20,6 +20,27 @@ class TileParameters:
     self.macroTileNumRows = -1
     self.macroTileNumCols = -1
     self.unroll           = -1
+
+  def __eq__(self, other):
+    return self.workGroupNumRows == other.workGroupNumRows \
+        and self.workGroupNumCols == other.workGroupNumCols \
+        and self.microTileNumRows == other.microTileNumRows \
+        and self.microTileNumCols == other.microTileNumCols \
+        and self.unroll == other.unroll
+  def __ni__(self, other):
+    return not self.__eq__(other)
+  def __hash__(self):
+    return \
+        self.workGroupNumRows*2*8*8*256 + \
+        self.workGroupNumCols*2*8*8 + \
+        self.microTileNumRows*2*8 + \
+        self.microTileNumCols*2 + \
+        self.unroll
+  def __str__(self):
+    return self.getName()
+  def __repr__(self):
+    return self.getName()
+
 
   def printAttributes(self):
     print "workGroupNumRows = %d" % self.workGroupNumRows

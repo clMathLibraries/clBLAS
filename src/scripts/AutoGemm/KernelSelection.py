@@ -69,18 +69,19 @@ class KernelSelection:
       betaList, \
       unrollList, \
       kernelSelectionData):
-    self.kernelSelectionFileName = Common.getOutputPath() + "GemmKernelSelection.h"
+    self.kernelSelectionFileName = Common.getOutputPath() + "AutoGemmKernelSelection.h"
 
     self.logic = (
-      "#include \"GemmSourceIncludes.h\"\n"
+      "#include \"UserGemmKernelSourceIncludes.h\"\n"
+      "#include \"AutoGemmKernelSourceIncludes.h\"\n"
       "#if USE_GEMM_KERNEL_BINARIES\n"
-      "#include \"GemmBinaryIncludes.h\"\n"
+      "#include \"AutoGemmKernelBinaryIncludes.h\"\n"
       "#else\n"
-      "#include \"GemmBinaryNulls.h\"\n"
+      "#include \"AutoGemmKernelBinaryNulls.h\"\n"
       "#endif\n"
-      "#include \"GemmKernelSourceBuildOptions.h\"\n"
-      "#include \"GemmKernelBinaryBuildOptions.h\"\n"
-      "#include \"GemmClKernels.h\"\n"
+      "#include \"AutoGemmKernelSourceBuildOptions.h\"\n"
+      "#include \"AutoGemmKernelBinaryBuildOptions.h\"\n"
+      "#include \"AutoGemmClKernels.h\"\n"
       "\n"
       "#define EXACT_MULTIPLES(MULTIPLE_STR) MULTIPLE_STR\n"
       "\n"
@@ -228,7 +229,6 @@ class KernelSelection:
                 # valid tiles
                 self.logic += indent(6)+"// valid tiles\n"
                 for tileParams in validTiles:
-                  tileParams = tileData[0]
                   kernel.workGroupNumRows = tileParams[0]
                   kernel.workGroupNumCols = tileParams[1]
                   kernel.microTileNumRows = tileParams[2]
@@ -249,7 +249,7 @@ class KernelSelection:
                 kernel.workGroupNumRows = fallbackTile[0]
                 kernel.workGroupNumCols = fallbackTile[1]
                 kernel.microTileNumRows = fallbackTile[2]
-                kernel.microTileNumRows = fallbackTile[3]
+                kernel.microTileNumCols = fallbackTile[3]
                 kernel.macroTileNumRows = kernel.workGroupNumRows*kernel.microTileNumRows
                 kernel.macroTileNumCols = kernel.workGroupNumCols*kernel.microTileNumCols
                 for unroll in unrollList:
@@ -335,18 +335,19 @@ class KernelSelectionSpecific:
   ##############################################################################
   def __init__(self):
 
-    self.kernelSelectionFileName = Common.getOutputPath() + "GemmKernelSelectionSpecific.h"
+    self.kernelSelectionFileName = Common.getOutputPath() + "AutoGemmKernelSelectionSpecific.h"
 
     self.logic = (
-      "#include \"GemmSourceIncludes.h\"\n"
+      "#include \"UserGemmKernelSourceIncludes.h\"\n"
+      "#include \"AutoGemmKernelSourceIncludes.h\"\n"
       "#if USE_GEMM_KERNEL_BINARIES\n"
-      "#include \"GemmBinaryIncludes.h\"\n"
+      "#include \"AutoGemmKernelBinaryIncludes.h\"\n"
       "#else\n"
-      "#include \"GemmBinaryNulls.h\"\n"
+      "#include \"AutoGemmKernelBinaryNulls.h\"\n"
       "#endif\n"
-      "#include \"GemmKernelSourceBuildOptions.h\"\n"
-      "#include \"GemmKernelBinaryBuildOptions.h\"\n"
-      "#include \"GemmClKernels.h\"\n"
+      "#include \"AutoGemmKernelSourceBuildOptions.h\"\n"
+      "#include \"AutoGemmKernelBinaryBuildOptions.h\"\n"
+      "#include \"AutoGemmClKernels.h\"\n"
       "\n"
       "// kernel selection specific template\n"
       "template<typename Precision>\n"

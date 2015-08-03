@@ -6,10 +6,10 @@ def getOutputPath():
   return "output/"
 
 def getKernelSourcePath():
-  return getOutputPath() + "GemmKernelSources/"
+  return getOutputPath() + "AutoGemmKernelSources/"
 
 def getKernelBinaryPath():
-  return getOutputPath() + "GemmKernelBinaries/"
+  return getOutputPath() + "AutoGemmKernelBinaries/"
 
 def getAutoGemmHeader():
   return (

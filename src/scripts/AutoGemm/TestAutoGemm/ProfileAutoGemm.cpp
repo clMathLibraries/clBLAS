@@ -12,12 +12,12 @@
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
-#include "GemmKernelSelectionSpecific.h"
-#include "GemmKernelEnumeration.h"
+#include "AutoGemmKernelSelectionSpecific.h"
+#include "AutoGemmKernelEnumeration.h"
 
 #define SGEMM 0
-#define DGEMM 1
-#define CGEMM 0
+#define DGEMM 0
+#define CGEMM 1
 #define ZGEMM 0
 
 #define RANDOM_DATA   1

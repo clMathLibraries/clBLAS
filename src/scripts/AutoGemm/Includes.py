@@ -12,20 +12,20 @@ class KernelSourceIncludes:
   # SINC - default constructor
   ##############################################################################
   def __init__(self):
-    self.fileName = Common.getOutputPath() + "GemmSourceIncludes.h"
-    self.fileStr = "#ifndef GEMM_SOURCE_INCLUDES_H\n"
-    self.fileStr += "#define GEMM_SOURCE_INCLUDES_H\n"
+    self.fileName = Common.getOutputPath() + "AutoGemmKernelSourceIncludes.h"
+    self.fileStr = "#ifndef AUTO_GEMM_KERNEL_SOURCE_INCLUDES_H\n"
+    self.fileStr += "#define AUTO_GEMM_KERNEL_SOURCE_INCLUDES_H\n"
     self.fileStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
-    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"AutoGemmKernelSources/%s_src.h\"\n" % kernelName
     kernelName = kernel.getRowName()
-    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"AutoGemmKernelSources/%s_src.h\"\n" % kernelName
     kernelName = kernel.getColName()
-    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"AutoGemmKernelSources/%s_src.h\"\n" % kernelName
     kernelName = kernel.getCornerName()
-    self.fileStr += "#include \"GemmKernelSources/%s_src.h\"\n" % kernelName
+    self.fileStr += "#include \"AutoGemmKernelSources/%s_src.h\"\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
@@ -44,27 +44,27 @@ class KernelBinaryIncludes:
   # BINC - default constructor
   ##############################################################################
   def __init__(self):
-    self.incFileName = Common.getOutputPath() + "GemmBinaryIncludes.h"
-    self.incStr = "#ifndef GEMM_BINARY_INCLUDES_H\n"
-    self.incStr += "#define GEMM_BINARY_INCLUDES_H\n"
+    self.incFileName = Common.getOutputPath() + "AutoGemmKernelBinaryIncludes.h"
+    self.incStr = "#ifndef AUTO_GEMM_KERNEL_BINARY_INCLUDES_H\n"
+    self.incStr += "#define AUTO_GEMM_KERNEL_BINARY_INCLUDES_H\n"
     self.incStr += "\n"
-    self.nullFileName = Common.getOutputPath() + "GemmBinaryNulls.h"
-    self.nullStr = "#ifndef GEMM_BINARY_NULLS_H\n"
-    self.nullStr += "#define GEMM_BINARY_NULLS_H\n"
+    self.nullFileName = Common.getOutputPath() + "AutoGemmKernelBinaryNulls.h"
+    self.nullStr = "#ifndef AUTO_GEMM_KERNEL_BINARY_NULLS_H\n"
+    self.nullStr += "#define AUTO_GEMM_KERNEL_BINARY_NULLS_H\n"
     self.nullStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
-    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
     self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
     kernelName = kernel.getRowName()
-    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
     self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
     kernelName = kernel.getColName()
-    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
     self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
     kernelName = kernel.getCornerName()
-    self.incStr += "#include \"GemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
     self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
 
   def writeToFile(self):
@@ -89,9 +89,9 @@ class ClKernelIncludes:
   # CINC - default constructor
   ##############################################################################
   def __init__(self):
-    self.fileName = Common.getOutputPath() + "GemmClKernels.h"
-    self.fileStr = "#ifndef GEMM_CL_KERNELS_H\n"
-    self.fileStr += "#define GEMM_CL_KERNELS_H\n"
+    self.fileName = Common.getOutputPath() + "AutoGemmClKernels.h"
+    self.fileStr = "#ifndef AUTO_GEMM_CL_KERNELS_H\n"
+    self.fileStr += "#define AUTO_GEMM_CL_KERNELS_H\n"
     self.fileStr += "#include \"CL/cl.h\"\n"
     self.fileStr += "\n"
 
@@ -122,9 +122,9 @@ class KernelSourceBuildOptions:
   # KSBO - default constructor
   ##############################################################################
   def __init__(self):
-    self.fileName = Common.getOutputPath() + "GemmKernelSourceBuildOptions.h"
-    self.fileStr = "#ifndef GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
-    self.fileStr += "#define GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
+    self.fileName = Common.getOutputPath() + "AutoGemmKernelSourceBuildOptions.h"
+    self.fileStr = "#ifndef AUTO_GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
+    self.fileStr += "#define AUTO_GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
     self.fileStr += "\n"
 
   def addKernel(self, kernel):
@@ -149,9 +149,9 @@ class KernelBinaryBuildOptions:
   # KBSO - default constructor
   ##############################################################################
   def __init__(self):
-    self.fileName = Common.getOutputPath() + "GemmKernelBinaryBuildOptions.h"
-    self.fileStr = "#ifndef GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
-    self.fileStr += "#define GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
+    self.fileName = Common.getOutputPath() + "AutoGemmKernelBinaryBuildOptions.h"
+    self.fileStr = "#ifndef AUTO_GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
+    self.fileStr += "#define AUTO_GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
     self.fileStr += "\n"
 
   def addKernel(self, kernel):
@@ -175,7 +175,7 @@ class CppKernelEnumeration:
   # CPPKE - default constructor
   ##############################################################################
   def __init__(self):
-    self.fileName = Common.getOutputPath() + "GemmKernelEnumeration.h"
+    self.fileName = Common.getOutputPath() + "AutoGemmKernelEnumeration.h"
     self.kernelStr = ""
     self.tileStr = ""
     self.nonTileStr = ""
