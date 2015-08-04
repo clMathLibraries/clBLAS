@@ -196,9 +196,9 @@ class KernelSelection:
             #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB
             kernel.transB = transB
             self.logic += indent(3) + "if (transB == "
-            if transA == "N":
+            if transB == "N":
               self.logic += "clblasNoTrans"
-            elif transA == "T":
+            elif transB == "T":
               self.logic += "clblasTrans"
             else:
               self.logic += "clblasConjTrans"

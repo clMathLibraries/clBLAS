@@ -337,7 +337,7 @@ def makeOpenCLKernelString(kernel):
       kStr += "( globalARow(%d) >= M) ? %s : " % ( a, zeroString )
     kStr += "A[ GET_GLOBAL_INDEX_A( globalARow(%d), globalACol(%d) ) ];%s" % (a, a, endLine)
   if numALoadsR:
-    kStr += "    if (localSerial < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {" + endLine
+    kStr += "    if ( localSerial + " + str(numALoads) + "*WG_NUM_ROWS*WG_NUM_COLS < (WG_NUM_ROWS*MICRO_TILE_NUM_ROWS*NUM_UNROLL_ITER) ) {" + endLine
     kStr += "      lA[ %d*localAStride ] = " % numALoads
     if kernel.isRowKernel():
       kStr += "( globalARow(%d) >= M) ? %s : " % ( numALoads, zeroString )
@@ -350,7 +350,7 @@ def makeOpenCLKernelString(kernel):
       kStr += "( globalBCol(%d) >= N) ? %s : " % ( b, zeroString )
     kStr += "B[ GET_GLOBAL_INDEX_B( globalBRow(%d), globalBCol(%d) ) ];%s" % (b, b, endLine)
   if numBLoadsR:
-    kStr += "    if (localSerial < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {" + endLine
+    kStr += "    if ( localSerial + " + str(numBLoads) + "*WG_NUM_ROWS*WG_NUM_COLS < (WG_NUM_COLS*MICRO_TILE_NUM_COLS*NUM_UNROLL_ITER) ) {" + endLine
     kStr += "      lB[ %d*localBStride ] = " % numBLoads
     if kernel.isColKernel():
       kStr += "(globalBCol(%d) >= N) ? %s : " % ( numBLoads, zeroString )

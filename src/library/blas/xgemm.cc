@@ -298,13 +298,13 @@ clblasGemm(
   //optimalNumElementsPerThread = 32;
   bool betaNonZero = !isZero(beta);
 
-#if 0
+#if 1
   printf("%sgemm %s, transA=%s, transB=%s, M=%llu, N=%llu, K=%llu, beta=%u, onept=%f }\n",
       getPrecision<Precision>(),
       order==clblasColumnMajor ? "ColMajor" : "RowMajor",
       transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
       transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
-      M, N, K,
+      iM, iN, iK,
       betaNonZero ? 1 : 0,
       optimalNumElementsPerThread );
 #endif
@@ -403,7 +403,7 @@ clblasGemm(
   bool needRowKernel = M%macroTileNumRows > 0 && N/macroTileNumCols > 0;
   bool needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
   bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
-#if 0
+#if 1
   printf("For M,N,K = %u,%u,%u and %u CUs selected tile is wg=%ux%u, microTile=%ux%u, macroTile=%ux%u kernelsNeeded=%u,%u,%u,%u\n",
     M, N, K, clDeviceNumCUs,
     workGroupNumRows, workGroupNumCols,

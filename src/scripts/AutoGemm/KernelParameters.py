@@ -66,6 +66,8 @@ class TileParameters:
   # Tile - are tile parameters valid?
   ##############################################################################
   def isValid(self):
+    return True
+    """
     numALoads = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
         / (self.workGroupNumRows*self.workGroupNumCols)
     numALoadsR = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
@@ -92,6 +94,7 @@ class TileParameters:
       return False
     else:
       return True
+    """
 
 
   ##############################################################################

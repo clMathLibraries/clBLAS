@@ -9,8 +9,9 @@
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
-#include "GemmKernelSelection.h"
-#include "GemmKernelEnumeration.h"
+#include "AutoGemmKernelSelection.h"
+#include "AutoGemmKernelSelectionSpecific.h"
+#include "AutoGemmKernelEnumeration.h"
 #if 0
 // from clBLAS.h
 typedef enum clblasOrder_ {
@@ -32,7 +33,7 @@ typedef enum clblasTranspose_ {
 #define ZGEMM 0
 
 #define RANDOM_DATA   1
-#define DO_VALIDATION 0
+#define DO_VALIDATION 1
 
 #if SGEMM
 #define DATA_TYPE float
@@ -412,19 +413,9 @@ void testKernelParameterCombination(
   unsigned int retMicroTileNumCols;
   unsigned int retUnroll;
 
+#if 0
     //printf("Creating kernel.\n");
-#if SGEMM
-  gemmSelectKernel<float>(
-#endif
-#if DGEMM
-  dgemmSelectKernel(
-#endif
-#if CGEMM
-  cgemmSelectKernel(
-#endif
-#if ZGEMM
-  zgemmSelectKernel(
-#endif
+  gemmSelectKernel<DATA_TYPE>(
     order,
     transA,
     transB,
@@ -433,7 +424,6 @@ void testKernelParameterCombination(
     K,
     betaNonZero==1,
     optimalNumElementsPerWorkItem,
-
     &tileKernelSource,
     &rowKernelSource,
     &colKernelSource,
@@ -454,13 +444,35 @@ void testKernelParameterCombination(
     &retMicroTileNumCols,
     &retUnroll
   );
+  bool kernelFound = tileKernelSource != NULL;
+#else
+  bool kernelFound = gemmSelectKernelSpecific<DATA_TYPE>(
+    order,
+    transA,
+    transB,
+    betaNonZero==1,
+    workGroupNumRows,
+    workGroupNumCols,
+    microTileNumRows,
+    microTileNumCols,
+    unroll,
+    &tileKernelSource,
+    &rowKernelSource,
+    &colKernelSource,
+    &cornerKernelSource,
+    &sourceBuildOptions,
+    &tileKernelBinary,
+    &rowKernelBinary,
+    &colKernelBinary,
+    &cornerKernelBinary,
+    &binaryBuildOptions,
+    &tileClKernel,
+    &rowClKernel,
+    &colClKernel,
+    &cornerClKernel );
+#endif
 
-  if ( retWorkGroupNumRows != workGroupNumRows
-    || retWorkGroupNumCols != workGroupNumCols
-    || retMicroTileNumRows != microTileNumRows
-    || retMicroTileNumCols != microTileNumCols
-    || retUnroll           != unroll
-    ) {
+  if ( !kernelFound ) {
       printf("ERROR: selected kernel doesn't match desired kernel: %u==%u, %u=%u, %u==%u, %u==%u, %u==%u\n",
         retWorkGroupNumRows, workGroupNumRows,
         retWorkGroupNumCols, workGroupNumCols,
@@ -475,22 +487,22 @@ void testKernelParameterCombination(
    ***************************************************************************/
   //printf("%s", tileKernelSource);
   assert(tileKernelSource != NULL);
-  tileClKernel = createKernel(tileKernelSource, context, sourceBuildOptions, &err);
+  *tileClKernel = createKernel(tileKernelSource, context, sourceBuildOptions, &err);
   assert(tileClKernel != NULL);
-  err = clSetKernelArg(tileClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
-  err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
+  err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
   // kernel dimensions
   const size_t localWorkSize[2] = { workGroupNumRows, workGroupNumCols };
   size_t tileKernelGlobalWorkSize[2] = { (M/(macroTileNumRows))*workGroupNumRows, (N/(macroTileNumCols))*workGroupNumCols };
@@ -503,22 +515,22 @@ void testKernelParameterCombination(
    ***************************************************************************/
   if (mSpill) {
     assert(rowKernelSource != NULL);
-    rowClKernel = createKernel(rowKernelSource, context, sourceBuildOptions, &err);
+    *rowClKernel = createKernel(rowKernelSource, context, sourceBuildOptions, &err);
     assert(rowClKernel != NULL);
-    err = clSetKernelArg(rowClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
-    err = clSetKernelArg(rowClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
     // kernel dimensions
   }
   
@@ -527,22 +539,22 @@ void testKernelParameterCombination(
    ***************************************************************************/
   if (nSpill) {
     assert(colKernelSource != NULL);
-    colClKernel = createKernel(colKernelSource, context, sourceBuildOptions, &err);
+    *colClKernel = createKernel(colKernelSource, context, sourceBuildOptions, &err);
     assert(colClKernel != NULL);
-    err = clSetKernelArg(colClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
-    err = clSetKernelArg(colClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
-    err = clSetKernelArg(colClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
-    err = clSetKernelArg(colClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
-    err = clSetKernelArg(colClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
-    err = clSetKernelArg(colClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
     // kernel dimensions
   }
   
@@ -551,22 +563,22 @@ void testKernelParameterCombination(
    ***************************************************************************/
   if (mSpill && nSpill) {
     assert(cornerKernelSource != NULL);
-    cornerClKernel = createKernel(cornerKernelSource, context, sourceBuildOptions, &err);
+    *cornerClKernel = createKernel(cornerKernelSource, context, sourceBuildOptions, &err);
     assert(cornerClKernel != NULL);
-    err = clSetKernelArg(cornerClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
-    err = clSetKernelArg(cornerClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel, 11, sizeof(cl_uint),   &offA);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel, 12, sizeof(cl_uint),   &offB);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel, 13, sizeof(cl_uint),   &offC);   CL_CHECK(err);
     // kernel dimensions
   }
 
@@ -584,7 +596,7 @@ void testKernelParameterCombination(
     for (unsigned int flushIdx = 0; flushIdx < numFlushesPerFinish; flushIdx++) {
       for (unsigned int enqIdx = 0; enqIdx < numEnqueuesPerFlush; enqIdx++) {
         // tile kernel
-        err = clEnqueueNDRangeKernel(queue, tileClKernel, workDim, NULL,
+        err = clEnqueueNDRangeKernel(queue, *tileClKernel, workDim, NULL,
             tileKernelGlobalWorkSize, localWorkSize, 0, NULL, &kernelEvents[kernelIdx]);
         CL_CHECK(err);
         kernelIdx++;
@@ -592,7 +604,7 @@ void testKernelParameterCombination(
         // row kernel
         if (mSpill) {
           printf("launching rowKernel %ux%u threads b/c M=%u\n", rowKernelGlobalWorkSize[0], rowKernelGlobalWorkSize[1], M);
-          err = clEnqueueNDRangeKernel(queue, rowClKernel, workDim, NULL,
+          err = clEnqueueNDRangeKernel(queue, *rowClKernel, workDim, NULL,
               rowKernelGlobalWorkSize, localWorkSize, 0, NULL, &kernelEvents[kernelIdx]);
           CL_CHECK(err);
           kernelIdx++;
@@ -600,7 +612,7 @@ void testKernelParameterCombination(
         // col kernel
         if (nSpill) {
           printf("launching colKernel %ux%u threads b/c N=%u\n", colKernelGlobalWorkSize[0], colKernelGlobalWorkSize[1], N);
-          err = clEnqueueNDRangeKernel(queue, colClKernel, workDim, NULL,
+          err = clEnqueueNDRangeKernel(queue, *colClKernel, workDim, NULL,
               colKernelGlobalWorkSize, localWorkSize, 0, NULL, &kernelEvents[kernelIdx]);
           CL_CHECK(err);
           kernelIdx++;
@@ -608,7 +620,7 @@ void testKernelParameterCombination(
         // corner kernel
         if (mSpill && nSpill) {
           printf("launching crnKernel %ux%u threads b/c M=%u, N=%u\n", cornerKernelGlobalWorkSize[0], cornerKernelGlobalWorkSize[1], M, N);
-          err = clEnqueueNDRangeKernel(queue, cornerClKernel, workDim, NULL,
+          err = clEnqueueNDRangeKernel(queue, *cornerClKernel, workDim, NULL,
               cornerKernelGlobalWorkSize, localWorkSize, 0, NULL, &kernelEvents[kernelIdx]);
           CL_CHECK(err);
           kernelIdx++;
@@ -712,6 +724,7 @@ void testKernelParameterCombination(
         printf("%s", tileKernelSource );
     }
     fflush(stdout);
+    system("PAUSE");
 #endif
 
     err = clReleaseMemObject(bufA); CL_CHECK(err);
@@ -731,7 +744,9 @@ void testKernelParameterCombination(
 
 
 int main(void) {
-  for (unsigned int kernelIdx = 0; kernelIdx < sgemmNumKernels; kernelIdx++) {
+
+#if 0
+  for (unsigned int kernelIdx = 6; kernelIdx < sgemmNumTiles; kernelIdx++) {
     
     srand((unsigned int)time(NULL));
 
@@ -763,6 +778,34 @@ int main(void) {
       mSpill,
       nSpill );
   } // end for
+#endif
+  
+    unsigned int columnMajor = 1;
+    unsigned int transA = 0;
+    unsigned int transB = 1;
+    unsigned int betaNonZero = 0;
+    unsigned int workGroupNumRows = 16;
+    unsigned int workGroupNumCols = 16;
+    unsigned int microTileNumRows = 3;
+    unsigned int microTileNumCols = 3;
+    unsigned int unroll = 8;
+    unsigned int mSpill = 0;
+    unsigned int nSpill = 0;
+
+    
+    testKernelParameterCombination(
+      columnMajor,
+      transA,
+      transB,
+      betaNonZero,
+      workGroupNumRows,
+      workGroupNumCols,
+      microTileNumRows,
+      microTileNumCols,
+      unroll,
+      mSpill,
+      nSpill );
+
 
   
     //system("PAUSE");

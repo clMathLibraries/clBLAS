@@ -15,9 +15,9 @@ using namespace NaiveBlas;
 #include "AutoGemmKernelSelectionSpecific.h"
 #include "AutoGemmKernelEnumeration.h"
 
-#define SGEMM 0
+#define SGEMM 1
 #define DGEMM 0
-#define CGEMM 1
+#define CGEMM 0
 #define ZGEMM 0
 
 #define RANDOM_DATA   1
@@ -29,8 +29,8 @@ using namespace NaiveBlas;
 const unsigned int numTiles = sgemmNumTiles;
 const unsigned int numNonTiles = sgemmNumNonTiles;
 const unsigned int numKernels = sgemmNumKernels;
-char *ksrFileName = "sgemm_kernel_selection_rules.txt";
-char *rawFileName = "sgemm_raw_data.csv";
+char *ksrFileName = "prof_sgemm_ksr.txt";
+char *rawFileName = "prof_sgemm_raw.csv";
 
 #endif
 
@@ -40,8 +40,8 @@ char *rawFileName = "sgemm_raw_data.csv";
 const unsigned int numTiles = dgemmNumTiles;
 const unsigned int numNonTiles = dgemmNumNonTiles;
 const unsigned int numKernels = dgemmNumKernels;
-char *ksrFileName = "dgemm_kernel_selection_rules.txt";
-char *rawFileName = "dgemm_raw_data.csv";
+char *ksrFileName = "prof_dgemm_ksr.txt";
+char *rawFileName = "prof_dgemm_raw.csv";
 #endif
 
 #if CGEMM
@@ -50,8 +50,8 @@ char *rawFileName = "dgemm_raw_data.csv";
 const unsigned int numTiles = cgemmNumTiles;
 const unsigned int numNonTiles = cgemmNumNonTiles;
 const unsigned int numKernels = cgemmNumKernels;
-char *ksrFileName = "cgemm_kernel_selection_rules.txt";
-char *rawFileName = "cgemm_raw_data.csv";
+char *ksrFileName = "prof_cgemm_ksr.txt";
+char *rawFileName = "prof_cgemm_raw.csv";
 #endif
 
 #if ZGEMM
@@ -60,8 +60,8 @@ char *rawFileName = "cgemm_raw_data.csv";
 const unsigned int numTiles = zgemmNumTiles;
 const unsigned int numNonTiles = zgemmNumNonTiles;
 const unsigned int numKernels = zgemmNumKernels;
-char *ksrFileName = "zgemm_kernel_selection_rules.txt";
-char *rawFileName = "zgemm_raw_data.csv";
+char *ksrFileName = "prof_zgemm_ksr.txt";
+char *rawFileName = "prof_zgemm_raw.csv";
 #endif
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -605,18 +605,7 @@ float benchmarkKernel(
 
     //printf("Creating kernel.\n");
   bool kernelFound = 
-#if SGEMM
-  gemmSelectKernelSpecific<float>(
-#endif
-#if DGEMM
-  gemmSelectKernelSpecific<double>(
-#endif
-#if CGEMM
-  gemmSelectKernelSpecific<FloatComplex>(
-#endif
-#if ZGEMM
-  gemmSelectKernelSpecific<DoubleComplex>(
-#endif
+  gemmSelectKernelSpecific<DATA_TYPE>(
     order,
     transA,
     transB,
@@ -641,6 +630,8 @@ float benchmarkKernel(
     &colClKernel,
     &cornerClKernel
   );
+
+
 
   if ( !kernelFound ) {
       printf("ERROR: couldn't find kernel\n" );
@@ -821,7 +812,7 @@ float benchmarkKernel(
  * Main
  ***************************************************************************/
 int main(void) {
-  file.open("benchmark.csv", std::ios_base::out); // or ::app for append
+  file.open(rawFileName, std::ios_base::out); // or ::app for append
   file << "M, N, ";
   bool printDetails = true;
   // load tiles for precision
