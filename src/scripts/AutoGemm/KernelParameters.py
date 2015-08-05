@@ -7,7 +7,10 @@ import Common
 ################################################################################
 class TileParameters:
 
-  nameFormat = "%03d_%03d_%02d_%02dx%02d_%02dx%02d"
+  nameFormatTile    = "MX%03d_NX%03d_KX%02d"
+  nameFormatRow     = "ML%03d_NX%03d_KX%02d"
+  nameFormatCol     = "MX%03d_NL%03d_KX%02d"
+  nameFormatCorner  = "ML%03d_NL%03d_KX%02d"
 
   ##############################################################################
   # Tile - constructors
@@ -101,25 +104,36 @@ class TileParameters:
   # Tile - get Name
   ##############################################################################
   def getName(self):
-    return self.nameFormat \
-        % ( self.macroTileNumRows, self.macroTileNumCols, self.unroll, \
-        self.workGroupNumRows, self.workGroupNumCols, \
-        self.microTileNumRows, self.microTileNumCols)
+    if self.macroTileNumRows < self.workGroupNumRows*self.microTileNumRows:
+      if self.macroTileNumCols < self.workGroupNumCols*self.microTileNumCols:
+        return self.nameFormatCorner \
+            % ( (self.workGroupNumRows*self.microTileNumRows), \
+            (self.workGroupNumCols*self.microTileNumCols), self.unroll )
+      else:
+        return self.nameFormatRow \
+            % ( (self.workGroupNumRows*self.microTileNumRows), \
+            (self.workGroupNumCols*self.microTileNumCols), self.unroll )
+    else:
+      if self.macroTileNumCols < self.workGroupNumCols*self.microTileNumCols:
+        return self.nameFormatCol \
+            % ( (self.workGroupNumRows*self.microTileNumRows), \
+            (self.workGroupNumCols*self.microTileNumCols), self.unroll )
+      else:
+        return self.nameFormatTile \
+            % ( (self.workGroupNumRows*self.microTileNumRows), \
+            (self.workGroupNumCols*self.microTileNumCols), self.unroll )
   def getRowName(self):
-    return self.nameFormat \
-        % ( 1, self.macroTileNumCols, self.unroll, \
-        self.workGroupNumRows, self.workGroupNumCols, \
-        self.microTileNumRows, self.microTileNumCols)
+    return self.nameFormatRow \
+        % ( (self.workGroupNumRows*self.microTileNumRows), \
+        (self.workGroupNumCols*self.microTileNumCols), self.unroll )
   def getColName(self):
-    return self.nameFormat \
-        % ( self.macroTileNumRows, 1, self.unroll, \
-        self.workGroupNumRows, self.workGroupNumCols, \
-        self.microTileNumRows, self.microTileNumCols)
+    return self.nameFormatCol \
+        % ( (self.workGroupNumRows*self.microTileNumRows), \
+        (self.workGroupNumCols*self.microTileNumCols), self.unroll )
   def getCornerName(self):
-    return self.nameFormat \
-        % ( 1, 1, self.unroll, \
-        self.workGroupNumRows, self.workGroupNumCols, \
-        self.microTileNumRows, self.microTileNumCols)
+    return self.nameFormatCorner \
+        % ( (self.workGroupNumRows*self.microTileNumRows), \
+        (self.workGroupNumCols*self.microTileNumCols), self.unroll )
 
   ##############################################################################
   # Row Kernel

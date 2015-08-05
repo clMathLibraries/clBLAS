@@ -473,12 +473,12 @@ void testKernelParameterCombination(
 #endif
 
   if ( !kernelFound ) {
-      printf("ERROR: selected kernel doesn't match desired kernel: %u==%u, %u=%u, %u==%u, %u==%u, %u==%u\n",
-        retWorkGroupNumRows, workGroupNumRows,
-        retWorkGroupNumCols, workGroupNumCols,
-        retMicroTileNumRows, microTileNumRows,
-        retMicroTileNumCols, microTileNumCols,
-        retUnroll, unroll
+      printf("ERROR: selected kernel doesn't match desired kernel: %u, %u, %u, %u, %u\n",
+         workGroupNumRows,
+         workGroupNumCols,
+         microTileNumRows,
+         microTileNumCols,
+         unroll
     );
   }
 

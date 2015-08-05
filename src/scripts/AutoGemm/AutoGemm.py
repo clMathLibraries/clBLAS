@@ -99,7 +99,6 @@ import KernelOpenCL
 
 
 # global variables
-totalParameterCombinations = 0
 validParameterCombinations = 0
 
 
@@ -107,7 +106,7 @@ validParameterCombinations = 0
 # Main
 ################################################################################
 def main(argv):
-  global totalParameterCombinations, validParameterCombinations
+  global validParameterCombinations
 
   # create output directories if needed
   if not os.path.exists( Common.getOutputPath() ):
@@ -118,7 +117,7 @@ def main(argv):
     os.makedirs( Common.getKernelBinaryPath() )
 
   processAllKernelParameterCombinations(argv)
-  print "%d / %d kernels valid" % (validParameterCombinations, totalParameterCombinations)
+  print "Kernels Used: %d" % (validParameterCombinations)
 
 
 
@@ -133,12 +132,12 @@ def processAllKernelParameterCombinations(argv):
   listOrder = [ "clblasColumnMajor" ]
   dictTrans = { "s":["N", "T"], "d":["N", "T"], \
       "c":["N", "T", "C"], "z":["N", "T", "C"] }
+  dictUnroll = { "s":[16, 1], "d":[8, 1], "c":[8, 1], "z":[8, 1] }
   listBeta = [ 0, 1 ]
 
   # tile parameters
   microTileMaxProductDict = { "s":(6*6), "d":(6*6), "c":(3*6), "z":(3*3) }
   microTileMaxEdgeLengthDict = { "s":12, "d":12, "c":12, "z":12 }
-  listUnroll = [ 8, 1 ]
   #listWorkGroupDims = [ [16, 16] ]
   listTileKernelParameters = []
   listEdgeKernelParameters = []
@@ -148,7 +147,7 @@ def processAllKernelParameterCombinations(argv):
       listOrder, \
       dictTrans, \
       listBeta, \
-      listUnroll, \
+      dictUnroll, \
       kernelSelectionData )
   kernelSelectionLogic.writeToFile()
 
@@ -185,10 +184,9 @@ def processAllKernelParameterCombinations(argv):
         tile.macroTileNumRows = tile.workGroupNumRows*tile.microTileNumRows
         tile.macroTileNumCols = tile.workGroupNumCols*tile.microTileNumCols
         #print tile.getName()
-        for unroll in listUnroll:
+        for unroll in dictUnroll[precision]:
           tile.unroll = unroll
           if tile.isValid():
-            print "appending " + tile.getName()
             listTileKernelParameters.append( copy.copy(tile) )
           else:
             print tile.getName() + " - SKIPPING - "
@@ -200,10 +198,9 @@ def processAllKernelParameterCombinations(argv):
       tile.microTileNumCols = fallbackTile[3]
       tile.macroTileNumRows = tile.workGroupNumRows*tile.microTileNumRows
       tile.macroTileNumCols = tile.workGroupNumCols*tile.microTileNumCols
-      for unroll in listUnroll:
+      for unroll in dictUnroll[precision]:
         tile.unroll = unroll
         if tile.isValid():
-          print "appending " + tile.getName()
           listTileKernelParameters.append( copy.copy(tile) )
         else:
           print tile.getName() + " - SKIPPING - "
@@ -318,11 +315,10 @@ def processKernel( \
     kernelSourceBuildOptions, \
     kernelBinaryBuildOptions, \
     cppKernelEnumeration ):
-  global totalParameterCombinations, validParameterCombinations
+  global validParameterCombinations
 
   ############################################################
   # check if parameter combination is valid
-  totalParameterCombinations += 4
   kernelName = kernel.getName()
   if kernel.isValid():
     #print "Processing: " + kernelName

@@ -67,7 +67,7 @@ class KernelSelection:
       orderList, \
       transDict, \
       betaList, \
-      unrollList, \
+      unrollDict, \
       kernelSelectionData):
     self.kernelSelectionFileName = Common.getOutputPath() + "AutoGemmKernelSelection.h"
 
@@ -235,7 +235,7 @@ class KernelSelection:
                   kernel.microTileNumCols = tileParams[3]
                   kernel.macroTileNumRows = kernel.workGroupNumRows*kernel.microTileNumRows
                   kernel.macroTileNumCols = kernel.workGroupNumCols*kernel.microTileNumCols
-                  for unroll in unrollList:
+                  for unroll in unrollDict[precision]:
                     kernel.unroll = unroll
                     self.logic += indent(6)+"if ( M%%%d == 0 && N%%%d == 0 && K%%%d == 0) {\n" \
                         % (kernel.getMultipleM(), kernel.getMultipleN(), kernel.getMultipleK())
@@ -252,7 +252,7 @@ class KernelSelection:
                 kernel.microTileNumCols = fallbackTile[3]
                 kernel.macroTileNumRows = kernel.workGroupNumRows*kernel.microTileNumRows
                 kernel.macroTileNumCols = kernel.workGroupNumCols*kernel.microTileNumCols
-                for unroll in unrollList:
+                for unroll in unrollDict[precision]:
                   kernel.unroll = unroll
                   self.logic += indent(6)+"if ( K%%%d == 0 ) {\n" \
                       % (kernel.getMultipleK())
@@ -287,25 +287,25 @@ class KernelSelection:
 
   def addBodyForKernel( self, kernel ):
     #self.logic += indent(7) + "printf(\"selected kernel: " + kernel.getName() + "\\n\");\n"
-    self.logic += indent(7) + "*tileKernelSource   = " + kernel.getName()       + "_src;\n"
-    self.logic += indent(7) + "*rowKernelSource    = " + kernel.getRowName()    + "_src;\n"
-    self.logic += indent(7) + "*colKernelSource    = " + kernel.getColName()    + "_src;\n"
-    self.logic += indent(7) + "*cornerKernelSource = " + kernel.getCornerName() + "_src;\n"
-    self.logic += indent(7) + "*sourceBuildOptions = " + kernel.getName() + "_srcBuildOptions;\n"
-    self.logic += indent(7) + "*tileKernelBinary   = " + kernel.getName()       + "_bin;\n"
-    self.logic += indent(7) + "*rowKernelBinary    = " + kernel.getRowName()    + "_bin;\n"
-    self.logic += indent(7) + "*colKernelBinary    = " + kernel.getColName()    + "_bin;\n"
-    self.logic += indent(7) + "*cornerKernelBinary = " + kernel.getCornerName() + "_bin;\n"
-    self.logic += indent(7) + "*binaryBuildOptions = " + kernel.getName() + "_binBuildOptions;\n"
+    self.logic += indent(7) + "*tileKernelSource   =  " + kernel.getName()       + "_src;\n"
+    self.logic += indent(7) + "*rowKernelSource    =  " + kernel.getRowName()    + "_src;\n"
+    self.logic += indent(7) + "*colKernelSource    =  " + kernel.getColName()    + "_src;\n"
+    self.logic += indent(7) + "*cornerKernelSource =  " + kernel.getCornerName() + "_src;\n"
+    self.logic += indent(7) + "*sourceBuildOptions =  " + kernel.getName()       + "_srcBuildOptions;\n"
+    self.logic += indent(7) + "*tileKernelBinary   =  " + kernel.getName()       + "_bin;\n"
+    self.logic += indent(7) + "*rowKernelBinary    =  " + kernel.getRowName()    + "_bin;\n"
+    self.logic += indent(7) + "*colKernelBinary    =  " + kernel.getColName()    + "_bin;\n"
+    self.logic += indent(7) + "*cornerKernelBinary =  " + kernel.getCornerName() + "_bin;\n"
+    self.logic += indent(7) + "*binaryBuildOptions =  " + kernel.getName()       + "_binBuildOptions;\n"
     self.logic += indent(7) + "*tileClKernel       = &" + kernel.getName()       + "_clKernel;\n"
     self.logic += indent(7) + "*rowClKernel        = &" + kernel.getRowName()    + "_clKernel;\n"
     self.logic += indent(7) + "*colClKernel        = &" + kernel.getColName()    + "_clKernel;\n"
     self.logic += indent(7) + "*cornerClKernel     = &" + kernel.getCornerName() + "_clKernel;\n"
-    self.logic += indent(7) + "*workGroupNumRows   = " + str(kernel.workGroupNumRows) + ";\n"
-    self.logic += indent(7) + "*workGroupNumCols   = " + str(kernel.workGroupNumCols) + ";\n"
-    self.logic += indent(7) + "*microTileNumRows   = " + str(kernel.microTileNumRows) + ";\n"
-    self.logic += indent(7) + "*microTileNumCols   = " + str(kernel.microTileNumCols) + ";\n"
-    self.logic += indent(7) + "*unroll             = " + str(kernel.unroll)           + ";\n"
+    self.logic += indent(7) + "*workGroupNumRows   =  " + kernel.getName()       + "_workGroupNumRows;\n"
+    self.logic += indent(7) + "*workGroupNumCols   =  " + kernel.getName()       + "_workGroupNumCols;\n"
+    self.logic += indent(7) + "*microTileNumRows   =  " + kernel.getName()       + "_microTileNumRows;\n"
+    self.logic += indent(7) + "*microTileNumCols   =  " + kernel.getName()       + "_microTileNumRows;\n"
+    self.logic += indent(7) + "*unroll             =  " + kernel.getName()       + "_unroll;\n"
     self.logic += indent(7) + "return;\n"
 
 
@@ -513,34 +513,34 @@ class KernelSelectionSpecific:
     #self.logic += "printf(\"selected kernel: " + kernel.getName() + "\\n\");\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*tileKernelSource   = " + kernel.getName()       + "_src;\n"
+    self.logic += "*tileKernelSource   =  " + kernel.getName()       + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*rowKernelSource    = " + kernel.getRowName()    + "_src;\n"
+    self.logic += "*rowKernelSource    =  " + kernel.getRowName()    + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*colKernelSource    = " + kernel.getColName()    + "_src;\n"
+    self.logic += "*colKernelSource    =  " + kernel.getColName()    + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*cornerKernelSource = " + kernel.getCornerName() + "_src;\n"
+    self.logic += "*cornerKernelSource =  " + kernel.getCornerName() + "_src;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*sourceBuildOptions = " + kernel.getName() + "_srcBuildOptions;\n"
+    self.logic += "*sourceBuildOptions =  " + kernel.getName() + "_srcBuildOptions;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*tileKernelBinary   = " + kernel.getName()       + "_bin;\n"
+    self.logic += "*tileKernelBinary   =  " + kernel.getName()       + "_bin;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*rowKernelBinary    = " + kernel.getRowName()    + "_bin;\n"
+    self.logic += "*rowKernelBinary    =  " + kernel.getRowName()    + "_bin;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*colKernelBinary    = " + kernel.getColName()    + "_bin;\n"
+    self.logic += "*colKernelBinary    =  " + kernel.getColName()    + "_bin;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*cornerKernelBinary = " + kernel.getCornerName() + "_bin;\n"
+    self.logic += "*cornerKernelBinary =  " + kernel.getCornerName() + "_bin;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
-    self.logic += "*binaryBuildOptions = " + kernel.getName() + "_binBuildOptions;\n"
+    self.logic += "*binaryBuildOptions =  " + kernel.getName() + "_binBuildOptions;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "*tileClKernel       = &" + kernel.getName()       + "_clKernel;\n"
