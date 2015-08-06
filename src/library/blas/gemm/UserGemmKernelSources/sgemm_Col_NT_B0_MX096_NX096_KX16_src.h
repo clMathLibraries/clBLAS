@@ -4,6 +4,7 @@
 
 #ifndef KERNEL_SGEMM_COL_NT_B0_MX096_NX096_KX16_SRC_H
 #define KERNEL_SGEMM_COL_NT_B0_MX096_NX096_KX16_SRC_H
+#pragma message("AutoGemm's sgemm_Col_NT_B0_MX096_NX096_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -206,3 +207,4 @@ __kernel void sgemm_Col_NT_B0_MX096_NX096_KX16 (
    
 }
 );
+#endif

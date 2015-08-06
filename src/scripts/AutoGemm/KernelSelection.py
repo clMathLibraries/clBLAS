@@ -356,10 +356,8 @@ class KernelSelectionSpecific:
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
       "  bool betaNonZero,\n"
-      "  unsigned int workGroupNumRows,\n"
-      "  unsigned int workGroupNumCols,\n"
-      "  unsigned int microTileNumRows,\n"
-      "  unsigned int microTileNumCols,\n"
+      "  unsigned int macroTileNumRows,\n"
+      "  unsigned int macroTileNumCols,\n"
       "  unsigned int unroll,\n"
       "  const char **tileKernelSource,\n"
       "  const char **rowKernelSource,\n"
@@ -374,7 +372,11 @@ class KernelSelectionSpecific:
       "  cl_kernel  **tileClKernel,\n"
       "  cl_kernel  **rowClKernel,\n"
       "  cl_kernel  **colClKernel,\n"
-      "  cl_kernel  **cornerClKernel\n"
+      "  cl_kernel  **cornerClKernel,\n"
+      "  unsigned int *workGroupNumRows,\n"
+      "  unsigned int *workGroupNumCols,\n"
+      "  unsigned int *microTileNumRows,\n"
+      "  unsigned int *microTileNumCols\n"
       ");\n\n" )
     self.precisionInitialized = False
     self.orderInitialized = False
@@ -410,10 +412,8 @@ class KernelSelectionSpecific:
       "  clblasTranspose transA,\n"
       "  clblasTranspose transB,\n"
       "  bool betaNonZero,\n"
-      "  unsigned int workGroupNumRows,\n"
-      "  unsigned int workGroupNumCols,\n"
-      "  unsigned int microTileNumRows,\n"
-      "  unsigned int microTileNumCols,\n"
+      "  unsigned int macroTileNumRows,\n"
+      "  unsigned int macroTileNumCols,\n"
       "  unsigned int unroll,\n"
       "  const char **tileKernelSource,\n"
       "  const char **rowKernelSource,\n"
@@ -428,7 +428,11 @@ class KernelSelectionSpecific:
       "  cl_kernel  **tileClKernel,\n"
       "  cl_kernel  **rowClKernel,\n"
       "  cl_kernel  **colClKernel,\n"
-      "  cl_kernel  **cornerClKernel\n"
+      "  cl_kernel  **cornerClKernel,\n"
+      "  unsigned int *workGroupNumRows,\n"
+      "  unsigned int *workGroupNumCols,\n"
+      "  unsigned int *microTileNumRows,\n"
+      "  unsigned int *microTileNumCols\n"
       ") {\n" )
     self.precisionInitialized = True
     self.orderInitialized = False
@@ -503,11 +507,9 @@ class KernelSelectionSpecific:
 
     # new kernel
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab # 3 tabs
-    self.logic += ("if ( workGroupNumRows == %u && workGroupNumCols == %u "
-        "&& microTileNumRows == %u && microTileNumCols == %u "
+    self.logic += ("if ( macroTileNumRows == %u && macroTileNumCols == %u "
         "&& unroll == %u) {\n") \
-        % (kernel.workGroupNumRows, kernel.workGroupNumCols, \
-        kernel.microTileNumRows, kernel.microTileNumCols, kernel.unroll )
+        % ( kernel.macroTileNumRows, kernel.macroTileNumCols, kernel.unroll )
 
     #self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab+self.tab # 5 tabs
     #self.logic += "printf(\"selected kernel: " + kernel.getName() + "\\n\");\n"
@@ -553,6 +555,18 @@ class KernelSelectionSpecific:
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "*cornerClKernel     = &" + kernel.getCornerName() + "_clKernel;\n"
+    # dims
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
+    self.logic += "*workGroupNumRows   =  " + kernel.getName() + "_workGroupNumRows;\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
+    self.logic += "*workGroupNumCols   =  " + kernel.getName() + "_workGroupNumCols;\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
+    self.logic += "*microTileNumRows   =  " + kernel.getName() + "_microTileNumRows;\n"
+
+    self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
+    self.logic += "*microTileNumCols   =  " + kernel.getName() + "_microTileNumCols;\n"
 
     self.logic += self.zeroIndent+self.tab+self.tab+self.tab+self.tab # 4 tabs
     self.logic += "return true;\n"

@@ -4,6 +4,7 @@
 
 #ifndef KERNEL_SGEMM_COL_NT_B1_MX064_NX064_KX16_SRC_H
 #define KERNEL_SGEMM_COL_NT_B1_MX064_NX064_KX16_SRC_H
+#pragma message("AutoGemm's sgemm_Col_NT_B1_MX064_NX064_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -153,7 +154,6 @@ __kernel void sgemm_Col_NT_B1_MX064_NX064_KX16 (
     C[32*ldc] = alpha*rC[3][2] + beta*C[32*ldc];
     C[48*ldc] = alpha*rC[3][3] + beta*C[48*ldc];
 
-   
 }
-
 );
+#endif

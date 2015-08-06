@@ -4,6 +4,7 @@
 
 #ifndef KERNEL_DGEMM_COL_TN_B1_MX048_NX048_KX08_SRC_H
 #define KERNEL_DGEMM_COL_TN_B1_MX048_NX048_KX08_SRC_H
+#pragma message("AutoGemm's dgemm_Col_TN_B1_MX048_NX048_KX08_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -191,3 +192,4 @@ __kernel void dgemm_Col_TN_B1_MX048_NX048_KX08_src (
     C+=8;
 }
 ); 
+#endif

@@ -199,11 +199,11 @@ class CppKernelEnumeration:
     self.precisionInitialized = True
     self.precision = precision
 
-    self.kernelStr += "// order, transA, transB, beta, workGroupNumRows, workGroupNumCols, microTileNumRows, microTileNumCols, unroll, mSpill, nSpill\n"
-    self.kernelStr += "unsigned int " + precision + "gemmKernelEnumeration[][11] = {\n"
+    self.kernelStr += "// order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, mSpill, nSpill\n"
+    self.kernelStr += "unsigned int " + precision + "gemmKernelEnumeration[][9] = {\n"
 
-    self.tileStr += "// workGroupNumRows, workGroupNumCols, microTileNumRows, microTileNumCols, macroTileNumRows, macroTileNumCols, unroll\n"
-    self.tileStr += "unsigned int " + precision + "gemmTileEnumeration[][7] = {\n"
+    self.tileStr += "// macroTileNumRows, macroTileNumCols, unroll\n"
+    self.tileStr += "unsigned int " + precision + "gemmTileEnumeration[][3] = {\n"
 
     self.nonTileStr += "// order, transA, transB, beta\n"
     self.nonTileStr += "unsigned int " + precision + "gemmNonTileEnumeration[][4] = {\n"
@@ -212,11 +212,7 @@ class CppKernelEnumeration:
     self.kernelCount = 0
 
   def addTile(self, tile):
-    self.tileStr += "  { %2u, %2u, %1u, %1u, %3u, %3u, %1u },\n" % ( \
-        tile.workGroupNumRows, \
-        tile.workGroupNumCols, \
-        tile.microTileNumRows, \
-        tile.microTileNumCols, \
+    self.tileStr += "  { %3u, %3u, %1u },\n" % ( \
         tile.macroTileNumRows, \
         tile.macroTileNumCols, \
         tile.unroll )
@@ -234,15 +230,13 @@ class CppKernelEnumeration:
     # 6) list to add to ktest for automated kernel testing
     for mSpill in range(0, 2):
       for nSpill in range(0, 2):
-        self.kernelStr += "  { %1u, %1u, %1u, %1u, %2u, %2u, %1u, %1u, %2u, %1u, %1u },\n" % ( \
+        self.kernelStr += "  { %1u, %1u, %1u, %1u, %3u, %3u, %2u, %1u, %1u },\n" % ( \
           1 if kernel.order=="clblasColumnMajor" else 0, \
           0 if kernel.transA=="N" else 1 if kernel.transA=="T" else 2 , \
           0 if kernel.transB=="N" else 1 if kernel.transB=="T" else 2, \
           1 if kernel.beta>0 else 0, \
-          kernel.workGroupNumRows, \
-          kernel.workGroupNumCols, \
-          kernel.microTileNumRows, \
-          kernel.microTileNumCols, \
+          kernel.macroTileNumRows, \
+          kernel.macroTileNumCols, \
           kernel.unroll, \
           mSpill, \
           nSpill )

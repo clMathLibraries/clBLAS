@@ -27,8 +27,8 @@ typedef enum clblasTranspose_ {
 } clblasTranspose;
 #endif
 
-#define SGEMM 1
-#define DGEMM 0
+#define SGEMM 0
+#define DGEMM 1
 #define CGEMM 0
 #define ZGEMM 0
 
@@ -38,21 +38,33 @@ typedef enum clblasTranspose_ {
 #if SGEMM
 #define DATA_TYPE float
 #define DATA_TYPE_CONSTRUCTOR(X,Y) X
+const unsigned int numTiles = sgemmNumTiles;
+const unsigned int numNonTiles = sgemmNumNonTiles;
+const unsigned int numKernels = sgemmNumKernels;
 #endif
 
 #if DGEMM
 #define DATA_TYPE double
 #define DATA_TYPE_CONSTRUCTOR(X,Y) X
+const unsigned int numTiles = dgemmNumTiles;
+const unsigned int numNonTiles = dgemmNumNonTiles;
+const unsigned int numKernels = dgemmNumKernels;
 #endif
 
 #if CGEMM
 #define DATA_TYPE FloatComplex
 #define DATA_TYPE_CONSTRUCTOR floatComplex
+const unsigned int numTiles = cgemmNumTiles;
+const unsigned int numNonTiles = cgemmNumNonTiles;
+const unsigned int numKernels = cgemmNumKernels;
 #endif
 
 #if ZGEMM
 #define DATA_TYPE DoubleComplex
 #define DATA_TYPE_CONSTRUCTOR doubleComplex
+const unsigned int numTiles = zgemmNumTiles;
+const unsigned int numNonTiles = zgemmNumNonTiles;
+const unsigned int numKernels = zgemmNumKernels;
 #endif
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -174,12 +186,10 @@ const unsigned int numFlushesPerFinish = 2;
 const unsigned int numFinishes = 2;
 #endif
 
-char* loadFile(const char* path);
 cl_platform_id getPlatform(const char *name);
 cl_device_id getDevice(cl_platform_id platform, const char *name);
 cl_kernel createKernel(const char *source, cl_context context,
     const char* options, cl_int *error);
-void printExecTime(cl_ulong ns);
 
 
 
@@ -188,10 +198,8 @@ void testKernelParameterCombination(
   unsigned int transAInt,
   unsigned int transBInt,
   unsigned int betaNonZero,
-  unsigned int workGroupNumRows,
-  unsigned int workGroupNumCols,
-  unsigned int microTileNumRows,
-  unsigned int microTileNumCols,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
   unsigned int unroll,
   unsigned int mSpill,
   unsigned int nSpill ) {
@@ -203,10 +211,7 @@ void testKernelParameterCombination(
   } else {
     beta = DATA_TYPE_CONSTRUCTOR(0, 0);
   }
-
-  unsigned int macroTileNumRows = workGroupNumRows*microTileNumRows;
-  unsigned int macroTileNumCols = workGroupNumCols*microTileNumCols;
-
+  
 
   // how large of a matrix to test?
 #if DO_VALIDATION
@@ -227,7 +232,7 @@ void testKernelParameterCombination(
   }
 
   
-#if 1
+#if 0
   printf("Testing: %sgemm_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s%s_%u_%u\n",
 #if SGEMM
     "s",
@@ -243,8 +248,6 @@ void testKernelParameterCombination(
     macroTileNumRows,
     macroTileNumCols,
     unroll,
-    workGroupNumRows,
-    workGroupNumCols,
     microTileNumRows,
     microTileNumCols,
     columnMajorInt ? "ColumnMajor" : "RowMajor",
@@ -385,13 +388,7 @@ void testKernelParameterCombination(
     CL_CHECK(err);
     assert(err == CL_SUCCESS);
 
-    
-  unsigned int deviceNumCUs = 44; // CUs per device
-  unsigned int occupancy = 8; // waves per CU
-  unsigned int workItemsPerWave = workGroupNumRows*workGroupNumCols; // 64;
-  unsigned int wavesPerWorkGroup = workGroupNumRows*workGroupNumCols / workItemsPerWave;
-  unsigned int optimalNumWorkGroups = deviceNumCUs * occupancy / wavesPerWorkGroup;
-  float optimalNumElementsPerWorkItem = microTileNumRows * microTileNumCols;
+  float optimalNumElementsPerWorkItem = 1;
 
   const char *tileKernelSource;
   const char *rowKernelSource;
@@ -407,10 +404,10 @@ void testKernelParameterCombination(
   cl_kernel  *rowClKernel;
   cl_kernel  *colClKernel;
   cl_kernel  *cornerClKernel;
-  unsigned int retWorkGroupNumRows;
-  unsigned int retWorkGroupNumCols;
-  unsigned int retMicroTileNumRows;
-  unsigned int retMicroTileNumCols;
+  unsigned int workGroupNumRows;
+  unsigned int workGroupNumCols;
+  unsigned int microTileNumRows;
+  unsigned int microTileNumCols;
   unsigned int retUnroll;
 
 #if 0
@@ -438,10 +435,10 @@ void testKernelParameterCombination(
     &rowClKernel,
     &colClKernel,
     &cornerClKernel,
-    &retWorkGroupNumRows,
-    &retWorkGroupNumCols,
-    &retMicroTileNumRows,
-    &retMicroTileNumCols,
+    &workGroupNumRows,
+    &workGroupNumCols,
+    &microTileNumRows,
+    &microTileNumCols,
     &retUnroll
   );
   bool kernelFound = tileKernelSource != NULL;
@@ -451,10 +448,8 @@ void testKernelParameterCombination(
     transA,
     transB,
     betaNonZero==1,
-    workGroupNumRows,
-    workGroupNumCols,
-    microTileNumRows,
-    microTileNumCols,
+    macroTileNumRows,
+    macroTileNumCols,
     unroll,
     &tileKernelSource,
     &rowKernelSource,
@@ -469,7 +464,12 @@ void testKernelParameterCombination(
     &tileClKernel,
     &rowClKernel,
     &colClKernel,
-    &cornerClKernel );
+    &cornerClKernel,
+    &workGroupNumRows,
+    &workGroupNumCols,
+    &microTileNumRows,
+    &microTileNumCols
+    );
 #endif
 
   if ( !kernelFound ) {
@@ -677,7 +677,6 @@ void testKernelParameterCombination(
 #endif
       double gFlops = (1.0*totalFlops) / (1.0*timeNs);
       printf("%llu flops in %llu ns = %f Gflop/s (%.1f%% of peak)\n", totalFlops, timeNs, gFlops, 100*gFlops/peakGflops);
-      //printExecTime(end - start);
     }
 #endif
 
@@ -724,7 +723,7 @@ void testKernelParameterCombination(
         printf("%s", tileKernelSource );
     }
     fflush(stdout);
-    system("PAUSE");
+    //system("PAUSE");
 #endif
 
     err = clReleaseMemObject(bufA); CL_CHECK(err);
@@ -745,40 +744,51 @@ void testKernelParameterCombination(
 
 int main(void) {
 
-#if 0
-  for (unsigned int kernelIdx = 6; kernelIdx < sgemmNumTiles; kernelIdx++) {
-    
-    srand((unsigned int)time(NULL));
+#if 1
+  srand((unsigned int)time(NULL));
 
+  unsigned int **kernels = new unsigned int*[numKernels];
+  for (unsigned int i = 0; i < numKernels; i++) {
+    kernels[i] = 
+#if SGEMM
+          sgemmKernelEnumeration[i];
+#elif DGEMM
+          dgemmKernelEnumeration[i];
+#elif CGEMM
+          cgemmKernelEnumeration[i];
+#elif ZGEMM
+          zgemmKernelEnumeration[i];
+#endif
+  }
+
+
+  for (unsigned int kernelIdx = 112; kernelIdx < numKernels; kernelIdx++) {
+    printf("kernelIdx = %u\n", kernelIdx);
     /* {isColumnMajor, transA, transB, betaNonZero, wgNumRows, wgNumCols, mtNumRows, mtNumCols, }*/
-    unsigned int *kernelParameters = sgemmKernelEnumeration[kernelIdx];
+    unsigned int *kernelParameters = kernels[kernelIdx];
 
     unsigned int columnMajor = kernelParameters[0];
     unsigned int transA = kernelParameters[1];
     unsigned int transB = kernelParameters[2];
     unsigned int betaNonZero = kernelParameters[3];
-    unsigned int workGroupNumRows = kernelParameters[4];
-    unsigned int workGroupNumCols = kernelParameters[5];
-    unsigned int microTileNumRows = kernelParameters[6];
-    unsigned int microTileNumCols = kernelParameters[7];
-    unsigned int unroll = kernelParameters[8];
-    unsigned int mSpill = kernelParameters[9];
-    unsigned int nSpill = kernelParameters[10];
+    unsigned int macroTileNumRows = kernelParameters[4];
+    unsigned int macroTileNumCols = kernelParameters[5];
+    unsigned int unroll = kernelParameters[6];
+    unsigned int mSpill = kernelParameters[7];
+    unsigned int nSpill = kernelParameters[8];
 
     testKernelParameterCombination(
       columnMajor,
       transA,
       transB,
       betaNonZero,
-      workGroupNumRows,
-      workGroupNumCols,
-      microTileNumRows,
-      microTileNumCols,
+      macroTileNumRows,
+      macroTileNumCols,
       unroll,
       mSpill,
       nSpill );
   } // end for
-#endif
+#else
   
     unsigned int columnMajor = 1;
     unsigned int transA = 0;
@@ -805,7 +815,7 @@ int main(void) {
       unroll,
       mSpill,
       nSpill );
-
+#endif
 
   
     //system("PAUSE");
@@ -813,52 +823,6 @@ int main(void) {
     exit(EXIT_SUCCESS);
 };
 
-
-
-
-
-
-char*
-loadFile(const char* path)
-{
-    FILE *f;
-    long size;
-    char *text;
-
-    f = fopen(path, "rb");
-    if (f == NULL) {
-        return NULL;
-    }
-
-    if (fseek(f, 0, SEEK_END) != 0) {
-        fclose(f);
-        return NULL;
-    }
-    size = ftell(f);
-    if (size == -1) {
-        fclose(f);
-        return NULL;
-    }
-    if (fseek(f, 0, SEEK_SET) != 0) {
-        fclose(f);
-        return NULL;
-    }
-
-    text = (char*)malloc(size + 1);
-    if (text == NULL) {
-        fclose(f);
-        return NULL;
-    }
-
-    if (fread(text, 1, size, f) == 0) {
-        free(text);
-        fclose(f);
-        return NULL;
-    }
-    fclose(f);
-    text[size] = '\0';
-    return text;
-}
 
 cl_platform_id
 getPlatform(const char *name)
@@ -952,7 +916,7 @@ createKernel(
     const char* options,
     cl_int* error)
 {
-  printf("Kernel Source:\n%s", source );
+  //printf("Kernel Source:\n%s", source );
   cl_int err;
   cl_device_id device;
   cl_program program;
@@ -980,7 +944,7 @@ createKernel(
     }
 
     err = clBuildProgram(program, 1, &device, options, NULL, NULL);
-    if (true || err != CL_SUCCESS) {
+    if (err != CL_SUCCESS) {
         logSize = 0;
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
         log = (char*)malloc(logSize + 1);
@@ -1031,16 +995,3 @@ createKernel(
     return kernel;
 }
 
-void
-printExecTime(cl_ulong ns)
-{
-    if (ns > 10000000) {
-        printf("Kernel execution time: %lu milliseconds\n", ns / 1000000);
-    }
-    else if (ns > 10000) {
-        printf("Kernel execution time: %lu microseconds\n", ns / 1000);
-    }
-    else {
-        printf("Kernel execution time: %lu nanoseconds\n", ns);
-    }
-}
