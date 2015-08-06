@@ -429,14 +429,14 @@ clblasGemm(
 /******************************************************************************
  * Gather kernel arguments
  *****************************************************************************/
-  gemmKernelArgs[ 0] = &M;     gemmKernelArgSizes[ 0] = sizeof(cl_uint);
-  gemmKernelArgs[ 1] = &N;     gemmKernelArgSizes[ 1] = sizeof(cl_uint);
-  gemmKernelArgs[ 2] = &K;     gemmKernelArgSizes[ 2] = sizeof(cl_uint);
+  gemmKernelArgs[ 0] = &A;     gemmKernelArgSizes[ 0] = sizeof(cl_mem);
+  gemmKernelArgs[ 1] = &B;     gemmKernelArgSizes[ 1] = sizeof(cl_mem);
+  gemmKernelArgs[ 2] = &C;     gemmKernelArgSizes[ 2] = sizeof(cl_mem);
   gemmKernelArgs[ 3] = &alpha; gemmKernelArgSizes[ 3] = sizeof(Precision);
   gemmKernelArgs[ 4] = &beta;  gemmKernelArgSizes[ 4] = sizeof(Precision);
-  gemmKernelArgs[ 5] = &A;     gemmKernelArgSizes[ 5] = sizeof(cl_mem);
-  gemmKernelArgs[ 6] = &B;     gemmKernelArgSizes[ 6] = sizeof(cl_mem);
-  gemmKernelArgs[ 7] = &C;     gemmKernelArgSizes[ 7] = sizeof(cl_mem);
+  gemmKernelArgs[ 5] = &M;     gemmKernelArgSizes[ 5] = sizeof(cl_uint);
+  gemmKernelArgs[ 6] = &N;     gemmKernelArgSizes[ 6] = sizeof(cl_uint);
+  gemmKernelArgs[ 7] = &K;     gemmKernelArgSizes[ 7] = sizeof(cl_uint);
   gemmKernelArgs[ 8] = &lda;   gemmKernelArgSizes[ 8] = sizeof(cl_uint);
   gemmKernelArgs[ 9] = &ldb;   gemmKernelArgSizes[ 9] = sizeof(cl_uint);
   gemmKernelArgs[10] = &ldc;   gemmKernelArgSizes[10] = sizeof(cl_uint);

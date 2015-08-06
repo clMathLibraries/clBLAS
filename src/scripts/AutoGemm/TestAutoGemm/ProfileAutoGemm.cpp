@@ -648,14 +648,14 @@ float benchmarkKernel(
   //printf("%s", tileKernelSource);
   unsigned int totalEnqueues = 0;
   if (needTileKernel) {
-    err = clSetKernelArg(*tileClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(*tileClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(*tileClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*tileClKernel,  0, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*tileClKernel,  1, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*tileClKernel,  2, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
     err = clSetKernelArg(*tileClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
     err = clSetKernelArg(*tileClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(*tileClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(*tileClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(*tileClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*tileClKernel,  5, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*tileClKernel,  6, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*tileClKernel,  7, sizeof(cl_uint),   &K);      CL_CHECK(err);
     err = clSetKernelArg(*tileClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
     err = clSetKernelArg(*tileClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
     err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
@@ -675,14 +675,14 @@ float benchmarkKernel(
    * Row Kernel (along bottom of matrix)
    ***************************************************************************/
   if (needRowKernel) {
-    err = clSetKernelArg(*rowClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(*rowClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(*rowClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  0, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  1, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  2, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
     err = clSetKernelArg(*rowClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
     err = clSetKernelArg(*rowClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(*rowClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(*rowClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(*rowClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  5, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  6, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*rowClKernel,  7, sizeof(cl_uint),   &K);      CL_CHECK(err);
     err = clSetKernelArg(*rowClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
     err = clSetKernelArg(*rowClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
     err = clSetKernelArg(*rowClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
@@ -697,14 +697,14 @@ float benchmarkKernel(
    * Col Kernel (along side of kernel)
    ***************************************************************************/
   if (needColKernel) {
-    err = clSetKernelArg(*colClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(*colClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(*colClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  0, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  1, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  2, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
     err = clSetKernelArg(*colClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
     err = clSetKernelArg(*colClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(*colClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(*colClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(*colClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  5, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  6, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*colClKernel,  7, sizeof(cl_uint),   &K);      CL_CHECK(err);
     err = clSetKernelArg(*colClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
     err = clSetKernelArg(*colClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
     err = clSetKernelArg(*colClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);
@@ -719,14 +719,14 @@ float benchmarkKernel(
    * Corner Kernel (lower left corder of kernel)
    ***************************************************************************/
   if (needCornerKernel) {
-    err = clSetKernelArg(*cornerClKernel,  0, sizeof(cl_uint),   &M);      CL_CHECK(err);
-    err = clSetKernelArg(*cornerClKernel,  1, sizeof(cl_uint),   &N);      CL_CHECK(err);
-    err = clSetKernelArg(*cornerClKernel,  2, sizeof(cl_uint),   &K);      CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  0, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  1, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  2, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
     err = clSetKernelArg(*cornerClKernel,  3, sizeof(DATA_TYPE), &alpha);  CL_CHECK(err);
     err = clSetKernelArg(*cornerClKernel,  4, sizeof(DATA_TYPE), &beta);   CL_CHECK(err);
-    err = clSetKernelArg(*cornerClKernel,  5, sizeof(cl_mem),    &bufA);   CL_CHECK(err);
-    err = clSetKernelArg(*cornerClKernel,  6, sizeof(cl_mem),    &bufB);   CL_CHECK(err);
-    err = clSetKernelArg(*cornerClKernel,  7, sizeof(cl_mem),    &bufC);   CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  5, sizeof(cl_uint),   &M);      CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  6, sizeof(cl_uint),   &N);      CL_CHECK(err);
+    err = clSetKernelArg(*cornerClKernel,  7, sizeof(cl_uint),   &K);      CL_CHECK(err);
     err = clSetKernelArg(*cornerClKernel,  8, sizeof(cl_uint),   &lda);    CL_CHECK(err);
     err = clSetKernelArg(*cornerClKernel,  9, sizeof(cl_uint),   &ldb);    CL_CHECK(err);
     err = clSetKernelArg(*cornerClKernel, 10, sizeof(cl_uint),   &ldc);    CL_CHECK(err);

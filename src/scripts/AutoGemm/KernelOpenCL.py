@@ -24,19 +24,19 @@ def makeOpenCLKernelString(kernel):
   # kernel parameters
   kStr += endLine
   kStr += "/* kernel parameters */" + endLine
-  if kernel.order == "clblasColumnMajor":
-    kStr += "#define COLUMN_MAJOR          1" + endLine
-  else:
-    kStr += "#define COLUMN_MAJOR          0" + endLine
-  if kernel.transA == "T":
-    kStr += "#define TRANSPOSE_A           1" + endLine
-  else:
-    kStr += "#define TRANSPOSE_A           0" + endLine
-  if kernel.transB == "T":
-    kStr += "#define TRANSPOSE_B           1" + endLine
-  else:
-    kStr += "#define TRANSPOSE_B           0" + endLine
-  kStr += "" + endLine
+  #if kernel.order == "clblasColumnMajor":
+  #  kStr += "#define COLUMN_MAJOR          1" + endLine
+  #else:
+  #  kStr += "#define COLUMN_MAJOR          0" + endLine
+  #if kernel.transA == "T":
+  #  kStr += "#define TRANSPOSE_A           1" + endLine
+  #else:
+  #  kStr += "#define TRANSPOSE_A           0" + endLine
+  #if kernel.transB == "T":
+  #  kStr += "#define TRANSPOSE_B           1" + endLine
+  #else:
+  #  kStr += "#define TRANSPOSE_B           0" + endLine
+  #kStr += "" + endLine
   kStr += "#define WG_NUM_ROWS          %d%s" % (kernel.workGroupNumRows, endLine )
   kStr += "#define WG_NUM_COLS          %d%s" % (kernel.workGroupNumCols, endLine )
   kStr += "#define MICRO_TILE_NUM_ROWS  %d%s" % (kernel.microTileNumRows, endLine )
@@ -183,14 +183,14 @@ def makeOpenCLKernelString(kernel):
   kStr += "(" + endLine
   # arguments
   kStr += (
-    "  uint const M," + endLine +
-    "  uint const N," + endLine +
-    "  uint const K," + endLine +
-    "  DATA_TYPE_STR const alpha," + endLine +
-    "  DATA_TYPE_STR const beta," + endLine +
     "  __global DATA_TYPE_STR const * restrict A," + endLine +
     "  __global DATA_TYPE_STR const * restrict B," + endLine +
     "  __global DATA_TYPE_STR       *          C," + endLine +
+    "  DATA_TYPE_STR const alpha," + endLine +
+    "  DATA_TYPE_STR const beta," + endLine +
+    "  uint const M," + endLine +
+    "  uint const N," + endLine +
+    "  uint const K," + endLine +
     "  uint const lda," + endLine +
     "  uint const ldb," + endLine +
     "  uint const ldc," + endLine +
