@@ -8,16 +8,17 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <Windows.h>
+//#include <Windows.h>
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
+#include "AutoGemmKernelSelection.h"
 #include "AutoGemmKernelSelectionSpecific.h"
 #include "AutoGemmKernelEnumeration.h"
 
-#define SGEMM 1
+#define SGEMM 0
 #define DGEMM 0
-#define CGEMM 0
+#define CGEMM 1
 #define ZGEMM 0
 
 #define RANDOM_DATA   1
@@ -29,9 +30,8 @@ using namespace NaiveBlas;
 const unsigned int numTiles = sgemmNumTiles;
 const unsigned int numNonTiles = sgemmNumNonTiles;
 const unsigned int numKernels = sgemmNumKernels;
-char *ksrFileName = "prof_sgemm_ksr.txt";
-char *rawFileName = "prof_sgemm_raw.csv";
-
+const char * const ksrFileName = "prof_sgemm_ksr.txt";
+const char * const rawFileName = "prof_sgemm_raw.csv";
 #endif
 
 #if DGEMM
@@ -40,8 +40,8 @@ char *rawFileName = "prof_sgemm_raw.csv";
 const unsigned int numTiles = dgemmNumTiles;
 const unsigned int numNonTiles = dgemmNumNonTiles;
 const unsigned int numKernels = dgemmNumKernels;
-char *ksrFileName = "prof_dgemm_ksr.txt";
-char *rawFileName = "prof_dgemm_raw.csv";
+const char * const ksrFileName = "prof_dgemm_ksr.txt";
+const char * const rawFileName = "prof_dgemm_raw.csv";
 #endif
 
 #if CGEMM
@@ -50,8 +50,8 @@ char *rawFileName = "prof_dgemm_raw.csv";
 const unsigned int numTiles = cgemmNumTiles;
 const unsigned int numNonTiles = cgemmNumNonTiles;
 const unsigned int numKernels = cgemmNumKernels;
-char *ksrFileName = "prof_cgemm_ksr.txt";
-char *rawFileName = "prof_cgemm_raw.csv";
+const char * const ksrFileName = "prof_cgemm_ksr.txt";
+const char * const rawFileName = "prof_cgemm_raw.csv";
 #endif
 
 #if ZGEMM
@@ -60,11 +60,13 @@ char *rawFileName = "prof_cgemm_raw.csv";
 const unsigned int numTiles = zgemmNumTiles;
 const unsigned int numNonTiles = zgemmNumNonTiles;
 const unsigned int numKernels = zgemmNumKernels;
-char *ksrFileName = "prof_zgemm_ksr.txt";
-char *rawFileName = "prof_zgemm_raw.csv";
+const char * const ksrFileName = "prof_zgemm_ksr.txt";
+const char * const rawFileName = "prof_zgemm_raw.csv";
 #endif
 
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #define CL_CHECK(RET) \
   if(RET != CL_SUCCESS) { \
@@ -96,8 +98,8 @@ public:
 
   int getFastestValidTileIndex( unsigned int M, unsigned int N) {
     for (unsigned int i = 0; i < rule.numValidTiles; i++) {
-      if ( M%tiles[rule.validTileIndices[i]][4]==0
-        && N%tiles[rule.validTileIndices[i]][5]==0) {
+      if ( M%tiles[rule.validTileIndices[i]][0]==0
+        && N%tiles[rule.validTileIndices[i]][1]==0) {
           return rule.validTileIndices[i];
       }
     }
@@ -137,17 +139,17 @@ public:
 
     printf("add(%4u,%4u) input::valid =", M, N, validTileIndices[0]);
     for (unsigned int i = 0; i < numValidTiles; i++) {
-      printf("%ux%u, ", tiles[validTileIndices[i]][2], tiles[validTileIndices[i]][3]);
+      printf("%ux%u, ", tiles[validTileIndices[i]][0], tiles[validTileIndices[i]][1]);
     }
-    printf("; fallback = %ux%u\n", tiles[fallbackTileIndex][2], tiles[fallbackTileIndex][3]);
+    printf("; fallback = %ux%u\n", tiles[fallbackTileIndex][0], tiles[fallbackTileIndex][1]);
 
     
     printf("add(%4u,%4u)  rule::valid =", rule.startSize, rule.startSize, rule.validTileIndices[0]);
     for (unsigned int i = 0; i < rule.numValidTiles; i++) {
-      printf("%ux%u, ", tiles[rule.validTileIndices[i]][2], tiles[rule.validTileIndices[i]][3]);
+      printf("%ux%u, ", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
     }
     if (rule.fallbackTileIndex>=0) {
-      printf("; fallback = %ux%u", tiles[rule.fallbackTileIndex][2], tiles[rule.fallbackTileIndex][3]);
+      printf("; fallback = %ux%u", tiles[rule.fallbackTileIndex][0], tiles[rule.fallbackTileIndex][1]);
     }
     printf("\n");
 
@@ -162,8 +164,8 @@ public:
       if (rule.fallbackTileIndex != fallbackTileIndex) {
         mismatch = true;
         printf("mismatch:rule fallback was %ux%u, whereas new fallback is %u,%u\n",
-          tiles[rule.fallbackTileIndex][2], tiles[rule.fallbackTileIndex][3],
-          tiles[fallbackTileIndex][2], tiles[fallbackTileIndex][3]
+          tiles[rule.fallbackTileIndex][0], tiles[rule.fallbackTileIndex][1],
+          tiles[fallbackTileIndex][0], tiles[fallbackTileIndex][1]
           );
         rule.fallbackTileIndex = fallbackTileIndex;
       }
@@ -183,8 +185,8 @@ public:
           // there is a valid tile for this M,N but it mismatches
           mismatch = true;
           printf("mismatch:rule tile was %ux%u, whereas fastest is %ux%u\n",
-            tiles[ruleFastestValidTileIndex][2], tiles[ruleFastestValidTileIndex][3],
-            tiles[validTileIndices[0]][2], tiles[validTileIndices[0]][3]
+            tiles[ruleFastestValidTileIndex][0], tiles[ruleFastestValidTileIndex][1],
+            tiles[validTileIndices[0]][0], tiles[validTileIndices[0]][1]
             );
           removeTileFromRule(validTileIndices[0]); // if it existed elsewhere in the rule stack
           addTileToRule(validTileIndices[0]);
@@ -194,8 +196,8 @@ public:
 
     // remove retired tiles
     for (unsigned int i = 0; i < rule.numValidTiles; i++) {
-      if ( M%tiles[rule.validTileIndices[i]][4]==0
-          && N%tiles[rule.validTileIndices[i]][5]==0) {
+      if ( M%tiles[rule.validTileIndices[i]][0]==0
+          && N%tiles[rule.validTileIndices[i]][1]==0) {
 
         bool tileIsValid = false;
         for (unsigned int j = 0; j < numValidTiles; j++) {
@@ -206,7 +208,7 @@ public:
         }
         if (!tileIsValid) {
           mismatch = true;
-          printf("mismatch:tile %ux%u no longer valid\n", tiles[rule.validTileIndices[i]][2], tiles[rule.validTileIndices[i]][3]);
+          printf("mismatch:tile %ux%u no longer valid\n", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
               removeTileFromRule( rule.validTileIndices[i] );
         }
        }
@@ -222,20 +224,20 @@ public:
       // print what we added
       printf("add(%4u,%4u)   new::valid =", rule.startSize, rule.startSize, rule.validTileIndices[0]);
       for (unsigned int i = 0; i < rule.numValidTiles; i++) {
-        printf("%ux%u, ", tiles[rule.validTileIndices[i]][2], tiles[rule.validTileIndices[i]][3]);
+        printf("%ux%u, ", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
       }
-      printf("; fallback = %ux%u\n", tiles[rule.fallbackTileIndex][2], tiles[rule.fallbackTileIndex][3]);
+      printf("; fallback = %ux%u\n", tiles[rule.fallbackTileIndex][0], tiles[rule.fallbackTileIndex][1]);
 
       // write size event
       out << "    [ " << std::setw(4) << rule.startSize;
       // write fallback
-      out << ", [ " << std::setw(2) << tiles[rule.fallbackTileIndex][0] << ", " << std::setw(2) << tiles[rule.fallbackTileIndex][1] << ", " << std::setw(2) << tiles[rule.fallbackTileIndex][2] << ", " << std::setw(2) << tiles[rule.fallbackTileIndex][3] << "]";
+      out << ", [ " << std::setw(2) << tiles[rule.fallbackTileIndex][0] << ", " << std::setw(2) << tiles[rule.fallbackTileIndex][1] << "]";
       out << ", [ ";
       if (rule.numValidTiles >= 0) {
-        out << "[ " << std::setw(2) << tiles[rule.validTileIndices[0]][0] << ", " << std::setw(2) << tiles[rule.validTileIndices[0]][1] << ", " << std::setw(2) << tiles[rule.validTileIndices[0]][2] << ", " << std::setw(2) << tiles[rule.validTileIndices[0]][3] << "]";
+        out << "[ " << std::setw(2) << tiles[rule.validTileIndices[0]][0] << ", " << std::setw(2) << tiles[rule.validTileIndices[0]][1] << "]";
       }
       for (unsigned int i = 1; i < rule.numValidTiles; i++) {
-        out << ", [ " << std::setw(2) << tiles[rule.validTileIndices[i]][0] << ", " << std::setw(2) << tiles[rule.validTileIndices[i]][1] << ", " << std::setw(2) << tiles[rule.validTileIndices[i]][2] << ", " << std::setw(2) << tiles[rule.validTileIndices[i]][3] << "]";
+        out << ", [ " << std::setw(2) << tiles[rule.validTileIndices[i]][0] << ", " << std::setw(2) << tiles[rule.validTileIndices[i]][1] << "]";
       }
       out << " ] ], \n";
       out.flush();
@@ -494,10 +496,8 @@ float benchmarkKernel(
   clblasTranspose transA,
   clblasTranspose transB,
   bool betaNonZero,
-  unsigned int workGroupNumRows,
-  unsigned int workGroupNumCols,
-  unsigned int microTileNumRows,
-  unsigned int microTileNumCols,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
   unsigned int unroll,
   size_t M,
   size_t N,
@@ -512,17 +512,14 @@ float benchmarkKernel(
     beta = DATA_TYPE_CONSTRUCTOR(0, 0);
   }
 
-  unsigned int macroTileNumRows = workGroupNumRows*microTileNumRows;
-  unsigned int macroTileNumCols = workGroupNumCols*microTileNumCols;
-
   bool needTileKernel = M/macroTileNumRows > 0 && N/macroTileNumCols > 0;
   bool needRowKernel = M%macroTileNumRows > 0 && N/macroTileNumCols > 0;
   bool needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
   bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
 
     
-#if 0
-  printf("Testing: %sgemm_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s%s_%u_%u\n",
+#if 1
+  printf("Testing: %sgemm_%s_%s%s_%s_%03u_%03u_%02u\n",
 #if SGEMM
     "s",
 #elif DGEMM
@@ -532,19 +529,14 @@ float benchmarkKernel(
 #else
     "z",
 #endif
-    transAInt ? "T" : "N",
-    transBInt ? "T" : "N",
+    order==clblasColumnMajor ? "Col" : "Row",
+    transA==clblasTrans ? "T" : "N",
+    transB==clblasTrans ? "T" : "N",
+    betaNonZero ? "_B1" : "_B0",
     macroTileNumRows,
     macroTileNumCols,
-    unroll,
-    workGroupNumRows,
-    workGroupNumCols,
-    microTileNumRows,
-    microTileNumCols,
-    columnMajorInt ? "ColumnMajor" : "RowMajor",
-    betaNonZero ? "_BETA" : "",
-    mSpill,
-    nSpill );
+    unroll
+    );
 #endif
 
   //printf("M=%u, N=%u, K=%u\n", M, N, K);
@@ -603,6 +595,11 @@ float benchmarkKernel(
   cl_kernel  *colClKernel;
   cl_kernel  *cornerClKernel;
 
+  unsigned int workGroupNumRows;
+  unsigned int workGroupNumCols;
+  unsigned int microTileNumRows;
+  unsigned int microTileNumCols;
+
     //printf("Creating kernel.\n");
   bool kernelFound = 
   gemmSelectKernelSpecific<DATA_TYPE>(
@@ -610,11 +607,9 @@ float benchmarkKernel(
     transA,
     transB,
     betaNonZero,
-    workGroupNumRows,
-    workGroupNumCols,
-    microTileNumRows,
-    microTileNumCols,
-    8,
+    macroTileNumRows,
+    macroTileNumCols,
+    unroll,
     &tileKernelSource,
     &rowKernelSource,
     &colKernelSource,
@@ -628,7 +623,11 @@ float benchmarkKernel(
     &tileClKernel,
     &rowClKernel,
     &colClKernel,
-    &cornerClKernel
+    &cornerClKernel,
+    &workGroupNumRows,
+    &workGroupNumCols,
+    &microTileNumRows,
+    &microTileNumCols
   );
 
 
@@ -832,12 +831,12 @@ int main(void) {
 
   for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
     unsigned int *tile = tiles[tileIdx];
-    file << tile[2] << "x" << tile[3] << ", ";
+    file << tile[0] << "x" << tile[1] << ", ";
   }
   file << "<-F|T->, ";
   for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
     unsigned int *tile = tiles[tileIdx];
-    file << tile[2] << "x" << tile[3] << ", ";
+    file << tile[0] << "x" << tile[1] << ", ";
   }
   file << "fallback, fastest, would-be valid tiles\n";
       
@@ -876,11 +875,18 @@ int main(void) {
   unsigned int systemSizeMax = 8000;
   unsigned int systemSizeStep = systemSizeMin;
     
-  unsigned int kValues[] = {64, 512, 2048};
-  unsigned int numKValues = 3;
+  //unsigned int kValues[] = {64, 512, 2048};
+  //unsigned int numKValues = 3;
+  unsigned int kValues[] = {0};
+  unsigned int numKValues = 1;
   //unsigned int kValues[] = {4032};
   //unsigned int numKValues = 1;
-  unsigned int kMax = kValues[numKValues-1];
+  unsigned int kMax;
+  if (kValues[numKValues-1] > 0) {
+    kMax = kValues[numKValues-1];
+  } else {
+    kMax = systemSizeMax;
+  }
 
   
   /******************************************************************
@@ -985,18 +991,15 @@ int main(void) {
     // (2) for each k size
     for (unsigned int kIdx = 0; kIdx < numKValues; kIdx++) {
       unsigned int K = kValues[kIdx];
+      if (K == 0) K = systemSize;
       
       // (3) for each tile
       for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
         unsigned int *tile = tiles[tileIdx];
-        unsigned int workGroupNumRows = tile[0];
-        unsigned int workGroupNumCols = tile[1];
-        unsigned int microTileNumRows = tile[2];
-        unsigned int microTileNumCols = tile[3];
-        unsigned int macroTileNumRows = tile[4];
-        unsigned int macroTileNumCols = tile[5];
-        unsigned int unroll = tile[6];
-        if (printDetails) printf("%4ux%4ux%4u; %ux%u; ", M, N, K, microTileNumRows, microTileNumCols );
+        unsigned int macroTileNumRows = tile[0];
+        unsigned int macroTileNumCols = tile[1];
+        unsigned int unroll = tile[2];
+        if (printDetails) printf("%4ux%4ux%4u; %ux%u; ", M, N, K, macroTileNumRows, macroTileNumCols );
 
         /******************************************************************
          * (4) fallback speed
@@ -1005,8 +1008,7 @@ int main(void) {
             // non-tile
             order, transA, transB, false,
             // tile
-            workGroupNumRows, workGroupNumCols,
-            microTileNumRows, microTileNumCols,
+            macroTileNumRows, macroTileNumCols,
             unroll,
             // system
             M-1, N-1, K
@@ -1022,8 +1024,7 @@ int main(void) {
               // non-tile
               order, transA, transB, false,
               // tile
-              workGroupNumRows, workGroupNumCols,
-              microTileNumRows, microTileNumCols,
+              macroTileNumRows, macroTileNumCols,
               unroll,
               // system
               M, N, K
@@ -1061,7 +1062,7 @@ int main(void) {
           fastestFallbackIdx = tileIdx;
         }
       }
-      file << tiles[fastestFallbackIdx][2] << "x" << tiles[fastestFallbackIdx][3] << ", ";
+      file << tiles[fastestFallbackIdx][0] << "x" << tiles[fastestFallbackIdx][1] << ", ";
       
       /**************************************************************
        * (8) ensure fallback tile has begun/ended
@@ -1097,8 +1098,8 @@ int main(void) {
         // if the coverage of this tile is already handled by prior (faster) valid tiles, then skip it
         bool uniqueCoverage = true;
         for (unsigned int i = 0; i < numValidTiles; i++) {
-          if ( tiles[fastestTileIdx][4] % tiles[ validTiles[i] ][4] == 0
-            && tiles[fastestTileIdx][5] % tiles[ validTiles[i] ][5] == 0 )
+          if ( tiles[fastestTileIdx][0] % tiles[ validTiles[i] ][0] == 0
+            && tiles[fastestTileIdx][1] % tiles[ validTiles[i] ][1] == 0 )
           {
             uniqueCoverage = false;
             break;
@@ -1111,7 +1112,7 @@ int main(void) {
         numValidTiles++;
       }
       for (unsigned int i = 0; i < numValidTiles; i++) {
-        file << tiles[validTiles[i]][2] << "x" << tiles[validTiles[i]][3] << ", ";
+        file << tiles[validTiles[i]][0] << "x" << tiles[validTiles[i]][1] << ", ";
       }
 
       ksr.add(M, N, validTiles, numValidTiles, fastestFallbackIdx );

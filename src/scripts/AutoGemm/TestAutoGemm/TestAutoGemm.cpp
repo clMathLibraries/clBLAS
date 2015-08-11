@@ -5,7 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <string>
-#include <Windows.h>
+//#include <Windows.h>
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
@@ -67,7 +67,9 @@ const unsigned int numNonTiles = zgemmNumNonTiles;
 const unsigned int numKernels = zgemmNumKernels;
 #endif
 
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #define CL_CHECK(RET) \
   if(RET != CL_SUCCESS) { \

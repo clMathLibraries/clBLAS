@@ -56,16 +56,16 @@ class KernelBinaryIncludes:
   def addKernel(self, kernel):
     kernelName = kernel.getName()
     self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
+    self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
     kernelName = kernel.getRowName()
     self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
+    self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
     kernelName = kernel.getColName()
     self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
+    self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
     kernelName = kernel.getCornerName()
     self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
-    self.nullStr += "unsigned char *%s_bin = NULL;\n" % kernelName
+    self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.incFileName, "w")
@@ -129,7 +129,7 @@ class KernelSourceBuildOptions:
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
-    self.fileStr += "char *%s_srcBuildOptions = \"-cl-std=CL2.0\";\n" \
+    self.fileStr += "const char * const %s_srcBuildOptions = \"-cl-std=CL2.0\";\n" \
         % kernelName
 
   def writeToFile(self):
@@ -156,7 +156,7 @@ class KernelBinaryBuildOptions:
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
-    self.fileStr += "char *%s_binBuildOptions = NULL;\n" % kernelName
+    self.fileStr += "const char * const %s_binBuildOptions = NULL;\n" % kernelName
 
   def writeToFile(self):
     incFile = open(self.fileName, "w")
