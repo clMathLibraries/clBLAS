@@ -160,7 +160,7 @@ __kernel void sgemm_Col_NN_B1_MX096_NX096_KX16 (
     C+= gidy*96*ldc;
     C+= idy*ldc;
     
-	C[0*ldc] = alpha*rC[0][0] + beta*C[0*ldc];
+    C[0*ldc] = alpha*rC[0][0] + beta*C[0*ldc];
     C[16*ldc] = alpha*rC[0][1] + beta*C[16*ldc];
     C[32*ldc] = alpha*rC[0][2] + beta*C[32*ldc];
     C[48*ldc] = alpha*rC[0][3] + beta*C[48*ldc];

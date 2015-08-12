@@ -27,13 +27,13 @@ typedef enum clblasTranspose_ {
 } clblasTranspose;
 #endif
 
-#define SGEMM 0
-#define DGEMM 1
+#define SGEMM 1
+#define DGEMM 0
 #define CGEMM 0
 #define ZGEMM 0
 
 #define RANDOM_DATA   1
-#define DO_VALIDATION 1
+#define DO_VALIDATION 0
 
 #if SGEMM
 #define DATA_TYPE float
@@ -746,7 +746,7 @@ void testKernelParameterCombination(
 
 int main(void) {
 
-#if 1
+#if 0
   srand((unsigned int)time(NULL));
 
   unsigned int **kernels = new unsigned int*[numKernels];
@@ -794,12 +794,10 @@ int main(void) {
   
     unsigned int columnMajor = 1;
     unsigned int transA = 0;
-    unsigned int transB = 0;
-    unsigned int betaNonZero = 0;
-    unsigned int workGroupNumRows = 16;
-    unsigned int workGroupNumCols = 16;
-    unsigned int microTileNumRows = 4;
-    unsigned int microTileNumCols = 4;
+    unsigned int transB = 1;
+    unsigned int beta = 1;
+    unsigned int macroTileNumRows = 16*6;
+    unsigned int macroTileNumCols = 16*6;
     unsigned int unroll = 16;
     unsigned int mSpill = 0;
     unsigned int nSpill = 0;
@@ -809,14 +807,27 @@ int main(void) {
       columnMajor,
       transA,
       transB,
-      betaNonZero,
-      workGroupNumRows,
-      workGroupNumCols,
-      microTileNumRows,
-      microTileNumCols,
+      true,
+      macroTileNumRows,
+      macroTileNumCols,
       unroll,
       mSpill,
       nSpill );
+
+    
+    testKernelParameterCombination(
+      columnMajor,
+      transA,
+      transB,
+      false,
+      macroTileNumRows,
+      macroTileNumCols,
+      unroll,
+      mSpill,
+      nSpill );
+
+
+    system("PAUSE");
 #endif
 
   
