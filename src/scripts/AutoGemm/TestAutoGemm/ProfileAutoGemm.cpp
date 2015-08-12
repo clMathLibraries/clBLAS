@@ -12,13 +12,14 @@
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
+
 #include "AutoGemmKernelSelection.h"
 #include "AutoGemmKernelSelectionSpecific.h"
 #include "AutoGemmKernelEnumeration.h"
 
 #define SGEMM 0
-#define DGEMM 0
-#define CGEMM 1
+#define DGEMM 1
+#define CGEMM 0
 #define ZGEMM 0
 
 #define RANDOM_DATA   1
@@ -30,8 +31,14 @@ using namespace NaiveBlas;
 const unsigned int numTiles = sgemmNumTiles;
 const unsigned int numNonTiles = sgemmNumNonTiles;
 const unsigned int numKernels = sgemmNumKernels;
+#ifdef USER_KERNELS
+const char * const ksrFileName = "prof_user_sgemm_ksr.txt";
+const char * const rawFileName = "prof_user_sgemm_raw.csv";
+#else
 const char * const ksrFileName = "prof_sgemm_ksr.txt";
 const char * const rawFileName = "prof_sgemm_raw.csv";
+#endif
+unsigned int systemSizeMax = 8000;
 #endif
 
 #if DGEMM
@@ -40,8 +47,14 @@ const char * const rawFileName = "prof_sgemm_raw.csv";
 const unsigned int numTiles = dgemmNumTiles;
 const unsigned int numNonTiles = dgemmNumNonTiles;
 const unsigned int numKernels = dgemmNumKernels;
+#ifdef USER_KERNELS
+const char * const ksrFileName = "prof_user_dgemm_ksr.txt";
+const char * const rawFileName = "prof_user_dgemm_raw.csv";
+#else
 const char * const ksrFileName = "prof_dgemm_ksr.txt";
 const char * const rawFileName = "prof_dgemm_raw.csv";
+#endif
+unsigned int systemSizeMax = 6000;
 #endif
 
 #if CGEMM
@@ -50,8 +63,14 @@ const char * const rawFileName = "prof_dgemm_raw.csv";
 const unsigned int numTiles = cgemmNumTiles;
 const unsigned int numNonTiles = cgemmNumNonTiles;
 const unsigned int numKernels = cgemmNumKernels;
+#ifdef USER_KERNELS
+const char * const ksrFileName = "prof_user_cgemm_ksr.txt";
+const char * const rawFileName = "prof_user_cgemm_raw.csv";
+#else
 const char * const ksrFileName = "prof_cgemm_ksr.txt";
 const char * const rawFileName = "prof_cgemm_raw.csv";
+#endif
+unsigned int systemSizeMax = 5500;
 #endif
 
 #if ZGEMM
@@ -60,8 +79,14 @@ const char * const rawFileName = "prof_cgemm_raw.csv";
 const unsigned int numTiles = zgemmNumTiles;
 const unsigned int numNonTiles = zgemmNumNonTiles;
 const unsigned int numKernels = zgemmNumKernels;
+#ifdef USER_KERNELS
+const char * const ksrFileName = "prof_user_zgemm_ksr.txt";
+const char * const rawFileName = "prof_user_zgemm_raw.csv";
+#else
 const char * const ksrFileName = "prof_zgemm_ksr.txt";
 const char * const rawFileName = "prof_zgemm_raw.csv";
+#endif
+unsigned int systemSizeMax = 5000;
 #endif
 
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -468,9 +493,9 @@ const unsigned int numEnqueuesPerFlush = 1;
 const unsigned int numFlushesPerFinish = 1;
 const unsigned int numFinishes = 1;
 #else
-const unsigned int numEnqueuesPerFlush = 1;
+const unsigned int numEnqueuesPerFlush = 10;
 const unsigned int numFlushesPerFinish = 1;
-const unsigned int numFinishes = 4;
+const unsigned int numFinishes = 1;
 #endif
 
 char* loadFile(const char* path);
@@ -872,7 +897,6 @@ int main(void) {
   bool beta = false;
 
   unsigned int systemSizeMin = 16;
-  unsigned int systemSizeMax = 8000;
   unsigned int systemSizeStep = systemSizeMin;
     
   //unsigned int kValues[] = {64, 512, 2048};
