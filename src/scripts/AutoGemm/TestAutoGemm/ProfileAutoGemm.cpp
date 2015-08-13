@@ -17,8 +17,8 @@ using namespace NaiveBlas;
 #include "AutoGemmKernelSelectionSpecific.h"
 #include "AutoGemmKernelEnumeration.h"
 
-#define SGEMM 0
-#define DGEMM 1
+#define SGEMM 1
+#define DGEMM 0
 #define CGEMM 0
 #define ZGEMM 0
 
@@ -896,8 +896,8 @@ int main(void) {
   clblasTranspose transB = clblasTrans;
   bool beta = false;
 
-  unsigned int systemSizeMin = 16;
-  unsigned int systemSizeStep = systemSizeMin;
+  unsigned int systemSizeMin = 5120+16;
+  unsigned int systemSizeStep = 16;
     
   //unsigned int kValues[] = {64, 512, 2048};
   //unsigned int numKValues = 3;
