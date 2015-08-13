@@ -15,6 +15,7 @@ class KernelSourceIncludes:
   ##############################################################################
   def __init__(self):
     self.fileName = Common.getIncludePath() + "AutoGemmKernelSourceIncludes.h"
+    print self.fileName
     self.incFile = open(self.fileName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
     self.fileStr = "#ifndef AUTO_GEMM_KERNEL_SOURCE_INCLUDES_H\n"
@@ -344,5 +345,9 @@ def writeIncludes():
 # Main
 ################################################################################
 if __name__ == "__main__":
+  if len(sys.argv) == 2:
+    Common.setOutputPath(sys.argv[1])
+  else:
+    print "Warning: No output path specified; default is working directory."
   writeIncludes()
 

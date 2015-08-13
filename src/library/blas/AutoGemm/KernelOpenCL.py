@@ -510,5 +510,9 @@ def writeOpenCLKernels():
 # Main
 ################################################################################
 if __name__ == "__main__":
+  if len(sys.argv) == 2:
+    Common.setOutputPath(sys.argv[1])
+  else:
+    print "Warning: No output path specified; default is working directory."
   writeOpenCLKernels()
 

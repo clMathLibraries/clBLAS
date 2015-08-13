@@ -17,6 +17,7 @@ import os
 import sys
 import getopt
 
+import Common
 import Includes
 import KernelSelection
 import KernelOpenCL
@@ -27,6 +28,10 @@ import KernelOpenCL
 # Main
 ################################################################################
 if __name__ == "__main__":
+  if len(sys.argv) == 2:
+    Common.setOutputPath(sys.argv[1])
+  else:
+    print "Warning: No output path specified; default is working directory."
   KernelSelection.writeKernelSelection()
   KernelOpenCL.writeOpenCLKernels()
   Includes.writeIncludes()

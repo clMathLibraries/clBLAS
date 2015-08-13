@@ -2,8 +2,14 @@
 # Auto-Gemm
 ################################################################################
 
+outputPath = ""
+def setOutputPath(path):
+  global outputPath
+  outputPath = path + "/"
+
 def getOutputPath():
-  return ""
+  global outputPath
+  return outputPath
 
 def getKernelSourcePath():
   return getOutputPath() + "AutoGemmKernelSources/"
