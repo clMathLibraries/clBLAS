@@ -113,6 +113,7 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
 
+
   # AutoGemm header files
   #${CMAKE_BINARY_DIR}/include/AutoGemmClKernels.h
   #${CMAKE_BINARY_DIR}/include/AutoGemmBinaryBuildOptions.h
@@ -357,9 +358,7 @@ include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}/library/blas/functor/include
     ${clBLAS_SOURCE_DIR}/library/tools/tune
     ${clBLAS_BINARY_DIR}/include
-    ${clBLAS_SOURCE_DIR}/library/blas/gemm
-    ${clBLAS_SOURCE_DIR}/library/blas/GemmKernelSources
-    ${clBLAS_SOURCE_DIR}/library/blas/GemmKernelBinaries
+    ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
 )
 
 option( BLAS_DUMP_CLBLAS_KERNELS "Force the library to dump OpenCL kernels to disk" OFF )
@@ -495,7 +494,7 @@ endif( )
 
 add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
 add_dependencies(clBLAS GENERATE_CLT)
-add_dependencies( clBLAS AutoGemm )
+add_dependencies( clBLAS AutoGemmHeaderGeneration )
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
 set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

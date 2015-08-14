@@ -9,9 +9,9 @@
 #include <CL/cl.h>
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
-#include "AutoGemmKernelSelection.h"
-#include "AutoGemmKernelSelectionSpecific.h"
-#include "AutoGemmKernelEnumeration.h"
+#include "AutoGemmIncludes/AutoGemmKernelSelection.h"
+#include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
+#include "AutoGemmIncludes/AutoGemmKernelEnumeration.h"
 #if 0
 // from clBLAS.h
 typedef enum clblasOrder_ {

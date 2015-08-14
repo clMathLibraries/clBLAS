@@ -13,9 +13,9 @@
 #include "naive_blas.cpp"
 using namespace NaiveBlas;
 
-#include "AutoGemmKernelSelection.h"
-#include "AutoGemmKernelSelectionSpecific.h"
-#include "AutoGemmKernelEnumeration.h"
+#include "AutoGemmIncludes/AutoGemmKernelSelection.h"
+#include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
+#include "AutoGemmIncludes/AutoGemmKernelEnumeration.h"
 
 #define SGEMM 1
 #define DGEMM 0

@@ -11,21 +11,30 @@ def getOutputPath():
   global outputPath
   return outputPath
 
+def getRelativeKernelSourcePath():
+  return "AutoGemmKernelSources/"
+
+def getRelativeKernelBinaryPath():
+  return "AutoGemmKernelBinaries/"
+
+def getRelativeIncludePath():
+  return "AutoGemmIncludes/"
+
 def getKernelSourcePath():
-  return getOutputPath() + "AutoGemmKernelSources/"
+  return getOutputPath() + getRelativeKernelSourcePath()
 
 def getKernelBinaryPath():
-  return getOutputPath() + "AutoGemmKernelBinaries/"
+  return getOutputPath() + getRelativeKernelBinaryPath()
 
 def getIncludePath():
-  return getOutputPath() + "AutoGemmIncludes/"
+  return getOutputPath() + getRelativeIncludePath()
 
 def getAutoGemmHeader():
   return (
       "/*******************************************************************************\n"
       " * This file was auto-generated using the AutoGemm.py python script.\n"
       " * DO NOT modify this file! Instead, make changes to\n"
-      " *   clBLAS/src/scripts/AutoGemm/AutoGemm.py then re-generate files\n"
+      " *   clBLAS/src/library/blas/AutoGemm/*.py then re-generate files\n"
       " *   (otherwise local changes will be lost after re-generation).\n"
       " * - David Tanner\n"
       " ******************************************************************************/\n\n"

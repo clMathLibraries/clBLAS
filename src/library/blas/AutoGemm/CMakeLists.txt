@@ -22,17 +22,45 @@ add_custom_command(
   OUTPUT ${AUTOGEMM_OUT}
   COMMAND
     python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py ${CMAKE_BINARY_DIR}/include
-  DEPENDS ${AUTO_GEMM_SRC}
+  DEPENDS ${AUTOGEMM_SRC}
 )
 
-add_custom_target( AutoGemm
+add_custom_target( AutoGemmHeaderGeneration
   DEPENDS ${AUTOGEMM_OUT} 
-  SOURCES ${AUTO_GEMM_SRC}
+  SOURCES ${AUTOGEMM_SRC}
 )
 
 #add_library( AutoGemm
-#  SOURCES ${AUTO_GEMM_SRC}
+#  SOURCES ${AUTOGEMM_SRC}
 #)
 #add_dependencies( AutoGemm ${AUTOGEMM_OUT} )
 
-#source_group(AutoGemm\\source FILES ${AUTO_GEMM_SRC} )
+#source_group(AutoGemm\\source FILES ${AUTOGEMM_SRC} )
+
+
+
+set(AUTOGEMM_TEST_SRC
+  AutoGemmTools/TestAutoGemm.cpp
+)
+set(AUTOGEMM_PROFILER_SRC
+  AutoGemmTools/ProfileAutoGemm.cpp
+)
+
+
+include_directories(
+    ${OPENCL_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/library/tools/ktest/naive
+    ${CMAKE_BINARY_DIR}/include
+    .
+)
+
+add_executable(TestAutoGemm ${AUTOGEMM_TEST_SRC})
+add_executable(ProfileAutoGemm ${AUTOGEMM_PROFILER_SRC})
+target_link_libraries(TestAutoGemm ${OPENCL_LIBRARIES})
+target_link_libraries(ProfileAutoGemm ${OPENCL_LIBRARIES})
+
+set_property( TARGET AutoGemmHeaderGeneration PROPERTY FOLDER "AutoGemm")
+set_property( TARGET TestAutoGemm PROPERTY FOLDER "AutoGemm")
+set_property( TARGET ProfileAutoGemm PROPERTY FOLDER "AutoGemm")
+
+source_group( AutoGemmScripts FILES ${AUTOGEMM_SRC} )
