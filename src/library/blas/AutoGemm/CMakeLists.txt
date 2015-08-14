@@ -30,22 +30,12 @@ add_custom_target( AutoGemmHeaderGeneration
   SOURCES ${AUTOGEMM_SRC}
 )
 
-#add_library( AutoGemm
-#  SOURCES ${AUTOGEMM_SRC}
-#)
-#add_dependencies( AutoGemm ${AUTOGEMM_OUT} )
-
-#source_group(AutoGemm\\source FILES ${AUTOGEMM_SRC} )
-
-
-
 set(AUTOGEMM_TEST_SRC
   AutoGemmTools/TestAutoGemm.cpp
 )
 set(AUTOGEMM_PROFILER_SRC
   AutoGemmTools/ProfileAutoGemm.cpp
 )
-
 
 include_directories(
     ${OPENCL_INCLUDE_DIRS}

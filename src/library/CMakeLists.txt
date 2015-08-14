@@ -112,17 +112,6 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_dgemmSmallMatrices.h
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
-
-
-  # AutoGemm header files
-  #${CMAKE_BINARY_DIR}/include/AutoGemmClKernels.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmBinaryBuildOptions.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmBinaryIncludes.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmBinaryNulls.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmKernelSelection.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmKernelSelectionSpecific.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmKernelSourceBuildOptions.h
-  #${CMAKE_BINARY_DIR}/include/AutoGemmKernelSourceIncludes.h
 )
 
 set(SRC_BLAS_GENERIC
