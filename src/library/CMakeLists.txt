@@ -81,6 +81,7 @@ set(SRC_BLAS
 	blas/functor/gcn_dgemmSmallMatrices.cc
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
+	blas/functor/hawaii_sgemmBig1024Kernel.cc
 )
 
 set(SRC_BLAS_HEADERS
@@ -114,6 +115,7 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_dgemmSmallMatrices.h
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
+	blas/functor/include/hawaii_sgemmBig1024Kernel.h
 )
 
 set(SRC_BLAS_GENERIC
