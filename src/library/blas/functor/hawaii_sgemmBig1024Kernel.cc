@@ -289,21 +289,300 @@ clBlashawaiiSgemmBig1024KernelFunctor::provide(clblasSgemmFunctor::Args & args, 
 
 cl_int clBlashawaiiSgemmBig1024KernelFunctor::KernelsLaunch(cl_command_queue queue, cl_kernel Kernel[1], Args &args)
 {
-  //((Mvalue - 1) / 128 + 1) * 16
-  size_t GlobalX = ((args.M-1) / 128 + 1)*16 ;
-  
-  //
-
-  size_t GlobalY = ((args.N - 1) / 128 + 1) * 16;
-
-
-  std::size_t gs[2] = {GlobalX, GlobalY};
-  cl_int error = 0;
+	if (args.lda < 7168)
+	{
+		//((Mvalue - 1) / 128 + 1) * 16
+		size_t GlobalX = ((args.M - 1) / 128 + 1) * 16;
+		size_t GlobalY = ((args.N - 1) / 128 + 1) * 16;
 
 
-  //if (VERB) printf(" ===> EXECUTE KERNEL 0 \n") ;
-  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantBig1024->ls, args.numEventsInWaitList, args.eventWaitList,args.events);
-  return error;
+		std::size_t gs[2] = { GlobalX, GlobalY };
+		cl_int error = 0;
+
+
+		//if (VERB) printf(" ===> EXECUTE KERNEL 0 \n") ;
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantBig1024->ls, args.numEventsInWaitList, args.eventWaitList, args.events);
+		return error;
+	}
+	else
+	{
+		//for example, when M=N=K=8192
+		//we are gonna call 16 GEMMs 
+		//each GEMM has M=N=K=4096
+		//note are direct GEMM call has a 0.7 TFLOPS performance
+
+		//     [ A11 | A12 | A13 | A14 ]      [ B11 | B12 | B13 | B14 ]      [ C11 | C12 ]
+		// A = [ A21 | A22 | A23 | A24 ]  B = [ B21 | B22 | B23 | B24 ]  C = [ C21 | C22 ] 
+
+		// 16 GEMMs are
+		// #01: C11 = a*A11*B11 + b*C11
+		// #02: C11 = a*A12*B12 + 1*C11
+		// #03: C11 = a*A13*B13 + 1*C11
+		// #04: C11 = a*A14*B14 + 1*C11 now we are done with C11
+
+		// #05: C12 = a*A11*B21 + b*C12
+		// #06: C12 = a*A12*B22 + 1*C12
+		// #07: C12 = a*A12*B22 + 1*C12
+		// #08: C12 = a*A12*B22 + 1*C12 now we are done with C12
+
+		// #09: C21 = a*A21*B11 + b*C21
+		// #10: C21 = a*A22*B12 + 1*C21
+		// #11: C21 = a*A23*B13 + 1*C21
+		// #12: C21 = a*A24*B14 + 1*C21 now we are done with C21
+
+		// #13: C22 = a*A21*B21 + b*C22
+		// #14: C22 = a*A22*B22 + 1*C22
+		// #15: C22 = a*A23*B23 + 1*C22
+		// #16: C22 = a*A24*B24 + 1*C22 now we are done with C22
+
+		unsigned int small_M = args.M / 2;
+		unsigned int small_N = args.N / 2;
+		unsigned int small_K = args.K / 4;
+
+		size_t GlobalX = ((small_M - 1) / 128 + 1) * 16;
+		size_t GlobalY = ((small_N - 1) / 128 + 1) * 16;
+		std::size_t gs[2] = { GlobalX, GlobalY };
+		cl_int error = 0;
+
+		//GEMM #1
+		error = clSetKernelArg(Kernel[0], 3, sizeof(cl_uint), &small_M);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 4, sizeof(cl_uint), &small_N);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 5, sizeof(cl_uint), &small_K);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, args.numEventsInWaitList, args.eventWaitList, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #2: C11 = a*A12*B12 + 1*C11
+
+		unsigned int offa_A2 = args.lda*args.K / 4;
+		unsigned int offb_B2 = args.ldb*args.K / 4;
+		cl_float betaone = 1;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A2);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B2);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #3: C11 = a*A13*B13 + 1*C11
+
+		unsigned int offa_A3 = args.lda*args.K / 4 * 2;
+		unsigned int offb_B3 = args.ldb*args.K / 4 * 2;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A3);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B3);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #4: C11 = a*A14*B14 + 1*C11 now we are done with C11
+
+		unsigned int offa_A4 = args.lda*args.K / 4 * 3;
+		unsigned int offb_B4 = args.ldb*args.K / 4 * 3;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A4);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B4);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #5: C12 = a*A11*B21 + b*C12
+		unsigned int offa_A5 = 0;
+		unsigned int offb_B5 = args.N / 2;
+		unsigned int offc_C5 = args.ldc*args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A5);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B5);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C5);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #6: C12 = a*A12*B22 + 1*C12
+		unsigned int offa_A6 = args.lda*args.K / 4;
+		unsigned int offb_B6 = args.ldb*args.K / 4 + args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A6);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B6);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #7: C12 = a*A13*B23 + 1*C12
+		unsigned int offa_A7 = args.lda*args.K / 4 * 2;
+		unsigned int offb_B7 = args.ldb*args.K / 4 * 2 + args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A7);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B7);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #8: C12 = a*A14*B24 + 1*C12 now we are done with C12
+		unsigned int offa_A8 = args.lda*args.K / 4 * 3;
+		unsigned int offb_B8 = args.ldb*args.K / 4 * 3 + args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A8);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B8);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #9: C21 = a*A21*B11 + b*C21
+		unsigned int offa_A9 = args.M / 2;
+		unsigned int offb_B9 = 0;
+		unsigned int offc_C9 = args.M / 2;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A9);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B9);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C9);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #10: C21 = a*A22*B12 + 1*C21 
+
+		unsigned int offa_A10 = args.lda*args.K / 4 + args.M / 2;
+		unsigned int offb_B10 = args.ldb*args.K / 4;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A10);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B10);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #11: C21 = a*A23*B13 + 1*C21 
+
+		unsigned int offa_A11 = args.lda*args.K / 4 * 2 + args.M / 2;
+		unsigned int offb_B11 = args.ldb*args.K / 4 * 2;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A11);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B11);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #12: C21 = a*A24*B14 + 1*C21 now we are done with C21
+
+		unsigned int offa_A12 = args.lda*args.K / 4 * 3 + args.M / 2;
+		unsigned int offb_B12 = args.ldb*args.K / 4 * 3;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A12);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B12);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// GEMM #13: C22 = a*A21*B21 + b*C22
+		unsigned int offa_A13 = args.M / 2;
+		unsigned int offb_B13 = args.N / 2;
+		unsigned int offc_C13 = args.ldc*args.N / 2 + args.M / 2;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A13);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B13);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C13);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// #14: C22 = a*A22*B22 + 1*C22 
+		unsigned int offa_A14 = args.lda*args.K / 4 + args.M / 2;
+		unsigned int offb_B14 = args.ldb*args.K / 4 + args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A14);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B14);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// #15: C22 = a*A23*B23 + 1*C22 
+		unsigned int offa_A15 = args.lda*args.K / 4 * 2 + args.M / 2;
+		unsigned int offb_B15 = args.ldb*args.K / 4 * 2 + args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A15);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B15);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, NULL);
+		assert(error == CL_SUCCESS);
+
+		// #16: C22 = a*A24*B24 + 1*C22 
+		unsigned int offa_A16 = args.lda*args.K / 4 * 3 + args.M / 2;
+		unsigned int offb_B16 = args.ldb*args.K / 4 * 3 + args.N / 2;
+
+		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A16);
+		assert(error == CL_SUCCESS);
+		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B16);
+		assert(error == CL_SUCCESS);
+
+		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+			gs, m_variantBig1024->ls, 0, NULL, args.events);
+		assert(error == CL_SUCCESS);
+
+		return error;
+	}
 
 
   return clblasNotImplemented;
