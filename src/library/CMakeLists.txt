@@ -234,6 +234,7 @@ set (SRC_CL_TEMPLATES
     dtrsm_gpu192.cl
 	dgemm_gcn_SmallMatrices.cl
 	sgemm_gcn_SmallMatrices.cl
+	sgemm_gcn_bigMatrices.cl
 	sgemm_gcn.cl
 	zgemm_gcn.cl
 )
@@ -253,6 +254,9 @@ set(SRC_CL_TEMPLATES_GEN
 	sgemm_gcn_SmallMatrices.clHawaii_64.bin.cl
 	sgemm_gcn_SmallMatrices.clTahiti_64.bin.cl
     sgemm_gcn_SmallMatrices.clBonaire_64.bin.cl
+	sgemm_gcn_bigMatrices.clHawaii_64.bin.cl
+	sgemm_gcn_bigMatrices.clTahiti_64.bin.cl
+    sgemm_gcn_bigMatrices.clBonaire_64.bin.cl
 	sgemm_gcn.clHawaii_64.bin.cl
 	zgemm_gcn.clHawaii_64.bin.cl
     sgemm_gcn.clBonaire_64.bin.cl
