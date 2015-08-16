@@ -335,16 +335,21 @@ cl_int clBlashawaiiSgemmBig1024KernelFunctor::KernelsLaunch(cl_command_queue que
 		// #15: C22 = a*A23*B23 + 1*C22
 		// #16: C22 = a*A24*B24 + 1*C22 now we are done with C22
 
-		unsigned int small_M = args.M / 2;
-		unsigned int small_N = args.N / 2;
-		unsigned int small_K = args.K / 4;
+		unsigned int K_split_factor = 4;
+		unsigned int M_split_factor = 2;
+		unsigned int N_split_factor = 2;
+
+		unsigned int small_M = args.M / M_split_factor;
+		unsigned int small_N = args.N / N_split_factor;
+		unsigned int small_K = args.K / K_split_factor;
 
 		size_t GlobalX = ((small_M - 1) / 128 + 1) * 16;
 		size_t GlobalY = ((small_N - 1) / 128 + 1) * 16;
 		std::size_t gs[2] = { GlobalX, GlobalY };
 		cl_int error = 0;
 
-		//GEMM #1
+		cl_float betaone = 1;
+
 		error = clSetKernelArg(Kernel[0], 3, sizeof(cl_uint), &small_M);
 		assert(error == CL_SUCCESS);
 		error = clSetKernelArg(Kernel[0], 4, sizeof(cl_uint), &small_N);
@@ -352,234 +357,68 @@ cl_int clBlashawaiiSgemmBig1024KernelFunctor::KernelsLaunch(cl_command_queue que
 		error = clSetKernelArg(Kernel[0], 5, sizeof(cl_uint), &small_K);
 		assert(error == CL_SUCCESS);
 
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, args.numEventsInWaitList, args.eventWaitList, NULL);
-		assert(error == CL_SUCCESS);
+		for (int M_split_index = 0; M_split_index < M_split_factor; M_split_index++)
+		{
+			//2 groups of GEMMs splited by M from example
+			for (int N_split_index = 0; N_split_index < N_split_factor; N_split_index++)
+			{
+				//2 groups of GEMMs splited by N from example
+				unsigned int offc_C = args.ldc*args.N / N_split_factor * N_split_index + args.M / M_split_factor * M_split_index + args.offC;
+				error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C);
+				assert(error == CL_SUCCESS);
 
-		// GEMM #2: C11 = a*A12*B12 + 1*C11
+				for (int K_split_index = 0; K_split_index < K_split_factor; K_split_index++)
+				{
+					//4 GEMMs splited by K from example
+					unsigned int offa_A = (args.M / M_split_factor * M_split_index) + (args.lda * args.K / K_split_factor * K_split_index) + args.offA;
+					unsigned int offb_B = (args.N / N_split_factor * N_split_index) + (args.ldb * args.K / K_split_factor * K_split_index) + args.offB;
+					error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A);
+					assert(error == CL_SUCCESS);
+					error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B);
+					assert(error == CL_SUCCESS);
 
-		unsigned int offa_A2 = args.lda*args.K / 4;
-		unsigned int offb_B2 = args.ldb*args.K / 4;
-		cl_float betaone = 1;
+					if (K_split_index == 0)
+					{
+						error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
+						assert(error == CL_SUCCESS);
 
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A2);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B2);
-		assert(error == CL_SUCCESS);
+						if (M_split_index == 0 && N_split_index == 0)
+						{
+							//very first GEMM call
+							error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+								gs, m_variantBig1024->ls, args.numEventsInWaitList, args.eventWaitList, NULL);
+							assert(error == CL_SUCCESS);
+						}
+						else
+						{
+							error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+								gs, m_variantBig1024->ls, 0, NULL, NULL);
+							assert(error == CL_SUCCESS);
+						}
+					}
+					else
+					{
+						error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
+						assert(error == CL_SUCCESS);
 
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
+						if ((M_split_index == (M_split_factor - 1) ) && (N_split_index == (N_split_factor - 1)) && (K_split_index == (K_split_factor - 1)))
+						{
+							//very last GEMM call
+							error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+								gs, m_variantBig1024->ls, 0, NULL, args.events);
+							assert(error == CL_SUCCESS);
+						}
+						else
+						{
+							error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
+								gs, m_variantBig1024->ls, 0, NULL, NULL);
+							assert(error == CL_SUCCESS);
+						}
+					}
+				}
+			}
+		}
 
-		// GEMM #3: C11 = a*A13*B13 + 1*C11
-
-		unsigned int offa_A3 = args.lda*args.K / 4 * 2;
-		unsigned int offb_B3 = args.ldb*args.K / 4 * 2;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A3);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B3);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #4: C11 = a*A14*B14 + 1*C11 now we are done with C11
-
-		unsigned int offa_A4 = args.lda*args.K / 4 * 3;
-		unsigned int offb_B4 = args.ldb*args.K / 4 * 3;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A4);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B4);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #5: C12 = a*A11*B21 + b*C12
-		unsigned int offa_A5 = 0;
-		unsigned int offb_B5 = args.N / 2;
-		unsigned int offc_C5 = args.ldc*args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A5);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B5);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C5);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #6: C12 = a*A12*B22 + 1*C12
-		unsigned int offa_A6 = args.lda*args.K / 4;
-		unsigned int offb_B6 = args.ldb*args.K / 4 + args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A6);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B6);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #7: C12 = a*A13*B23 + 1*C12
-		unsigned int offa_A7 = args.lda*args.K / 4 * 2;
-		unsigned int offb_B7 = args.ldb*args.K / 4 * 2 + args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A7);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B7);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #8: C12 = a*A14*B24 + 1*C12 now we are done with C12
-		unsigned int offa_A8 = args.lda*args.K / 4 * 3;
-		unsigned int offb_B8 = args.ldb*args.K / 4 * 3 + args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A8);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B8);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #9: C21 = a*A21*B11 + b*C21
-		unsigned int offa_A9 = args.M / 2;
-		unsigned int offb_B9 = 0;
-		unsigned int offc_C9 = args.M / 2;
-
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A9);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B9);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C9);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #10: C21 = a*A22*B12 + 1*C21 
-
-		unsigned int offa_A10 = args.lda*args.K / 4 + args.M / 2;
-		unsigned int offb_B10 = args.ldb*args.K / 4;
-
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A10);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B10);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #11: C21 = a*A23*B13 + 1*C21 
-
-		unsigned int offa_A11 = args.lda*args.K / 4 * 2 + args.M / 2;
-		unsigned int offb_B11 = args.ldb*args.K / 4 * 2;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A11);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B11);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #12: C21 = a*A24*B14 + 1*C21 now we are done with C21
-
-		unsigned int offa_A12 = args.lda*args.K / 4 * 3 + args.M / 2;
-		unsigned int offb_B12 = args.ldb*args.K / 4 * 3;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A12);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B12);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// GEMM #13: C22 = a*A21*B21 + b*C22
-		unsigned int offa_A13 = args.M / 2;
-		unsigned int offb_B13 = args.N / 2;
-		unsigned int offc_C13 = args.ldc*args.N / 2 + args.M / 2;
-
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &(args.beta));
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A13);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B13);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 13, sizeof(cl_uint), &offc_C13);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// #14: C22 = a*A22*B22 + 1*C22 
-		unsigned int offa_A14 = args.lda*args.K / 4 + args.M / 2;
-		unsigned int offb_B14 = args.ldb*args.K / 4 + args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 7, sizeof(cl_float), &betaone);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A14);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B14);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// #15: C22 = a*A23*B23 + 1*C22 
-		unsigned int offa_A15 = args.lda*args.K / 4 * 2 + args.M / 2;
-		unsigned int offb_B15 = args.ldb*args.K / 4 * 2 + args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A15);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B15);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, NULL);
-		assert(error == CL_SUCCESS);
-
-		// #16: C22 = a*A24*B24 + 1*C22 
-		unsigned int offa_A16 = args.lda*args.K / 4 * 3 + args.M / 2;
-		unsigned int offb_B16 = args.ldb*args.K / 4 * 3 + args.N / 2;
-
-		error = clSetKernelArg(Kernel[0], 11, sizeof(cl_uint), &offa_A16);
-		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(Kernel[0], 12, sizeof(cl_uint), &offb_B16);
-		assert(error == CL_SUCCESS);
-
-		error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL,
-			gs, m_variantBig1024->ls, 0, NULL, args.events);
-		assert(error == CL_SUCCESS);
 
 		return error;
 	}

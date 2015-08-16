@@ -123,7 +123,9 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
 	  {
 		  if (args.lda != 6144)// 6144 is handled by a special case split
 		  {
-			  if (args.M % 128 == 0 && args.N % 128 == 0 && args.K % 64 == 0)
+			  // we are going to call 16 GEMMs with M=M/2, N=N/2, K=K/4
+			  // each GEMM requires M%128 == 0, N%128 == 0, K%16 == 0
+			  if (args.M % 256 == 0 && args.N % 256 == 0 && args.K % 64 == 0)
 			  {
 				  functor = clBlashawaiiSgemmBig1024KernelFunctor::provide(args, "Hawaii");
 				  if (functor)
