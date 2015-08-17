@@ -114,5 +114,29 @@ def getTilesForPrecision(precision):
   setTiles = set(tiles)
   tiles = list( setTiles )
   tiles.sort()
-  #print tiles
   return tiles
+
+def getTransposeChoices():
+  singleTransposes = []
+  for precision in precisions:
+    for transpose in transposes[precision]:
+      singleTransposes.append( transpose )
+  singleTransposeSet = set(singleTransposes)
+  singleTranspose =  list( singleTransposeSet)
+  transposeChoices = []
+  for transA in singleTranspose:
+    for transB in singleTranspose:
+      transposePair = transA+transB
+      if transposePair not in transposeChoices:
+        transposeChoices.append(transposePair)
+  return transposeChoices
+
+def getTileChoices():
+  tileChoices = []
+  for precision in precisions:
+    tilesForPrecision = getTilesForPrecision(precision)
+    for t in tilesForPrecision:
+      tile = str(t.workGroupNumRows*t.microTileNumRows) + "x" + str(t.workGroupNumCols*t.microTileNumCols)
+      if tile not in tileChoices:
+        tileChoices.append(tile)
+  return tileChoices

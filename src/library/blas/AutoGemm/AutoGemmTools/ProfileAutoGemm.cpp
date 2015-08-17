@@ -896,7 +896,7 @@ int main(void) {
   clblasTranspose transB = clblasTrans;
   bool beta = false;
 
-  unsigned int systemSizeMin = 5120+16;
+  unsigned int systemSizeMin = 16;
   unsigned int systemSizeStep = 16;
     
   //unsigned int kValues[] = {64, 512, 2048};

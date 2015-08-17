@@ -44,4 +44,8 @@ hostDataChar = { "s":"s", "d":"d", "c":"c", "z":"z" }
 hostDataType = { "s":"float", "d":"double", "c":"float2", "z":"double2" }
 openclDataType = { "s":"float", "d":"double", "c":"float2", "z":"double2" }
 
+precisionInt = { "s":0, "d":1, "c":2, "z":3 }
+orderInt = { "clblasRowMajor":0, "clblasColumnMajor":1 }
+transposeInt = { "N":0, "T":1, "C":2 }
+
 
