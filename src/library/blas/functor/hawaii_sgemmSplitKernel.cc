@@ -683,6 +683,153 @@ cl_int clBlashawaiiSgemmSplitKernelFunctor::KernelsLaunch(cl_command_queue queue
 
   std::size_t gs[2] = {GlobalX, GlobalY};
   cl_int error = 0;
+  
+  //deals with square matrix sizes where K is mod 16 for now
+  if (args.lda == args.ldb)
+  {
+	  if ((args.K % 16 == 0) && (args.lda >= 6144) && (args.ldb >= 6144))
+	  {
+		  if ((args.lda % 1024 == 0) && (args.ldb % 1024 == 0) && (args.transA == clblasNoTrans) && (args.transB == clblasTrans))
+		  {
+			  //handles special cases where a direct call to "sgemm_NT_96_96_16..." causes perf drop due to cache miss/thrashing
+			  //this special cases is: sgemm column major NT / sgemm row major TN; lda and ldb are big multiples of 1024 such as 4096 and 6144
+			  //K is bigger than a threshold: 1536 for lda=ldb=6144
+
+			  //
+			  int K_block_size;
+              if (args.lda == 6144)
+			  {
+				  K_block_size = 1536;
+			  }
+			  else
+			  {
+				  K_block_size = 128;
+			  }
+
+			  if (args.M % 96 == 0 && args.N % 96 == 0)
+			  {
+				  if (VERB) printf(" ===> EXECUTE KERNEL 0 \n");
+				  if (args.K > K_block_size)
+				  {
+					  //split into many GEMM calls with K = K_block_size
+					  //there are at least 2 GEMM calls
+					  int num_of_gemm = ((args.K - 1) / K_block_size) + 1;
+
+					  //call first GEMM
+					  unsigned int small_K = K_block_size;
+					  setKernelArg<int>(Kernel[0], 5, small_K);
+					  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantSplit->ls, args.numEventsInWaitList, args.eventWaitList, NULL);
+
+					  //call middle GEMMs
+					  unsigned beta_one = 1.0f;
+					  setKernelArg<int>(Kernel[0], 7, beta_one);
+					  for (int i = 1; i < num_of_gemm - 1; i++)
+					  {
+						  unsigned offa_i = args.lda * (args.K / num_of_gemm) * i + args.offA;
+						  unsigned offb_i = args.ldb * (args.K / num_of_gemm) * i + args.offB;
+						  setKernelArg<int>(Kernel[0], 11, offa_i);
+						  setKernelArg<int>(Kernel[0], 12, offb_i);
+						  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+					  }
+					  //call last GEMM
+					  //the last GEMM's K might be smaller than small_K
+					  unsigned int residue_K = args.K % small_K;
+					  if (residue_K == 0)
+						  residue_K = small_K;
+					  unsigned offa_i = args.lda * (args.K / num_of_gemm) * (num_of_gemm - 1) + args.offA;
+					  unsigned offb_i = args.ldb * (args.K / num_of_gemm) * (num_of_gemm - 1) + args.offB;
+					  setKernelArg<int>(Kernel[0], 5, residue_K);
+					  setKernelArg<int>(Kernel[0], 11, offa_i);
+					  setKernelArg<int>(Kernel[0], 12, offb_i);
+					  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantSplit->ls, 0, NULL, args.events);
+					  return error;
+				  }
+			  }
+
+			  if (args.M % 96 != 0 && args.N % 96 != 0 && args.M >= 96 && args.N >= 96)
+			  {
+				  if (VERB) printf(" ===> EXECUTE KERNEL 0, 1, 2, 3 \n");
+
+				  if (args.K > K_block_size)
+				  {
+					  int num_of_gemm = ((args.K - 1) / K_block_size) + 1;
+
+					  //first 4 GEMMs
+					  unsigned int small_K = K_block_size;
+					  setKernelArg<int>(Kernel[0], 5, small_K);
+
+					  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantSplit->ls, args.numEventsInWaitList, args.eventWaitList, NULL);
+
+					  gs[0] = 16;
+					  error |= clEnqueueNDRangeKernel(queue, Kernel[1], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+					  gs[1] = 16;
+					  gs[0] = GlobalX;
+					  error |= clEnqueueNDRangeKernel(queue, Kernel[2], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+					  gs[0] = 16; gs[1] = 16;
+					  error |= clEnqueueNDRangeKernel(queue, Kernel[3], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+					  //middle GEMMs
+					  unsigned beta_one = 1.0f;
+					  setKernelArg<int>(Kernel[0], 7, beta_one);
+					  for (int i = 1; i < num_of_gemm - 1; i++)
+					  {
+						  unsigned offa_i = args.lda * (args.K / num_of_gemm) * i + args.offA;
+						  unsigned offb_i = args.ldb * (args.K / num_of_gemm) * i + args.offB;
+						  setKernelArg<int>(Kernel[0], 11, offa_i);
+						  setKernelArg<int>(Kernel[0], 12, offb_i);
+						  //gs[2] = {GlobalX, GlobalY};
+						  gs[0] = GlobalX;
+						  gs[1] = GlobalY;
+
+						  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+						  gs[0] = 16;
+						  error |= clEnqueueNDRangeKernel(queue, Kernel[1], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+						  gs[1] = 16;
+						  gs[0] = GlobalX;
+						  error |= clEnqueueNDRangeKernel(queue, Kernel[2], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+						  gs[0] = 16; gs[1] = 16;
+						  error |= clEnqueueNDRangeKernel(queue, Kernel[3], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+					  }
+					  //last 4 GEMMs
+					  unsigned int residue_K = args.K % small_K;
+					  if (residue_K == 0)
+						  residue_K = small_K;
+					  unsigned offa_i = args.lda * (args.K / num_of_gemm) * (num_of_gemm - 1) + args.offA;
+					  unsigned offb_i = args.ldb * (args.K / num_of_gemm) * (num_of_gemm - 1) + args.offB;
+					  setKernelArg<int>(Kernel[0], 5, residue_K);
+					  setKernelArg<int>(Kernel[0], 11, offa_i);
+					  setKernelArg<int>(Kernel[0], 12, offb_i);
+
+					  gs[0] = GlobalX;
+					  gs[1] = GlobalY;
+
+					  error = clEnqueueNDRangeKernel(queue, Kernel[0], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+					  gs[0] = 16;
+					  error |= clEnqueueNDRangeKernel(queue, Kernel[1], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+					  gs[1] = 16;
+					  gs[0] = GlobalX;
+					  error |= clEnqueueNDRangeKernel(queue, Kernel[2], 2, NULL, gs, m_variantSplit->ls, 0, NULL, NULL);
+
+					  gs[0] = 16; gs[1] = 16;
+					  error |= clEnqueueNDRangeKernel(queue, Kernel[3], 2, NULL, gs, m_variantSplit->ls, 0, NULL, args.events);
+
+
+					  return error;
+				  }
+			  }
+
+
+		  }
+	  }
+  }
+
 
   if (args.M%96==0 && args.N%96==0)
   {

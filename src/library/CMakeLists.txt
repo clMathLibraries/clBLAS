@@ -81,6 +81,7 @@ set(SRC_BLAS
 	blas/functor/gcn_dgemmSmallMatrices.cc
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
+	blas/functor/hawaii_sgemmBig1024Kernel.cc
 )
 
 set(SRC_BLAS_HEADERS
@@ -114,6 +115,7 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_dgemmSmallMatrices.h
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
+	blas/functor/include/hawaii_sgemmBig1024Kernel.h
 )
 
 set(SRC_BLAS_GENERIC
@@ -234,6 +236,7 @@ set (SRC_CL_TEMPLATES
     dtrsm_gpu192.cl
 	dgemm_gcn_SmallMatrices.cl
 	sgemm_gcn_SmallMatrices.cl
+	sgemm_gcn_bigMatrices.cl
 	sgemm_gcn.cl
 	zgemm_gcn.cl
 )
@@ -253,6 +256,9 @@ set(SRC_CL_TEMPLATES_GEN
 	sgemm_gcn_SmallMatrices.clHawaii_64.bin.cl
 	sgemm_gcn_SmallMatrices.clTahiti_64.bin.cl
     sgemm_gcn_SmallMatrices.clBonaire_64.bin.cl
+	sgemm_gcn_bigMatrices.clHawaii_64.bin.cl
+	sgemm_gcn_bigMatrices.clTahiti_64.bin.cl
+    sgemm_gcn_bigMatrices.clBonaire_64.bin.cl
 	sgemm_gcn.clHawaii_64.bin.cl
 	zgemm_gcn.clHawaii_64.bin.cl
     sgemm_gcn.clBonaire_64.bin.cl

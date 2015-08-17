@@ -165,6 +165,7 @@ clblasDgemm( clblasOrder order,
              const cl_event *eventWaitList,
              cl_event *events)
 {
+//printf("dgemm M=%i,N=%i,K=%i,lda=%i,ldb=%i,ldc=%i\n", M, N, K, lda, ldb, ldc);
    CHECK_QUEUES(numCommandQueues, commandQueues);
    CHECK_EVENTS(numEventsInWaitList, eventWaitList);
    CHECK_MATRIX_A(TYPE_DOUBLE, order, transA, A, M, K, offA, lda);
