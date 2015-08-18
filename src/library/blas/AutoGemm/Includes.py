@@ -50,12 +50,12 @@ class KernelBinaryIncludes:
   # BINC - default constructor
   ##############################################################################
   def __init__(self):
-    self.incFileName = Common.getIncludePath() + "AutoGemmKernelBinaryIncludes.h"
-    self.incFile = open(self.incFileName, "w")
-    self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTO_GEMM_KERNEL_BINARY_INCLUDES_H\n"
-    self.incStr += "#define AUTO_GEMM_KERNEL_BINARY_INCLUDES_H\n"
-    self.incStr += "\n"
+    #self.incFileName = Common.getIncludePath() + "AutoGemmKernelBinaryIncludes.h"
+    #self.incFile = open(self.incFileName, "w")
+    #self.incFile.write( Common.getAutoGemmHeader() )
+    #self.incStr = "#ifndef AUTO_GEMM_KERNEL_BINARY_INCLUDES_H\n"
+    #self.incStr += "#define AUTO_GEMM_KERNEL_BINARY_INCLUDES_H\n"
+    #self.incStr += "\n"
 
     self.nullFileName = Common.getIncludePath() + "AutoGemmKernelBinaryNulls.h"
     self.nullFile = open(self.nullFileName, "w")
@@ -66,27 +66,35 @@ class KernelBinaryIncludes:
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
-    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    #self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_H\n"
     self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
+    self.nullStr += "#endif\n"
     kernelName = kernel.getRowName()
-    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    #self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_H\n"
     self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
+    self.nullStr += "#endif\n"
     kernelName = kernel.getColName()
-    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    #self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_H\n"
     self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
+    self.nullStr += "#endif\n"
     kernelName = kernel.getCornerName()
-    self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    #self.incStr += "#include \"AutoGemmKernelBinaries/%s_bin.h\"\n" % kernelName
+    self.nullStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_H\n"
     self.nullStr += "const unsigned char * const %s_bin = NULL;\n" % kernelName
+    self.nullStr += "#endif\n"
 
-    self.incFile.write( self.incStr )
-    self.incStr = ""
+    #self.incFile.write( self.incStr )
+    #self.incStr = ""
     self.nullFile.write( self.nullStr )
     self.nullStr = ""
 
   def writeToFile(self):
-    self.incFile.write( self.incStr )
-    self.incFile.write( "\n#endif\n" )
-    self.incFile.close()
+    #self.incFile.write( self.incStr )
+    #self.incFile.write( "\n#endif\n" )
+    #self.incFile.close()
     self.nullFile.write( self.nullStr )
     self.nullFile.write( "\n#endif\n" )
     self.nullFile.close()

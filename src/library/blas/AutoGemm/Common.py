@@ -33,10 +33,9 @@ def getAutoGemmHeader():
   return (
       "/*******************************************************************************\n"
       " * This file was auto-generated using the AutoGemm.py python script.\n"
-      " * DO NOT modify this file! Instead, make changes to\n"
-      " *   clBLAS/src/library/blas/AutoGemm/*.py then re-generate files\n"
+      " * DO NOT modify this file! Instead, make changes to scripts in\n"
+      " *   clBLAS/src/library/blas/AutoGemm/ then re-generate files\n"
       " *   (otherwise local changes will be lost after re-generation).\n"
-      " * - David Tanner\n"
       " ******************************************************************************/\n\n"
       )
 
