@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 
 #include <devinfo.h>
-
+#include <stdlib.h>
 
 
 
