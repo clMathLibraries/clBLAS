@@ -14,8 +14,9 @@
 * limitations under the License.
 * ************************************************************************/
 
-
+#include <assert.h>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -37,9 +38,571 @@
 #endif
 
 #include "CL/opencl.h"
-#include "AutoGemmIncludes/AutoGemmKernelsToCompileOffline.h"
+#include "naive_blas.cpp"
+using namespace NaiveBlas;
+#include "AutoGemmIncludes/AutoGemmKernelsToPreCompile.h"
+#include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
 
-using namespace std;
+unsigned int totalKernelsToCompile;
+unsigned int numKernelsCompiled;
+
+/******************************************************************************
+ * Check OpenCL Errors
+ *****************************************************************************/
+#define CL_CHECK(STATUS) \
+  if(STATUS != CL_SUCCESS) { \
+    printf("OpenCL error %i on line %u\n", STATUS, __LINE__); \
+    assert(false); \
+  }
+
+/******************************************************************************
+ * Get AMD Platform
+ *****************************************************************************/
+cl_int getAMDPlatform(cl_platform_id *platform) {
+  *platform = NULL;
+  cl_int status = CL_SUCCESS;
+
+  // get num platforms
+  cl_uint numPlatforms;
+  status = clGetPlatformIDs(0, NULL, &numPlatforms);
+  if(status != CL_SUCCESS) {
+    std::cout << "Error: clGetPlatformIDs failed. Error code: " << status << std::endl;
+    return status;
+  }
+
+  if (numPlatforms > 0) {
+    // Get selected platform
+    cl_platform_id* platforms = new cl_platform_id[numPlatforms];
+    status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+    if(status != CL_SUCCESS) {
+      std::cout<<"Error: clGetPlatformIDs failed. Error code : " << status << std::endl;
+      return status;
+    }
+
+    // Print all platforms
+    for (unsigned i = 0; i < numPlatforms; ++i) {
+      char pbuf[100];
+      status = clGetPlatformInfo(platforms[i],
+        CL_PLATFORM_VENDOR,
+        sizeof(pbuf),
+        pbuf,
+        NULL);
+
+      if(status != CL_SUCCESS) {
+        std::cout<<"Error: clGetPlatformInfo failed. Error code : " << status << std::endl;
+        return status;
+      }
+
+      std::cout << "Platform " << i << " : " << pbuf << std::endl;
+    }
+
+    // Get AMD platform
+    for (unsigned i = 0; i < numPlatforms; ++i) {
+      char pbuf[100];
+      status = clGetPlatformInfo(platforms[i],
+        CL_PLATFORM_VENDOR,
+        sizeof(pbuf),
+        pbuf,
+        NULL);
+
+      if(status != CL_SUCCESS) {
+        std::cout << "Error: clGetPlatformInfo failed. Error code: " << status << std::endl;
+        return status;
+      }
+
+      *platform = platforms[i];
+      if (!strcmp(pbuf, "Advanced Micro Devices, Inc.")) {
+        break;
+      }
+    }
+
+    // verify AMD platform
+    char pbuf[100];
+    status = clGetPlatformInfo(*platform,
+      CL_PLATFORM_VENDOR,
+      sizeof(pbuf),
+      pbuf,
+      NULL);
+
+    if(status != CL_SUCCESS) {
+      std::cout<<"Error: clGetPlatformInfo failed. Error code: " << status << std::endl;
+      return status;
+    }
+    if (strcmp(pbuf, "Advanced Micro Devices, Inc.")) {
+      std::cout << "AMD platform not found" << std::endl;
+      return CL_INVALID_PLATFORM; 
+    }
+
+  } else {
+      std::cout << "No OpenCL platforms found." << std::endl;
+      return CL_INVALID_PLATFORM;
+  }
+
+  return status;
+}
+
+
+/******************************************************************************
+ * Precision -> char
+ *****************************************************************************/
+template<typename Precision> char getPrecisionChar();
+template<> char getPrecisionChar<float>(){ return 's'; }
+template<> char getPrecisionChar<double>(){ return 'd'; }
+template<> char getPrecisionChar<FloatComplex>(){ return 'c'; }
+template<> char getPrecisionChar<DoubleComplex>(){ return 'z'; }
+
+
+/******************************************************************************
+ * get kernel name
+ *****************************************************************************/
+template<typename Precision>
+int getKernelName(
+  char **kernelName,
+  NaiveBlas::clblasOrder order,
+  NaiveBlas::clblasTranspose transA,
+  NaiveBlas::clblasTranspose transB,
+  bool beta,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
+  unsigned int unroll,
+  bool extraRow,
+  bool extraCol )
+{
+  return sprintf( *kernelName,
+    "%cgemm_%s_%s%s_B%i_M%c%03u_N%c%03u_KX%03u",
+    getPrecisionChar<Precision>(),
+    order==NaiveBlas::clblasColumnMajor ? "Col" : "Row",
+    transA==NaiveBlas::clblasNoTrans ? "N" : transA==NaiveBlas::clblasTrans ? "T" : "C",
+    transB==NaiveBlas::clblasNoTrans ? "N" : transB==NaiveBlas::clblasTrans ? "T" : "C",
+    beta ? 1 : 0,
+    extraRow ? 'L' : 'X',
+    macroTileNumRows,
+    extraCol ? 'L' : 'X',
+    macroTileNumCols,
+    unroll );
+}
+
+template<typename Precision>
+int getStringName(
+  char **stringName,
+  NaiveBlas::clblasOrder order,
+  NaiveBlas::clblasTranspose transA,
+  NaiveBlas::clblasTranspose transB,
+  bool beta,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
+  unsigned int unroll,
+  bool extraRow,
+  bool extraCol )
+{
+  int n = getKernelName<Precision>(stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int n2 = sprintf( (*stringName)+n, "_bin" );
+  return n+n2;
+}
+
+template<typename Precision>
+int getFileName(
+  char **fileName,
+  NaiveBlas::clblasOrder order,
+  NaiveBlas::clblasTranspose transA,
+  NaiveBlas::clblasTranspose transB,
+  bool beta,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
+  unsigned int unroll,
+  bool extraRow,
+  bool extraCol )
+{
+  int n = getKernelName<Precision>(fileName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int n2 = sprintf( (*fileName)+n, "_bin.h" );
+  return n+n2;
+}
+
+template<typename Precision>
+int getPreprocessorName(
+  char **preprocessorName,
+  NaiveBlas::clblasOrder order,
+  NaiveBlas::clblasTranspose transA,
+  NaiveBlas::clblasTranspose transB,
+  bool beta,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
+  unsigned int unroll,
+  bool extraRow,
+  bool extraCol )
+{
+  char kernelNameArray[64];
+  char *kernelName = kernelNameArray;
+  int n = getKernelName<Precision>(&kernelName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  for ( int i = 0; i < n; i++) {
+    kernelName[i] = toupper(kernelName[i]);
+  }
+  int n2 = sprintf( *preprocessorName, "KERNEL_%s_BIN_H", kernelName );
+  return n2;
+}
+
+
+/******************************************************************************
+ * get kernel binary from source
+ *****************************************************************************/
+cl_int getKernelBinaryFromSource(
+  cl_context context,
+  const char *source,
+  const char *buildOptions,
+  unsigned char **binary,
+  size_t *binarySize)
+{
+  cl_int status = CL_SUCCESS;
+
+  // create program
+  cl_program program = clCreateProgramWithSource(context,1, &source, NULL, &status);
+  CL_CHECK(status);
+
+  cl_uint numDevicesInContext;
+  status = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(cl_uint), &numDevicesInContext, NULL);
+  CL_CHECK(status);
+  
+  // get devices
+  printf("Devices: %u\n", numDevicesInContext);
+  cl_device_id* devices = new cl_device_id[numDevicesInContext];
+  clGetContextInfo(context, CL_CONTEXT_DEVICES, numDevicesInContext*sizeof(cl_device_id), devices, NULL);
+  CL_CHECK(status);
+
+  // choose device 0
+  cl_device_id device = devices[0];
+
+  // build program for device
+  status = clBuildProgram(program, 1, &device, buildOptions, NULL, NULL);
+
+
+  // print build failure
+  if (status != CL_SUCCESS) {
+    printf("clBuildProgram Failed\n");
+    printf("status = %d\n", status);
+
+    size_t len=0;
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &len);
+    char* buildLog = new char[len];
+
+    printf("Error: Failed to build program executable!\n");
+    clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len*sizeof(char), buildLog, 0);
+    printf("%s\n", buildLog);
+  }
+
+
+  // get binary from program
+  status = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), binarySize, NULL);
+  printf("BinarySize: %llu\n", *binarySize);
+  size_t i = 0;
+  binary[0] = new unsigned char[*binarySize];
+  
+  status = clGetProgramInfo(program, CL_PROGRAM_BINARIES, *binarySize*sizeof(char), binary, NULL);
+
+  std::cout << std::endl;
+  CL_CHECK(status);
+  return CL_SUCCESS;
+}
+
+
+/******************************************************************************
+ * write binary to stream
+ *****************************************************************************/
+void writeBinaryToStream(std::ostream & out, unsigned char *binary, size_t binarySize) {
+  for(int i = 0; i < binarySize; i++) {
+
+    out << /*std::setw(3) <<*/ (int) binary[i];
+    
+    if(i < binarySize-1) {
+      out << ",";
+    }
+    if((i+1)%20 == 0) {
+      out << std::endl;
+    }
+  }
+  out << std::endl;
+}
+
+
+/******************************************************************************
+ * Pre-compile kernels within parameter group and write to file
+ *****************************************************************************/
+template<typename Precision>
+void compileKernelAndWriteToFile(
+  cl_context context,
+  NaiveBlas::clblasOrder order,
+  NaiveBlas::clblasTranspose transA,
+  NaiveBlas::clblasTranspose transB,
+  bool beta,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
+  unsigned int unroll,
+  bool extraRow,
+  bool extraCol,
+  const char *source,
+  const char *buildOptions )
+{
+  // get kernel name
+  char stringNameArray[64];
+  char fileNameArray[64];
+  char preprocessorNameArray[64];
+  char *stringName = &stringNameArray[0];
+  char *fileName = &fileNameArray[0];
+  char *preprocessorName = &preprocessorNameArray[0];
+  int stringNameLength = getStringName<Precision>(      &stringName,       order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int fileNameLength = getFileName<Precision>(        &fileName,         order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int preprocessorNameLength = getPreprocessorName<Precision>(&preprocessorName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  printf("Compiling[%4u/%4u]: %s\n", numKernelsCompiled, totalKernelsToCompile, stringName);
+  
+  printf(" StringName[%2i]: %s\n", stringNameLength, stringName );
+  printf("   FileName[%2i]: %s\n", fileNameLength, fileName );
+  printf("PreprocName[%2i]: %s\n", preprocessorNameLength, preprocessorName );
+
+  // get kernel binary
+  unsigned char **kernelBinary = new unsigned char*[1];
+  size_t kernelBinarySize;
+  getKernelBinaryFromSource(context, source, buildOptions, kernelBinary, &kernelBinarySize);
+  
+  std::ofstream kernelFile;
+  kernelFile.open(fileName, 'w');
+
+  writeBinaryToStream( kernelFile, *kernelBinary, kernelBinarySize );
+  
+
+  
+  // write preamble to file
+  // write binary to file
+  // write close to file
+  kernelFile.close();
+
+  // report kernel compiled
+  numKernelsCompiled++;
+}
+
+
+/******************************************************************************
+ * compile kernels within parameter group and write to file
+ *****************************************************************************/
+template<typename Precision>
+cl_int compileKernelGroupAndWriteToFile(
+  cl_context context,
+  NaiveBlas::clblasOrder order,
+  NaiveBlas::clblasTranspose transA,
+  NaiveBlas::clblasTranspose transB,
+  bool beta,
+  unsigned int macroTileNumRows,
+  unsigned int macroTileNumCols,
+  unsigned int unroll,
+  bool preCompileNonMultiples )
+{
+  const char *tileKernelSource;
+  const char *rowKernelSource;
+  const char *colKernelSource;
+  const char *cornerKernelSource;
+  const char *sourceBuildOptions;
+  const unsigned char *tileKernelBinary;
+  const unsigned char *rowKernelBinary;
+  const unsigned char *colKernelBinary;
+  const unsigned char *cornerKernelBinary;
+  const char *binaryBuildOptions;
+  cl_kernel  *tileClKernel;
+  cl_kernel  *rowClKernel;
+  cl_kernel  *colClKernel;
+  cl_kernel  *cornerClKernel;
+  unsigned int workGroupNumRows;
+  unsigned int workGroupNumCols;
+  unsigned int microTileNumRows;
+  unsigned int microTileNumCols;
+  gemmSelectKernelSpecific<Precision>(
+      order,
+      transA,
+      transB,
+      beta,
+      macroTileNumRows,
+      macroTileNumCols,
+      unroll,
+      &tileKernelSource,
+      &rowKernelSource,
+      &colKernelSource,
+      &cornerKernelSource,
+      &sourceBuildOptions,
+      &tileKernelBinary,
+      &rowKernelBinary,
+      &colKernelBinary,
+      &cornerKernelBinary,
+      &binaryBuildOptions,
+      &tileClKernel,
+      &rowClKernel,
+      &colClKernel,
+      &cornerClKernel,
+      &workGroupNumRows,
+      &workGroupNumCols,
+      &microTileNumRows,
+      &microTileNumCols );
+
+  compileKernelAndWriteToFile<Precision>(
+      context,
+      order,
+      transA,
+      transB,
+      beta,
+      macroTileNumRows,
+      macroTileNumCols,
+      unroll,
+      false, // extra row
+      false, // extra col
+      tileKernelSource,
+      sourceBuildOptions );
+
+  if (preCompileNonMultiples) {
+    
+    compileKernelAndWriteToFile<Precision>(
+        context,
+        order,
+        transA,
+        transB,
+        beta,
+        macroTileNumRows,
+        macroTileNumCols,
+        unroll,
+        true, // extra row
+        false, // extra col
+        rowKernelSource,
+        sourceBuildOptions );
+    compileKernelAndWriteToFile<Precision>(
+        context,
+        order,
+        transA,
+        transB,
+        beta,
+        macroTileNumRows,
+        macroTileNumCols,
+        unroll,
+        false, // extra row
+        true, // extra col
+        colKernelSource,
+        sourceBuildOptions );
+    compileKernelAndWriteToFile<Precision>(
+        context,
+        order,
+        transA,
+        transB,
+        beta,
+        macroTileNumRows,
+        macroTileNumCols,
+        unroll,
+        true, // extra row
+        true, // extra col
+        cornerKernelSource,
+        sourceBuildOptions );
+  }
+
+  return 1;
+}
+
+/******************************************************************************
+ * Main
+ *****************************************************************************/
+int main( int argc, char *argv[] ) {
+
+  // get AMD platform
+  cl_platform_id platform;
+  cl_int status = getAMDPlatform( &platform );
+  CL_CHECK(status);
+
+  cl_uint numDevices;
+  status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
+  CL_CHECK(status);
+  
+  // get all gpu devices
+  printf("NumDevicesInPlatform: %u\n", numDevices);
+  cl_device_id* devices = new cl_device_id[numDevices];
+  clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+  CL_CHECK(status);
+
+  // choose device 0
+  cl_device_id device = devices[0];
+
+  // create context
+  cl_context_properties cps[3] = {
+    CL_CONTEXT_PLATFORM,
+    (cl_context_properties)platform,
+    0
+  };
+  cl_context context = clCreateContext(
+    cps,
+    1, // device
+    &device,
+    NULL,
+    NULL,
+    &status);
+  CL_CHECK(status);
+
+  cl_uint numDevicesInContext;
+  status = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(cl_uint), &numDevicesInContext, NULL);
+  printf("NumDevicesInContext: %u\n", numDevicesInContext);
+  CL_CHECK(status);
+
+  
+  NaiveBlas::clblasOrder order;
+  NaiveBlas::clblasTranspose transA;
+  NaiveBlas::clblasTranspose transB;
+  bool beta;
+  unsigned int macroTileNumRows;
+  unsigned int macroTileNumCols;
+  unsigned int unroll;
+
+  // for each kernel to be pre-compiled
+  
+  totalKernelsToCompile = gemmPreCompileNum;
+  if (gemmPreCompileNonMultiples) { totalKernelsToCompile *= 4; }
+  numKernelsCompiled = 0;
+  for (unsigned int i = 0; i < gemmPreCompileNum; i++) {
+    // unload parameters
+    // idx 0 is precision
+    order = gemmPreCompile[i][1]==1 ? NaiveBlas::clblasColumnMajor : NaiveBlas::clblasRowMajor;
+    transA = gemmPreCompile[i][2]==0 ? NaiveBlas::clblasNoTrans : gemmPreCompile[i][2]==1 ? NaiveBlas::clblasTrans : NaiveBlas::clblasConjTrans;
+    transB = gemmPreCompile[i][3]==0 ? NaiveBlas::clblasNoTrans : gemmPreCompile[i][3]==1 ? NaiveBlas::clblasTrans : NaiveBlas::clblasConjTrans;
+    beta = gemmPreCompile[i][4]==1;
+    macroTileNumRows = gemmPreCompile[i][5];
+    macroTileNumCols = gemmPreCompile[i][6];
+    unroll = gemmPreCompile[i][7];
+
+    if (gemmPreCompile[i][0] == 0) { // sgemm
+      compileKernelGroupAndWriteToFile<float>(
+        context,
+        order,
+        transA,
+        transB,
+        beta,
+        macroTileNumRows,
+        macroTileNumCols,
+        unroll,
+        gemmPreCompileNonMultiples==1
+        );
+    }
+  }// end for
+
+  system("PAUSE");
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
 
 // from tplint
 void binaryToChar(const string &inputStr, std::ostream &outFile)
@@ -564,3 +1127,5 @@ int main( int argc, char *argv[] )
   clReleaseContext(context);
   return 0;
 }
+
+#endif

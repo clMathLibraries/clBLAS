@@ -12,7 +12,7 @@ def writeOfflineCompilation(args):
   ocFile.write( Common.getAutoGemmHeader() )
 
   fileStr = "\n/*precision, order, transA, transB, beta, tileNumRows, tileNumCols, unroll*/\n"
-  fileStr += "\nunsigned int *gemmPreCompile[8] = {\n"
+  fileStr += "\nunsigned int gemmPreCompile[][8] = {\n"
 
   count = 0
   for precision in args.precisions:

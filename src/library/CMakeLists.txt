@@ -481,9 +481,11 @@ if( CMAKE_COMPILER_IS_GNUCC )
              DESTINATION lib${SUFFIX_LIB}/pkgconfig )
 endif( )
 
-add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
+add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS} ${AUTOGEMM_HEADERS} ${AUTOGEMM_PRECOMPILE_HEADER})
 add_dependencies(clBLAS GENERATE_CLT)
-add_dependencies( clBLAS AutoGemmHeaderGeneration )
+
+#add_dependencies( clBLAS AutoGemmHeaderGeneration )
+
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
 set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
