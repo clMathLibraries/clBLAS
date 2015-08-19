@@ -93,7 +93,7 @@ cl_int getAMDPlatform(cl_platform_id *platform) {
         return status;
       }
 
-      std::cout << "Platform " << i << " : " << pbuf << std::endl;
+      //std::cout << "Platform " << i << " : " << pbuf << std::endl;
     }
 
     // Get AMD platform
@@ -214,7 +214,7 @@ int getFileName(
   bool extraCol )
 {
   int n = getKernelName<Precision>(fileName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
-  int n2 = sprintf( (*fileName)+n, "_bin.h" );
+  int n2 = sprintf( (*fileName)+n, "_bin.c" );
   return n+n2;
 }
 
@@ -263,7 +263,7 @@ cl_int getKernelBinaryFromSource(
   CL_CHECK(status);
   
   // get devices
-  printf("Devices: %u\n", numDevicesInContext);
+  //printf("Devices: %u\n", numDevicesInContext);
   cl_device_id* devices = new cl_device_id[numDevicesInContext];
   clGetContextInfo(context, CL_CONTEXT_DEVICES, numDevicesInContext*sizeof(cl_device_id), devices, NULL);
   CL_CHECK(status);
@@ -292,14 +292,26 @@ cl_int getKernelBinaryFromSource(
 
   // get binary from program
   status = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), binarySize, NULL);
-  printf("BinarySize: %llu\n", *binarySize);
-  size_t i = 0;
+  //printf("BinarySize: %llu\n", *binarySize);
   binary[0] = new unsigned char[*binarySize];
+  //for (int i = 0; i < *binarySize; i++) binary[0][i] = 512;
   
-  status = clGetProgramInfo(program, CL_PROGRAM_BINARIES, *binarySize*sizeof(char), binary, NULL);
-
-  std::cout << std::endl;
+  //size_t size = 2;
+  //status = -1;
+  //for (int i = 0; status; i++) {
+  //  printf("size=%i\n", i);
+    status = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 8 /*?*/, binary, NULL);
+  //}
   CL_CHECK(status);
+
+  //for (int i = 0; i < *binarySize; i++) {
+  //  std::cout << std::setw(3) << (int)binary[0][i] << ",";
+  //}
+  //printf("binary[0][0] = %p\n", binary[0][0]);
+  //printf("binary[0]    = %p\n", binary[0]);
+  //printf("binary       = %p\n", binary);
+  //printf("&binary      = %p\n", &binary);
+
   return CL_SUCCESS;
 }
 
@@ -310,7 +322,7 @@ cl_int getKernelBinaryFromSource(
 void writeBinaryToStream(std::ostream & out, unsigned char *binary, size_t binarySize) {
   for(int i = 0; i < binarySize; i++) {
 
-    out << /*std::setw(3) <<*/ (int) binary[i];
+    out << std::setw(3) << (unsigned int) binary[i];
     
     if(i < binarySize-1) {
       out << ",";
@@ -351,28 +363,24 @@ void compileKernelAndWriteToFile(
   int stringNameLength = getStringName<Precision>(      &stringName,       order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
   int fileNameLength = getFileName<Precision>(        &fileName,         order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
   int preprocessorNameLength = getPreprocessorName<Precision>(&preprocessorName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
-  printf("Compiling[%4u/%4u]: %s\n", numKernelsCompiled, totalKernelsToCompile, stringName);
   
-  printf(" StringName[%2i]: %s\n", stringNameLength, stringName );
-  printf("   FileName[%2i]: %s\n", fileNameLength, fileName );
-  printf("PreprocName[%2i]: %s\n", preprocessorNameLength, preprocessorName );
-
   // get kernel binary
   unsigned char **kernelBinary = new unsigned char*[1];
   size_t kernelBinarySize;
   getKernelBinaryFromSource(context, source, buildOptions, kernelBinary, &kernelBinarySize);
-  
+  printf("AutoGemm-PreCompile[%3u/%3u]: %s %7u bytes\n", numKernelsCompiled, totalKernelsToCompile, stringName, kernelBinarySize);
+
+  // write binary to file
   std::ofstream kernelFile;
   kernelFile.open(fileName, 'w');
-
+  kernelFile << "/* AutoGemm Pre-Compiled kernel binary */" << std::endl;
+  kernelFile << "unsigned char " << stringName << "[" << kernelBinarySize << "] = {" << std::endl;
   writeBinaryToStream( kernelFile, *kernelBinary, kernelBinarySize );
-  
-
-  
-  // write preamble to file
-  // write binary to file
-  // write close to file
+  kernelFile << "};" << std::endl;
   kernelFile.close();
+
+  delete[] kernelBinary[0];
+  delete[] kernelBinary;
 
   // report kernel compiled
   numKernelsCompiled++;
@@ -514,7 +522,7 @@ int main( int argc, char *argv[] ) {
   CL_CHECK(status);
   
   // get all gpu devices
-  printf("NumDevicesInPlatform: %u\n", numDevices);
+  //printf("NumDevicesInPlatform: %u\n", numDevices);
   cl_device_id* devices = new cl_device_id[numDevices];
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
   CL_CHECK(status);
@@ -539,7 +547,7 @@ int main( int argc, char *argv[] ) {
 
   cl_uint numDevicesInContext;
   status = clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(cl_uint), &numDevicesInContext, NULL);
-  printf("NumDevicesInContext: %u\n", numDevicesInContext);
+  //printf("NumDevicesInContext: %u\n", numDevicesInContext);
   CL_CHECK(status);
 
   
@@ -582,7 +590,7 @@ int main( int argc, char *argv[] ) {
     }
   }// end for
 
-  system("PAUSE");
+  //system("PAUSE");
   return 0;
 }
 
