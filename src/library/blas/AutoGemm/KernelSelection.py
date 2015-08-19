@@ -42,19 +42,22 @@ class KernelSelection:
       betaList, \
       unrollDict, \
       kernelSelectionData):
-    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelection.h"
+
+    self.incFileName = Common.getIncludePath() + "AutoGemmKernelSelection.h"
+    self.incFile = open(self.incFileName, "w")
+    self.incFile.write( Common.getAutoGemmHeader() )
+
+    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelection.c"
     self.selectionFile = open(self.kernelSelectionFileName, "w")
     self.selectionFile.write( Common.getAutoGemmHeader() )
 
-    self.logic = (
+
+    self.inc = (
       "#include \"UserGemmKernelSources/UserGemmKernelSourceIncludes.h\"\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSourceIncludes.h\"\n"
-      "#if USE_GEMM_PRECOMPILED_BINARIES\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaryIncludes.h\"\n"
-      "#endif\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaryNulls.h\"\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSourceBuildOptions.h\"\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaryBuildOptions.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSources.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaries.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBuildOptionsSource.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBuildOptionsBinary.h\"\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmClKernels.h\"\n"
       "\n"
       "#define EXACT_MULTIPLES(MULTIPLE_STR) MULTIPLE_STR\n"
@@ -90,6 +93,8 @@ class KernelSelection:
       "  unsigned int *microTileNumCols,\n"
       "  unsigned int *unroll\n"
       ");\n\n" )
+
+    self.logic = ""
 
     ####################################
     # precision
@@ -168,7 +173,7 @@ class KernelSelection:
           ####################################
           # transB
           for transB in transList:
-            print precision + "gemm" + "_" + order + "_" + transA + transB
+            #print precision + "AutoGemm: gemm" + "_" + order + "_" + transA + transB
             kernel.transB = transB
             self.logic += indent(3) + "if (transB == "
             if transB == "N":
@@ -296,6 +301,9 @@ class KernelSelection:
   def writeToFile(self):
     self.selectionFile.close()
 
+    self.incFile.write( self.inc )
+    self.incFile.close()
+
 
 
 
@@ -311,19 +319,20 @@ class KernelSelectionSpecific:
   ##############################################################################
   def __init__(self):
 
-    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelectionSpecific.h"
+    self.incFileName = Common.getIncludePath() + "AutoGemmKernelSelectionSpecific.h"
+    self.incFile = open(self.incFileName, "w")
+    self.incFile.write( Common.getAutoGemmHeader() )
+
+    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelectionSpecific.c"
     self.selectionFile = open(self.kernelSelectionFileName, "w")
     self.selectionFile.write( Common.getAutoGemmHeader() )
 
-    self.logic = (
+    self.inc = (
       "#include \"UserGemmKernelSources/UserGemmKernelSourceIncludes.h\"\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSourceIncludes.h\"\n"
-      "#if USE_GEMM_PRECOMPILED_BINARIES\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaryIncludes.h\"\n"
-      "#endif\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaryNulls.h\"\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSourceBuildOptions.h\"\n"
-      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaryBuildOptions.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSources.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaries.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBuildOptionsSource.h\"\n"
+      "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBuildOptionsBinary.h\"\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmClKernels.h\"\n"
       "\n"
       "// kernel selection specific template\n"
@@ -355,13 +364,15 @@ class KernelSelectionSpecific:
       "  unsigned int *microTileNumRows,\n"
       "  unsigned int *microTileNumCols\n"
       ");\n\n" )
+
+    self.logic = ""
     self.precisionInitialized = False
     self.orderInitialized = False
     self.transInitialized = False
     self.betaInitialized = False
 
   def newPrecision(self, precision ):
-    print "KernelSelectionSpecific: " + precision + "gemm"
+    #print "KernelSelectionSpecific: " + precision + "gemm"
     if self.precisionInitialized:
       self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
       self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
@@ -570,13 +581,16 @@ class KernelSelectionSpecific:
     self.selectionFile.write("\n")
     self.selectionFile.close()
 
+    self.incFile.write(self.inc)
+    self.incFile.write("\n")
+    self.incFile.close()
 
 
 ################################################################################
 # Main
 ################################################################################
 def writeKernelSelection():
-
+  print "AutoGemm: Kernel Selection"
   if not os.path.exists( Common.getIncludePath() ):
     os.makedirs( Common.getIncludePath() )
 

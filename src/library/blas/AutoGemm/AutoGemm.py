@@ -23,7 +23,6 @@ import KernelSelection
 import KernelOpenCL
 
 
-
 ################################################################################
 # Main
 ################################################################################
@@ -32,7 +31,7 @@ if __name__ == "__main__":
     Common.setOutputPath(sys.argv[1])
   else:
     print "Warning: No output path specified; default is working directory."
-  KernelSelection.writeKernelSelection()
   KernelOpenCL.writeOpenCLKernels()
+  KernelSelection.writeKernelSelection()
   Includes.writeIncludes()
 

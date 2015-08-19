@@ -7,6 +7,7 @@ import Common
 ################################################################################
 
 def writeOfflineCompilation(args):
+  print "AutoGemm: Kernels To PreCompile"
   ocFileName = Common.getIncludePath() + "AutoGemmKernelsToPreCompile.h"
   ocFile = open(ocFileName, "w")
   ocFile.write( Common.getAutoGemmHeader() )
@@ -44,7 +45,7 @@ def writeOfflineCompilation(args):
                     unroll
                     )
                 fileStr += kernelStr
-                print kernelStr
+                #print kernelStr
                 count+=1
   fileStr += "};\n"
   fileStr += "unsigned int gemmPreCompileNum = " + str(count) + ";\n"
@@ -56,7 +57,7 @@ def writeOfflineCompilation(args):
   ocFile.close()
   if args.nonMultiples:
     count *= 4
-  print "PreCompile: %u kernels" % count
+  print "AutoGemm: Pre-Compile %u kernels" % count
 
 
 ################################################################################
@@ -74,9 +75,6 @@ if __name__ == "__main__":
   ap.add_argument("--tiles", dest="tiles", action="store", nargs="+", choices=AutoGemmParameters.getTileChoices() )
   ap.add_argument("--non-multiples", dest="nonMultiples", action="store_true" )
   args = ap.parse_args()
-  print "\n"
-  print args
-  print "\n"
   if args.output:
     Common.setOutputPath(args.output)
   else:
