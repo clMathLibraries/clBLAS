@@ -17,7 +17,9 @@ set(AUTOGEMM_HEADERS
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsSource.h
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.h
+  CACHE INTERNAL "AutoGemm_Headers"
 )
+
 set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.cpp
@@ -26,6 +28,7 @@ set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSelectionSpecific.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsSource.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.cpp
+  CACHE INTERNAL "AutoGemm_Src"
 )
 set(USERGEMM_SRC
   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSources.cpp
@@ -40,7 +43,9 @@ set(AUTOGEMM_PRECOMPILE_SRC
   AutoGemmTools/AutoGemmPreCompileKernels.cpp
 )
 set( AUTOGEMM_PRECOMPILED_KERNELS
-  ${AUTOGEMM_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.cpp )
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinariesPreCompiled.cpp
+  CACHE INTERNAL "AutoGemm_PreCompiled_Kernels"
+)
 
 # AutoGemm options for pre-compiling kernels
 option( AutoGemmPreCompile_PRECISION_SGEMM "AutoGemm: pre-compile sgemm kernels" OFF)
@@ -236,12 +241,12 @@ set_property( TARGET AutoGemmPreCompileKernels PROPERTY FOLDER "AutoGemm")
 # add target for running pre-compile executable
 ################################################################################
 add_custom_target( AutoGemmPreCompile_Run
-  DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
+  DEPENDS ${AUTOGEMM_PRECOMPILED_KERNELS}
   #SOURCES ${AUTOGEMM_PRECOMPILE_HEADER}
 )
 add_custom_command(
   OUTPUT ${AUTOGEMM_PRECOMPILED_KERNELS}
-  COMMAND AutoGemmPreCompileKernels
+  COMMAND AutoGemmPreCompileKernels ${CMAKE_BINARY_DIR}
   DEPENDS AutoGemmPreCompileKernels
 )
 set_property( TARGET AutoGemmPreCompile_Run PROPERTY FOLDER "AutoGemm")

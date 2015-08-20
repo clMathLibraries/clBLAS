@@ -17,8 +17,8 @@ class KernelSourceIncludes:
     self.incFileName = Common.getIncludePath() + "AutoGemmKernelSources.h"
     self.incFile = open(self.incFileName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTO_GEMM_KERNEL_SOURCE_INCLUDES_H\n"
-    self.incStr += "#define AUTO_GEMM_KERNEL_SOURCE_INCLUDES_H\n"
+    self.incStr = "#ifndef AUTOGEMM_KERNEL_SOURCE_INCLUDES_H\n"
+    self.incStr += "#define AUTOGEMM_KERNEL_SOURCE_INCLUDES_H\n"
     self.incStr += "\n"
 
     self.cppFileName = Common.getIncludePath() + "AutoGemmKernelSources.cpp"
@@ -87,41 +87,50 @@ class KernelBinaryIncludes:
     self.incFileName = Common.getIncludePath() + "AutoGemmKernelBinaries.h"
     self.incFile = open(self.incFileName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTO_GEMM_KERNEL_BINARIES_H\n"
-    self.incStr += "#define AUTO_GEMM_KERNEL_BINARIES_H\n"
+    self.incStr = "#ifndef AUTOGEMM_KERNEL_BINARIES_H\n"
+    self.incStr += "#define AUTOGEMM_KERNEL_BINARIES_H\n"
     self.incStr += "\n"
 
     self.cppFileName = Common.getIncludePath() + "AutoGemmKernelBinaries.cpp"
     self.cppFile = open(self.cppFileName, "w")
     self.cppFile.write( Common.getAutoGemmHeader() )
     self.cppStr = ""
-    self.cppStr += "#ifdef AUTO_GEMM_USE_PRE_COMPILED_BINARIES\n"
-    self.cppStr += "#include \"AutoGemmKernelBinaries/AutoGemmBinariesPreCompiled.cpp\"\n"
+    self.cppStr += "#include \"%sAutoGemmKernelBinaries.h\"\n" % Common.getRelativeIncludePath()
+    self.cppStr += "#ifdef AUTOGEMM_USE_PRE_COMPILED_KERNELS\n"
+    self.cppStr += "#include \"%sAutoGemmKernelBinariesPreCompiled.cpp\"\n" % Common.getRelativeKernelBinaryPath()
     self.cppStr += "#endif\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_C\n"
+    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
     self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "#else\n"
+    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getRowName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_C\n"
+    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
     self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "#else\n"
+    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getColName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_C\n"
+    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
     self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "#else\n"
+    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getCornerName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_C\n"
+    self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
     self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "#else\n"
+    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     self.incFile.write( self.incStr )
@@ -149,8 +158,8 @@ class ClKernelIncludes:
     self.incName = Common.getIncludePath() + "AutoGemmClKernels.h"
     self.incFile = open(self.incName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTO_GEMM_CL_KERNELS_H\n"
-    self.incStr += "#define AUTO_GEMM_CL_KERNELS_H\n"
+    self.incStr = "#ifndef AUTOGEMM_CL_KERNELS_H\n"
+    self.incStr += "#define AUTOGEMM_CL_KERNELS_H\n"
     self.incStr += "#include \"CL/cl.h\"\n"
     self.incStr += "\n"
 
@@ -199,8 +208,8 @@ class KernelSourceBuildOptions:
     self.incName = Common.getIncludePath() + "AutoGemmKernelBuildOptionsSource.h"
     self.incFile = open(self.incName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTO_GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
-    self.incStr += "#define AUTO_GEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
+    self.incStr = "#ifndef AUTOGEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
+    self.incStr += "#define AUTOGEMM_KERNEL_SOURCE_BUILD_OPTIONS_H\n"
     self.incStr += "\n"
 
     self.cppName = Common.getIncludePath() + "AutoGemmKernelBuildOptionsSource.cpp"
@@ -242,8 +251,8 @@ class KernelBinaryBuildOptions:
     self.incName = Common.getIncludePath() + "AutoGemmKernelBuildOptionsBinary.h"
     self.incFile = open(self.incName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTO_GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
-    self.incStr += "#define AUTO_GEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
+    self.incStr = "#ifndef AUTOGEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
+    self.incStr += "#define AUTOGEMM_KERNEL_BINARY_BUILD_OPTIONS_H\n"
     self.incStr += "\n"
 
     self.cppName = Common.getIncludePath() + "AutoGemmKernelBuildOptionsBinary.cpp"

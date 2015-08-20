@@ -1,5 +1,5 @@
 ################################################################################
-# Auto-Gemm
+# AutoGemm
 # - Automatically generate gemm kernels based on tile parameters
 # - This script generates the following to ease integration into clBLAS:
 #   - generate all the kernel files

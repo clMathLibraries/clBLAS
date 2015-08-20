@@ -80,7 +80,12 @@ set(SRC_BLAS
 	blas/functor/gcn_dgemmSmallMatrices.cc
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
+
+  ${AUTOGEMM_SRC}
+  ${AUTOGEMM_PRECOMPILED_KERNELS}
 )
+message(STATUS "AUTOGEMM_SRC= ${AUTOGEMM_SRC}")
+message(STATUS "SRC_BLAS = ${SRC_BLAS}")
 
 set(SRC_BLAS_HEADERS
     blas/include/blas_funcs.h
@@ -112,6 +117,9 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_dgemmSmallMatrices.h
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
+
+  ${AUTOGEMM_HEADERS}
+
 )
 
 set(SRC_BLAS_GENERIC
@@ -337,8 +345,9 @@ source_group(common\\gens FILES ${SRC_COMMON_GENS})
 source_group(blas FILES ${SRC_BLAS})
 source_group(blas\\include FILES ${SRC_BLAS_HEADERS})
 source_group(blas\\generic FILES ${SRC_BLAS_GENERIC})
-source_group(blas\\gens FILES ${SRC_BLAS_GENS}
-    ${SRC_BLAS_GENS_HEADERS})
+source_group(blas\\gens FILES ${SRC_BLAS_GENS} ${SRC_BLAS_GENS_HEADERS})
+source_group(AutoGemm\\include FILES ${AUTOGEMM_HEADERS} )
+source_group(AutoGemm\\src FILES ${AUTOGEMM_SRC} ${AUTOGEMM_PRECOMPILED_KERNELS} )
 
 include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}
@@ -484,8 +493,10 @@ endif( )
 add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS} ${AUTOGEMM_HEADERS} ${AUTOGEMM_PRECOMPILE_HEADER})
 add_dependencies(clBLAS GENERATE_CLT)
 
+#AutoGemm
 add_dependencies( clBLAS AutoGemmHeaderGeneration )
 add_dependencies( clBLAS AutoGemmPreCompile_Run )
+add_definitions(-DAUTOGEMM_USE_PRE_COMPILED_KERNELS)
 
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
