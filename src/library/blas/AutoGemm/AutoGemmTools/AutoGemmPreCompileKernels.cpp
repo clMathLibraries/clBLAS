@@ -38,8 +38,8 @@
 #endif
 
 #include "CL/opencl.h"
-#include "naive_blas.cpp"
-using namespace NaiveBlas;
+//#include "naive_blas.cpp"
+//using namespace NaiveBlas;
 #include "AutoGemmIncludes/AutoGemmKernelsToPreCompile.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
 
@@ -158,9 +158,9 @@ template<> char getPrecisionChar<DoubleComplex>(){ return 'z'; }
 template<typename Precision>
 int getKernelName(
   char **kernelName,
-  NaiveBlas::clblasOrder order,
-  NaiveBlas::clblasTranspose transA,
-  NaiveBlas::clblasTranspose transB,
+  clblasOrder order,
+  clblasTranspose transA,
+  clblasTranspose transB,
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
@@ -171,9 +171,9 @@ int getKernelName(
   return sprintf( *kernelName,
     "%cgemm_%s_%s%s_B%i_M%c%03u_N%c%03u_KX%03u",
     getPrecisionChar<Precision>(),
-    order==NaiveBlas::clblasColumnMajor ? "Col" : "Row",
-    transA==NaiveBlas::clblasNoTrans ? "N" : transA==NaiveBlas::clblasTrans ? "T" : "C",
-    transB==NaiveBlas::clblasNoTrans ? "N" : transB==NaiveBlas::clblasTrans ? "T" : "C",
+    order==clblasColumnMajor ? "Col" : "Row",
+    transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
+    transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
     beta ? 1 : 0,
     extraRow ? 'L' : 'X',
     macroTileNumRows,
@@ -185,9 +185,9 @@ int getKernelName(
 template<typename Precision>
 int getStringName(
   char **stringName,
-  NaiveBlas::clblasOrder order,
-  NaiveBlas::clblasTranspose transA,
-  NaiveBlas::clblasTranspose transB,
+  clblasOrder order,
+  clblasTranspose transA,
+  clblasTranspose transB,
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
@@ -203,9 +203,9 @@ int getStringName(
 template<typename Precision>
 int getFileName(
   char **fileName,
-  NaiveBlas::clblasOrder order,
-  NaiveBlas::clblasTranspose transA,
-  NaiveBlas::clblasTranspose transB,
+  clblasOrder order,
+  clblasTranspose transA,
+  clblasTranspose transB,
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
@@ -221,9 +221,9 @@ int getFileName(
 template<typename Precision>
 int getPreprocessorName(
   char **preprocessorName,
-  NaiveBlas::clblasOrder order,
-  NaiveBlas::clblasTranspose transA,
-  NaiveBlas::clblasTranspose transB,
+  clblasOrder order,
+  clblasTranspose transA,
+  clblasTranspose transB,
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
@@ -341,9 +341,9 @@ void writeBinaryToStream(std::ostream & out, unsigned char *binary, size_t binar
 template<typename Precision>
 void compileKernelAndWriteToFile(
   cl_context context,
-  NaiveBlas::clblasOrder order,
-  NaiveBlas::clblasTranspose transA,
-  NaiveBlas::clblasTranspose transB,
+  clblasOrder order,
+  clblasTranspose transA,
+  clblasTranspose transB,
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
@@ -393,9 +393,9 @@ void compileKernelAndWriteToFile(
 template<typename Precision>
 cl_int compileKernelGroupAndWriteToFile(
   cl_context context,
-  NaiveBlas::clblasOrder order,
-  NaiveBlas::clblasTranspose transA,
-  NaiveBlas::clblasTranspose transB,
+  clblasOrder order,
+  clblasTranspose transA,
+  clblasTranspose transB,
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
@@ -551,9 +551,9 @@ int main( int argc, char *argv[] ) {
   CL_CHECK(status);
 
   
-  NaiveBlas::clblasOrder order;
-  NaiveBlas::clblasTranspose transA;
-  NaiveBlas::clblasTranspose transB;
+  clblasOrder order;
+  clblasTranspose transA;
+  clblasTranspose transB;
   bool beta;
   unsigned int macroTileNumRows;
   unsigned int macroTileNumCols;
@@ -567,9 +567,9 @@ int main( int argc, char *argv[] ) {
   for (unsigned int i = 0; i < gemmPreCompileNum; i++) {
     // unload parameters
     // idx 0 is precision
-    order = gemmPreCompile[i][1]==1 ? NaiveBlas::clblasColumnMajor : NaiveBlas::clblasRowMajor;
-    transA = gemmPreCompile[i][2]==0 ? NaiveBlas::clblasNoTrans : gemmPreCompile[i][2]==1 ? NaiveBlas::clblasTrans : NaiveBlas::clblasConjTrans;
-    transB = gemmPreCompile[i][3]==0 ? NaiveBlas::clblasNoTrans : gemmPreCompile[i][3]==1 ? NaiveBlas::clblasTrans : NaiveBlas::clblasConjTrans;
+    order = gemmPreCompile[i][1]==1 ? clblasColumnMajor : clblasRowMajor;
+    transA = gemmPreCompile[i][2]==0 ? clblasNoTrans : gemmPreCompile[i][2]==1 ? clblasTrans : clblasConjTrans;
+    transB = gemmPreCompile[i][3]==0 ? clblasNoTrans : gemmPreCompile[i][3]==1 ? clblasTrans : clblasConjTrans;
     beta = gemmPreCompile[i][4]==1;
     macroTileNumRows = gemmPreCompile[i][5];
     macroTileNumCols = gemmPreCompile[i][6];

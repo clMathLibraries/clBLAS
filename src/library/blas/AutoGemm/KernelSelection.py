@@ -47,13 +47,13 @@ class KernelSelection:
     self.incFile = open(self.incFileName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
 
-    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelection.c"
+    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelection.cpp"
     self.selectionFile = open(self.kernelSelectionFileName, "w")
     self.selectionFile.write( Common.getAutoGemmHeader() )
 
 
     self.inc = (
-      "#include \"UserGemmKernelSources/UserGemmKernelSourceIncludes.h\"\n"
+      "#include <clBLAS.h>\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSources.h\"\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaries.h\"\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBuildOptionsSource.h\"\n"
@@ -94,7 +94,7 @@ class KernelSelection:
       "  unsigned int *unroll\n"
       ");\n\n" )
 
-    self.logic = ""
+    self.logic = "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSelection.h\"\n"
 
     ####################################
     # precision
@@ -105,7 +105,7 @@ class KernelSelection:
       kernel.precision = precision
       sizeEvents = kernelSelectionData[precision]
       self.logic += (
-          "// " + precision + "gemm kernel selection logic\n"
+          "\n// " + precision + "gemm kernel selection logic\n"
           "template<>\n"
           "void gemmSelectKernel<" )
       if precision == "s":
@@ -323,12 +323,12 @@ class KernelSelectionSpecific:
     self.incFile = open(self.incFileName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
 
-    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelectionSpecific.c"
+    self.kernelSelectionFileName = Common.getIncludePath() + "AutoGemmKernelSelectionSpecific.cpp"
     self.selectionFile = open(self.kernelSelectionFileName, "w")
     self.selectionFile.write( Common.getAutoGemmHeader() )
 
     self.inc = (
-      "#include \"UserGemmKernelSources/UserGemmKernelSourceIncludes.h\"\n"
+      "#include <clBLAS.h>\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSources.h\"\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBinaries.h\"\n"
       "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelBuildOptionsSource.h\"\n"
@@ -365,7 +365,7 @@ class KernelSelectionSpecific:
       "  unsigned int *microTileNumCols\n"
       ");\n\n" )
 
-    self.logic = ""
+    self.logic = "#include \"" + Common.getRelativeIncludePath() + "AutoGemmKernelSelectionSpecific.h\"\n"
     self.precisionInitialized = False
     self.orderInitialized = False
     self.transInitialized = False
@@ -383,7 +383,7 @@ class KernelSelectionSpecific:
       self.logic += self.zeroIndent
 
     self.logic += (
-      "// " + precision + "gemm kernel selection specific\n"
+      "\n// " + precision + "gemm kernel selection specific\n"
       "template<>\n"
       "bool gemmSelectKernelSpecific<" )
     if precision == "s":

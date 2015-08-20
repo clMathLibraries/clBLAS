@@ -434,7 +434,7 @@ def makeOpenCLKernelString(kernel):
 def writeOpenCLKernelToFile(kernel):
   kernelName = kernel.getName()
   kernelString = makeOpenCLKernelString(kernel)
-  kernelFileName = Common.getKernelSourcePath() + kernelName +"_src.c"
+  kernelFileName = Common.getKernelSourcePath() + kernelName +"_src.cpp"
   kernelFile = open(kernelFileName, "w")
   kernelFile.write( Common.getAutoGemmHeader() )
   kernelFile.write("#ifndef KERNEL_" + kernelName.upper() + "_SRC_C\n")
@@ -450,6 +450,8 @@ def writeOpenCLKernelToFile(kernel):
   kernelFile.write(kernelString)
   kernelFile.write("\";\n")
   kernelFile.write("\n")
+  kernelFile.write("#else\n")
+  kernelFile.write("#pragma message(\"AutoGemm's %s overriden by user kernel.\")\n" % kernel.getName() )
   kernelFile.write("#endif\n")
   kernelFile.close()
 
