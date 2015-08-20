@@ -81,11 +81,7 @@ set(SRC_BLAS
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
 
-  ${AUTOGEMM_SRC}
-  #${AUTOGEMM_PRECOMPILED_KERNELS}
 )
-message(STATUS "AUTOGEMM_SRC= ${AUTOGEMM_SRC}")
-message(STATUS "SRC_BLAS = ${SRC_BLAS}")
 
 set(SRC_BLAS_HEADERS
     blas/include/blas_funcs.h
@@ -117,9 +113,6 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_dgemmSmallMatrices.h
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
-
-  ${AUTOGEMM_HEADERS}
-
 )
 
 set(SRC_BLAS_GENERIC
@@ -490,7 +483,15 @@ if( CMAKE_COMPILER_IS_GNUCC )
              DESTINATION lib${SUFFIX_LIB}/pkgconfig )
 endif( )
 
-add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS} ${AUTOGEMM_HEADERS} ${AUTOGEMM_PRECOMPILE_HEADER})
+  add_library(clBLAS
+    ${CLBLAS_SOURCES}
+    ${GLOBAL_HEADERS}
+    ${SRC_BLAS_HEADERS}
+    ${SRC_BLAS_GENS_HEADERS}
+    ${AUTOGEMM_SRC}
+    ${AUTOGEMM_HEADERS}
+    ${AUTOGEMM_PRECOMPILED_KERNELS}
+  )
 add_dependencies(clBLAS GENERATE_CLT)
 
 #AutoGemm

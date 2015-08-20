@@ -102,33 +102,33 @@ class KernelBinaryIncludes:
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
-    self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
+    self.incStr += "extern char %s_bin[];\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "char %s_bin[];\n" % kernelName
     self.cppStr += "#else\n"
     self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getRowName()
-    self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
+    self.incStr += "extern char %s_bin[];\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "char %s_bin[];\n" % kernelName
     self.cppStr += "#else\n"
     self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getColName()
-    self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
+    self.incStr += "extern char %s_bin[];\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "char %s_bin[];\n" % kernelName
     self.cppStr += "#else\n"
     self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getCornerName()
-    self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
+    self.incStr += "extern char %s_bin[];\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char * %s_bin = 0;\n" % kernelName
+    self.cppStr += "char %s_bin[];\n" % kernelName
     self.cppStr += "#else\n"
     self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"

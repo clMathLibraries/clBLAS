@@ -133,9 +133,9 @@ void makeGemmKernel(
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
-      size_t kernelBinarySize = strlen((char *)*kernelBinary);
+      size_t kernelBinarySize = strlen((char *)(*kernelBinary));
       printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n");
-      printf("%s\n", kernelBinary);
+      printf("%s\n", *kernelBinary);
       clProgram = clCreateProgramWithBinary(
         clContext,
         1, &clDevice,
@@ -319,10 +319,10 @@ clblasGemm(
   const char *colKernelSource = NULL;
   const char *cornerKernelSource = NULL;
   const char *sourceBuildOptions = NULL;
-  const unsigned char *tileKernelBinary = NULL;
-  const unsigned char *rowKernelBinary = NULL;
-  const unsigned char *colKernelBinary = NULL;
-  const unsigned char *cornerKernelBinary = NULL;
+  const char *tileKernelBinary = NULL;
+  const char *rowKernelBinary = NULL;
+  const char *colKernelBinary = NULL;
+  const char *cornerKernelBinary = NULL;
   const char *binaryBuildOptions = NULL;
   cl_kernel  *tileClKernel = NULL;
   cl_kernel  *rowClKernel = NULL;

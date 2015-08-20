@@ -19,6 +19,7 @@ set(AUTOGEMM_HEADERS
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.h
   CACHE INTERNAL "AutoGemm_Headers"
 )
+set_source_files_properties( ${AUTOGEMM_HEADERS} PROPERTIES GENERATED TRUE )
 
 set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
@@ -30,22 +31,25 @@ set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.cpp
   CACHE INTERNAL "AutoGemm_Src"
 )
+set_source_files_properties( ${AUTOGEMM_SRC} PROPERTIES GENERATED TRUE )
+
 set(USERGEMM_SRC
   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSources.cpp
 )
 set(AUTOGEMM_TEST_SRC
-  AutoGemmTools/TestAutoGemm.cpp
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemmTools/TestAutoGemm.cpp
 )
 set(AUTOGEMM_PROFILER_SRC
-  AutoGemmTools/ProfileAutoGemm.cpp
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemmTools/ProfileAutoGemm.cpp
 )
 set(AUTOGEMM_PRECOMPILE_SRC
-  AutoGemmTools/AutoGemmPreCompileKernels.cpp
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemmTools/AutoGemmPreCompileKernels.cpp
 )
 set( AUTOGEMM_PRECOMPILED_KERNELS
   ${CMAKE_BINARY_DIR}/include/AutoGemmKernelBinaries/AutoGemmKernelBinariesPreCompiled.cpp
   CACHE INTERNAL "AutoGemm_PreCompiled_Kernels"
 )
+set_source_files_properties( ${AUTOGEMM_PRECOMPILED_KERNELS} PROPERTIES GENERATED TRUE )
 
 # AutoGemm options for pre-compiling kernels
 option( AutoGemmPreCompile_PRECISION_SGEMM "AutoGemm: pre-compile sgemm kernels" OFF)
@@ -207,10 +211,6 @@ MESSAGE( STATUS "AutoGemmPreCompile: python KernelsToPreCompile.py ${AGPC_ARGS}"
 ################################################################################
 set( AUTOGEMM_PRECOMPILE_HEADER_SRC ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py )
 set( AUTOGEMM_PRECOMPILE_HEADER_OUT ${CMAKE_BINARY_DIR}/include/AutoGemmKernelsToPreCompile.h )
-add_custom_target( AutoGemmPreCompile_GenerateHeader
-  DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_OUT} 
-  SOURCES ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
-  )
 add_custom_command(
   #TARGET AutoGemmPreCompile_GenerateHeader
   OUTPUT ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
@@ -219,6 +219,10 @@ add_custom_command(
   COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
   DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
 )
+add_custom_target( AutoGemmPreCompile_GenerateHeader
+  DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_OUT} 
+  SOURCES ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
+  )
 set_property( TARGET AutoGemmPreCompile_GenerateHeader PROPERTY FOLDER "AutoGemm")
 
 
@@ -240,14 +244,14 @@ set_property( TARGET AutoGemmPreCompileKernels PROPERTY FOLDER "AutoGemm")
 ################################################################################
 # add target for running pre-compile executable
 ################################################################################
-add_custom_target( AutoGemmPreCompile_Run
-  DEPENDS ${AUTOGEMM_PRECOMPILED_KERNELS}
-  #SOURCES ${AUTOGEMM_PRECOMPILE_HEADER}
-)
 add_custom_command(
   OUTPUT ${AUTOGEMM_PRECOMPILED_KERNELS}
   COMMAND AutoGemmPreCompileKernels ${CMAKE_BINARY_DIR}
   DEPENDS AutoGemmPreCompileKernels
+)
+add_custom_target( AutoGemmPreCompile_Run
+  DEPENDS ${AUTOGEMM_PRECOMPILED_KERNELS}
+  #SOURCES ${AUTOGEMM_PRECOMPILE_HEADER}
 )
 set_property( TARGET AutoGemmPreCompile_Run PROPERTY FOLDER "AutoGemm")
 
@@ -255,14 +259,14 @@ set_property( TARGET AutoGemmPreCompile_Run PROPERTY FOLDER "AutoGemm")
 ################################################################################
 # add target for main AutoGemm headers / source
 ################################################################################
-add_custom_target( AutoGemmHeaderGeneration
-  DEPENDS ${AUTOGEMM_HEADERS} 
-  SOURCES ${AUTOGEMM_SCRIPTS}
-)
 add_custom_command(
   OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
   COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py ${CMAKE_BINARY_DIR}/include
   DEPENDS ${AUTOGEMM_SCRIPTS}
+)
+add_custom_target( AutoGemmHeaderGeneration
+  DEPENDS ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
+  SOURCES ${AUTOGEMM_SCRIPTS}
 )
 set_property( TARGET AutoGemmHeaderGeneration PROPERTY FOLDER "AutoGemm")
 
@@ -270,18 +274,17 @@ set_property( TARGET AutoGemmHeaderGeneration PROPERTY FOLDER "AutoGemm")
 
 include_directories(
     ${OPENCL_INCLUDE_DIRS}
-    #${CMAKE_SOURCE_DIR}/library/tools/ktest/naive
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}/include
     .
 )
 
-add_executable(TestAutoGemm ${AUTOGEMM_TEST_SRC} ${AUTOGEMM_SRC} ${USER_GEMM_SRC} )
+add_executable(TestAutoGemm ${AUTOGEMM_TEST_SRC} ${AUTOGEMM_SRC} ${USERGEMM_SRC} )
 add_dependencies(TestAutoGemm AutoGemmHeaderGeneration)
 target_link_libraries(TestAutoGemm ${OPENCL_LIBRARIES})
 set_property( TARGET TestAutoGemm PROPERTY FOLDER "AutoGemm")
 
-add_executable(ProfileAutoGemm ${AUTOGEMM_PROFILER_SRC} ${AUTOGEMM_SRC} ${USER_GEMM_SRC} )
+add_executable(ProfileAutoGemm ${AUTOGEMM_PROFILER_SRC} ${AUTOGEMM_SRC} ${USERGEMM_SRC} )
 add_dependencies(ProfileAutoGemm AutoGemmHeaderGeneration)
 target_link_libraries(ProfileAutoGemm ${OPENCL_LIBRARIES})
 set_property( TARGET ProfileAutoGemm PROPERTY FOLDER "AutoGemm")
