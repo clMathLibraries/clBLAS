@@ -43,7 +43,7 @@ set(AUTOGEMM_PRECOMPILE_SRC
   AutoGemmTools/AutoGemmPreCompileKernels.cpp
 )
 set( AUTOGEMM_PRECOMPILED_KERNELS
-  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinariesPreCompiled.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmKernelBinaries/AutoGemmKernelBinariesPreCompiled.cpp
   CACHE INTERNAL "AutoGemm_PreCompiled_Kernels"
 )
 

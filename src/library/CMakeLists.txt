@@ -82,7 +82,7 @@ set(SRC_BLAS
 	blas/functor/hawaii_sgemmBranchKernel.cc
 
   ${AUTOGEMM_SRC}
-  ${AUTOGEMM_PRECOMPILED_KERNELS}
+  #${AUTOGEMM_PRECOMPILED_KERNELS}
 )
 message(STATUS "AUTOGEMM_SRC= ${AUTOGEMM_SRC}")
 message(STATUS "SRC_BLAS = ${SRC_BLAS}")

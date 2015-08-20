@@ -251,7 +251,7 @@ cl_int getKernelBinaryFromSource(
   cl_context context,
   const char *source,
   const char *buildOptions,
-  unsigned char **binary,
+  char **binary,
   size_t *binarySize)
 {
   cl_int status = CL_SUCCESS;
@@ -295,7 +295,7 @@ cl_int getKernelBinaryFromSource(
   // get binary from program
   status = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), binarySize, NULL);
   //printf("BinarySize: %llu\n", *binarySize);
-  binary[0] = new unsigned char[*binarySize];
+  binary[0] = new char[*binarySize];
   //for (int i = 0; i < *binarySize; i++) binary[0][i] = 512;
   
   //size_t size = 2;
@@ -321,15 +321,15 @@ cl_int getKernelBinaryFromSource(
 /******************************************************************************
  * write binary to stream
  *****************************************************************************/
-void writeBinaryToStream(std::ostream & out, unsigned char *binary, size_t binarySize) {
+void writeBinaryToStream(std::ostream & out, char *binary, size_t binarySize) {
   for(int i = 0; i < binarySize; i++) {
 
-    out << std::setw(3) << (unsigned int) binary[i];
+    out << std::setw(4) << (int) binary[i];
     
     if(i < binarySize-1) {
       out << ",";
     }
-    if((i+1)%20 == 0) {
+    if((i+1)%16 == 0) {
       out << std::endl;
     }
   }
@@ -367,7 +367,7 @@ void compileKernelAndWriteToFile(
   int preprocessorNameLength = getPreprocessorName<Precision>(&preprocessorName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
   
   // get kernel binary
-  unsigned char **kernelBinary = new unsigned char*[1];
+  char **kernelBinary = new char*[1];
   size_t kernelBinarySize;
   getKernelBinaryFromSource(context, source, buildOptions, kernelBinary, &kernelBinarySize);
   printf("AutoGemm-PreCompile[%3u/%3u]: %s %7u bytes\n", numKernelsCompiled, totalKernelsToCompile, stringName, kernelBinarySize);
@@ -380,9 +380,14 @@ void compileKernelAndWriteToFile(
   kernelFile.open(fullFilePath, 'w');
   kernelFile << "/* AutoGemm Pre-Compiled kernel binary */" << std::endl << std::endl;
   kernelFile << "#define " << preprocessorName << std::endl << std::endl;
-  kernelFile << "unsigned char " << stringName << "[" << kernelBinarySize << "] = {" << std::endl;
+  
+  kernelFile << "char " << stringName << "Array[" << kernelBinarySize << "] = {" << std::endl;
+  //kernelFile << "unsigned char *" << stringName << " = {" << std::endl;
+  //kernelFile << "unsigned char " << stringName << "[] = {" << std::endl;
+  
   writeBinaryToStream( kernelFile, *kernelBinary, kernelBinarySize );
   kernelFile << "};" << std::endl;
+  kernelFile << "unsigned char *" << stringName << " = " << "reinterpret_cast<unsigned char *>(" << stringName << "Array);" << std::endl;
   kernelFile.close();
 
   // add file to include
