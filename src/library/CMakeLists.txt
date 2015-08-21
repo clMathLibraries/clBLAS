@@ -146,8 +146,8 @@ else()
 endif()
 
 # build commandline argument for AutoGemm
-set( AGPC_ARGS )
-set( AGPC_ARGS ${AGPC_ARGS} --output ${CMAKE_BINARY_DIR}/include )
+#set( AGPC_ARGS CACHE FORCE)
+set( AGPC_ARGS --output ${CMAKE_BINARY_DIR}/include )
 
 if ( AutoGemmPreCompile_ACTIVE )
   # precisions
@@ -235,6 +235,7 @@ add_custom_command(
   OUTPUT ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
   #MESSAGE( STATUS "python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}" )
   #COMMAND echo python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
+  COMMAND echo python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
   COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
   DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
 )

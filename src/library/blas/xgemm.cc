@@ -134,7 +134,7 @@ void makeGemmKernel(
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
-      printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", kernelBinarySize);
+      printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
       printf("%s\n", *kernelBinary);
       clProgram = clCreateProgramWithBinary(
         clContext,
