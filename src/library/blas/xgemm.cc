@@ -95,6 +95,7 @@ void makeGemmKernel(
   const char *kernelSource,
   const char *sourceBuildOptions,
   const unsigned char **kernelBinary,
+  size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
   cl_int err;
@@ -133,13 +134,12 @@ void makeGemmKernel(
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
-      size_t kernelBinarySize = strlen((char *)(*kernelBinary));
-      printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n");
+      printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", kernelBinarySize);
       printf("%s\n", *kernelBinary);
       clProgram = clCreateProgramWithBinary(
         clContext,
         1, &clDevice,
-        &kernelBinarySize, kernelBinary,
+        kernelBinarySize, kernelBinary,
         &clBinaryStatus, &err );
       CL_CHECK(err)
       err = clBuildProgram(
@@ -314,20 +314,24 @@ clblasGemm(
 /******************************************************************************
  * Select kernel
  *****************************************************************************/
-  const char *tileKernelSource = NULL;
-  const char *rowKernelSource = NULL;
-  const char *colKernelSource = NULL;
+  const char *tileKernelSource   = NULL;
+  const char *rowKernelSource    = NULL;
+  const char *colKernelSource    = NULL;
   const char *cornerKernelSource = NULL;
   const char *sourceBuildOptions = NULL;
-  const char *tileKernelBinary = NULL;
-  const char *rowKernelBinary = NULL;
-  const char *colKernelBinary = NULL;
-  const char *cornerKernelBinary = NULL;
+  const unsigned char *tileKernelBinary   = NULL;
+  const unsigned char *rowKernelBinary    = NULL;
+  const unsigned char *colKernelBinary    = NULL;
+  const unsigned char *cornerKernelBinary = NULL;
+  size_t *tileKernelBinarySize   = 0;
+  size_t *rowKernelBinarySize    = 0;
+  size_t *colKernelBinarySize    = 0;
+  size_t *cornerKernelBinarySize = 0;
   const char *binaryBuildOptions = NULL;
-  cl_kernel  *tileClKernel = NULL;
-  cl_kernel  *rowClKernel = NULL;
-  cl_kernel  *colClKernel = NULL;
-  cl_kernel  *cornerClKernel = NULL;
+  cl_kernel  *tileClKernel       = NULL;
+  cl_kernel  *rowClKernel        = NULL;
+  cl_kernel  *colClKernel        = NULL;
+  cl_kernel  *cornerClKernel     = NULL;
   unsigned int workGroupNumRows;
   unsigned int workGroupNumCols;
   unsigned int microTileNumRows;
@@ -347,6 +351,10 @@ clblasGemm(
     &rowKernelBinary,
     &colKernelBinary,
     &cornerKernelBinary,
+    &tileKernelBinarySize,
+    &rowKernelBinarySize,
+    &colKernelBinarySize,
+    &cornerKernelBinarySize,
     &binaryBuildOptions,
     &tileClKernel,
     &rowClKernel,
@@ -384,6 +392,10 @@ clblasGemm(
           &rowKernelBinary,
           &colKernelBinary,
           &cornerKernelBinary,
+          &tileKernelBinarySize,
+          &rowKernelBinarySize,
+          &colKernelBinarySize,
+          &cornerKernelBinarySize,
           &binaryBuildOptions,
           &tileClKernel,
           &rowClKernel,
@@ -421,10 +433,10 @@ clblasGemm(
 /******************************************************************************
  * Build kernels
  *****************************************************************************/
-  if (needTileKernel)   makeGemmKernel(  tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary, binaryBuildOptions);
-  if (needRowKernel)    makeGemmKernel(   rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary, binaryBuildOptions);
-  if (needColKernel)    makeGemmKernel(   colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary, binaryBuildOptions);
-  if (needCornerKernel) makeGemmKernel(cornerClKernel, commandQueues[0], cornerKernelSource, sourceBuildOptions, &cornerKernelBinary, binaryBuildOptions);
+  if (needTileKernel)   makeGemmKernel(  tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary,   tileKernelBinarySize, binaryBuildOptions);
+  if (needRowKernel)    makeGemmKernel(   rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary,    rowKernelBinarySize, binaryBuildOptions);
+  if (needColKernel)    makeGemmKernel(   colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary,    colKernelBinarySize, binaryBuildOptions);
+  if (needCornerKernel) makeGemmKernel(cornerClKernel, commandQueues[0], cornerKernelSource, sourceBuildOptions, &cornerKernelBinary, cornerKernelBinarySize, binaryBuildOptions);
   const size_t localWorkSize[2] = { workGroupNumRows, workGroupNumCols };
   unsigned int numKernelsEnqueued = 0;
 

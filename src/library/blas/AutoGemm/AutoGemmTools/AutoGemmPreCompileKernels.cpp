@@ -381,13 +381,14 @@ void compileKernelAndWriteToFile(
   kernelFile << "/* AutoGemm Pre-Compiled kernel binary */" << std::endl << std::endl;
   kernelFile << "#define " << preprocessorName << std::endl << std::endl;
   
-  kernelFile << "char " << stringName << "[" << kernelBinarySize << "] = {" << std::endl;
+  kernelFile << "char " << stringName << "Array[" << kernelBinarySize << "] = {" << std::endl;
   //kernelFile << "unsigned char *" << stringName << " = {" << std::endl;
   //kernelFile << "unsigned char " << stringName << "[] = {" << std::endl;
   
   writeBinaryToStream( kernelFile, *kernelBinary, kernelBinarySize );
   kernelFile << "};" << std::endl;
-  //kernelFile << "unsigned char *" << stringName << " = " << "reinterpret_cast<unsigned char *>(" << stringName << "Array);" << std::endl;
+  kernelFile << "unsigned char *" << stringName << " = " << "reinterpret_cast<unsigned char *>(" << stringName << "Array);" << std::endl;
+  kernelFile << "size_t " << stringName << "Size = " << kernelBinarySize << ";" << std::endl;
   kernelFile.close();
 
   // add file to include
@@ -421,15 +422,19 @@ cl_int compileKernelGroupAndWriteToFile(
   const char *colKernelSource;
   const char *cornerKernelSource;
   const char *sourceBuildOptions;
-  const char *tileKernelBinary;
-  const char *rowKernelBinary;
-  const char *colKernelBinary;
-  const char *cornerKernelBinary;
+  const unsigned char *tileKernelBinary;
+  const unsigned char *rowKernelBinary;
+  const unsigned char *colKernelBinary;
+  const unsigned char *cornerKernelBinary;
+  size_t *tileKernelBinarySize;
+  size_t *rowKernelBinarySize;
+  size_t *colKernelBinarySize;
+  size_t *cornerKernelBinarySize;
   const char *binaryBuildOptions;
-  cl_kernel  *tileClKernel;
-  cl_kernel  *rowClKernel;
-  cl_kernel  *colClKernel;
-  cl_kernel  *cornerClKernel;
+  cl_kernel *tileClKernel;
+  cl_kernel *rowClKernel;
+  cl_kernel *colClKernel;
+  cl_kernel *cornerClKernel;
   unsigned int workGroupNumRows;
   unsigned int workGroupNumCols;
   unsigned int microTileNumRows;
@@ -451,6 +456,10 @@ cl_int compileKernelGroupAndWriteToFile(
       &rowKernelBinary,
       &colKernelBinary,
       &cornerKernelBinary,
+      &tileKernelBinarySize,
+      &rowKernelBinarySize,
+      &colKernelBinarySize,
+      &cornerKernelBinarySize,
       &binaryBuildOptions,
       &tileClKernel,
       &rowClKernel,
