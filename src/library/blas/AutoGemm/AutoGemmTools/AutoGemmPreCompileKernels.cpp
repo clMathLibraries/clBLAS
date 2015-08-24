@@ -405,7 +405,8 @@ void compileKernelAndWriteToFile(
   double elapsedTimeSec = (clockCurrent - clockStart) / ((double) CLOCKS_PER_SEC);
   double timePerKernel = elapsedTimeSec / numKernelsCompiled;
   double timeRemaining = timePerKernel * (totalKernelsToCompile - numKernelsCompiled);
-  printf("AutoGemm-PreCompile[%3u/%3u]: %s %7u bytes ( %.0f sec remaining)\n", numKernelsCompiled, totalKernelsToCompile, stringName, kernelBinarySize, timeRemaining);
+  //printf("AutoGemm-PreCompile[%3u/%3u]: %s %7u bytes ( %.0f sec remaining)\n", numKernelsCompiled, totalKernelsToCompile, stringName, kernelBinarySize, timeRemaining);
+  std::cout << "AutoGemm-PreCompile[" << std::setw(3) << numKernelsCompiled << "/" << std::setw(3) << totalKernelsToCompile << "]: " << stringName << std::setw(7) << kernelBinarySize << " bytes (" << std::setw(4) << (int) timeRemaining << " sec remaining)" << std::endl;
 }
 
 
@@ -421,8 +422,7 @@ cl_int compileKernelGroupAndWriteToFile(
   bool beta,
   unsigned int macroTileNumRows,
   unsigned int macroTileNumCols,
-  unsigned int unroll,
-  bool preCompileNonMultiples )
+  unsigned int unroll )
 {
   const char *tileKernelSource;
   const char *rowKernelSource;
@@ -478,10 +478,7 @@ cl_int compileKernelGroupAndWriteToFile(
       &microTileNumCols );
 
   if (!kernelFound) {
-    totalKernelsToCompile -= 1;
-    if (preCompileNonMultiples) {
-      totalKernelsToCompile -= 3;
-    }
+    totalKernelsToCompile -= 4;
     char stringNameArray[64];
     char *stringName = &stringNameArray[0];
     int stringNameLength = getStringName<Precision>( &stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, 0, 0);
@@ -502,8 +499,6 @@ cl_int compileKernelGroupAndWriteToFile(
       false, // extra col
       tileKernelSource,
       sourceBuildOptions );
-
-  if (preCompileNonMultiples) {
     
     compileKernelAndWriteToFile<Precision>(
         context,
@@ -518,6 +513,7 @@ cl_int compileKernelGroupAndWriteToFile(
         false, // extra col
         rowKernelSource,
         sourceBuildOptions );
+
     compileKernelAndWriteToFile<Precision>(
         context,
         order,
@@ -531,6 +527,7 @@ cl_int compileKernelGroupAndWriteToFile(
         true, // extra col
         colKernelSource,
         sourceBuildOptions );
+
     compileKernelAndWriteToFile<Precision>(
         context,
         order,
@@ -544,7 +541,6 @@ cl_int compileKernelGroupAndWriteToFile(
         true, // extra col
         cornerKernelSource,
         sourceBuildOptions );
-  }
 
   return 1;
 }
@@ -627,7 +623,7 @@ int main( int argc, char *argv[] ) {
   // for each kernel to be pre-compiled
   
   totalKernelsToCompile = gemmPreCompileNum;
-  if (gemmPreCompileNonMultiples) { totalKernelsToCompile *= 4; }
+  totalKernelsToCompile *= 4;
   numKernelsCompiled = 0;
   for (unsigned int i = 0; i < gemmPreCompileNum; i++) {
     // unload parameters
@@ -649,8 +645,7 @@ int main( int argc, char *argv[] ) {
         beta,
         macroTileNumRows,
         macroTileNumCols,
-        unroll,
-        gemmPreCompileNonMultiples==1
+        unroll
         );
     } else if (gemmPreCompile[i][0] == 1) { // dgemm
       compileKernelGroupAndWriteToFile<double>(
@@ -661,8 +656,7 @@ int main( int argc, char *argv[] ) {
         beta,
         macroTileNumRows,
         macroTileNumCols,
-        unroll,
-        gemmPreCompileNonMultiples==1
+        unroll
         );
     } else if (gemmPreCompile[i][0] == 2) { // cgemm
       compileKernelGroupAndWriteToFile<FloatComplex>(
@@ -673,8 +667,7 @@ int main( int argc, char *argv[] ) {
         beta,
         macroTileNumRows,
         macroTileNumCols,
-        unroll,
-        gemmPreCompileNonMultiples==1
+        unroll
         );
     } else if (gemmPreCompile[i][0] == 3) { // zgemm
       compileKernelGroupAndWriteToFile<DoubleComplex>(
@@ -685,12 +678,14 @@ int main( int argc, char *argv[] ) {
         beta,
         macroTileNumRows,
         macroTileNumCols,
-        unroll,
-        gemmPreCompileNonMultiples==1
+        unroll
         );
     }
   }// end for
+  clock_t clockCurrent = clock();
+  double elapsedTimeSec = (clockCurrent - clockStart) / ((double) CLOCKS_PER_SEC);
   includeFile.close();
+  std::cout << "Total Compile Time: " << std::setprecision(0) << elapsedTimeSec << " sec" << std::endl;
   //system("PAUSE");
   return 0;
 }

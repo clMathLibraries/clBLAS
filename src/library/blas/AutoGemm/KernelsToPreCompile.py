@@ -20,6 +20,7 @@ def writeOfflineCompilation(args):
   for precision in args.precisions:
     ocFile.write( fileStr )
     fileStr = ""
+    validTiles = AutoGemmParameters.getTilesForPrecision(precision)
     for order in args.orders:
       for transpose in args.transposes:
         transA = transpose[0]
@@ -28,36 +29,28 @@ def writeOfflineCompilation(args):
           # real precision doesn't have conjugate transpose
           continue
         for beta in args.betas:
-          for tile in args.tiles:
-            tileNumRows = int( tile[:tile.find("x")] )
-            tileNumCols = int( tile[tile.find("x")+1:] )
+          for tile in validTiles:
             for unroll in AutoGemmParameters.unrolls[precision]:
-              if args.nonMultiples or (unroll > 1 and len(AutoGemmParameters.unrolls[precision]) > 1):
-                # print combination
-                kernelStr = "  { %1u, %1u, %1u, %1u, %1u, %3u, %3u, %2u },\n" \
-                    % (
-                    Common.precisionInt[precision],
-                    Common.orderInt[order],
-                    Common.transposeInt[transA],
-                    Common.transposeInt[transB],
-                    beta,
-                    tileNumRows,
-                    tileNumCols,
-                    unroll
-                    )
-                fileStr += kernelStr
-                #print kernelStr
-                count+=1
+              # print combination
+              kernelStr = "  { %1u, %1u, %1u, %1u, %1u, %3u, %3u, %2u },\n" \
+                  % (
+                  Common.precisionInt[precision],
+                  Common.orderInt[order],
+                  Common.transposeInt[transA],
+                  Common.transposeInt[transB],
+                  beta,
+                  tile.macroTileNumRows,
+                  tile.macroTileNumCols,
+                  unroll
+                  )
+              fileStr += kernelStr
+              #print kernelStr
+              count+=1
   fileStr += "};\n"
   fileStr += "unsigned int gemmPreCompileNum = " + str(count) + ";\n"
-  if args.nonMultiples:
-    fileStr += "bool gemmPreCompileNonMultiples = true;\n"
-  else:
-    fileStr += "bool gemmPreCompileNonMultiples = false;\n"
   ocFile.write( fileStr )
   ocFile.close()
-  if args.nonMultiples:
-    count *= 4
+  count *= 4
   print "AutoGemm: Pre-Compile %u kernels" % count
 
 
@@ -73,8 +66,6 @@ if __name__ == "__main__":
   ap.add_argument("--orders", dest="orders", action="store", nargs="+", choices=AutoGemmParameters.orders )
   ap.add_argument("--transposes", dest="transposes", action="store", nargs="+", choices=AutoGemmParameters.getTransposeChoices() )
   ap.add_argument("--betas", dest="betas", action="store", nargs="+", type=int, choices=AutoGemmParameters.betas )
-  ap.add_argument("--tiles", dest="tiles", action="store", nargs="+", choices=AutoGemmParameters.getTileChoices() )
-  ap.add_argument("--non-multiples", dest="nonMultiples", action="store_true" )
   args = ap.parse_args()
   if args.output:
     Common.setOutputPath(args.output)
