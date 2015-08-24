@@ -29,8 +29,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/time.h>
 #else
 // Windows
+#include <Windows.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -47,7 +49,12 @@ unsigned int totalKernelsToCompile;
 unsigned int numKernelsCompiled;
 char *path;
 std::ofstream includeFile;
-std::clock_t clockStart;
+
+//std::clock_t clockStart;
+unsigned long long clockStart;
+unsigned long long clockFrequency;
+
+
 
 /******************************************************************************
  * Check OpenCL Errors
@@ -363,8 +370,8 @@ void compileKernelAndWriteToFile(
   char *stringName = &stringNameArray[0];
   char *fileName = &fileNameArray[0];
   char *preprocessorName = &preprocessorNameArray[0];
-  int stringNameLength = getStringName<Precision>(      &stringName,       order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
-  int fileNameLength = getFileName<Precision>(        &fileName,         order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int stringNameLength = getStringName<Precision>(      &stringName,             order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int fileNameLength = getFileName<Precision>(        &fileName,                 order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
   int preprocessorNameLength = getPreprocessorName<Precision>(&preprocessorName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
   
   // get kernel binary
@@ -401,12 +408,22 @@ void compileKernelAndWriteToFile(
   numKernelsCompiled++;
 
   // how much time left
-  clock_t clockCurrent = clock();
+  unsigned long long clockCurrent;
+  #if defined( _WIN32 )
+	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockCurrent ) );
+#else
+	struct timeval s;
+	gettimeofday(&s, 0);
+	clockCurrent = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
+#endif
+
+
+
   double elapsedTimeSec = (clockCurrent - clockStart) / ((double) CLOCKS_PER_SEC);
   double timePerKernel = elapsedTimeSec / numKernelsCompiled;
   double timeRemaining = timePerKernel * (totalKernelsToCompile - numKernelsCompiled);
   //printf("AutoGemm-PreCompile[%3u/%3u]: %s %7u bytes ( %.0f sec remaining)\n", numKernelsCompiled, totalKernelsToCompile, stringName, kernelBinarySize, timeRemaining);
-  std::cout << "AutoGemm-PreCompile[" << std::setw(3) << numKernelsCompiled << "/" << std::setw(3) << totalKernelsToCompile << "]: " << stringName << std::setw(7) << kernelBinarySize << " bytes (" << std::setw(4) << (int) timeRemaining << " sec remaining)" << std::endl;
+  std::cout << "AutoGemm-PreCompile[" << std::setw(3) << numKernelsCompiled << "/" << std::setw(3) << totalKernelsToCompile << "]: " << stringName << std::setw(4) << kernelBinarySize/1024 << " kB (" << std::setw(4) << (int) timeRemaining << " sec remaining)" << std::endl;
 }
 
 
@@ -619,6 +636,21 @@ int main( int argc, char *argv[] ) {
 
   // timer
   clockStart = clock();
+  
+#if defined( _WIN32 )
+	//	OS call to get ticks per second2
+	::QueryPerformanceFrequency( reinterpret_cast<LARGE_INTEGER*>( &clockFrequency ) );
+#else
+	clockFrequency = 1000000;
+#endif
+
+#if defined( _WIN32 )
+	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockStart ) );
+#else
+	struct timeval s;
+	gettimeofday(&s, 0);
+	clockStart = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
+#endif
 
   // for each kernel to be pre-compiled
   

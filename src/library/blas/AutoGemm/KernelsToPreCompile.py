@@ -34,22 +34,24 @@ def writeOfflineCompilation(args):
           continue
         for beta in args.betas:
           for tile in validTiles:
-            for unroll in AutoGemmParameters.unrolls[precision]:
-              # print combination
-              kernelStr = "  { %1u, %1u, %1u, %1u, %1u, %3u, %3u, %2u },\n" \
-                  % (
-                  Common.precisionInt[precision],
-                  Common.orderInt[order],
-                  Common.transposeInt[transA],
-                  Common.transposeInt[transB],
-                  beta,
-                  tile.macroTileNumRows,
-                  tile.macroTileNumCols,
-                  unroll
-                  )
-              fileStr += kernelStr
-              #print kernelStr
-              count+=1
+            # print combination
+            kernelStr = "  { %1u, %1u, %1u, %1u, %1u, %3u, %3u, %2u },\n" \
+                % (
+                Common.precisionInt[precision],
+                Common.orderInt[order],
+                Common.transposeInt[transA],
+                Common.transposeInt[transB],
+                beta,
+                tile.macroTileNumRows,
+                tile.macroTileNumCols,
+                tile.unroll
+                )
+            fileStr += kernelStr
+            #print kernelStr
+            count+=1
+  if count is 0:
+    fileStr += "  { %1u, %1u, %1u, %1u, %1u, %3u, %3u, %2u },\n" \
+        % ( 0, 0, 0, 0, 0, 0, 0, 0 )
   fileStr += "};\n"
   fileStr += "unsigned int gemmPreCompileNum = " + str(count) + ";\n"
   ocFile.write( fileStr )
@@ -77,5 +79,13 @@ if __name__ == "__main__":
     print "Warning: No output path specified; default is working directory."
 
   # write offline compilation header
+  if args.precisions is None:
+    args.precisions = []
+  if args.transposes is None:
+    args.transposes = []
+  if args.orders is None:
+    args.orders = []
+  if args.betas is None:
+    args.betas = []
   writeOfflineCompilation(args)
 
