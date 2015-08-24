@@ -9,6 +9,9 @@ import Common
 
 def writeOfflineCompilation(args):
   print "AutoGemm: Kernels To PreCompile"
+  if not os.path.exists( Common.getIncludePath() ):
+    os.makedirs( Common.getIncludePath() )
+
   ocFileName = Common.getIncludePath() + "AutoGemmKernelsToPreCompile.h"
   ocFile = open(ocFileName, "w")
   ocFile.write( Common.getAutoGemmHeader() )
