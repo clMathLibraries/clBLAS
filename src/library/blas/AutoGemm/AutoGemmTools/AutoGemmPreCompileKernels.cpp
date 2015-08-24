@@ -728,10 +728,9 @@ int main( int argc, char *argv[] ) {
     }
   }// end for
   unsigned long long clockCurrent;
-  #if defined( _WIN32 )
+#if defined( _WIN32 )
 	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockCurrent ) );
 #else
-	struct timeval s;
 	gettimeofday(&s, 0);
 	clockCurrent = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
 #endif
