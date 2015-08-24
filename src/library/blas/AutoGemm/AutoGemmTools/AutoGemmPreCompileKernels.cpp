@@ -297,7 +297,11 @@ cl_int getKernelBinaryFromSource(
 
     printf("Error: Failed to build program executable!\n");
     clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, len*sizeof(char), buildLog, 0);
+    printf("\nBuild Log:\n\n");
     printf("%s\n", buildLog);
+    printf("\n\nKernel String:\n\n");
+    printf("%s\n", source);
+    
   }
 
 
