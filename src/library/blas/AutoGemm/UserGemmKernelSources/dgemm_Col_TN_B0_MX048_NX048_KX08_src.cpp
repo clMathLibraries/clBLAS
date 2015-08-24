@@ -16,7 +16,7 @@ const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_microTileNumRows = 6;
 const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_unroll = 8;
 
-static const char * const dgemm_Col_TN_B0_MX048_NX048_KX08_src = STRINGIFY(
+const char * const dgemm_Col_TN_B0_MX048_NX048_KX08_src = STRINGIFY(
 
 __attribute__( (reqd_work_group_size(8, 8, 1)) )
 __kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (

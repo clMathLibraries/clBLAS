@@ -16,7 +16,7 @@ const unsigned int sgemm_Col_TN_B1_MX032_NX032_KX16_microTileNumRows = 2;
 const unsigned int sgemm_Col_TN_B1_MX032_NX032_KX16_microTileNumCols = 2;
 const unsigned int sgemm_Col_TN_B1_MX032_NX032_KX16_unroll = 16;
 
-static const char * const sgemm_Col_TN_B1_MX032_NX032_KX16_src = STRINGIFY(
+const char * const sgemm_Col_TN_B1_MX032_NX032_KX16_src = STRINGIFY(
 
 #define  M2x2 \
             rA[0][0] = lA[offA + 0];				  \
