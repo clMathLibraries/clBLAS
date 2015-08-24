@@ -7,11 +7,14 @@
 #include <string>
 //#include <Windows.h>
 #include <CL/cl.h>
-#include "naive_blas.cpp"
-using namespace NaiveBlas;
+//#include "library/tools/ktest/naive/naive_blas.cpp"
+//using namespace NaiveBlas;
 #include "AutoGemmIncludes/AutoGemmKernelSelection.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
 #include "AutoGemmIncludes/AutoGemmKernelEnumeration.h"
+
+#include "AutoGemmUtil.h"
+
 #if 0
 // from clBLAS.h
 typedef enum clblasOrder_ {
@@ -401,6 +404,10 @@ void testKernelParameterCombination(
   const unsigned char *rowKernelBinary;
   const unsigned char *colKernelBinary;
   const unsigned char *cornerKernelBinary;
+  size_t *tileKernelBinarySize = 0;
+  size_t *rowKernelBinarySize = 0;
+  size_t *colKernelBinarySize = 0;
+  size_t *cornerKernelBinarySize = 0;
   const char *binaryBuildOptions;
   cl_kernel  *tileClKernel;
   cl_kernel  *rowClKernel;
@@ -432,6 +439,10 @@ void testKernelParameterCombination(
     &rowKernelBinary,
     &colKernelBinary,
     &cornerKernelBinary,
+    &tileKernelBinarySize,
+    &rowKernelBinarySize,
+    &colKernelBinarySize,
+    &cornerKernelBinarySize,
     &binaryBuildOptions,
     &tileClKernel,
     &rowClKernel,
@@ -462,6 +473,10 @@ void testKernelParameterCombination(
     &rowKernelBinary,
     &colKernelBinary,
     &cornerKernelBinary,
+    &tileKernelBinarySize,
+    &rowKernelBinarySize,
+    &colKernelBinarySize,
+    &cornerKernelBinarySize,
     &binaryBuildOptions,
     &tileClKernel,
     &rowClKernel,

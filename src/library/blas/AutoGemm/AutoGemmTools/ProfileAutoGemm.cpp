@@ -10,8 +10,9 @@
 #include <fstream>
 //#include <Windows.h>
 #include <CL/cl.h>
-#include "naive_blas.cpp"
-using namespace NaiveBlas;
+//#include "library/tools/ktest/naive/naive_blas.cpp"
+//using namespace NaiveBlas;
+#include "AutoGemmTools/AutoGemmUtil.h"
 
 #include "AutoGemmIncludes/AutoGemmKernelSelection.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
@@ -614,6 +615,10 @@ float benchmarkKernel(
   const unsigned char *rowKernelBinary;
   const unsigned char *colKernelBinary;
   const unsigned char *cornerKernelBinary;
+  size_t *tileKernelBinarySize = 0;
+  size_t *rowKernelBinarySize = 0;
+  size_t *colKernelBinarySize = 0;
+  size_t *cornerKernelBinarySize = 0;
   const char *binaryBuildOptions;
   cl_kernel  *tileClKernel;
   cl_kernel  *rowClKernel;
@@ -644,6 +649,10 @@ float benchmarkKernel(
     &rowKernelBinary,
     &colKernelBinary,
     &cornerKernelBinary,
+    &tileKernelBinarySize,
+    &rowKernelBinarySize,
+    &colKernelBinarySize,
+    &cornerKernelBinarySize,
     &binaryBuildOptions,
     &tileClKernel,
     &rowClKernel,
