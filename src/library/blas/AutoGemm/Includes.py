@@ -87,7 +87,9 @@ class KernelBinaryIncludes:
     self.incFileName = Common.getIncludePath() + "AutoGemmKernelBinaries.h"
     self.incFile = open(self.incFileName, "w")
     self.incFile.write( Common.getAutoGemmHeader() )
-    self.incStr = "#ifndef AUTOGEMM_KERNEL_BINARIES_H\n"
+    self.incStr = ""
+    self.incStr += "#include <cstddef>\n"
+    self.incStr += "\n#ifndef AUTOGEMM_KERNEL_BINARIES_H\n"
     self.incStr += "#define AUTOGEMM_KERNEL_BINARIES_H\n"
     self.incStr += "\n"
 
@@ -96,9 +98,11 @@ class KernelBinaryIncludes:
     self.cppFile.write( Common.getAutoGemmHeader() )
     self.cppStr = ""
     self.cppStr += "#include \"%sAutoGemmKernelBinaries.h\"\n" % Common.getRelativeIncludePath()
+    self.cppStr += "\n"
     self.cppStr += "#ifdef AUTOGEMM_USE_PRE_COMPILED_KERNELS\n"
     self.cppStr += "#include \"%sAutoGemmKernelBinariesPreCompiled.cpp\"\n" % Common.getRelativeKernelBinaryPath()
     self.cppStr += "#endif\n"
+    self.cppStr += "\n"
 
   def addKernel(self, kernel):
     kernelName = kernel.getName()
