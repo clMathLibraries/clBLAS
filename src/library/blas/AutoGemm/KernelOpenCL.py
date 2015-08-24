@@ -446,7 +446,7 @@ def writeOpenCLKernelToFile(kernel):
   kernelFile.write("const unsigned int %s_microTileNumCols = %u;\n" % (kernel.getName(), kernel.microTileNumCols ) )
   kernelFile.write("const unsigned int %s_unroll = %u;\n" % (kernel.getName(), kernel.unroll) )
   kernelFile.write("\n")
-  kernelFile.write("static const char * const %s_src =\"" % (kernelName) )
+  kernelFile.write("const char * const %s_src =\"" % (kernelName) )
   kernelFile.write(kernelString)
   kernelFile.write("\";\n")
   kernelFile.write("\n")
