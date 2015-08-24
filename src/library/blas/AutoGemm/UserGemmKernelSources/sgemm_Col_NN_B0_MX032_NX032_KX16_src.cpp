@@ -18,17 +18,17 @@ const unsigned int sgemm_Col_NN_B0_MX032_NX032_KX16_unroll = 16;
 
 const char * const sgemm_Col_NN_B0_MX032_NX032_KX16_src = STRINGIFY(
 \n
-\n#define  M2x2 \
-\n            rA[0][0] = lA[offA + 0];				  \
-\n            rA[0][1] = lA[offA + 16];				  \
-\n            rB[0][0] = lB[offB + 0];				  \
-\n            rB[0][1] = lB[offB + 16];				  \
-\n            offA += 33;								  \
-\n            offB += 33;								  \
-\n            rC[0][0]=mad(rA[0][0],rB[0][0],rC[0][0]); \
-\n            rC[1][0]=mad(rA[0][1],rB[0][0],rC[1][0]); \
-\n            rC[0][1]=mad(rA[0][0],rB[0][1],rC[0][1]); \
-\n            rC[1][1]=mad(rA[0][1],rB[0][1],rC[1][1]); \
+\n#define  M2x2 \\
+\n            rA[0][0] = lA[offA + 0];				  \\
+\n            rA[0][1] = lA[offA + 16];				  \\
+\n            rB[0][0] = lB[offB + 0];				  \\
+\n            rB[0][1] = lB[offB + 16];				  \\
+\n            offA += 33;								  \\
+\n            offB += 33;								  \\
+\n            rC[0][0]=mad(rA[0][0],rB[0][0],rC[0][0]); \\
+\n            rC[1][0]=mad(rA[0][1],rB[0][0],rC[1][0]); \\
+\n            rC[0][1]=mad(rA[0][0],rB[0][1],rC[0][1]); \\
+\n            rC[1][1]=mad(rA[0][1],rB[0][1],rC[1][1]); \\
 \n			barrier(CLK_LOCAL_MEM_FENCE);\n
 \n
 \n__attribute__((reqd_work_group_size(16,16,1)))
