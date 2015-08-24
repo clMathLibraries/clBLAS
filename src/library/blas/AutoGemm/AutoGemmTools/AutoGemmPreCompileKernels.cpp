@@ -301,7 +301,10 @@ cl_int getKernelBinaryFromSource(
     printf("%s\n", buildLog);
     printf("\n\nKernel String:\n\n");
     printf("%s\n", source);
-    
+
+    binary[0] = 0;
+    *binarySize = 0;
+    return status;
   }
 
 
@@ -381,32 +384,35 @@ void compileKernelAndWriteToFile(
   
   // get kernel binary
   char **kernelBinary = new char*[1];
+  kernelBinary[0] = 0;
   size_t kernelBinarySize;
-  getKernelBinaryFromSource(context, source, buildOptions, kernelBinary, &kernelBinarySize);
-
-  // write binary to file
-  std::ofstream kernelFile;
-  std::string fullFilePath;
-  fullFilePath += path;
-  fullFilePath += fileName;
-  kernelFile.open(fullFilePath.c_str(), std::ios::out);
-  kernelFile << "/* AutoGemm Pre-Compiled kernel binary */" << std::endl << std::endl;
-  kernelFile << "#define " << preprocessorName << std::endl << std::endl;
+  cl_int status = getKernelBinaryFromSource(context, source, buildOptions, kernelBinary, &kernelBinarySize);
   
-  kernelFile << "char " << stringName << "Array[" << kernelBinarySize << "] = {" << std::endl;
-  //kernelFile << "unsigned char *" << stringName << " = {" << std::endl;
-  //kernelFile << "unsigned char " << stringName << "[] = {" << std::endl;
-  
-  writeBinaryToStream( kernelFile, *kernelBinary, kernelBinarySize );
-  kernelFile << "};" << std::endl;
-  kernelFile << "unsigned char *" << stringName << " = " << "reinterpret_cast<unsigned char *>(" << stringName << "Array);" << std::endl;
-  kernelFile << "size_t " << stringName << "Size = " << kernelBinarySize << ";" << std::endl;
-  kernelFile.close();
+  if (status == CL_SUCCESS) {
+    // write binary to file
+    std::ofstream kernelFile;
+    std::string fullFilePath;
+    fullFilePath += path;
+    fullFilePath += fileName;
+    kernelFile.open(fullFilePath.c_str(), std::ios::out);
+    kernelFile << "/* AutoGemm Pre-Compiled kernel binary */" << std::endl << std::endl;
+    kernelFile << "#define " << preprocessorName << std::endl << std::endl;
+    
+    kernelFile << "char " << stringName << "Array[" << kernelBinarySize << "] = {" << std::endl;
+    //kernelFile << "unsigned char *" << stringName << " = {" << std::endl;
+    //kernelFile << "unsigned char " << stringName << "[] = {" << std::endl;
+    
+    writeBinaryToStream( kernelFile, *kernelBinary, kernelBinarySize );
+    kernelFile << "};" << std::endl;
+    kernelFile << "unsigned char *" << stringName << " = " << "reinterpret_cast<unsigned char *>(" << stringName << "Array);" << std::endl;
+    kernelFile << "size_t " << stringName << "Size = " << kernelBinarySize << ";" << std::endl;
+    kernelFile.close();
 
-  // add file to include
-  includeFile << "#include \"AutoGemmKernelBinaries/" << fileName << "\"" << std::endl;
-
-  delete[] kernelBinary[0];
+    // add file to include
+    includeFile << "#include \"AutoGemmKernelBinaries/" << fileName << "\"" << std::endl;
+  }
+  if (kernelBinary[0])
+    delete[] kernelBinary[0];
   delete[] kernelBinary;
 
   // report kernel compiled

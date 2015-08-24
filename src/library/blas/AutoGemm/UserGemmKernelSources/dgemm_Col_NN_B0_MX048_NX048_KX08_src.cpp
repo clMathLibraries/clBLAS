@@ -70,7 +70,7 @@ const char * const dgemm_Col_NN_B0_MX048_NX048_KX08_src = STRINGIFY(
             rC[4][5]=mad(rA[4],rB[5],rC[4][5]);         \
             rC[5][5]=mad(rA[5],rB[5],rC[5][5]);         \
             barrier(CLK_LOCAL_MEM_FENCE);\n
-
+\n
 \n__attribute__((reqd_work_group_size(8,8,1)))
 \n__kernel void dgemm_Col_NN_B0_MX048_NX048_KX08 (
 \n    __global double const * restrict A,
