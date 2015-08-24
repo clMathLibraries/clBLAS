@@ -384,7 +384,7 @@ void compileKernelAndWriteToFile(
   std::string fullFilePath;
   fullFilePath += path;
   fullFilePath += fileName;
-  kernelFile.open(fullFilePath, 'w');
+  kernelFile.open(fullFilePath, std::ios::out);
   kernelFile << "/* AutoGemm Pre-Compiled kernel binary */" << std::endl << std::endl;
   kernelFile << "#define " << preprocessorName << std::endl << std::endl;
   
