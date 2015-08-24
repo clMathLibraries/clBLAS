@@ -430,7 +430,7 @@ void compileKernelAndWriteToFile(
 
 
 
-  double elapsedTimeSec = (clockCurrent - clockStart) / ((double) CLOCKS_PER_SEC);
+  double elapsedTimeSec = ((double) clockCurrent - clockStart) / clockFrequency;
   double timePerKernel = elapsedTimeSec / numKernelsCompiled;
   double timeRemaining = timePerKernel * (totalKernelsToCompile - numKernelsCompiled);
   //printf("AutoGemm-PreCompile[%3u/%3u]: %s %7u bytes ( %.0f sec remaining)\n", numKernelsCompiled, totalKernelsToCompile, stringName, kernelBinarySize, timeRemaining);
@@ -655,6 +655,8 @@ int main( int argc, char *argv[] ) {
 	clockFrequency = 1000000;
 #endif
 
+
+
 #if defined( _WIN32 )
 	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockStart ) );
 #else
@@ -725,10 +727,17 @@ int main( int argc, char *argv[] ) {
         );
     }
   }// end for
-  clock_t clockCurrent = clock();
-  double elapsedTimeSec = (clockCurrent - clockStart) / ((double) CLOCKS_PER_SEC);
+  unsigned long long clockCurrent;
+  #if defined( _WIN32 )
+	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockCurrent ) );
+#else
+	struct timeval s;
+	gettimeofday(&s, 0);
+	clockCurrent = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
+#endif
+  double elapsedTimeSec = ((double)clockCurrent - clockStart) / clockFrequency;
   includeFile.close();
-  std::cout << "Total Compile Time: " << std::setprecision(0) << elapsedTimeSec << " sec" << std::endl;
+  std::cout << "Total Compile Time: " << elapsedTimeSec << " sec" << std::endl;
   //system("PAUSE");
   return 0;
 }
