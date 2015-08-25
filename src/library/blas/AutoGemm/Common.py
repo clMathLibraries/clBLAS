@@ -3,6 +3,16 @@
 ################################################################################
 
 outputPath = ""
+clCompilerVersion = "2.0"
+
+def setClCompilerVersion(version):
+  global clCompilerVersion
+  clCompilerVersion = version
+
+def getClCompilerVersion():
+  global clCompilerVersion
+  return clCompilerVersion
+
 def setOutputPath(path):
   global outputPath
   outputPath = path + "/"

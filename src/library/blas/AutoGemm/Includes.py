@@ -109,40 +109,40 @@ class KernelBinaryIncludes:
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
     self.incStr += "extern         size_t %s_binSize;\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "        size_t %s_binSize;\n" % kernelName
+    self.cppStr += "unsigned char *%s_bin = 0;\n" % kernelName
+    self.cppStr += "        size_t %s_binSize = 0;\n" % kernelName
     self.cppStr += "#else\n"
-    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
+    self.cppStr += "#pragma message(\"AutoGemmKernelBinaries.cpp: %s was pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getRowName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
     self.incStr += "extern         size_t %s_binSize;\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "        size_t %s_binSize;\n" % kernelName
+    self.cppStr += "unsigned char *%s_bin = 0;\n" % kernelName
+    self.cppStr += "        size_t %s_binSize = 0;\n" % kernelName
     self.cppStr += "#else\n"
-    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
+    self.cppStr += "#pragma message(\"AutoGemmKernelBinaries.cpp: %s was pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getColName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
     self.incStr += "extern         size_t %s_binSize;\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "        size_t %s_binSize;\n" % kernelName
+    self.cppStr += "unsigned char *%s_bin = 0;\n" % kernelName
+    self.cppStr += "        size_t %s_binSize = 0;\n" % kernelName
     self.cppStr += "#else\n"
-    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
+    self.cppStr += "#pragma message(\"AutoGemmKernelBinaries.cpp: %s was pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     kernelName = kernel.getCornerName()
     self.incStr += "extern unsigned char *%s_bin;\n" % kernelName
     self.incStr += "extern         size_t %s_binSize;\n" % kernelName
     self.cppStr += "#ifndef KERNEL_" + kernelName.upper() + "_BIN_CPP\n"
-    self.cppStr += "unsigned char *%s_bin;\n" % kernelName
-    self.cppStr += "        size_t %s_binSize;\n" % kernelName
+    self.cppStr += "unsigned char *%s_bin = 0;\n" % kernelName
+    self.cppStr += "        size_t %s_binSize = 0;\n" % kernelName
     self.cppStr += "#else\n"
-    self.cppStr += "#pragma message(\"AutoGemm's %s pre-compiled.\")\n" % kernelName
+    self.cppStr += "#pragma message(\"AutoGemmKernelBinaries.cpp: %s was pre-compiled.\")\n" % kernelName
     self.cppStr += "#endif\n"
 
     self.incFile.write( self.incStr )
@@ -234,8 +234,8 @@ class KernelSourceBuildOptions:
     kernelName = kernel.getName()
     self.incStr += "extern const char * const %s_srcBuildOptions;\n" \
         % kernelName
-    self.cppStr += "const char * const %s_srcBuildOptions = \"-cl-std=CL2.0\";\n" \
-        % kernelName
+    self.cppStr += "const char * const %s_srcBuildOptions = \"-cl-std=CL%s\";\n" \
+        % (kernelName, Common.getClCompilerVersion() )
 
     self.incFile.write( self.incStr )
     self.incStr = ""
@@ -276,7 +276,7 @@ class KernelBinaryBuildOptions:
   def addKernel(self, kernel):
     kernelName = kernel.getName()
     self.incStr += "extern const char * const %s_binBuildOptions;\n" % kernelName
-    self.cppStr += "const char * const %s_binBuildOptions = \"-cl-std=CL2.0\";\n" % kernelName
+    self.cppStr += "const char * const %s_binBuildOptions = \"-cl-std=CL%s\";\n" % (kernelName, Common.getClCompilerVersion() )
 
     self.incFile.write( self.incStr )
     self.incStr = ""
@@ -387,7 +387,7 @@ class CppKernelEnumeration:
 # Write Includes
 ################################################################################
 def writeIncludes():
-  print "AutoGemm: Include Files"
+  print "AutoGemm.py: Generating include files."
   if not os.path.exists( Common.getIncludePath() ):
     os.makedirs( Common.getIncludePath() )
 

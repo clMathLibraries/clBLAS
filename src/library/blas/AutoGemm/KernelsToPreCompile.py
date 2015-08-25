@@ -9,7 +9,7 @@ import Common
 ################################################################################
 
 def writeOfflineCompilation(args):
-  print "AutoGemm: Kernels To PreCompile"
+  print "AutoGemm.py: Generating list of kernels to pre-compile."
   if not os.path.exists( Common.getIncludePath() ):
     os.makedirs( Common.getIncludePath() )
 
@@ -57,7 +57,7 @@ def writeOfflineCompilation(args):
   ocFile.write( fileStr )
   ocFile.close()
   count *= 4
-  print "AutoGemm: Pre-Compile %u kernels" % count
+  print "AutoGemm.py: %u kernels will be pre-compiled." % count
 
 
 ################################################################################

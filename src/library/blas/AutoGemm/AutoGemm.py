@@ -15,6 +15,7 @@
 
 import os
 import sys
+import argparse
 import getopt
 
 import Common
@@ -27,10 +28,19 @@ import KernelOpenCL
 # Main
 ################################################################################
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
-    Common.setOutputPath(sys.argv[1])
+  # parse arguments
+  ap = argparse.ArgumentParser(description="AutoGemm")
+  ap.add_argument("--output-path", dest="output" )
+  ap.add_argument("--opencl-compiler-version", dest="clCompilerVersion", action="store", choices=["1.1", "1.2", "2.0" ])
+  args = ap.parse_args()
+  if args.output:
+    Common.setOutputPath(args.output)
   else:
-    print "Warning: No output path specified; default is working directory."
+    print "AutoGemm.py: Warning: No output path specified; default is working directory."
+
+  print "AutoGemm.py: using OpenCL " + args.clCompilerVersion + " compiler"
+  Common.setClCompilerVersion(args.clCompilerVersion)
+
   KernelOpenCL.writeOpenCLKernels()
   KernelSelection.writeKernelSelection()
   Includes.writeIncludes()

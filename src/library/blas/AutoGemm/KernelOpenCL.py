@@ -451,7 +451,7 @@ def writeOpenCLKernelToFile(kernel):
   kernelFile.write("\";\n")
   kernelFile.write("\n")
   kernelFile.write("#else\n")
-  kernelFile.write("#pragma message(\"AutoGemm's %s overriden by user kernel.\")\n" % kernel.getName() )
+  kernelFile.write("#pragma message(\"AutoGemmKernelSources.cpp: %s was overriden by user kernel.\")\n" % kernel.getName() )
   kernelFile.write("#endif\n")
   kernelFile.close()
 
@@ -504,7 +504,7 @@ def writeOpenCLKernels():
               cornerKernel.macroTileNumCols = 1
               writeOpenCLKernelToFile(cornerKernel)
               numKernels += 4
-  print "AutoGemm: %d kernels" % numKernels
+  print "AutoGemm.py: generated %d kernels" % numKernels
 
 
 

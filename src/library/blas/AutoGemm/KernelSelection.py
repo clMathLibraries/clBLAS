@@ -181,7 +181,6 @@ class KernelSelection:
           ####################################
           # transB
           for transB in transList:
-            #print precision + "AutoGemm: gemm" + "_" + order + "_" + transA + transB
             kernel.transB = transB
             self.logic += indent(3) + "if (transB == "
             if transB == "N":
@@ -622,7 +621,7 @@ class KernelSelectionSpecific:
 # Main
 ################################################################################
 def writeKernelSelection():
-  print "AutoGemm: Kernel Selection"
+  print "AutoGemm.py: Generating kernel selection."
   if not os.path.exists( Common.getIncludePath() ):
     os.makedirs( Common.getIncludePath() )
 

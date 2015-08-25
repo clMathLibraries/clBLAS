@@ -101,7 +101,7 @@ void makeGemmKernel(
   cl_int err;
   if (*clKernel) {
     // kernel has already been built, return
-#if 0
+#ifdef _DEBUG
     // get kernel name
     size_t kernelNameLength;
     err = clGetKernelInfo(
@@ -134,8 +134,9 @@ void makeGemmKernel(
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
+#ifdef _DEBUG
       printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
-      printf("%s\n", *kernelBinary);
+#endif
       clProgram = clCreateProgramWithBinary(
         clContext,
         1, &clDevice,
@@ -165,7 +166,7 @@ void makeGemmKernel(
       NULL );
     CL_CHECK(err)
     
-#if 1
+#ifdef _DEBUG
     // get kernel name
     size_t kernelNameLength;
     err = clGetKernelInfo(
@@ -183,7 +184,7 @@ void makeGemmKernel(
       kernelName,
       NULL );
     CL_CHECK(err)
-    printf("makeGemmKernel: \"%s\" built; returning.\n", kernelName);
+    printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
     delete[] kernelName;
 #endif
   }
@@ -300,15 +301,14 @@ clblasGemm(
   //optimalNumElementsPerThread = 32;
   bool betaNonZero = !isZero(beta);
 
-#if 1
-  printf("%sgemm %s, transA=%s, transB=%s, M=%llu, N=%llu, K=%llu, beta=%u, onept=%f }\n",
+#ifdef _DEBUG
+  printf("%sgemm_%3s_%s%s_B%u_%llux%llux%llu\n",
       getPrecision<Precision>(),
-      order==clblasColumnMajor ? "ColMajor" : "RowMajor",
+      order==clblasColumnMajor ? "Col" : "Row",
       transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
       transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
-      iM, iN, iK,
       betaNonZero ? 1 : 0,
-      optimalNumElementsPerThread );
+      iM, iN, iK );
 #endif
 
 /******************************************************************************
