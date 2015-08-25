@@ -337,7 +337,6 @@ endif( )
 
 if( BUILD_RUNTIME AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/library" )
 #	add_subdirectory( library/tools/bingen )
-# add_subdirectory( library/blas/AutoGemm )
 	add_subdirectory( library )
 	add_subdirectory( library/tools/tune )
 	if( BUILD_KTEST )

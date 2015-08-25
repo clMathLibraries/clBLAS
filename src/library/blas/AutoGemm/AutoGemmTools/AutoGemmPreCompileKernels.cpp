@@ -590,7 +590,7 @@ int main( int argc, char *argv[] ) {
 
   std::string fullIncludeFilePath;
   fullIncludeFilePath += path;
-  fullIncludeFilePath += "AutoGemmKernelBinariesPreCompiled.cpp";
+  fullIncludeFilePath += "AutoGemmKernelBinariesPreCompiled.h";
   includeFile.open(fullIncludeFilePath.c_str(), std::ios::out);
   const char *includeFileHeader =
     "/*****************************************************************************\n"

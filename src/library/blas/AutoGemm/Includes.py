@@ -100,7 +100,7 @@ class KernelBinaryIncludes:
     self.cppStr += "#include \"%sAutoGemmKernelBinaries.h\"\n" % Common.getRelativeIncludePath()
     self.cppStr += "\n"
     self.cppStr += "#ifdef AUTOGEMM_USE_PRE_COMPILED_KERNELS\n"
-    self.cppStr += "#include \"%sAutoGemmKernelBinariesPreCompiled.cpp\"\n" % Common.getRelativeKernelBinaryPath()
+    self.cppStr += "#include \"%sAutoGemmKernelBinariesPreCompiled.h\"\n" % Common.getRelativeKernelBinaryPath()
     self.cppStr += "#endif\n"
     self.cppStr += "\n"
 
