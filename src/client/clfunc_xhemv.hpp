@@ -200,15 +200,15 @@ void xHemv<T>::initialize_gpu_buffer()
 {
   cl_int err;
 
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(T),
                               buffer.N * buffer.lda*sizeof(T),
                               buffer.cpuA, 0, NULL, NULL);
 
-  err = clEnqueueWriteBuffer(queue_, buffer.X, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.X, CL_TRUE, 0,
                               buffer.N*sizeof(T),
                               buffer.cpuX, 0, NULL, NULL);
-  err = clEnqueueWriteBuffer(queue_, buffer.Y, CL_TRUE, 0,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.Y, CL_TRUE, 0,
                               buffer.N*sizeof(T),
                               buffer.cpuY, 0, NULL, NULL);
 }
@@ -217,7 +217,7 @@ template <typename T>
 void xHemv<T>::reset_gpu_write_buffer()
 {
   cl_int err;
-  err = clEnqueueWriteBuffer(queue_, buffer.A, CL_TRUE,
+  err = clEnqueueWriteBuffer(queues_[0], buffer.A, CL_TRUE,
                               buffer.offa * sizeof(T),
                               buffer.N * buffer.lda*sizeof(T),
                               buffer.cpuA, 0, NULL, NULL);;
@@ -229,7 +229,7 @@ void xHemv<cl_float2>::call_func()
   timer.Start(timer_id);
   clblasChemv(buffer.order, buffer.uplo, buffer.N, buffer.alpha, buffer.A,
                  buffer.offa, buffer.lda, buffer.X, buffer.offx, buffer.incx,
-                 buffer.beta, buffer.Y, buffer.offy, buffer.incy, 1, &queue_, 0, NULL,&event_);
+                 buffer.beta, buffer.Y, buffer.offy, buffer.incy, numQueues, queues_, 0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
 }
@@ -240,7 +240,7 @@ void xHemv<cl_double2>::call_func()
   timer.Start(timer_id);
   clblasZhemv(buffer.order, buffer.uplo, buffer.N, buffer.alpha, buffer.A,
                  buffer.offa, buffer.lda, buffer.X, buffer.offx, buffer.incx,
-                 buffer.beta, buffer.Y, buffer.offy, buffer.incy, 1, &queue_, 0, NULL,&event_);
+                 buffer.beta, buffer.Y, buffer.offy, buffer.incy, numQueues, queues_, 0, NULL,&event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
 }

@@ -14,6 +14,260 @@
 # limitations under the License.
 # ########################################################################
 
+
+
+
+################################################################################
+# AutoGemm Begin
+################################################################################
+
+# AutoGemm scripts and out files
+set(AUTOGEMM_SCRIPTS
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemmParameters.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/Common.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/Includes.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelOpenCL.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelParameters.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelSelection.py
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py
+)
+set(AUTOGEMM_HEADERS
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.h
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.h
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.h
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSelection.h
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsSource.h
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.h
+)
+
+set(AUTOGEMM_SRC
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSelection.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSelectionSpecific.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsSource.cpp
+  ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.cpp
+)
+
+set(USERGEMM_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSources.cpp
+)
+set(AUTOGEMM_TEST_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemmTools/TestAutoGemm.cpp
+)
+set(AUTOGEMM_PROFILER_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemmTools/ProfileAutoGemm.cpp
+)
+set(AUTOGEMM_PRECOMPILE_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemmTools/AutoGemmPreCompileKernels.cpp
+)
+set( AUTOGEMM_PRECOMPILED_KERNELS
+  ${CMAKE_BINARY_DIR}/include/AutoGemmKernelBinaries/AutoGemmKernelBinariesPreCompiled.h
+)
+set_source_files_properties( ${AUTOGEMM_PRECOMPILED_KERNELS} PROPERTIES GENERATED TRUE )
+
+# AutoGemm options for pre-compiling kernels
+option( AutoGemm_PreCompile_PRECISION_SGEMM "AutoGemm: pre-compile sgemm kernels" OFF)
+option( AutoGemm_PreCompile_PRECISION_DGEMM "AutoGemm: pre-compile dgemm kernels" OFF)
+option( AutoGemm_PreCompile_PRECISION_CGEMM "AutoGemm: pre-compile cgemm kernels" OFF)
+option( AutoGemm_PreCompile_PRECISION_ZGEMM "AutoGemm: pre-compile zgemm kernels" OFF)
+
+option( AutoGemm_PreCompile_TRANS_NN "AutoGemm: pre-compile NN transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_NT "AutoGemm: pre-compile NT transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_NC "AutoGemm: pre-compile NC transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_TN "AutoGemm: pre-compile TN transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_TT "AutoGemm: pre-compile TT transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_TC "AutoGemm: pre-compile TC transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
+option( AutoGemm_PreCompile_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
+
+# opencl compiler version
+#set( AutoGemm_PreCompile_OPENCL_VERSION "2.0" CACHE STRING "OpenCL compiler version supported by device driver." )
+#set_property( CACHE AutoGemm_PreCompile_OPENCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
+#message( STATUS "AutoGemm PreCompiler will use OpenCL ${AutoGemm_PreCompile_OPENCL_VERSION} compiler." ) 
+
+# PreCompile precision selected?
+set( AutoGemm_PreCompile_PRECISION_SELECTED OFF)
+if (   AutoGemm_PreCompile_PRECISION_SGEMM
+    OR AutoGemm_PreCompile_PRECISION_DGEMM
+    OR AutoGemm_PreCompile_PRECISION_CGEMM
+    OR AutoGemm_PreCompile_PRECISION_ZGEMM )
+  set( AutoGemm_PreCompile_PRECISION_SELECTED ON)
+endif()
+
+# PreCompile transpose selected?
+set( AutoGemm_PreCompile_TRANS_SELECTED OFF)
+if (   AutoGemm_PreCompile_TRANS_NN
+    OR AutoGemm_PreCompile_TRANS_NT
+    OR AutoGemm_PreCompile_TRANS_NC
+    OR AutoGemm_PreCompile_TRANS_TN
+    OR AutoGemm_PreCompile_TRANS_TT
+    OR AutoGemm_PreCompile_TRANS_TC
+    OR AutoGemm_PreCompile_TRANS_CN
+    OR AutoGemm_PreCompile_TRANS_CT
+    OR AutoGemm_PreCompile_TRANS_CC )
+  set( AutoGemm_PreCompile_TRANS_SELECTED ON)
+endif()
+
+# PreCompile is valid and active?
+set( AutoGemm_PreCompile_ACTIVE OFF)
+if ( AutoGemm_PreCompile_PRECISION_SELECTED
+    AND AutoGemm_PreCompile_TRANS_SELECTED)
+  # valid selection
+  set( AutoGemm_PreCompile_ACTIVE ON)
+  MESSAGE( STATUS "AutoGemm-PreCompile: selected kernels will be pre-compiled." )
+elseif(NOT AutoGemm_PreCompile_PRECISION_SELECTED
+    AND NOT AutoGemm_PreCompile_TRANS_SELECTED)
+  MESSAGE( STATUS "AutoGemm-PreCompile: no kernels to be pre-compiled." )
+else()
+  MESSAGE( SEND_ERROR "AutoGemm-PreCompile: To pre-compile gemm kernels, select at lease one option from each of AutoGemm_PreCompile_PRECISION_* and AutoGemm_PreCompile_TRANS_*; otherwise, unselect all AutoGemm_PreCompile_* options to not pre-compile any gemm kernels." )
+endif()
+
+# build commandline argument for AutoGemm
+set( AGPC_ARGS --output ${CMAKE_BINARY_DIR}/include )
+
+if ( AutoGemm_PreCompile_ACTIVE )
+  # precisions
+  set(AGPC_ARGS ${AGPC_ARGS} --precisions )
+  if (AutoGemm_PreCompile_PRECISION_SGEMM)
+    set(AGPC_ARGS ${AGPC_ARGS} s )
+  endif()
+  if (AutoGemm_PreCompile_PRECISION_DGEMM)
+    set(AGPC_ARGS ${AGPC_ARGS} d )
+  endif()
+  if (AutoGemm_PreCompile_PRECISION_CGEMM)
+    set(AGPC_ARGS ${AGPC_ARGS} c )
+  endif()
+  if (AutoGemm_PreCompile_PRECISION_ZGEMM)
+    set(AGPC_ARGS ${AGPC_ARGS} z )
+  endif()
+
+  # orders
+  set(AGPC_ARGS ${AGPC_ARGS} --orders clblasColumnMajor )
+
+  # transposes
+  set(AGPC_ARGS ${AGPC_ARGS} --transposes )
+  if (AutoGemm_PreCompile_TRANS_NN)
+    set(AGPC_ARGS ${AGPC_ARGS} NN )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_NT)
+    set(AGPC_ARGS ${AGPC_ARGS} NT )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_NC)
+    set(AGPC_ARGS ${AGPC_ARGS} NC )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_TN)
+    set(AGPC_ARGS ${AGPC_ARGS} TN )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_TT)
+    set(AGPC_ARGS ${AGPC_ARGS} TT )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_TC)
+    set(AGPC_ARGS ${AGPC_ARGS} TC )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_CN)
+    set(AGPC_ARGS ${AGPC_ARGS} CN )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_CT)
+    set(AGPC_ARGS ${AGPC_ARGS} CT )
+  endif()
+  if (AutoGemm_PreCompile_TRANS_CC)
+    set(AGPC_ARGS ${AGPC_ARGS} CC )
+  endif()
+
+  # betas
+  set(AGPC_ARGS ${AGPC_ARGS} --betas 0 1 )
+
+endif()
+
+
+################################################################################
+# add target for generating pre-compile WhichKernels header
+################################################################################
+set( AUTOGEMM_PRECOMPILE_HEADER_SRC ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py )
+set( AUTOGEMM_PRECOMPILE_HEADER_OUT ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelsToPreCompile.h )
+add_custom_command(
+  OUTPUT ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
+  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
+  DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
+)
+
+
+################################################################################
+# add target for main AutoGemm headers / source
+################################################################################
+add_custom_command(
+  OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
+  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OCL_VERSION}
+  DEPENDS ${AUTOGEMM_SCRIPTS}
+)
+
+
+################################################################################
+# add target for compiling pre-compile executable
+################################################################################
+add_executable(AutoGemm_PreCompile_Bin
+  ${AUTOGEMM_PRECOMPILE_SRC}
+  ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
+  ${AUTOGEMM_HEADERS}
+  ${AUTOGEMM_SRC}
+  ${AUTOGEMM_SCRIPTS}
+  )
+target_link_libraries(AutoGemm_PreCompile_Bin ${OPENCL_LIBRARIES})
+set_property( TARGET AutoGemm_PreCompile_Bin PROPERTY FOLDER "AutoGemm")
+
+
+################################################################################
+# add target for running pre-compile executable
+################################################################################
+add_custom_command(
+  OUTPUT ${AUTOGEMM_PRECOMPILED_KERNELS}
+  COMMAND AutoGemm_PreCompile_Bin ${CMAKE_BINARY_DIR}
+  DEPENDS AutoGemm_PreCompile_Bin
+)
+
+include_directories(
+    ${OPENCL_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_BINARY_DIR}/include
+    .
+)
+
+################################################################################
+# AutoGemm Tools
+################################################################################
+add_executable(AutoGemm_Tools_Test
+  ${AUTOGEMM_TEST_SRC}
+  ${AUTOGEMM_SRC}
+  ${AUTOGEMM_HEADERS}
+  ${AUTOGEMM_SCRIPTS}
+  )
+target_link_libraries(AutoGemm_Tools_Test ${OPENCL_LIBRARIES})
+set_property( TARGET AutoGemm_Tools_Test PROPERTY FOLDER "AutoGemm")
+
+add_executable(AutoGemm_Tools_Profile
+  ${AUTOGEMM_PROFILER_SRC}
+  ${AUTOGEMM_SRC}
+  ${AUTOGEMM_HEADERS}
+  ${AUTOGEMM_SCRIPTS}
+  )
+target_link_libraries(AutoGemm_Tools_Profile ${OPENCL_LIBRARIES})
+set_property( TARGET AutoGemm_Tools_Profile PROPERTY FOLDER "AutoGemm")
+
+source_group(AutoGemm\\scripts FILES ${AUTOGEMM_SCRIPTS} )
+source_group(AutoGemm\\include FILES ${AUTOGEMM_HEADERS} )
+source_group(AutoGemm\\src FILES ${AUTOGEMM_SRC} ${AUTOGEMM_PRECOMPILED_KERNELS} )
+
+################################################################################
+# AutoGemm End
+################################################################################
+
+
+
 set(SRC_BLAS
     blas/init.c
     blas/impl.c
@@ -81,7 +335,11 @@ set(SRC_BLAS
 	blas/functor/gcn_dgemmSmallMatrices.cc
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
+<<<<<<< HEAD
 	blas/functor/hawaii_sgemmBig1024Kernel.cc
+=======
+
+>>>>>>> auto_gemm
 )
 
 set(SRC_BLAS_HEADERS
@@ -346,8 +604,7 @@ source_group(common\\gens FILES ${SRC_COMMON_GENS})
 source_group(blas FILES ${SRC_BLAS})
 source_group(blas\\include FILES ${SRC_BLAS_HEADERS})
 source_group(blas\\generic FILES ${SRC_BLAS_GENERIC})
-source_group(blas\\gens FILES ${SRC_BLAS_GENS}
-    ${SRC_BLAS_GENS_HEADERS})
+source_group(blas\\gens FILES ${SRC_BLAS_GENS} ${SRC_BLAS_GENS_HEADERS})
 
 include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}
@@ -356,6 +613,7 @@ include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}/library/blas/functor/include
     ${clBLAS_SOURCE_DIR}/library/tools/tune
     ${clBLAS_BINARY_DIR}/include
+    ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
 )
 
 option( BLAS_DUMP_CLBLAS_KERNELS "Force the library to dump OpenCL kernels to disk" OFF )
@@ -489,8 +747,22 @@ if( CMAKE_COMPILER_IS_GNUCC )
              DESTINATION lib${SUFFIX_LIB}/pkgconfig )
 endif( )
 
-add_library(clBLAS ${CLBLAS_SOURCES} ${GLOBAL_HEADERS} ${SRC_BLAS_HEADERS} ${SRC_BLAS_GENS_HEADERS})
+# clBLAS to depend on AutoGemm
+add_library(clBLAS
+    ${CLBLAS_SOURCES}
+    ${GLOBAL_HEADERS}
+    ${SRC_BLAS_HEADERS}
+    ${SRC_BLAS_GENS_HEADERS}
+    ${AUTOGEMM_SRC}
+    ${AUTOGEMM_HEADERS}
+    ${AUTOGEMM_SCRIPTS}
+    ${AUTOGEMM_PRECOMPILED_KERNELS}
+  )
 add_dependencies(clBLAS GENERATE_CLT)
+
+# AutoGemm needs compiler flag to utilize pre-compiled kernels
+set_target_properties(clBLAS PROPERTIES COMPILE_FLAGS -DAUTOGEMM_USE_PRE_COMPILED_KERNELS)
+
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
 set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

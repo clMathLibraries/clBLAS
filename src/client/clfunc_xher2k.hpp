@@ -313,13 +313,13 @@ public:
   {
 	    cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.A_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.A_, CL_TRUE,
                                    buffer_.offa_ * sizeof(T),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(T),
                                    buffer_.cpuA_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.C_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.C_, CL_TRUE,
                                    buffer_.offa_ * sizeof(T),
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
@@ -329,7 +329,7 @@ public:
   {
 	    cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.C_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.C_, CL_TRUE,
                                    buffer_.offc_ * sizeof(T),
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
@@ -339,7 +339,7 @@ public:
   void read_gpu_buffer()
 	{
 		cl_int err;
-		err = clEnqueueReadBuffer(queue_, buffer_.C_, CL_TRUE,
+		err = clEnqueueReadBuffer(queues_[0], buffer_.C_, CL_TRUE,
 								  buffer_.offc_*sizeof(T), buffer_.ldc_*buffer_.c_num_vectors_*sizeof(T),
 								  buffer_.cpuC_, 0, NULL, NULL);
 	}
@@ -581,7 +581,7 @@ xHer2k<cl_float2>::call_func()
 				buffer_.A_, buffer_.offa_, buffer_.lda_, 
 				buffer_.B_, buffer_.offb_, buffer_.ldb_,
 				buffer_.beta_.s[0], buffer_.C_, buffer_.offc_,
-				buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+				buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
 }
@@ -610,9 +610,9 @@ xHer2k<cl_float2>::roundtrip_func()
 				buffer_.A_, buffer_.offa_, buffer_.lda_, 
 				buffer_.B_, buffer_.offb_, buffer_.ldb_,
 				buffer_.beta_.s[0], buffer_.C_, buffer_.offc_,
-				buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
+				buffer_.ldc_, numQueues, queues_, 0, NULL, NULL);
 
-		err = clEnqueueWriteBuffer(queue_, buffer_.C_, CL_TRUE,
+		err = clEnqueueWriteBuffer(queues_[0], buffer_.C_, CL_TRUE,
                                    buffer_.offc_ * sizeof(cl_float2),
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(cl_float2),
@@ -632,7 +632,7 @@ xHer2k<cl_double2>::call_func()
 				buffer_.A_, buffer_.offa_, buffer_.lda_, 
 				buffer_.B_, buffer_.offb_, buffer_.ldb_,
 				buffer_.beta_.s[0], buffer_.C_, buffer_.offc_,
-				buffer_.ldc_, 1, &queue_, 0, NULL, &event_);
+				buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -663,9 +663,9 @@ xHer2k<cl_double2>::roundtrip_func()
 				buffer_.A_, buffer_.offa_, buffer_.lda_, 
 				buffer_.B_, buffer_.offb_, buffer_.ldb_,
 				buffer_.beta_.s[0], buffer_.C_, buffer_.offc_,
-				buffer_.ldc_, 1, &queue_, 0, NULL, NULL);
+				buffer_.ldc_, numQueues, queues_, 0, NULL, NULL);
 
-		err = clEnqueueWriteBuffer(queue_, buffer_.C_, CL_TRUE,
+		err = clEnqueueWriteBuffer(queues_[0], buffer_.C_, CL_TRUE,
                                    buffer_.offc_ * sizeof(cl_double2),
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(cl_double2),

@@ -188,11 +188,11 @@ public:
   {
     cl_int err;
 
-    err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE, 0,
                                buffer_.lda_*buffer_.a_num_vectors_*sizeof(T),
                                buffer_.a_, 0, NULL, NULL);
 
-    err = clEnqueueWriteBuffer(queue_, buffer_.buf_x_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_x_, CL_TRUE, 0,
                                buffer_.m_*sizeof(T),
                                buffer_.x_, 0, NULL, NULL);
   }
@@ -200,7 +200,7 @@ public:
   void reset_gpu_write_buffer()
   {
     cl_int err;
-    err = clEnqueueWriteBuffer(queue_, buffer_.buf_x_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_x_, CL_TRUE, 0,
                                buffer_.m_,
                                buffer_.x_, 0, NULL, NULL);
   }
@@ -256,7 +256,7 @@ call_func()
   timer.Start(timer_id);
   clblasStrsv(order_, buffer_.uplo_, buffer_.trans_a_,
                  buffer_.diag_, buffer_.m_, buffer_.buf_a_, 0,
-                 buffer_.lda_, buffer_.buf_x_, 0, 1, 1, &queue_, 0, NULL,
+                 buffer_.lda_, buffer_.buf_x_, 0, 1, numQueues, queues_, 0, NULL,
                  &event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -270,7 +270,7 @@ call_func()
   timer.Start(timer_id);
   clblasDtrsv(order_, buffer_.uplo_, buffer_.trans_a_,
                  buffer_.diag_, buffer_.m_, buffer_.buf_a_, 0,
-                 buffer_.lda_, buffer_.buf_x_, 0, 1, 1, &queue_, 0, NULL,
+                 buffer_.lda_, buffer_.buf_x_, 0, 1, numQueues, queues_, 0, NULL,
                  &event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -284,7 +284,7 @@ call_func()
   timer.Start(timer_id);
   clblasCtrsv(order_, buffer_.uplo_, buffer_.trans_a_,
                  buffer_.diag_, buffer_.m_, buffer_.buf_a_, 0,
-                 buffer_.lda_, buffer_.buf_x_, 0, 1, 1, &queue_, 0, NULL,
+                 buffer_.lda_, buffer_.buf_x_, 0, 1, numQueues, queues_, 0, NULL,
                  &event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
@@ -298,7 +298,7 @@ call_func()
   timer.Start(timer_id);
   clblasZtrsv(order_, buffer_.uplo_, buffer_.trans_a_,
                  buffer_.diag_, buffer_.m_, buffer_.buf_a_, 0,
-                 buffer_.lda_, buffer_.buf_x_, 0, 1, 1, &queue_, 0, NULL,
+                 buffer_.lda_, buffer_.buf_x_, 0, 1, numQueues, queues_, 0, NULL,
                  &event_);
   clWaitForEvents(1, &event_);
   timer.Stop(timer_id);
