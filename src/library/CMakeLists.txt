@@ -248,6 +248,13 @@ add_executable(AutoGemm_Tools_Test
   )
 target_link_libraries(AutoGemm_Tools_Test ${OPENCL_LIBRARIES})
 set_property( TARGET AutoGemm_Tools_Test PROPERTY FOLDER "AutoGemm")
+set_target_properties(
+  AutoGemm_Tools_Test
+  PROPERTIES
+  EXCLUDE_FROM_ALL TRUE
+  EXCLUDE_FROM_DEFAULT_BUILD TRUE
+)
+
 
 add_executable(AutoGemm_Tools_Profile
   ${AUTOGEMM_PROFILER_SRC}
@@ -257,6 +264,12 @@ add_executable(AutoGemm_Tools_Profile
   )
 target_link_libraries(AutoGemm_Tools_Profile ${OPENCL_LIBRARIES})
 set_property( TARGET AutoGemm_Tools_Profile PROPERTY FOLDER "AutoGemm")
+set_target_properties(
+  AutoGemm_Tools_Profile
+  PROPERTIES
+  EXCLUDE_FROM_ALL TRUE
+  EXCLUDE_FROM_DEFAULT_BUILD TRUE
+)
 
 source_group(AutoGemm\\scripts FILES ${AUTOGEMM_SCRIPTS} )
 source_group(AutoGemm\\include FILES ${AUTOGEMM_HEADERS} )
