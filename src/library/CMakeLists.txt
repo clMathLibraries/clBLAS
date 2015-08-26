@@ -181,7 +181,6 @@ if ( AutoGemm_PreCompile_ACTIVE )
   # betas
   set(AGPC_ARGS ${AGPC_ARGS} --betas 0 1 )
 
-endif()
 
 
 ################################################################################
@@ -234,6 +233,8 @@ add_custom_command(
   COMMAND AutoGemm_PreCompile_Bin ${CMAKE_BINARY_DIR}
   DEPENDS AutoGemm_PreCompile_Bin
 )
+
+endif()
 
 include_directories(
     ${OPENCL_INCLUDE_DIRS}
