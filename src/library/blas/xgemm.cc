@@ -101,7 +101,7 @@ void makeGemmKernel(
   cl_int err;
   if (*clKernel) {
     // kernel has already been built, return
-#ifdef _DEBUG
+#ifndef NDEBUG
     // get kernel name
     size_t kernelNameLength;
     err = clGetKernelInfo(
@@ -134,7 +134,7 @@ void makeGemmKernel(
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
-#ifdef _DEBUG
+#ifndef NDEBUG
       printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
 #endif
       clProgram = clCreateProgramWithBinary(
@@ -166,7 +166,7 @@ void makeGemmKernel(
       NULL );
     CL_CHECK(err)
     
-#ifdef _DEBUG
+#ifndef NDEBUG
     // get kernel name
     size_t kernelNameLength;
     err = clGetKernelInfo(
@@ -301,7 +301,7 @@ clblasGemm(
   //optimalNumElementsPerThread = 32;
   bool betaNonZero = !isZero(beta);
 
-#ifdef _DEBUG
+#ifndef NDEBUG
   printf("%sgemm_%3s_%s%s_B%u_%llux%llux%llu\n",
       getPrecision<Precision>(),
       order==clblasColumnMajor ? "Col" : "Row",
