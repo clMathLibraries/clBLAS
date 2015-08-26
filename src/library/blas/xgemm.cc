@@ -18,6 +18,7 @@
 #include <string.h>
 #include <clBLAS.h>
 #include "AutoGemmIncludes/AutoGemmKernelSelection.h"
+//#include "GemmSpecialCases.h"
 
  #include <functor.h>
 // #include <functor_selector.h>
@@ -285,6 +286,32 @@ clblasGemm(
   force_gemm_column_major( order, transA, transB,
     M, N, offA, offB, lda, ldb, A, B );
 
+  // handle some special cases not optimized by auto gemm kernels
+  // 1, sgemm nt where lda, ldb are big multiples of 1024 starting from 4096
+  // 2, sgemm (all transpose cases) where M and N are within middle range
+  //    and are mod32 but not mod96 or mod 64
+  /*
+  bool specialCaseHandled = false;
+
+  clblasStatus SpecialCaseStatus = GemmSpecialCases<Precision>(order,
+	  transA,
+	  transB,
+	  M, N, K,
+	  alpha,
+	  A, offA, lda,
+	  B, offB, ldb,
+	  beta,
+	  C, offC, ldc,
+	  numCommandQueues,
+	  commandQueues,
+	  numEventsInWaitList,
+	  eventWaitList,
+	  events,
+	  specialCaseHandled);
+
+  if (specialCaseHandled)
+	  return SpecialCaseStatus;
+  */
   
 /******************************************************************************
  * Optimal num elements per thread

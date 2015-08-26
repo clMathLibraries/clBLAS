@@ -2,8 +2,9 @@
  * Hand-tuned kernel
  ******************************************************************************/
 
-#ifndef KERNEL_SGEMM_COL_NN_B1_MX096_NX096_KX16_SRC_C
-#define KERNEL_SGEMM_COL_NN_B1_MX096_NX096_KX16_SRC_C
+#ifndef KERNEL_SGEMM_COL_NN_B1_MX096_NX096_KX16_SRC_H
+#define KERNEL_SGEMM_COL_NN_B1_MX096_NX096_KX16_SRC_H
+#pragma message("AutoGemm's sgemm_Col_NN_B1_MX096_NX096_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -16,7 +17,7 @@ const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_microTileNumRows = 6;
 const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_microTileNumCols = 6;
 const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_unroll = 16;
 
-const char * const sgemm_Col_NN_B1_MX096_NX096_KX16_src = STRINGIFY(
+static const char * const sgemm_Col_NN_B1_MX096_NX096_KX16_src = STRINGIFY(
 
 #define  M6x6 \
             rA[0][0] = lA[offA + 0];				  \

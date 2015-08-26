@@ -2,21 +2,22 @@
  * Hand-tuned kernel
  ******************************************************************************/
 
-#ifndef KERNEL_SGEMM_COL_TN_B0_MX064_NX064_KX16_SRC_C
-#define KERNEL_SGEMM_COL_TN_B0_MX064_NX064_KX16_SRC_C
+#ifndef KERNEL_SGEMM_COL_TN_B1_MX064_NX064_KX16_SRC_H
+#define KERNEL_SGEMM_COL_TN_B1_MX064_NX064_KX16_SRC_H
+#pragma message("AutoGemm's sgemm_Col_TN_B1_MX064_NX064_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
 #define STRINGIFY2(S) #S
 #endif
 
-const unsigned int sgemm_Col_TN_B0_MX064_NX064_KX16_workGroupNumRows = 16;
-const unsigned int sgemm_Col_TN_B0_MX064_NX064_KX16_workGroupNumCols = 16;
-const unsigned int sgemm_Col_TN_B0_MX064_NX064_KX16_microTileNumRows = 4;
-const unsigned int sgemm_Col_TN_B0_MX064_NX064_KX16_microTileNumCols = 4;
-const unsigned int sgemm_Col_TN_B0_MX064_NX064_KX16_unroll = 16;
+const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_workGroupNumRows = 16;
+const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_workGroupNumCols = 16;
+const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_microTileNumRows = 4;
+const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_microTileNumCols = 4;
+const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_unroll = 16;
 
-const char * const sgemm_Col_TN_B0_MX064_NX064_KX16_src = STRINGIFY(
+static const char * const sgemm_Col_TN_B1_MX064_NX064_KX16_src = STRINGIFY(
 
 #define  M4x4 \
             rA[0][0] = lA[offA + 0];				  \
@@ -48,21 +49,21 @@ const char * const sgemm_Col_TN_B0_MX064_NX064_KX16_src = STRINGIFY(
 			      barrier(CLK_LOCAL_MEM_FENCE);\n
 
 __attribute__((reqd_work_group_size(16,16,1)))
-__kernel void sgemm_Col_TN_B0_MX064_NX064_KX16 (
-   __global float const * restrict A,
-   __global float const * restrict B,
-   __global float * C,
-   float const alpha,
-   float const beta,
-   uint const M,
-   uint const N,
-   uint const K,
-   uint lda,
-   uint ldb,
-   uint ldc,
-   uint offsetA,
-   uint offsetB,
-   uint offsetC)
+__kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
+  __global float const * restrict A,
+  __global float const * restrict B,
+  __global float * C,
+  float const alpha,
+  float const beta,
+  uint const M,
+  uint const N,
+  uint const K,
+  uint lda,
+  uint ldb,
+  uint ldc,
+  uint offsetA,
+  uint offsetB,
+  uint offsetC)
 {
   float rC[4][4]  = {(float)0};
   float rA[1][4];
@@ -136,28 +137,28 @@ __kernel void sgemm_Col_TN_B0_MX064_NX064_KX16 (
   C+= gidy*64*ldc;
   C+= idy*ldc;
 
-  C[0*ldc] = alpha*rC[0][0]  ;
-  C[16*ldc] = alpha*rC[0][1] ;
-  C[32*ldc] = alpha*rC[0][2] ;
-  C[48*ldc] = alpha*rC[0][3] ;
+  C[0*ldc] = alpha*rC[0][0] + beta*C[0*ldc];
+  C[16*ldc] = alpha*rC[0][1] + beta*C[16*ldc];
+  C[32*ldc] = alpha*rC[0][2] + beta*C[32*ldc];
+  C[48*ldc] = alpha*rC[0][3] + beta*C[48*ldc];
 
   C+=16;
-  C[0*ldc] = alpha*rC[1][0] ; 
-  C[16*ldc] = alpha*rC[1][1] ;
-  C[32*ldc] = alpha*rC[1][2] ;
-  C[48*ldc] = alpha*rC[1][3] ;
+  C[0*ldc] = alpha*rC[1][0] + beta*C[0*ldc];
+  C[16*ldc] = alpha*rC[1][1] + beta*C[16*ldc];
+  C[32*ldc] = alpha*rC[1][2] + beta*C[32*ldc];
+  C[48*ldc] = alpha*rC[1][3] + beta*C[48*ldc];
 
   C+=16;
-  C[0*ldc] = alpha*rC[2][0]  ;
-  C[16*ldc] = alpha*rC[2][1] ;
-  C[32*ldc] = alpha*rC[2][2] ;
-  C[48*ldc] = alpha*rC[2][3] ;
+  C[0*ldc] = alpha*rC[2][0] + beta*C[0*ldc];
+  C[16*ldc] = alpha*rC[2][1] + beta*C[16*ldc];
+  C[32*ldc] = alpha*rC[2][2] + beta*C[32*ldc];
+  C[48*ldc] = alpha*rC[2][3] + beta*C[48*ldc];
 
   C+=16;
-  C[0*ldc] = alpha*rC[3][0]  ;
-  C[16*ldc] = alpha*rC[3][1] ;
-  C[32*ldc] = alpha*rC[3][2] ;
-  C[48*ldc] = alpha*rC[3][3] ;
+  C[0*ldc] = alpha*rC[3][0] + beta*C[0*ldc];
+  C[16*ldc] = alpha*rC[3][1] + beta*C[16*ldc];
+  C[32*ldc] = alpha*rC[3][2] + beta*C[32*ldc];
+  C[48*ldc] = alpha*rC[3][3] + beta*C[48*ldc];
 }
 );
 #endif
