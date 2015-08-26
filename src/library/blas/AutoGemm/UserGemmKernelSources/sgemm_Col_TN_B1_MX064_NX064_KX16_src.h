@@ -46,7 +46,7 @@ static const char * const sgemm_Col_TN_B1_MX064_NX064_KX16_src = STRINGIFY(
             rC[1][3]=mad(rA[0][1],rB[0][3],rC[1][3]); \
             rC[2][3]=mad(rA[0][2],rB[0][3],rC[2][3]); \
             rC[3][3]=mad(rA[0][3],rB[0][3],rC[3][3]); \
-			      barrier(CLK_LOCAL_MEM_FENCE);\n
+			      mem_fence(CLK_LOCAL_MEM_FENCE);\n
 
 __attribute__((reqd_work_group_size(16,16,1)))
 __kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
@@ -91,10 +91,11 @@ __kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
 
 
   uint block_k = K >> 4;
-  do 
+  do
   {
     __local float* plA = lA + idxT*65+idyT;
     __local float* plB = lB + idxT*65+idyT;
+    barrier(CLK_LOCAL_MEM_FENCE);
     plB[0] = B[0];
     plB[16] = B[16*ldb];
     plB[32] = B[32*ldb];
@@ -130,7 +131,7 @@ __kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
 
     A += 16;
     B += 16;
-    
+
   } while (--block_k > 0);
 
   C+= gidx*64+idx;

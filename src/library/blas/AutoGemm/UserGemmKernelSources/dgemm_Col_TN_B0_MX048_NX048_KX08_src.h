@@ -23,50 +23,50 @@ __attribute__( (reqd_work_group_size(8, 8, 1)) )
 __kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (
   __global double const * restrict A,
   __global double const * restrict B,
-  __global double * C,  
-  double const alpha,  
-  double const beta,  
-  uint const M, 
-  uint const N, 
+  __global double * C,
+  double const alpha,
+  double const beta,
+  uint const M,
+  uint const N,
   uint const K,
   uint lda,
-  uint ldb, 
-  uint ldc, 
-  uint const offsetA, 
+  uint ldb,
+  uint ldc,
+  uint const offsetA,
   uint const offsetB,
   uint const offsetC )
 {
     double rC[6][6]  = {(double)0};
     double rA[1][6];
     double rB[1][6];
-    
-    
+
+
     A += offsetA;
     B += offsetB;
     C+=offsetC;
-    
+
     __local double lA[392];
     __local double lB[392];
-    
+
     int gidx = get_group_id(0);
     int gidy = get_group_id(1);
     int idx = get_local_id(0);
     int idy = get_local_id(1);
-    
+
     int idt = 8*idy + idx;
     int idxT = idt % 4;
     int idyT = idt / 4;
-    
+
     A +=  gidx*48*lda + idxT + idyT*lda;
     B +=  gidy*48*ldb+ idxT + idyT*ldb;
-    
+
     //for( int block_k=0 ; block_k< K ; block_k+=8)
     uint block_k = K >> 3;
     do
 	{
         __local double* plA = lA + idxT*49+ idyT;
         __local double* plB = lB + idxT*49+ idyT;
-   
+
         barrier(CLK_LOCAL_MEM_FENCE);
         plA[0] = A[0];
         plA[196] = A[4];
@@ -81,10 +81,10 @@ __kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (
         plB[32] = B[0+32*ldb];
         plB[228] = B[4+32*ldb];
         barrier(CLK_LOCAL_MEM_FENCE);
-       
+
         int offA = 1*idx;
         int offB = 1*idy;
-       
+
         for( int k = 0 ; k < 8; k+=1)
         {
             rA[0][0] = lA[offA + 0];
@@ -147,49 +147,49 @@ __kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (
     C+= idx;
     C+= gidy*48*ldc;
     C+= idy*ldc;
-    
+
     C[0*ldc] = alpha*rC[0][0] ;
     C[8*ldc] = alpha*rC[0][1] ;
     C[16*ldc] = alpha*rC[0][2];
     C[24*ldc] = alpha*rC[0][3];
     C[32*ldc] = alpha*rC[0][4];
     C[40*ldc] = alpha*rC[0][5];
-    C+=8;                     
+    C+=8;
     C[0*ldc] = alpha*rC[1][0] ;
     C[8*ldc] = alpha*rC[1][1] ;
     C[16*ldc] = alpha*rC[1][2];
     C[24*ldc] = alpha*rC[1][3];
     C[32*ldc] = alpha*rC[1][4];
     C[40*ldc] = alpha*rC[1][5];
-    C+=8;                     
+    C+=8;
     C[0*ldc] = alpha*rC[2][0] ;
     C[8*ldc] = alpha*rC[2][1] ;
     C[16*ldc] = alpha*rC[2][2];
     C[24*ldc] = alpha*rC[2][3];
     C[32*ldc] = alpha*rC[2][4];
     C[40*ldc] = alpha*rC[2][5];
-    C+=8;                     
+    C+=8;
     C[0*ldc] = alpha*rC[3][0] ;
     C[8*ldc] = alpha*rC[3][1] ;
     C[16*ldc] = alpha*rC[3][2];
     C[24*ldc] = alpha*rC[3][3];
     C[32*ldc] = alpha*rC[3][4];
     C[40*ldc] = alpha*rC[3][5];
-    C+=8;                     
+    C+=8;
     C[0*ldc] = alpha*rC[4][0] ;
     C[8*ldc] = alpha*rC[4][1] ;
     C[16*ldc] = alpha*rC[4][2];
     C[24*ldc] = alpha*rC[4][3];
     C[32*ldc] = alpha*rC[4][4];
     C[40*ldc] = alpha*rC[4][5];
-    C+=8;                     
+    C+=8;
     C[0*ldc] = alpha*rC[5][0] ;
     C[8*ldc] = alpha*rC[5][1] ;
     C[16*ldc] = alpha*rC[5][2];
     C[24*ldc] = alpha*rC[5][3];
     C[32*ldc] = alpha*rC[5][4];
     C[40*ldc] = alpha*rC[5][5];
-    
+
 }
-); 
+);
 #endif

@@ -46,7 +46,7 @@ static const char * const sgemm_Col_NT_B1_MX064_NX064_KX16_src = STRINGIFY(
             rC[1][3]=mad(rA[0][1],rB[0][3],rC[1][3]); \
             rC[2][3]=mad(rA[0][2],rB[0][3],rC[2][3]); \
             rC[3][3]=mad(rA[0][3],rB[0][3],rC[3][3]); \
-			barrier(CLK_LOCAL_MEM_FENCE);\n
+			      mem_fence(CLK_LOCAL_MEM_FENCE);\n
 
 __attribute__((reqd_work_group_size(16,16,1)))
 __kernel void sgemm_Col_NT_B1_MX064_NX064_KX16 (
@@ -68,43 +68,44 @@ __kernel void sgemm_Col_NT_B1_MX064_NX064_KX16 (
     float rC[4][4]  = {(float)0};
     float rA[1][4];
     float rB[1][4];
-    
+
     A += offsetA;
     B += offsetB;
     C+=offsetC;
-    
+
     __local float lA[1056];
     __local float lB[1056];
-    
+
     uint gidx = get_group_id(0);
     uint gidy = get_group_id(1);
     uint idx = get_local_id(0);
     uint idy = get_local_id(1);
-    
+
     uint idt = 16*idy + idx;
     uint idxT = idt % 16;
     uint idyT = idt / 16;
-    
+
     A +=  gidx*64+ idxT + idyT*lda;
     B +=  gidy*64+ idxT + idyT*ldb;
-    
-   
+
+
     uint block_k = K >> 4;
-    do 
+    do
 	{
         __local float* plA = lA + idyT*65+idxT;
         __local float* plB = lB + idyT*65+idxT;
+        barrier(CLK_LOCAL_MEM_FENCE);
         plB[0] = B[0+0*ldb];
         plB[16] = B[16+0*ldb];
         plB[32] = B[32+0*ldb];
         plB[48] = B[48+0*ldb];
-	   
+
 	    plA[0] = A[0+0*lda];
         plA[16] = A[16+0*lda];
         plA[32] = A[32+0*lda];
         plA[48] = A[48+0*lda];
 
-        
+
         barrier(CLK_LOCAL_MEM_FENCE);
         uint offA = idx;
         uint offB = idy;
@@ -133,7 +134,7 @@ __kernel void sgemm_Col_NT_B1_MX064_NX064_KX16 (
     C+= gidx*64+idx;
     C+= gidy*64*ldc;
     C+= idy*ldc;
-    
+
 	C[0*ldc] = alpha*rC[0][0] + beta*C[0*ldc];
     C[16*ldc] = alpha*rC[0][1] + beta*C[16*ldc];
     C[32*ldc] = alpha*rC[0][2] + beta*C[32*ldc];

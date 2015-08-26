@@ -77,7 +77,7 @@ static const char * const dgemm_Col_NT_B0_MX048_NX048_KX08_src = STRINGIFY(
             rC[5][3] = mad(rA[3],rB[5],rC[5][3]);         \
             rC[5][4] = mad(rA[4],rB[5],rC[5][4]);         \
             rC[5][5] = mad(rA[5],rB[5],rC[5][5]);         \
-            barrier(CLK_LOCAL_MEM_FENCE);\n
+            mem_fence(CLK_LOCAL_MEM_FENCE);\n
 \n
 \n
 \n__attribute__((reqd_work_group_size(8,8,1)))
@@ -128,6 +128,7 @@ static const char * const dgemm_Col_NT_B0_MX048_NX048_KX08_src = STRINGIFY(
 \n    do {
 \n        __local double2* plA = (__local double2*)(lA + idy*48 + 2*idx);
 \n        __local double2* plB = (__local double2*)(lB + idy*48 + 2*idx);
+\n        barrier(CLK_LOCAL_MEM_FENCE);
 \n        plB[0 ] = uB.d2v[0 ];
 \n        plB[8 ] = uB.d2v[8 ];
 \n        plB[16] = uB.d2v[16];

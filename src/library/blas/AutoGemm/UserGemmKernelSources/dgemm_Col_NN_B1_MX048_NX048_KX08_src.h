@@ -70,7 +70,7 @@ static const char * const dgemm_Col_NN_B1_MX048_NX048_KX08_src = STRINGIFY(
             rC[3][5]=mad(rA[3],rB[5],rC[3][5]);         \
             rC[4][5]=mad(rA[4],rB[5],rC[4][5]);         \
             rC[5][5]=mad(rA[5],rB[5],rC[5][5]);         \
-            barrier(CLK_LOCAL_MEM_FENCE);\n
+            mem_fence(CLK_LOCAL_MEM_FENCE);\n
 
 __attribute__((reqd_work_group_size(8,8,1)))
 __kernel void dgemm_Col_NN_B1_MX048_NX048_KX08 (
@@ -118,9 +118,9 @@ __kernel void dgemm_Col_NN_B1_MX048_NX048_KX08 (
     int block_k = K >> 3;
     do {
 
-	    __local double* plA = lA + idyT*49 + idxT;
+	      __local double* plA = lA + idyT*49 + idxT;
         __local double* plB = lB + idxT*49 + idyT;
-
+        barrier(CLK_LOCAL_MEM_FENCE);
         plA[0] = A[0+0*lda];
         plA[8] = A[8+0*lda];
         plA[16] = A[16+0*lda];
@@ -156,7 +156,7 @@ __kernel void dgemm_Col_NN_B1_MX048_NX048_KX08 (
   C+= idx;
   C+= gidy*48*ldc;
   C+= idy*ldc;
- 
+
   C[0*ldc] = alpha*rC[0][0] + beta*C[0*ldc];
   C[8*ldc] = alpha*rC[0][1] + beta*C[8*ldc];
   C[16*ldc] = alpha*rC[0][2] + beta*C[16*ldc];
