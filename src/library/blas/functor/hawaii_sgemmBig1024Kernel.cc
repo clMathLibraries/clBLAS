@@ -20,10 +20,10 @@
 
 //only non-multiples of 32 is implemented right now, which is a small matrix.
 #if BUILD_KERNEL_FROM_STRING
-#include "sgemm_gcn_BigMatrices.clT"
+#include "sgemm_gcn_bigMatrices.clT"
 #else 
-#include "sgemm_gcn_BigMatrices.clHawaii_64.bin.clT"
-#include "sgemm_gcn_BigMatrices.clBonaire_64.bin.clT"
+#include "sgemm_gcn_bigMatrices.clHawaii_64.bin.clT"
+#include "sgemm_gcn_bigMatrices.clBonaire_64.bin.clT"
 #endif
 
 // Just because the full name is too long
