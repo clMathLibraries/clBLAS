@@ -67,7 +67,6 @@ set(AUTOGEMM_PRECOMPILE_SRC
 set( AUTOGEMM_PRECOMPILED_KERNELS
   ${CMAKE_BINARY_DIR}/include/AutoGemmKernelBinaries/AutoGemmKernelBinariesPreCompiled.h
 )
-set_source_files_properties( ${AUTOGEMM_PRECOMPILED_KERNELS} PROPERTIES GENERATED TRUE )
 
 # AutoGemm options for pre-compiling kernels
 option( AutoGemm_PreCompile_PRECISION_SGEMM "AutoGemm: pre-compile sgemm kernels" OFF)
@@ -219,6 +218,12 @@ add_executable(AutoGemm_PreCompile_Bin
   )
 target_link_libraries(AutoGemm_PreCompile_Bin ${OPENCL_LIBRARIES})
 set_property( TARGET AutoGemm_PreCompile_Bin PROPERTY FOLDER "AutoGemm")
+set_target_properties(
+  AutoGemm_PreCompile_Bin
+  PROPERTIES
+  EXCLUDE_FROM_ALL TRUE
+  EXCLUDE_FROM_DEFAULT_BUILD TRUE
+)
 
 
 ################################################################################
@@ -757,6 +762,16 @@ if( CMAKE_COMPILER_IS_GNUCC )
 endif( )
 
 # clBLAS to depend on AutoGemm
+
+if ( ${AutoGemm_PreCompile_ACTIVE} )
+  set( AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL ${AUTOGEMM_PRECOMPILED_KERNELS} )
+  MESSAGE( STATUS "clBLAS will depend on ${AUTOGEMM_PRECOMPILED_KERNELS}" )
+else()
+  set( AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL )
+  MESSAGE( STATUS "clBLAS will NOT depend on ${AUTOGEMM_PRECOMPILED_KERNELS}" )
+endif()
+
+
 add_library(clBLAS
     ${CLBLAS_SOURCES}
     ${GLOBAL_HEADERS}
@@ -765,12 +780,14 @@ add_library(clBLAS
     ${AUTOGEMM_SRC}
     ${AUTOGEMM_HEADERS}
     ${AUTOGEMM_SCRIPTS}
-    ${AUTOGEMM_PRECOMPILED_KERNELS}
+    ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
   )
 add_dependencies(clBLAS GENERATE_CLT)
 
 # AutoGemm needs compiler flag to utilize pre-compiled kernels
-set_target_properties(clBLAS PROPERTIES COMPILE_FLAGS -DAUTOGEMM_USE_PRE_COMPILED_KERNELS)
+if ( ${AutoGemm_PreCompile_ACTIVE} )
+  set_target_properties(clBLAS PROPERTIES COMPILE_FLAGS -DAUTOGEMM_USE_PRE_COMPILED_KERNELS)
+endif()
 
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
