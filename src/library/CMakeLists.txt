@@ -335,11 +335,7 @@ set(SRC_BLAS
 	blas/functor/gcn_dgemmSmallMatrices.cc
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
-<<<<<<< HEAD
 	blas/functor/hawaii_sgemmBig1024Kernel.cc
-=======
-
->>>>>>> auto_gemm
 )
 
 set(SRC_BLAS_HEADERS

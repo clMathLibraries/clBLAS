@@ -577,49 +577,6 @@ clblasDgemm( clblasOrder order,
              const cl_event *eventWaitList,
              cl_event *events)
 {
-<<<<<<< HEAD
-//printf("dgemm M=%i,N=%i,K=%i,lda=%i,ldb=%i,ldc=%i\n", M, N, K, lda, ldb, ldc);
-   CHECK_QUEUES(numCommandQueues, commandQueues);
-   CHECK_EVENTS(numEventsInWaitList, eventWaitList);
-   CHECK_MATRIX_A(TYPE_DOUBLE, order, transA, A, M, K, offA, lda);
-   CHECK_MATRIX_B(TYPE_DOUBLE, order, transB, B, K, N, offB, ldb);
-   CHECK_MATRIX_C(TYPE_DOUBLE, order, clblasNoTrans, C, M, N, offC, ldc);
-
-   if ( numCommandQueues>1 ) 
-   {
-       numCommandQueues = 1 ;  // No support for multi-device (yet)
-   }
-
-   cl_command_queue queue = commandQueues[0]; 
-
-   clblasDgemmFunctor::Args args(order,
-                                 transA,
-                                 transB,
-                                 M, N, K,
-                                 alpha,
-                                 A, offA, lda,
-                                 B, offB, ldb,
-                                 beta,
-                                 C, offC, ldc,
-                                 queue,
-                                 numEventsInWaitList,
-                                 eventWaitList,
-                                 events);
-
-#if FORCE_COLUMN_MAJOR
-   force_gemm_column_major(args);
-#endif
-
-   clblasFunctorSelector  * fselector = clblasFunctorSelector::find(queue);
-
-   clblasDgemmFunctor * functor = fselector->select_dgemm_specific(args);
-
-   clblasStatus res = functor->execute(args);
-
-   functor->release();
-
-   return res;
-=======
    return clblasGemm(
        order,
        transA,
@@ -635,7 +592,6 @@ clblasDgemm( clblasOrder order,
        numEventsInWaitList,
        eventWaitList,
        events);
->>>>>>> auto_gemm
 }
 
 /******************************************************************************
