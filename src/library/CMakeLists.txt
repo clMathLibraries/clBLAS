@@ -194,17 +194,6 @@ add_custom_command(
   DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
 )
 
-
-################################################################################
-# add target for main AutoGemm headers / source
-################################################################################
-add_custom_command(
-  OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
-  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OCL_VERSION}
-  DEPENDS ${AUTOGEMM_SCRIPTS}
-)
-
-
 ################################################################################
 # add target for compiling pre-compile executable
 ################################################################################
@@ -235,6 +224,17 @@ add_custom_command(
 )
 
 endif()
+
+
+################################################################################
+# add target for main AutoGemm headers / source
+################################################################################
+add_custom_command(
+  OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
+  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OCL_VERSION}
+  DEPENDS ${AUTOGEMM_SCRIPTS}
+)
+
 
 include_directories(
     ${OPENCL_INCLUDE_DIRS}
