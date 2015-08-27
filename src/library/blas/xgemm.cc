@@ -18,10 +18,11 @@
 #include <string.h>
 #include <clBLAS.h>
 #include "AutoGemmIncludes/AutoGemmKernelSelection.h"
-//#include "GemmSpecialCases.h"
+#include "GemmSpecialCases.h"
 
  #include <functor.h>
 // #include <functor_selector.h>
+#include "xgemm.h"
 
 /******************************************************************************
  * Row major -> column major
@@ -290,7 +291,7 @@ clblasGemm(
   // 1, sgemm nt where lda, ldb are big multiples of 1024 starting from 4096
   // 2, sgemm (all transpose cases) where M and N are within middle range
   //    and are mod32 but not mod96 or mod 64
-  /*
+  
   bool specialCaseHandled = false;
 
   clblasStatus SpecialCaseStatus = GemmSpecialCases<Precision>(order,
@@ -311,7 +312,7 @@ clblasGemm(
 
   if (specialCaseHandled)
 	  return SpecialCaseStatus;
-  */
+  
   
 /******************************************************************************
  * Optimal num elements per thread

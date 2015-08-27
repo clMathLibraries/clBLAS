@@ -16,9 +16,8 @@
 
 #include "GemmSpecialCases.h"
 #include "UserGemmKernelSources/UserGemmKernelSourceIncludes.h"
-#include "xgemm.h"
-//#include "AutoGemmIncludes/AutoGemmClKernels.h"
-#include "AutoGemmIncludes/tempClKernels.h"
+#include "xgemm.h" //helper functions defined in xgemm.cpp
+#include "AutoGemmIncludes/AutoGemmClKernels.h"
 
 /******************************************************************************
 * Check OpenCL Errors
@@ -158,9 +157,15 @@ const cl_event *eventWaitList,
 cl_event *events,
 bool &specialCaseHandled)
 {
+
+	if (order == clblasRowMajor)
+		return clblasNotImplemented;
+
+
+
 	const char *tileKernelSource = NULL;
 	cl_kernel  *tileClKernel = NULL;
-	//cl_kernel tempKernel = NULL;//wait for David's Python magic
+	size_t *tileKernelBinarySize = 0;
 	cl_int err;
 
 
@@ -168,11 +173,13 @@ bool &specialCaseHandled)
 
 	clblasStatus status;
 
+
+	//split the kernel calls to handle sgemm NT perf drop at big multiples of 1024
 	if ((lda % 1024 == 0) && (ldb % 1024 == 0) && (K > lda / 4))
 	{
 		if ((lda == ldb) && (lda >= 4096) && (lda <= 8192)) // between 4096 and 8192 for now
 		{
-			if (lda != 6144)// 6144 is handled by a special case split
+			if (lda != 6144)// 6144 is handled by 96 x 96 kernel
 			{
 				// we are going to call 16 GEMMs with M=M/2, N=N/2, K=K/4
 				// each GEMM requires M%128 == 0, N%128 == 0, K%16 == 0
@@ -187,6 +194,9 @@ bool &specialCaseHandled)
 				// we are going to call 4 GEMMs each with K = K/4
 				if (M % 96 == 0 && N % 96 == 0 && K % 64 == 0)
 				{
+					if (!((transA == clblasNoTrans) && (transB == clblasTrans)))
+						return clblasNotImplemented;
+
 					specialCaseHandled = true;
 					unsigned int M_split_factor = 1;
 					unsigned int N_split_factor = 1;
@@ -194,9 +204,9 @@ bool &specialCaseHandled)
 					
 
 					tileKernelSource = sgemm_Col_NT_B1_MX096_NX096_KX16_src;
-					tileClKernel = &temp_clKernel;//wait for David's Python magic; right now kernels will be compiled every time
+					tileClKernel = &sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
 
-					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, User_binBuildOptions);
+					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
 					
 					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
 					CL_CHECK(err);
