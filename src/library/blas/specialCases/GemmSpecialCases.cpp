@@ -16,6 +16,7 @@
 
 #include "GemmSpecialCases.h"
 #include "UserGemmKernelSources/UserGemmKernelSourceIncludes.h"
+#include "UserGemmKernelSources/UserGemmClKernels.h"
 #include "xgemm.h" //helper functions defined in xgemm.cpp
 #include "AutoGemmIncludes/AutoGemmClKernels.h"
 
@@ -48,6 +49,35 @@ clblasStatus SGEMM_SPLIT_CALLS(
 	const cl_event *eventWaitList,
 	cl_event *events)
 {
+	//for example, when M=N=K=8192
+	//we are gonna call 16 GEMMs 
+	//each GEMM has M=N=K=4096
+	//note are direct GEMM call has a 0.7 TFLOPS performance
+
+	//     [ A11 | A12 | A13 | A14 ]      [ B11 | B12 | B13 | B14 ]      [ C11 | C12 ]
+	// A = [ A21 | A22 | A23 | A24 ]  B = [ B21 | B22 | B23 | B24 ]  C = [ C21 | C22 ] 
+
+	// 16 GEMMs are
+	// #01: C11 = a*A11*B11 + b*C11
+	// #02: C11 = a*A12*B12 + 1*C11
+	// #03: C11 = a*A13*B13 + 1*C11
+	// #04: C11 = a*A14*B14 + 1*C11 now we are done with C11
+
+	// #05: C12 = a*A11*B21 + b*C12
+	// #06: C12 = a*A12*B22 + 1*C12
+	// #07: C12 = a*A12*B22 + 1*C12
+	// #08: C12 = a*A12*B22 + 1*C12 now we are done with C12
+
+	// #09: C21 = a*A21*B11 + b*C21
+	// #10: C21 = a*A22*B12 + 1*C21
+	// #11: C21 = a*A23*B13 + 1*C21
+	// #12: C21 = a*A24*B14 + 1*C21 now we are done with C21
+
+	// #13: C22 = a*A21*B21 + b*C22
+	// #14: C22 = a*A22*B22 + 1*C22
+	// #15: C22 = a*A23*B23 + 1*C22
+	// #16: C22 = a*A24*B24 + 1*C22 now we are done with C22
+
 	unsigned int small_M = M / M_split_factor;
 	unsigned int small_N = N / N_split_factor;
 	unsigned int small_K = K / K_split_factor;
@@ -185,7 +215,84 @@ bool &specialCaseHandled)
 				// each GEMM requires M%128 == 0, N%128 == 0, K%16 == 0
 				if (M % 256 == 0 && N % 256 == 0 && K % 64 == 0)
 				{
-					return clblasNotImplemented;
+					if (!((transA == clblasNoTrans) && (transB == clblasTrans)))
+						return clblasNotImplemented;
+
+					specialCaseHandled = true;
+					unsigned int M_split_factor;
+					unsigned int N_split_factor;
+					unsigned int K_split_factor;
+
+					if (lda < 7168)
+					{
+						M_split_factor = 1;
+						N_split_factor = 1;
+						K_split_factor = 1;
+					}
+					else
+					{
+						//7168, 8192
+						M_split_factor = 2;
+						N_split_factor = 2;
+						K_split_factor = 4;
+					}
+
+					tileKernelSource = sgemm_Col_NT_B1_MX128_NX128_KX16_src;
+					tileClKernel = &sgemm_Col_NT_B1_MX128_NX128_KX16_clKernel;
+					//tileClKernel = &sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
+
+					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
+
+					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+					CL_CHECK(err);
+					err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+					CL_CHECK(err);
+
+					status = SGEMM_SPLIT_CALLS(
+						tileClKernel, order,
+						128, 16,
+						M_split_factor,
+						N_split_factor, K_split_factor,
+						transA,
+						transB,
+						M, N, K,
+						alpha,
+						A, offA, lda,
+						B, offB, ldb,
+						beta,
+						C, offC, ldc,
+						numCommandQueues,
+						commandQueues,
+						numEventsInWaitList,
+						eventWaitList,
+						events);
+
+
+					return status;
 				}
 			}
 			else
