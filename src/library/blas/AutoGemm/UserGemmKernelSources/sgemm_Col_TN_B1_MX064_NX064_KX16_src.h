@@ -2,8 +2,9 @@
  * Hand-tuned kernel
  ******************************************************************************/
 
-#ifndef KERNEL_SGEMM_COL_TN_B1_MX064_NX064_KX16_SRC_C
-#define KERNEL_SGEMM_COL_TN_B1_MX064_NX064_KX16_SRC_C
+#ifndef KERNEL_SGEMM_COL_TN_B1_MX064_NX064_KX16_SRC_H
+#define KERNEL_SGEMM_COL_TN_B1_MX064_NX064_KX16_SRC_H
+#pragma message("AutoGemm's sgemm_Col_TN_B1_MX064_NX064_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -16,7 +17,7 @@ const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_microTileNumRows = 4;
 const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_microTileNumCols = 4;
 const unsigned int sgemm_Col_TN_B1_MX064_NX064_KX16_unroll = 16;
 
-const char * const sgemm_Col_TN_B1_MX064_NX064_KX16_src = STRINGIFY(
+static const char * const sgemm_Col_TN_B1_MX064_NX064_KX16_src = STRINGIFY(
 
 #define  M4x4 \
             rA[0][0] = lA[offA + 0];				  \
@@ -45,7 +46,7 @@ const char * const sgemm_Col_TN_B1_MX064_NX064_KX16_src = STRINGIFY(
             rC[1][3]=mad(rA[0][1],rB[0][3],rC[1][3]); \
             rC[2][3]=mad(rA[0][2],rB[0][3],rC[2][3]); \
             rC[3][3]=mad(rA[0][3],rB[0][3],rC[3][3]); \
-			      barrier(CLK_LOCAL_MEM_FENCE);\n
+			      mem_fence(CLK_LOCAL_MEM_FENCE);\n
 
 __attribute__((reqd_work_group_size(16,16,1)))
 __kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
@@ -90,10 +91,11 @@ __kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
 
 
   uint block_k = K >> 4;
-  do 
+  do
   {
     __local float* plA = lA + idxT*65+idyT;
     __local float* plB = lB + idxT*65+idyT;
+    barrier(CLK_LOCAL_MEM_FENCE);
     plB[0] = B[0];
     plB[16] = B[16*ldb];
     plB[32] = B[32*ldb];
@@ -129,7 +131,7 @@ __kernel void sgemm_Col_TN_B1_MX064_NX064_KX16 (
 
     A += 16;
     B += 16;
-    
+
   } while (--block_k > 0);
 
   C+= gidx*64+idx;
