@@ -169,30 +169,22 @@ clblasStatus SGEMM_SPLIT_CALLS(
 	return clblasSuccess;
 }
 
-template<>
-clblasStatus
-GemmSpecialCases<float>(clblasOrder order,
-clblasTranspose transA,
-clblasTranspose transB,
-cl_uint M, cl_uint N, cl_uint K,
-float alpha,
-cl_mem A, cl_uint offA, cl_uint lda,
-cl_mem B, cl_uint offB, cl_uint ldb,
-float beta,
-cl_mem C, cl_uint offC, cl_uint ldc,
-cl_uint numCommandQueues,
-cl_command_queue *commandQueues,
-cl_uint numEventsInWaitList,
-const cl_event *eventWaitList,
-cl_event *events,
-bool &specialCaseHandled)
+clblasStatus GEMM_mod1024(
+	clblasTranspose transA,
+	clblasTranspose transB,
+	cl_uint M, cl_uint N, cl_uint K,
+	float alpha,
+	cl_mem A, cl_uint offA, cl_uint lda,
+	cl_mem B, cl_uint offB, cl_uint ldb,
+	float beta,
+	cl_mem C, cl_uint offC, cl_uint ldc,
+	cl_uint numCommandQueues,
+	cl_command_queue *commandQueues,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events,
+	bool &specialCaseHandled)
 {
-
-	if (order == clblasRowMajor)
-		return clblasNotImplemented;
-
-
-
 	const char *tileKernelSource = NULL;
 	cl_kernel  *tileClKernel = NULL;
 	size_t *tileKernelBinarySize = 0;
@@ -273,7 +265,7 @@ bool &specialCaseHandled)
 					CL_CHECK(err);
 
 					status = SGEMM_SPLIT_CALLS(
-						tileClKernel, order,
+						tileClKernel, clblasColumnMajor,
 						128, 16,
 						M_split_factor,
 						N_split_factor, K_split_factor,
@@ -308,13 +300,13 @@ bool &specialCaseHandled)
 					unsigned int M_split_factor = 1;
 					unsigned int N_split_factor = 1;
 					unsigned int K_split_factor = 4;
-					
+
 
 					tileKernelSource = sgemm_Col_NT_B1_MX096_NX096_KX16_src;
 					tileClKernel = &sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
 
 					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
-					
+
 					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
 					CL_CHECK(err);
 					err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
@@ -346,7 +338,7 @@ bool &specialCaseHandled)
 
 
 					status = SGEMM_SPLIT_CALLS(
-						tileClKernel, order, 
+						tileClKernel, clblasColumnMajor,
 						96, 16,
 						M_split_factor,
 						N_split_factor, K_split_factor,
@@ -370,6 +362,198 @@ bool &specialCaseHandled)
 			}
 		}
 	}
+
+	return clblasNotImplemented;
+}
+
+
+clblasStatus GEMM_SPLIT64_32(
+	clblasTranspose transA,
+	clblasTranspose transB,
+	cl_uint M, cl_uint N, cl_uint K,
+	float alpha,
+	cl_mem A, cl_uint offA, cl_uint lda,
+	cl_mem B, cl_uint offB, cl_uint ldb,
+	float beta,
+	cl_mem C, cl_uint offC, cl_uint ldc,
+	cl_uint numCommandQueues,
+	cl_command_queue *commandQueues,
+	cl_uint numEventsInWaitList,
+	const cl_event *eventWaitList,
+	cl_event *events,
+	bool &specialCaseHandled)
+{
+	//all the mod32 sizes that is not mod64 or mod96 ranging from 1184 to 3872 
+	//non mod32 cases are not implemented in this approach and are of less interest
+	const char *tileKernelSource = NULL;
+	const char *rowKernelSource = NULL;
+	const char *columnKernelSource = NULL;
+	const char *singleKernelSource = NULL;
+
+	cl_kernel  *tileClKernel = NULL;
+	cl_kernel  *rowClKernel = NULL;
+	cl_kernel  *columnClKernel = NULL;
+	cl_kernel  *singleClKernel = NULL;
+
+	const unsigned char *tileKernelBinary = NULL;
+	const unsigned char *rowKernelBinary = NULL;
+	const unsigned char *columnKernelBinary = NULL;
+	const unsigned char *singleKernelBinary = NULL;
+
+	size_t *tileKernelBinarySize = 0;
+	size_t *rowKernelBinarySize = 0;
+	size_t *columnKernelBinarySize = 0;
+	size_t *singleKernelBinarySize = 0;
+
+	cl_int err;
+	
+	if ((M >= 1184 && N >= 1184) && (M <= 3872 && N <= 3872) && (M % 64 != 0 && N % 64 != 0) && (M % 96 != 0 && N % 96 != 0) && (K % 16 == 0))
+	{
+		if ((M % 32 == 0 && N % 32 == 0) && (transA == clblasNoTrans && transB == clblasTrans))
+		{
+			specialCaseHandled = true;
+			//execute the kernels
+
+			//GlobalX = ((Mvalue - 1) / 64) * 16
+			//GlobalY = ((Nvalue - 1) / 64) * 16
+			size_t GlobalX = ((M - 1) / 64) * 16;
+			size_t GlobalY = ((N - 1) / 64) * 16;
+			size_t gs[2] = { GlobalX, GlobalY };
+			size_t wgsize[2] = { 16, 16 };
+
+			tileKernelSource = sgemm_Col_NT_B1_MX064_NX064_KX16_src;
+			tileClKernel = &sgemm_Col_NT_B1_MX064_NX064_KX16_clKernel;
+
+			rowKernelSource = sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_src;
+			rowClKernel = &sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_clKernel;
+
+			columnKernelSource = sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_src;
+			columnClKernel = &sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_clKernel;
+
+			singleKernelSource = sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_src;
+			singleClKernel = &sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_clKernel;
+
+			cl_kernel * Kernels[4] = { tileClKernel, rowClKernel, columnClKernel, singleClKernel };
+
+
+			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(rowClKernel, commandQueues[0], rowKernelSource, User_srcBuildOptions, &rowKernelBinary, rowKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(columnClKernel, commandQueues[0], columnKernelSource, User_srcBuildOptions, &columnKernelBinary, columnKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(singleClKernel, commandQueues[0], singleKernelSource, User_srcBuildOptions, &singleKernelBinary, singleKernelBinarySize, User_binBuildOptions);
+
+			for (int i = 0; i < 4; i++)
+			{
+				err = clSetKernelArg(*Kernels[i], 0, sizeof(cl_mem), &A);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 1, sizeof(cl_mem), &B);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 2, sizeof(cl_mem), &C);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 3, sizeof(cl_float), &alpha);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 4, sizeof(cl_float), &beta);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 5, sizeof(cl_uint), &M);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 6, sizeof(cl_uint), &N);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 7, sizeof(cl_uint), &K);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 8, sizeof(cl_uint), &lda);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 9, sizeof(cl_uint), &ldb);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 10, sizeof(cl_uint), &ldc);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 11, sizeof(cl_uint), &offA);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 12, sizeof(cl_uint), &offB);
+				CL_CHECK(err);
+				err = clSetKernelArg(*Kernels[i], 13, sizeof(cl_uint), &offC);
+				CL_CHECK(err);
+			}
+
+			err = clEnqueueNDRangeKernel(commandQueues[0], *Kernels[0], 2, NULL, gs, wgsize, numEventsInWaitList, eventWaitList, NULL);
+
+			gs[0] = 16;
+			err |= clEnqueueNDRangeKernel(commandQueues[0], *Kernels[1], 2, NULL, gs, wgsize, 0, NULL, NULL);
+
+			gs[1] = 16;
+			gs[0] = GlobalX;
+			err |= clEnqueueNDRangeKernel(commandQueues[0], *Kernels[2], 2, NULL, gs, wgsize, 0, NULL, NULL);
+
+			gs[0] = 16; gs[1] = 16;
+			err |= clEnqueueNDRangeKernel(commandQueues[0], *Kernels[3], 2, NULL, gs, wgsize, 0, NULL, events);
+
+			if (err == 0)
+				return clblasSuccess;
+
+		}
+	}
+	
+	return clblasNotImplemented;
+}
+
+template<>
+clblasStatus
+GemmSpecialCases<float>(clblasOrder order,
+clblasTranspose transA,
+clblasTranspose transB,
+cl_uint M, cl_uint N, cl_uint K,
+float alpha,
+cl_mem A, cl_uint offA, cl_uint lda,
+cl_mem B, cl_uint offB, cl_uint ldb,
+float beta,
+cl_mem C, cl_uint offC, cl_uint ldc,
+cl_uint numCommandQueues,
+cl_command_queue *commandQueues,
+cl_uint numEventsInWaitList,
+const cl_event *eventWaitList,
+cl_event *events,
+bool &specialCaseHandled)
+{
+
+	if (order == clblasRowMajor)
+		return clblasNotImplemented;
+
+	clblasStatus status;
+
+	//handles big multiples of 1024
+	status = GEMM_mod1024(transA,
+		transB,
+		M, N, K,
+		alpha,
+		A, offA, lda,
+		B, offB, ldb,
+		beta,
+		C, offC, ldc,
+		numCommandQueues,
+		commandQueues,
+		numEventsInWaitList,
+		eventWaitList,
+		events,
+		specialCaseHandled);
+	if (specialCaseHandled)
+		return status;
+
+	//handles mod32 but not mod 64
+	status = GEMM_SPLIT64_32(transA,
+		transB,
+		M, N, K,
+		alpha,
+		A, offA, lda,
+		B, offB, ldb,
+		beta,
+		C, offC, ldc,
+		numCommandQueues,
+		commandQueues,
+		numEventsInWaitList,
+		eventWaitList,
+		events,
+		specialCaseHandled);
+	if (specialCaseHandled)
+		return status;
+
 
 	return clblasNotImplemented;
 }

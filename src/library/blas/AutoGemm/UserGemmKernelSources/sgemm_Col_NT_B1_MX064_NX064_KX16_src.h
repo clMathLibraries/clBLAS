@@ -73,8 +73,8 @@ __kernel void sgemm_Col_NT_B1_MX064_NX064_KX16 (
     B += offsetB;
     C+=offsetC;
 
-    __local float lA[1056];
-    __local float lB[1056];
+    __local float lA[1040];
+	__local float lB[1040];
 
     uint gidx = get_group_id(0);
     uint gidy = get_group_id(1);
