@@ -19,6 +19,7 @@
 #include "UserGemmKernelSources/UserGemmClKernels.h"
 #include "xgemm.h" //helper functions defined in xgemm.cpp
 #include "AutoGemmIncludes/AutoGemmClKernels.h"
+#include "AutoGemmIncludes/AutoGemmKernelSources.h"
 
 /******************************************************************************
 * Check OpenCL Errors

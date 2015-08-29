@@ -20,8 +20,6 @@
 #include <clBLAS.h>
 #include <stdio.h>
 #include <assert.h>
-//wait for David's Python magic
-//#include "AutoGemmIncludes/AutoGemmClKernels.h"
 
 template<typename Precision>
 clblasStatus

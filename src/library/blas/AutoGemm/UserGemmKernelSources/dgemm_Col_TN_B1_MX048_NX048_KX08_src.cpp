@@ -2,25 +2,25 @@
  * Hand-tuned kernel
  ******************************************************************************/
 
-#ifndef KERNEL_DGEMM_COL_TN_B0_MX048_NX048_KX08_SRC_H
-#define KERNEL_DGEMM_COL_TN_B0_MX048_NX048_KX08_SRC_H
-#pragma message("AutoGemm's dgemm_Col_TN_B0_MX048_NX048_KX08_src overriden by user.")
+#ifndef KERNEL_DGEMM_COL_TN_B1_MX048_NX048_KX08_SRC_H
+#define KERNEL_DGEMM_COL_TN_B1_MX048_NX048_KX08_SRC_H
+#pragma message("AutoGemm's dgemm_Col_TN_B1_MX048_NX048_KX08_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
 #define STRINGIFY2(S) #S
 #endif
 
-const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_workGroupNumRows = 8;
-const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_workGroupNumCols = 8;
-const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_microTileNumRows = 6;
-const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_microTileNumCols = 6;
-const unsigned int dgemm_Col_TN_B0_MX048_NX048_KX08_unroll = 8;
+const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_workGroupNumRows = 8;
+const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_workGroupNumCols = 8;
+const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_microTileNumRows = 6;
+const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_microTileNumCols = 6;
+const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_unroll = 8;
 
-static const char * const dgemm_Col_TN_B0_MX048_NX048_KX08_src = STRINGIFY(
+const char * const dgemm_Col_TN_B1_MX048_NX048_KX08_src = STRINGIFY(
 
 __attribute__( (reqd_work_group_size(8, 8, 1)) )
-__kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (
+__kernel void dgemm_Col_TN_B1_MX048_NX048_KX08_src (
   __global double const * restrict A,
   __global double const * restrict B,
   __global double * C,
@@ -148,48 +148,48 @@ __kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (
     C+= gidy*48*ldc;
     C+= idy*ldc;
 
-    C[0*ldc] = alpha*rC[0][0] ;
-    C[8*ldc] = alpha*rC[0][1] ;
-    C[16*ldc] = alpha*rC[0][2];
-    C[24*ldc] = alpha*rC[0][3];
-    C[32*ldc] = alpha*rC[0][4];
-    C[40*ldc] = alpha*rC[0][5];
+    C[0*ldc] = alpha*rC[0][0] + beta*C[0*ldc];
+    C[8*ldc] = alpha*rC[0][1] + beta*C[8*ldc];
+    C[16*ldc] = alpha*rC[0][2] + beta*C[16*ldc];
+    C[24*ldc] = alpha*rC[0][3] + beta*C[24*ldc];
+    C[32*ldc] = alpha*rC[0][4] + beta*C[32*ldc];
+    C[40*ldc] = alpha*rC[0][5] + beta*C[40*ldc];
     C+=8;
-    C[0*ldc] = alpha*rC[1][0] ;
-    C[8*ldc] = alpha*rC[1][1] ;
-    C[16*ldc] = alpha*rC[1][2];
-    C[24*ldc] = alpha*rC[1][3];
-    C[32*ldc] = alpha*rC[1][4];
-    C[40*ldc] = alpha*rC[1][5];
+    C[0*ldc] = alpha*rC[1][0] + beta*C[0*ldc];
+    C[8*ldc] = alpha*rC[1][1] + beta*C[8*ldc];
+    C[16*ldc] = alpha*rC[1][2] + beta*C[16*ldc];
+    C[24*ldc] = alpha*rC[1][3] + beta*C[24*ldc];
+    C[32*ldc] = alpha*rC[1][4] + beta*C[32*ldc];
+    C[40*ldc] = alpha*rC[1][5] + beta*C[40*ldc];
     C+=8;
-    C[0*ldc] = alpha*rC[2][0] ;
-    C[8*ldc] = alpha*rC[2][1] ;
-    C[16*ldc] = alpha*rC[2][2];
-    C[24*ldc] = alpha*rC[2][3];
-    C[32*ldc] = alpha*rC[2][4];
-    C[40*ldc] = alpha*rC[2][5];
+    C[0*ldc] = alpha*rC[2][0] + beta*C[0*ldc];
+    C[8*ldc] = alpha*rC[2][1] + beta*C[8*ldc];
+    C[16*ldc] = alpha*rC[2][2] + beta*C[16*ldc];
+    C[24*ldc] = alpha*rC[2][3] + beta*C[24*ldc];
+    C[32*ldc] = alpha*rC[2][4] + beta*C[32*ldc];
+    C[40*ldc] = alpha*rC[2][5] + beta*C[40*ldc];
     C+=8;
-    C[0*ldc] = alpha*rC[3][0] ;
-    C[8*ldc] = alpha*rC[3][1] ;
-    C[16*ldc] = alpha*rC[3][2];
-    C[24*ldc] = alpha*rC[3][3];
-    C[32*ldc] = alpha*rC[3][4];
-    C[40*ldc] = alpha*rC[3][5];
+    C[0*ldc] = alpha*rC[3][0] + beta*C[0*ldc];
+    C[8*ldc] = alpha*rC[3][1] + beta*C[8*ldc];
+    C[16*ldc] = alpha*rC[3][2] + beta*C[16*ldc];
+    C[24*ldc] = alpha*rC[3][3] + beta*C[24*ldc];
+    C[32*ldc] = alpha*rC[3][4] + beta*C[32*ldc];
+    C[40*ldc] = alpha*rC[3][5] + beta*C[40*ldc];
     C+=8;
-    C[0*ldc] = alpha*rC[4][0] ;
-    C[8*ldc] = alpha*rC[4][1] ;
-    C[16*ldc] = alpha*rC[4][2];
-    C[24*ldc] = alpha*rC[4][3];
-    C[32*ldc] = alpha*rC[4][4];
-    C[40*ldc] = alpha*rC[4][5];
+    C[0*ldc] = alpha*rC[4][0] + beta*C[0*ldc];
+    C[8*ldc] = alpha*rC[4][1] + beta*C[8*ldc];
+    C[16*ldc] = alpha*rC[4][2] + beta*C[16*ldc];
+    C[24*ldc] = alpha*rC[4][3] + beta*C[24*ldc];
+    C[32*ldc] = alpha*rC[4][4] + beta*C[32*ldc];
+    C[40*ldc] = alpha*rC[4][5] + beta*C[40*ldc];
     C+=8;
-    C[0*ldc] = alpha*rC[5][0] ;
-    C[8*ldc] = alpha*rC[5][1] ;
-    C[16*ldc] = alpha*rC[5][2];
-    C[24*ldc] = alpha*rC[5][3];
-    C[32*ldc] = alpha*rC[5][4];
-    C[40*ldc] = alpha*rC[5][5];
-
+    C[0*ldc] = alpha*rC[5][0] + beta*C[0*ldc];
+    C[8*ldc] = alpha*rC[5][1] + beta*C[8*ldc];
+    C[16*ldc] = alpha*rC[5][2] + beta*C[16*ldc];
+    C[24*ldc] = alpha*rC[5][3] + beta*C[24*ldc];
+    C[32*ldc] = alpha*rC[5][4] + beta*C[32*ldc];
+    C[40*ldc] = alpha*rC[5][5] + beta*C[40*ldc];
+    C+=8;
 }
 );
 #endif
