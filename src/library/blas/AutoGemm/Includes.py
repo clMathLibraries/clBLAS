@@ -234,8 +234,8 @@ class KernelSourceBuildOptions:
     kernelName = kernel.getName()
     self.incStr += "extern const char * const %s_srcBuildOptions;\n" \
         % kernelName
-    self.cppStr += "const char * const %s_srcBuildOptions = \"-cl-std=CL%s\";\n" \
-        % (kernelName, Common.getClCompilerVersion() )
+    self.cppStr += "const char * const %s_srcBuildOptions = \"-cl-std=CL%s -save-temps=%s\";\n" \
+        % (kernelName, Common.getClCompilerVersion(), kernelName )
 
     self.incFile.write( self.incStr )
     self.incStr = ""

@@ -30,13 +30,13 @@ typedef enum clblasTranspose_ {
 } clblasTranspose;
 #endif
 
-#define SGEMM 1
-#define DGEMM 0
+#define SGEMM 0
+#define DGEMM 1
 #define CGEMM 0
 #define ZGEMM 0
 
 #define RANDOM_DATA   1
-#define DO_VALIDATION 0
+#define DO_VALIDATION 1
 
 #if SGEMM
 #define DATA_TYPE float
@@ -220,11 +220,14 @@ void testKernelParameterCombination(
 
   // how large of a matrix to test?
 #if DO_VALIDATION
-  size_t M = 1*macroTileNumRows;
-  size_t N = 1*macroTileNumCols;
-  size_t K = 1*unroll;
+  size_t M = 16*macroTileNumRows;
+  size_t N = 16*macroTileNumCols;
+  size_t K = 16*unroll;
 #else
-  if (mSpill || nSpill || unroll==1 || transAInt==1 || transBInt==0) return;
+  //if (mSpill || nSpill || unroll==1 || transAInt==1 || transBInt==0) return;
+  
+  if (mSpill || nSpill || unroll==1 ) return;
+
   size_t M = 22*macroTileNumRows;
   size_t N = 24*macroTileNumCols;
   size_t K = 2*64*90+unroll;
@@ -237,8 +240,8 @@ void testKernelParameterCombination(
   }
 
   
-#if 0
-  printf("Testing: %sgemm_%s%s_%03u_%03u_%u_%02ux%02u_%ux%u_%s%s_%u_%u\n",
+#if 1
+  printf("Testing: %sgemm_%s%s_B%u_MX%03u_NX%03u_KX%02u\n",
 #if SGEMM
     "s",
 #elif DGEMM
@@ -250,15 +253,10 @@ void testKernelParameterCombination(
 #endif
     transAInt ? "T" : "N",
     transBInt ? "T" : "N",
+    betaNonZero ? 1 : 0,
     macroTileNumRows,
     macroTileNumCols,
-    unroll,
-    microTileNumRows,
-    microTileNumCols,
-    columnMajorInt ? "ColumnMajor" : "RowMajor",
-    betaNonZero ? "_BETA" : "",
-    mSpill,
-    nSpill );
+    unroll );
 #endif
 
   //printf("M=%u, N=%u, K=%u\n", M, N, K);
@@ -311,23 +309,6 @@ void testKernelParameterCombination(
     ldc = numColsC;
   }
 
-  //printf("globalWorkSize initially %u x %u threads\n", globalWorkSize[0], globalWorkSize[1]);
-  //  
-  //if ( globalWorkSize[0] * microTileNumRows < M) {
-  //  printf("adding a row of work-groups\n");
-  //  globalWorkSize[0]+=localWorkSize[0];
-  //}
-  //if ( globalWorkSize[1] * microTileNumCols < N) {
-  //  printf("adding a col of work-groups\n");
-  //  globalWorkSize[1]+=localWorkSize[1];
-  //}
-  //printf("C[ %d rows x %d cols] = A[ %d rows x %d cols ] * B[ %d rows x %d cols ]\n",
-  //  numRowsC, numColsC,
-  //  numRowsA, numColsA,
-  //  numRowsB, numColsB );
-  //printf("M(%4u) = %3u * %3u + %3u\n", M, M / microTileNumRows, microTileNumRows, M % microTileNumRows);
-  //printf("N(%4u) = %3u * %3u + %3u\n", N, N / microTileNumCols, microTileNumCols, N % microTileNumCols);
-
     cl_int err;
     cl_platform_id platform;
     cl_device_id device;
@@ -361,7 +342,7 @@ void testKernelParameterCombination(
 
 #if DO_VALIDATION
     //printf("Running naive gemm.\n");
-    NaiveBlas::gemm(order, transA, transB, M, N, K, alpha, A + offA, lda, B + offB, ldb, beta, naiveC + offC, ldc);
+    gemm(order, transA, transB, M, N, K, alpha, A + offA, lda, B + offB, ldb, beta, naiveC + offC, ldc);
 #endif
     bufA = clCreateBuffer(context, CL_MEM_READ_ONLY,
         (offA + numRowsA * numColsA) * sizeof(*A), NULL, &err);
@@ -693,7 +674,7 @@ void testKernelParameterCombination(
       totalFlops *= 4;
 #endif
       double gFlops = (1.0*totalFlops) / (1.0*timeNs);
-      printf("%llu flops in %llu ns = %f Gflop/s (%.1f%% of peak)\n", totalFlops, timeNs, gFlops, 100*gFlops/peakGflops);
+      printf("%12llu flops in %12llu ns = %7.1f Gflop/s (%5.1f%% of peak)\n", totalFlops, timeNs, gFlops, 100*gFlops/peakGflops);
     }
 #endif
 
@@ -740,7 +721,7 @@ void testKernelParameterCombination(
         printf("%s", tileKernelSource );
     }
     fflush(stdout);
-    //system("PAUSE");
+    system("PAUSE");
 #endif
 
     err = clReleaseMemObject(bufA); CL_CHECK(err);
@@ -779,7 +760,7 @@ int main(void) {
   }
 
 
-  for (unsigned int kernelIdx = 112; kernelIdx < numKernels; kernelIdx++) {
+  for (unsigned int kernelIdx = 0; kernelIdx < numKernels; kernelIdx++) {
     printf("kernelIdx = %u\n", kernelIdx);
     /* {isColumnMajor, transA, transB, betaNonZero, wgNumRows, wgNumCols, mtNumRows, mtNumCols, }*/
     unsigned int *kernelParameters = kernels[kernelIdx];
@@ -810,10 +791,10 @@ int main(void) {
     unsigned int columnMajor = 1;
     unsigned int transA = 0;
     unsigned int transB = 1;
-    unsigned int beta = 1;
-    unsigned int macroTileNumRows = 16*6;
-    unsigned int macroTileNumCols = 16*6;
-    unsigned int unroll = 16;
+    unsigned int beta = 0;
+    unsigned int macroTileNumRows = 16*4;
+    unsigned int macroTileNumCols = 16*4;
+    unsigned int unroll = 8;
     unsigned int mSpill = 0;
     unsigned int nSpill = 0;
 
@@ -829,20 +810,6 @@ int main(void) {
       mSpill,
       nSpill );
 
-    
-    testKernelParameterCombination(
-      columnMajor,
-      transA,
-      transB,
-      false,
-      macroTileNumRows,
-      macroTileNumCols,
-      unroll,
-      mSpill,
-      nSpill );
-
-
-    system("PAUSE");
 #endif
 
   
@@ -944,6 +911,9 @@ createKernel(
     const char* options,
     cl_int* error)
 {
+
+  printf("BuildOptions: %s\n", options );
+
   //printf("Kernel Source:\n%s", source );
   cl_int err;
   cl_device_id device;

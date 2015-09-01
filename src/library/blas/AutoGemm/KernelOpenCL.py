@@ -241,6 +241,35 @@ def makeOpenCLKernelString(kernel):
     kStr += "  uint groupCol = N / " + str(kernel.workGroupNumCols*kernel.microTileNumCols) + "; // last column" + endLine
   else:
     kStr += "  uint groupCol = get_group_id(1);" + endLine
+
+  ####################################
+  # z-order - TODO doesn't improve caching, only lowers occupancy
+  if False:
+    kStr += (
+        "  // convert work-group order to z-order" + endLine +
+        "  unsigned int morton = get_group_id(1) * get_num_groups(0) + get_group_id(0);" + endLine +
+        "  groupRow = morton;" + endLine +
+        "  groupCol = ( groupRow >> 1 );" + endLine +
+        "  groupRow &= 0x55555555;" + endLine +
+        "  groupCol &= 0x55555555;" + endLine +
+        "  groupRow |= ( groupRow >> 1 );" + endLine +
+        "  groupCol |= ( groupCol >> 1 );" + endLine +
+        "  groupRow &= 0x33333333;" + endLine +
+        "  groupCol &= 0x33333333;" + endLine +
+        "  groupRow |= ( groupRow >> 2 );" + endLine +
+        "  groupCol |= ( groupCol >> 2 );" + endLine +
+        "  groupRow &= 0x0f0f0f0f;" + endLine +
+        "  groupCol &= 0x0f0f0f0f;" + endLine +
+        "  groupRow |= ( groupRow >> 4 );" + endLine +
+        "  groupCol |= ( groupCol >> 4 );" + endLine +
+        "  groupRow &= 0x00ff00ff;" + endLine +
+        "  groupCol &= 0x00ff00ff;" + endLine +
+        "  groupRow |= ( groupRow >> 8 );" + endLine +
+        "  groupCol |= ( groupCol >> 8 );" + endLine +
+        "  groupRow &= 0x0000ffff;" + endLine +
+        "  groupCol &= 0x0000ffff;" + endLine + endLine
+        )
+
   kStr += (
     "  uint localRow = get_local_id(0);" + endLine +
     "  uint localCol = get_local_id(1);" + endLine +
