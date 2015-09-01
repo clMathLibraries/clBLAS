@@ -43,6 +43,10 @@
 #include "UserGemmKernelSources/sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_src.cpp"
 #include "UserGemmKernelSources/sgemm_Col_NT_B1_MX064_NX032_KX16_COL_src.cpp"
 #include "UserGemmKernelSources/sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_src.cpp"
+//**** branch kernels with 32x32 macro tile size
+#include "UserGemmKernelSources/sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_src.cpp"
+#include "UserGemmKernelSources/sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_src.cpp"
+#include "UserGemmKernelSources/sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src.cpp"
 
 
 //**** compiler flags
