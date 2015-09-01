@@ -6,6 +6,8 @@
 #define KERNEL_SGEMM_COL_NT_B1_MX128_NX128_KX16_SRC_H
 #pragma message("AutoGemm's sgemm_Col_NT_B1_MX128_NX128_KX16_src (if exists) overriden by user.")
 
+#include "UserGemmKernelSourceIncludes.h"
+
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
 #define STRINGIFY2(S) #S
@@ -17,7 +19,7 @@ const unsigned int sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumRows = 8;
 const unsigned int sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumCols = 8;
 const unsigned int sgemm_Col_NT_B1_MX128_NX128_KX16_unroll = 16;
 
-static const char * const sgemm_Col_NT_B1_MX128_NX128_KX16_src = STRINGIFY(
+const char * const sgemm_Col_NT_B1_MX128_NX128_KX16_src = STRINGIFY(
 
 #define  M8x8 \
             rA[0][0] = lA[offA + 0];				  \

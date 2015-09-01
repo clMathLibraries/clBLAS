@@ -52,9 +52,15 @@ set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.cpp
 )
 
-set(USERGEMM_SRC
-  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSources.cpp
+#set(USERGEMM_SRC
+#  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.cpp
+#)
+
+set(USERGEMM_HEADERS
+   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
+   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.h
 )
+
 set(AUTOGEMM_TEST_SRC
   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemmTools/TestAutoGemm.cpp
 )
@@ -631,6 +637,7 @@ include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}/library/tools/tune
     ${clBLAS_BINARY_DIR}/include
     ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
+	${clBLAS_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources
 	${clBLAS_SOURCE_DIR}/library/blas/specialCases/include
 )
 
@@ -785,6 +792,8 @@ add_library(clBLAS
     ${AUTOGEMM_HEADERS}
     ${AUTOGEMM_SCRIPTS}
     ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
+	#${USERGEMM_SRC}
+	${USERGEMM_HEADERS}
   )
 add_dependencies(clBLAS GENERATE_CLT)
 

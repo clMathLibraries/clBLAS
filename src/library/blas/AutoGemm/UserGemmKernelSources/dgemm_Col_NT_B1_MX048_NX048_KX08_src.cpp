@@ -17,7 +17,7 @@ const unsigned int dgemm_Col_NT_B1_MX048_NX048_KX08_microTileNumRows = 6;
 const unsigned int dgemm_Col_NT_B1_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_NT_B1_MX048_NX048_KX08_unroll = 8;
 
-static const char * const dgemm_Col_NT_B1_MX048_NX048_KX08_src = STRINGIFY(
+const char * const dgemm_Col_NT_B1_MX048_NX048_KX08_src = STRINGIFY(
 \n
 \ntypedef union _GPtr {
 \n  __global float *f;

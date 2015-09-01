@@ -2,22 +2,22 @@
  * Hand-tuned kernel
  ******************************************************************************/
 
-#ifndef KERNEL_SGEMM_COL_NN_B1_MX096_NX096_KX16_SRC_H
-#define KERNEL_SGEMM_COL_NN_B1_MX096_NX096_KX16_SRC_H
-#pragma message("AutoGemm's sgemm_Col_NN_B1_MX096_NX096_KX16_src overriden by user.")
+#ifndef KERNEL_SGEMM_COL_NN_B0_MX096_NX096_KX16_SRC_H
+#define KERNEL_SGEMM_COL_NN_B0_MX096_NX096_KX16_SRC_H
+#pragma message("AutoGemm's sgemm_Col_NN_B0_MX096_NX096_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
 #define STRINGIFY2(S) #S
 #endif
 
-const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_workGroupNumRows = 16;
-const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_workGroupNumCols = 16;
-const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_microTileNumRows = 6;
-const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_microTileNumCols = 6;
-const unsigned int sgemm_Col_NN_B1_MX096_NX096_KX16_unroll = 16;
+const unsigned int sgemm_Col_NN_B0_MX096_NX096_KX16_workGroupNumRows = 16;
+const unsigned int sgemm_Col_NN_B0_MX096_NX096_KX16_workGroupNumCols = 16;
+const unsigned int sgemm_Col_NN_B0_MX096_NX096_KX16_microTileNumRows = 6;
+const unsigned int sgemm_Col_NN_B0_MX096_NX096_KX16_microTileNumCols = 6;
+const unsigned int sgemm_Col_NN_B0_MX096_NX096_KX16_unroll = 16;
 
-static const char * const sgemm_Col_NN_B1_MX096_NX096_KX16_src = STRINGIFY(
+const char * const sgemm_Col_NN_B0_MX096_NX096_KX16_src = STRINGIFY(
 
 #define  M6x6 \
             rA[0][0] = lA[offA + 0];				  \
@@ -70,10 +70,10 @@ static const char * const sgemm_Col_NN_B1_MX096_NX096_KX16_src = STRINGIFY(
             rC[3][5]=mad(rA[0][3],rB[0][5],rC[3][5]); \
             rC[4][5]=mad(rA[0][4],rB[0][5],rC[4][5]); \
             rC[5][5]=mad(rA[0][5],rB[0][5],rC[5][5]); \
-			      mem_fence(CLK_LOCAL_MEM_FENCE);\n
+		      	mem_fence(CLK_LOCAL_MEM_FENCE);\n
 
 __attribute__((reqd_work_group_size(16,16,1)))
-__kernel void sgemm_Col_NN_B1_MX096_NX096_KX16 (
+__kernel void sgemm_Col_NN_B0_MX096_NX096_KX16 (
   __global float const * restrict A,
   __global float const * restrict B,
   __global float * C,
@@ -112,10 +112,11 @@ __kernel void sgemm_Col_NN_B1_MX096_NX096_KX16 (
 
 
     uint block_k = K >> 4;
-    do {
+    do
+	{
         __local float* plA = lA + idy*97+idx;
         __local float* plB = lB + idx*97+idy;
-		    barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_LOCAL_MEM_FENCE);
         plB[0] = B[0];
         plB[16] = B[16*ldb];
         plB[32] = B[32*ldb];
@@ -123,7 +124,7 @@ __kernel void sgemm_Col_NN_B1_MX096_NX096_KX16 (
         plB[64] = B[64*ldb];
         plB[80] = B[80*ldb];
 
-	      plA[0] = A[0+0*lda];
+	    plA[0] = A[0+0*lda];
         plA[16] = A[16+0*lda];
         plA[32] = A[32+0*lda];
         plA[48] = A[48+0*lda];
@@ -135,22 +136,22 @@ __kernel void sgemm_Col_NN_B1_MX096_NX096_KX16 (
         uint offA = idx;
         uint offB = idy;
 
-        M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
-	      M6x6
+    M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
+		M6x6
 
         A += lda<<4;
         B += 16;

@@ -26,7 +26,7 @@ class KernelSourceIncludes:
     self.cppFile.write( Common.getAutoGemmHeader() )
     self.cppStr  = "\n"
     self.cppStr += "#include \"%sAutoGemmKernelSources.h\"\n" % Common.getRelativeIncludePath()
-    self.cppStr += "#include \"UserGemmKernelSources/UserGemmKernelSourceIncludes.h\"\n"
+    self.cppStr += "#include \"UserGemmKernelSources/UserGemmKernelSourceIncludes.cpp\"\n"
 	#self.cppStr += "#include \"UserGemmKernelSources/UserGemmKernelSources.cpp\"\n"
 
   def addKernel(self, kernel):

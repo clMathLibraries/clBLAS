@@ -17,7 +17,7 @@ const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_microTileNumRows = 6;
 const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_unroll = 8;
 
-static const char * const dgemm_Col_NN_B1_MX048_NX048_KX08_src = STRINGIFY(
+const char * const dgemm_Col_NN_B1_MX048_NX048_KX08_src = STRINGIFY(
 
 #define  M6x6 \
             rA[0] = lA[offA + 0];                       \
