@@ -466,8 +466,8 @@ def writeOpenCLKernelToFile(kernel):
   kernelFileName = Common.getKernelSourcePath() + kernelName +"_src.cpp"
   kernelFile = open(kernelFileName, "w")
   kernelFile.write( Common.getAutoGemmHeader() )
-  kernelFile.write("#ifndef KERNEL_" + kernelName.upper() + "_SRC_C\n")
-  kernelFile.write("#define KERNEL_" + kernelName.upper() + "_SRC_C\n")
+  kernelFile.write("#ifndef KERNEL_" + kernelName.upper() + "_SRC_H\n")
+  kernelFile.write("#define KERNEL_" + kernelName.upper() + "_SRC_H\n")
   kernelFile.write("\n")
   kernelFile.write("const unsigned int %s_workGroupNumRows = %u;\n" % (kernel.getName(), kernel.workGroupNumRows ) )
   kernelFile.write("const unsigned int %s_workGroupNumCols = %u;\n" % (kernel.getName(), kernel.workGroupNumCols ) )

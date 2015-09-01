@@ -355,6 +355,7 @@ set(SRC_BLAS
 	blas/functor/gcn_sgemmSmallMatrices.cc
 	blas/functor/hawaii_sgemmBranchKernel.cc
 	blas/functor/hawaii_sgemmBig1024Kernel.cc
+	blas/specialCases/GemmSpecialCases.cpp
 )
 
 set(SRC_BLAS_HEADERS
@@ -365,6 +366,7 @@ set(SRC_BLAS_HEADERS
     blas/include/clblas-internal.h
     blas/include/solution_seq.h
     blas/include/events.h
+	blas/include/xgemm.h
     blas/functor/include/functor.h
     blas/functor/include/functor_xgemm.h
     blas/functor/include/functor_xscal.h
@@ -629,6 +631,7 @@ include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}/library/tools/tune
     ${clBLAS_BINARY_DIR}/include
     ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
+	${clBLAS_SOURCE_DIR}/library/blas/specialCases/include
 )
 
 option( BLAS_DUMP_CLBLAS_KERNELS "Force the library to dump OpenCL kernels to disk" OFF )
