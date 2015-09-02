@@ -531,6 +531,46 @@ clblasStatus GEMM_BRANCH_32(
 
 		if (transA == clblasNoTrans && transB == clblasNoTrans)
 		{
+			specialCaseHandled = true;
+			tileKernelSource = sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_src;
+			tileClKernel = &sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_clKernel;
+
+			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
+
+			err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+			CL_CHECK(err);
+
+			err = clEnqueueNDRangeKernel(commandQueues[0], *tileClKernel, 2, NULL,
+				gs, wgsize, numEventsInWaitList, eventWaitList, &events[0]);
+
+			if (err == 0)
+				return clblasSuccess;
 		}
 		if (transA == clblasNoTrans && transB == clblasTrans)
 		{
@@ -577,6 +617,46 @@ clblasStatus GEMM_BRANCH_32(
 		}
 		if (transA == clblasTrans && transB == clblasNoTrans)
 		{
+			specialCaseHandled = true;
+			tileKernelSource = sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src;
+			tileClKernel = &sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel;
+
+			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
+
+			err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+			CL_CHECK(err);
+			err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+			CL_CHECK(err);
+
+			err = clEnqueueNDRangeKernel(commandQueues[0], *tileClKernel, 2, NULL,
+				gs, wgsize, numEventsInWaitList, eventWaitList, &events[0]);
+
+			if (err == 0)
+				return clblasSuccess;
 		}
 	}
 
