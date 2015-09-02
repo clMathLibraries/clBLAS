@@ -212,12 +212,12 @@ add_executable(AutoGemm_PreCompile_Bin
   )
 target_link_libraries(AutoGemm_PreCompile_Bin ${OPENCL_LIBRARIES})
 set_property( TARGET AutoGemm_PreCompile_Bin PROPERTY FOLDER "AutoGemm")
-set_target_properties(
-  AutoGemm_PreCompile_Bin
-  PROPERTIES
-  EXCLUDE_FROM_ALL TRUE
-  EXCLUDE_FROM_DEFAULT_BUILD TRUE
-)
+#set_target_properties(
+  #AutoGemm_PreCompile_Bin
+  #PROPERTIES
+  #EXCLUDE_FROM_ALL TRUE
+  #EXCLUDE_FROM_DEFAULT_BUILD TRUE
+#)
 
 
 ################################################################################
@@ -229,7 +229,7 @@ add_custom_command(
   DEPENDS AutoGemm_PreCompile_Bin
 )
 
-endif()
+endif()#endif precompile active
 
 
 ################################################################################
