@@ -1,6 +1,7 @@
 
 #ifndef USER_GEMM_SOURCE_INCLUDES_H
 #define USER_GEMM_SOURCE_INCLUDES_H
+#include <cstddef>
 
 //#ifdef AUTOGEMM_USE_PRE_COMPILED_KERNELS
 //#include "AutoGemmKernelBinaries/sgemm_Col_NT_B1_MX128_NX128_KX16_bin.cpp"
