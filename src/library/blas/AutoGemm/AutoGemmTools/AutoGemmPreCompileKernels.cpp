@@ -45,6 +45,8 @@
 //using namespace NaiveBlas;
 #include "AutoGemmIncludes/AutoGemmKernelsToPreCompile.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
+#include "UserGemmKernelSources/UserGemmClKernels.h"
+#include "UserGemmKernelSources/UserGemmKernelSourceIncludes.h"
 
 unsigned int totalKernelsToCompile;
 unsigned int numKernelsCompiled;
@@ -665,12 +667,59 @@ int main( int argc, char *argv[] ) {
 	clockStart = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
 #endif
 
+	totalKernelsToCompile = gemmPreCompileNum;
+	totalKernelsToCompile *= 4;
+	totalKernelsToCompile += 1;
+	numKernelsCompiled = 0;
+  //precompile user defined kernels
+  //all of the user defined kernels will be precompiled if precompile is active
+	
+  for (int i = 0; i < 1; i++)
+  {
+	  const char *tileKernelSource;
+	  const unsigned char *tileKernelBinary;
+	  size_t tileKernelBinarySize;
+	  const char *binaryBuildOptions;
+	  cl_kernel *tileClKernel;
+	  unsigned int workGroupNumRows;
+	  unsigned int workGroupNumCols;
+	  unsigned int unroll;
+
+	  tileKernelSource = sgemm_Col_NT_B1_MX128_NX128_KX16_src;
+	  tileKernelBinary = sgemm_Col_NT_B1_MX128_NX128_KX16_bin;
+	  tileKernelBinarySize = sgemm_Col_NT_B1_MX128_NX128_KX16_binSize;
+	  binaryBuildOptions = User_binBuildOptions;
+	  workGroupNumRows = sgemm_Col_NT_B1_MX128_NX128_KX16_workGroupNumRows;
+	  workGroupNumCols = sgemm_Col_NT_B1_MX128_NX128_KX16_workGroupNumCols;
+	  macroTileNumRows = sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumRows * sgemm_Col_NT_B1_MX128_NX128_KX16_workGroupNumRows;
+	  macroTileNumCols = sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumCols * sgemm_Col_NT_B1_MX128_NX128_KX16_workGroupNumCols;
+	  unroll = sgemm_Col_NT_B1_MX128_NX128_KX16_unroll;
+	  beta = 1.0;
+
+
+	  compileKernelAndWriteToFile<float>(
+		  context,
+		  clblasColumnMajor,
+		  clblasNoTrans,
+		  clblasTrans,
+		  beta,
+		  macroTileNumRows,
+		  macroTileNumCols,
+		  unroll,
+		  false, // extra row
+		  false, // extra col
+		  tileKernelSource,
+		  binaryBuildOptions);
+
+  }
+  
   // for each kernel to be pre-compiled
   
-  totalKernelsToCompile = gemmPreCompileNum;
-  totalKernelsToCompile *= 4;
-  numKernelsCompiled = 0;
-  for (unsigned int i = 0; i < gemmPreCompileNum; i++) {
+  //totalKernelsToCompile = gemmPreCompileNum;
+  //totalKernelsToCompile *= 4;
+  //numKernelsCompiled = 0;
+  
+  for (unsigned int i = 0; i < gemmPreCompileNum ; i++) {
     // unload parameters
     // idx 0 is precision
     order = gemmPreCompile[i][1]==1 ? clblasColumnMajor : clblasRowMajor;
@@ -727,6 +776,10 @@ int main( int argc, char *argv[] ) {
         );
     }
   }// end for
+  
+  //precompile user defined kernels
+
+
   unsigned long long clockCurrent;
 #if defined( _WIN32 )
 	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockCurrent ) );

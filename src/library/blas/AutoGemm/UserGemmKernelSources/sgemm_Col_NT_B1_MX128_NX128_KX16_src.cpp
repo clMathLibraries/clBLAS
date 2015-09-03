@@ -19,6 +19,12 @@ const unsigned int sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumRows = 8;
 const unsigned int sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumCols = 8;
 const unsigned int sgemm_Col_NT_B1_MX128_NX128_KX16_unroll = 16;
 
+//if precompiled is enabled. All hand tuned kerenls should be precompiled.
+#ifndef AUTOGEMM_USE_PRE_COMPILED_KERNELS
+unsigned char *sgemm_Col_NT_B1_MX128_NX128_KX16_bin = 0;
+size_t sgemm_Col_NT_B1_MX128_NX128_KX16_binSize = 0;
+#endif
+
 const char * const sgemm_Col_NT_B1_MX128_NX128_KX16_src = STRINGIFY(
 
 #define  M8x8 \

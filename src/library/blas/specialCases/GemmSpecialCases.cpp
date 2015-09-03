@@ -188,7 +188,7 @@ clblasStatus GEMM_mod1024(
 {
 	const char *tileKernelSource = NULL;
 	cl_kernel  *tileClKernel = NULL;
-	size_t *tileKernelBinarySize = 0;
+	size_t tileKernelBinarySize = 0;
 	cl_int err;
 
 
@@ -232,9 +232,10 @@ clblasStatus GEMM_mod1024(
 
 					tileKernelSource = sgemm_Col_NT_B1_MX128_NX128_KX16_src;
 					tileClKernel = &sgemm_Col_NT_B1_MX128_NX128_KX16_clKernel;
-					//tileClKernel = &sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
+					tileKernelBinary = sgemm_Col_NT_B1_MX128_NX128_KX16_bin;
+					tileKernelBinarySize = sgemm_Col_NT_B1_MX128_NX128_KX16_binSize;
 
-					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
+					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
 					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
 					CL_CHECK(err);
@@ -306,7 +307,7 @@ clblasStatus GEMM_mod1024(
 					tileKernelSource = sgemm_Col_NT_B1_MX096_NX096_KX16_src;
 					tileClKernel = &sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
 
-					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, tileKernelBinarySize, User_binBuildOptions);
+					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
 					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
 					CL_CHECK(err);
