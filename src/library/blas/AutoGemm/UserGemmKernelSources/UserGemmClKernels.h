@@ -13,6 +13,6 @@ static cl_kernel sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
 static cl_kernel sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
 static cl_kernel sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
 
-static int user_kernel_count = 7;
+static const int user_kernel_count = 7;
 
 #endif

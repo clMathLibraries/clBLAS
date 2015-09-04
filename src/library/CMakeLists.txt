@@ -397,6 +397,8 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
 	blas/functor/include/hawaii_sgemmBig1024Kernel.h
+	blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.h
+	blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
 )
 
 set(SRC_BLAS_GENERIC
@@ -793,7 +795,7 @@ add_library(clBLAS
     ${AUTOGEMM_SCRIPTS}
     ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
 	#${USERGEMM_SRC}
-	${USERGEMM_HEADERS}
+	#${USERGEMM_HEADERS}
   )
 add_dependencies(clBLAS GENERATE_CLT)
 

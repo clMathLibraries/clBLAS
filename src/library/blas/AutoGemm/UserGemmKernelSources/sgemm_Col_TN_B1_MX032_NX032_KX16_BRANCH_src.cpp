@@ -17,6 +17,11 @@ const unsigned int sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_microTileNumRows = 2;
 const unsigned int sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_microTileNumCols = 2;
 const unsigned int sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_unroll = 16;
 
+#ifndef AUTOGEMM_USE_PRE_COMPILED_KERNELS
+unsigned char *sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_bin = 0;
+size_t sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_binSize = 0;
+#endif
+
 const char * const sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src = STRINGIFY(
 
 #define  M2x2 \
