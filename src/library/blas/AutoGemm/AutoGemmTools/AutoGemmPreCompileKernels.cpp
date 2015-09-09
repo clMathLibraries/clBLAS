@@ -45,6 +45,8 @@
 //using namespace NaiveBlas;
 #include "AutoGemmIncludes/AutoGemmKernelsToPreCompile.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelectionSpecific.h"
+#include "UserGemmKernelSources/UserGemmClKernels.h"
+#include "UserGemmKernelSources/UserGemmKernelSourceIncludes.h"
 
 unsigned int totalKernelsToCompile;
 unsigned int numKernelsCompiled;
@@ -177,9 +179,10 @@ int getKernelName(
   unsigned int macroTileNumCols,
   unsigned int unroll,
   bool extraRow,
-  bool extraCol )
+  bool extraCol,
+  char *appendstring)
 {
-  return sprintf( *kernelName,
+  int n = sprintf( *kernelName,
     "%cgemm_%s_%s%s_B%i_M%c%03u_N%c%03u_KX%02u",
     getPrecisionChar<Precision>(),
     order==clblasColumnMajor ? "Col" : "Row",
@@ -191,6 +194,12 @@ int getKernelName(
     extraCol ? 'L' : 'X',
     macroTileNumCols,
     unroll );
+  int n2 = 0;
+  if (appendstring != NULL)
+  {
+	  n2 = sprintf((*kernelName) + n, appendstring);
+  }
+  return n2 + n;
 }
 
 template<typename Precision>
@@ -204,9 +213,10 @@ int getStringName(
   unsigned int macroTileNumCols,
   unsigned int unroll,
   bool extraRow,
-  bool extraCol )
+  bool extraCol,
+  char *appendstring)
 {
-  int n = getKernelName<Precision>(stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int n = getKernelName<Precision>(stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol, appendstring);
   int n2 = sprintf( (*stringName)+n, "_bin" );
   return n+n2;
 }
@@ -222,9 +232,10 @@ int getFileName(
   unsigned int macroTileNumCols,
   unsigned int unroll,
   bool extraRow,
-  bool extraCol )
+  bool extraCol,
+  char *appendstring)
 {
-  int n = getKernelName<Precision>(fileName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int n = getKernelName<Precision>(fileName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol, appendstring);
   int n2 = sprintf( (*fileName)+n, "_bin.cpp" );
   return n+n2;
 }
@@ -240,11 +251,12 @@ int getPreprocessorName(
   unsigned int macroTileNumCols,
   unsigned int unroll,
   bool extraRow,
-  bool extraCol )
+  bool extraCol,
+  char *appendstring)
 {
   char kernelNameArray[64];
   char *kernelName = kernelNameArray;
-  int n = getKernelName<Precision>(&kernelName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int n = getKernelName<Precision>(&kernelName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol, appendstring);
   for ( int i = 0; i < n; i++) {
     kernelName[i] = toupper(kernelName[i]);
   }
@@ -369,7 +381,8 @@ void compileKernelAndWriteToFile(
   bool extraRow,
   bool extraCol,
   const char *source,
-  const char *buildOptions )
+  const char *buildOptions,
+  char* appendString)
 {
   // get kernel name
   char stringNameArray[64];
@@ -378,9 +391,9 @@ void compileKernelAndWriteToFile(
   char *stringName = &stringNameArray[0];
   char *fileName = &fileNameArray[0];
   char *preprocessorName = &preprocessorNameArray[0];
-  int stringNameLength = getStringName<Precision>(      &stringName,             order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
-  int fileNameLength = getFileName<Precision>(        &fileName,                 order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
-  int preprocessorNameLength = getPreprocessorName<Precision>(&preprocessorName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol);
+  int stringNameLength = getStringName<Precision>(&stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol, appendString);
+  int fileNameLength = getFileName<Precision>(&fileName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol, appendString);
+  int preprocessorNameLength = getPreprocessorName<Precision>(&preprocessorName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, extraRow, extraCol, appendString);
   
   // get kernel binary
   char **kernelBinary = new char*[1];
@@ -509,7 +522,7 @@ cl_int compileKernelGroupAndWriteToFile(
     totalKernelsToCompile -= 4;
     char stringNameArray[64];
     char *stringName = &stringNameArray[0];
-    int stringNameLength = getStringName<Precision>( &stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, 0, 0);
+    int stringNameLength = getStringName<Precision>( &stringName, order, transA, transB, beta, macroTileNumRows, macroTileNumCols, unroll, 0, 0, NULL);
     printf("AutoGemm-PreCompile: %s not found; skipping.\n", stringName );
     return 0;
   }
@@ -526,7 +539,8 @@ cl_int compileKernelGroupAndWriteToFile(
       false, // extra row
       false, // extra col
       tileKernelSource,
-      sourceBuildOptions );
+      sourceBuildOptions,
+	  NULL);
     
     compileKernelAndWriteToFile<Precision>(
         context,
@@ -540,7 +554,8 @@ cl_int compileKernelGroupAndWriteToFile(
         true, // extra row
         false, // extra col
         rowKernelSource,
-        sourceBuildOptions );
+        sourceBuildOptions,
+		NULL);
 
     compileKernelAndWriteToFile<Precision>(
         context,
@@ -554,7 +569,8 @@ cl_int compileKernelGroupAndWriteToFile(
         false, // extra row
         true, // extra col
         colKernelSource,
-        sourceBuildOptions );
+        sourceBuildOptions,
+		NULL);
 
     compileKernelAndWriteToFile<Precision>(
         context,
@@ -568,7 +584,8 @@ cl_int compileKernelGroupAndWriteToFile(
         true, // extra row
         true, // extra col
         cornerKernelSource,
-        sourceBuildOptions );
+        sourceBuildOptions,
+		NULL);
 
   return 1;
 }
@@ -664,13 +681,173 @@ int main( int argc, char *argv[] ) {
 	gettimeofday(&s, 0);
 	clockStart = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
 #endif
+	const int specialKernelCount = user_kernel_count;
+	totalKernelsToCompile = gemmPreCompileNum;
+	totalKernelsToCompile *= 4;
+	totalKernelsToCompile += specialKernelCount;
+	numKernelsCompiled = 0;
+    //precompile user defined kernels
+    //all of the user defined special kernels will be precompiled if precompile is active
+    //there are 7 user defined special kernels refer to UserGemmKernelIncludes.h
+	const char *tileKernelSourceArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_src,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_src,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_src,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_src,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_src,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_src,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src
+	};
+	const unsigned char *tileKernelBinaryArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_bin,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_bin,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_bin,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_bin,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_bin,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_bin,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_bin
+	};
+	size_t tileKernelBinarySizeArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_binSize,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_binSize,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_binSize,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_binSize,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_binSize,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_binSize,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_binSize
+	};
+	unsigned int  workGroupNumRowsArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_workGroupNumRows,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_workGroupNumRows,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_workGroupNumRows,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_workGroupNumRows,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_workGroupNumRows,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_workGroupNumRows,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_workGroupNumRows
+	};
+	unsigned int  workGroupNumColsArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_workGroupNumCols,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_workGroupNumCols,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_workGroupNumCols,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_workGroupNumCols,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_workGroupNumCols,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_workGroupNumCols,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_workGroupNumCols
+	};
+	unsigned int  microTileNumRowsArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_microTileNumRows,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_microTileNumRows,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_microTileNumRows,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumRows,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_microTileNumRows,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_microTileNumRows,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_microTileNumRows
+	};
+	unsigned int  microTileNumColsArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_microTileNumCols,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_microTileNumCols,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_microTileNumCols,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_microTileNumCols,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_microTileNumCols,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_microTileNumCols,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_microTileNumCols
+	};
+	unsigned int  unrollArray[specialKernelCount] =
+	{
+		sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_unroll,
+		sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_unroll,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_unroll,
+		sgemm_Col_NT_B1_MX128_NX128_KX16_unroll,
+		sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_unroll,
+		sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_unroll,
+		sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_unroll
+	};
+	char *appendStringArray[specialKernelCount] =
+	{
+		"_ROW",
+		"_COLUMN",
+		"_SINGLE",
+		NULL,
+		"_BRANCH",
+		"_BRANCH",
+		"_BRANCH"
+	};
+	clblasTranspose transA_Array[specialKernelCount] =
+	{
+		clblasNoTrans,
+		clblasNoTrans,
+		clblasNoTrans,
+		clblasNoTrans,
+		clblasNoTrans,
+		clblasNoTrans,
+		clblasTrans
+	};
+	clblasTranspose transB_Array[specialKernelCount] =
+	{
+		clblasTrans,
+		clblasTrans,
+		clblasTrans,
+		clblasTrans,
+		clblasNoTrans,
+		clblasTrans,
+		clblasNoTrans
+	};
+	
+  for (int i = 0; i < specialKernelCount; i++)
+  {
+	  const char *tileKernelSource;
+	  const unsigned char *tileKernelBinary;
+	  size_t tileKernelBinarySize;
+	  const char *binaryBuildOptions;
+	  //cl_kernel *tileClKernel;
+	  unsigned int workGroupNumRows;
+	  unsigned int workGroupNumCols;
+	  unsigned int unroll;
 
+	  tileKernelSource = tileKernelSourceArray[i];
+	  tileKernelBinary = tileKernelBinaryArray[i];
+	  tileKernelBinarySize = tileKernelBinarySizeArray[i];
+	  binaryBuildOptions = User_binBuildOptions;
+	  workGroupNumRows = workGroupNumRowsArray[i];
+	  workGroupNumCols = workGroupNumColsArray[i];
+	  macroTileNumRows = microTileNumRowsArray[i] * workGroupNumRowsArray[i];
+	  macroTileNumCols = microTileNumColsArray[i] * workGroupNumColsArray[i];
+	  unroll = unrollArray[i];
+	  beta = 1.0;
+	  char *appendString = appendStringArray[i];
+
+
+	  compileKernelAndWriteToFile<float>(
+		  context,
+		  clblasColumnMajor,
+		  transA_Array[i],
+		  transB_Array[i],
+		  beta,
+		  macroTileNumRows,
+		  macroTileNumCols,
+		  unroll,
+		  false, // extra row
+		  false, // extra col
+		  tileKernelSource,
+		  binaryBuildOptions,
+		  appendString);
+
+  }
+  
   // for each kernel to be pre-compiled
   
-  totalKernelsToCompile = gemmPreCompileNum;
-  totalKernelsToCompile *= 4;
-  numKernelsCompiled = 0;
-  for (unsigned int i = 0; i < gemmPreCompileNum; i++) {
+  //totalKernelsToCompile = gemmPreCompileNum;
+  //totalKernelsToCompile *= 4;
+  //numKernelsCompiled = 0;
+  
+  for (unsigned int i = 0; i < gemmPreCompileNum ; i++) {
     // unload parameters
     // idx 0 is precision
     order = gemmPreCompile[i][1]==1 ? clblasColumnMajor : clblasRowMajor;
@@ -727,6 +904,10 @@ int main( int argc, char *argv[] ) {
         );
     }
   }// end for
+  
+  //precompile user defined kernels
+
+
   unsigned long long clockCurrent;
 #if defined( _WIN32 )
 	::QueryPerformanceCounter( reinterpret_cast<LARGE_INTEGER*>( &clockCurrent ) );

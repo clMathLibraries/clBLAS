@@ -21,6 +21,12 @@ const unsigned int sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_microTileNumRows = 2;
 const unsigned int sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_microTileNumCols = 4;
 const unsigned int sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_unroll = 16;
 
+//if precompiled is enabled. All hand tuned kerenls should be precompiled.
+#ifndef AUTOGEMM_USE_PRE_COMPILED_KERNELS
+unsigned char *sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_bin = 0;
+size_t sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_binSize = 0;
+#endif
+
 const char * const sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_src = STRINGIFY(
 
 #define  M2x4 \

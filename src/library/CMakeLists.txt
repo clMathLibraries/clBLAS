@@ -212,12 +212,12 @@ add_executable(AutoGemm_PreCompile_Bin
   )
 target_link_libraries(AutoGemm_PreCompile_Bin ${OPENCL_LIBRARIES})
 set_property( TARGET AutoGemm_PreCompile_Bin PROPERTY FOLDER "AutoGemm")
-set_target_properties(
-  AutoGemm_PreCompile_Bin
-  PROPERTIES
-  EXCLUDE_FROM_ALL TRUE
-  EXCLUDE_FROM_DEFAULT_BUILD TRUE
-)
+#set_target_properties(
+  #AutoGemm_PreCompile_Bin
+  #PROPERTIES
+  #EXCLUDE_FROM_ALL TRUE
+  #EXCLUDE_FROM_DEFAULT_BUILD TRUE
+#)
 
 
 ################################################################################
@@ -229,7 +229,7 @@ add_custom_command(
   DEPENDS AutoGemm_PreCompile_Bin
 )
 
-endif()
+endif()#endif precompile active
 
 
 ################################################################################
@@ -397,6 +397,8 @@ set(SRC_BLAS_HEADERS
 	blas/functor/include/gcn_sgemmSmallMatrices.h
 	blas/functor/include/hawaii_sgemmBranchKernel.h
 	blas/functor/include/hawaii_sgemmBig1024Kernel.h
+	blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.h
+	blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
 )
 
 set(SRC_BLAS_GENERIC
@@ -793,7 +795,7 @@ add_library(clBLAS
     ${AUTOGEMM_SCRIPTS}
     ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
 	#${USERGEMM_SRC}
-	${USERGEMM_HEADERS}
+	#${USERGEMM_HEADERS}
   )
 add_dependencies(clBLAS GENERATE_CLT)
 
