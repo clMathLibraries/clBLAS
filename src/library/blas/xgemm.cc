@@ -167,6 +167,8 @@ void makeGemmKernel(
       1, clKernel,
       NULL );
     CL_CHECK(err)
+	err = clReleaseProgram(clProgram);
+	CL_CHECK(err)
     
 #ifdef AUTOGEMM_PRINT_DEBUG
     // get kernel name
