@@ -287,10 +287,17 @@ clblasGemm(
   force_gemm_column_major( order, transA, transB,
     M, N, offA, offB, lda, ldb, A, B );
 
-  // handle some special cases not optimized by auto gemm kernels
-  // 1, sgemm nt where lda, ldb are big multiples of 1024 starting from 4096
-  // 2, sgemm nt where M and N are within middle range
-  //    and are mod32 but not mod96 or mod 64
+
+  
+/******************************************************************************
+ * Handle Special Cases
+ *
+ * 1) sgemm NT where lda, ldb are big multiples of 1024 starting from 4096
+ *
+ * 2) sgemm NT where M and N are within middle range
+ * and are mod32 but not mod96 or mod64
+ *
+ *****************************************************************************/
   
   bool specialCaseHandled = false;
 
