@@ -679,36 +679,37 @@ if(OCL_OFFLINE_BUILD_TAHITI_KERNEL OR OCL_OFFLINE_BUILD_HAWAII_KERNEL OR OCL_OFF
 endif()
 
 message(STATUS "OCL_VERSION = ${OCL_VERSION}")
-if( OCL_VERSION STREQUAL "2.0")
-	if(EXISTS ${CMAKE_SOURCE_DIR}/flags.txt)
-		MESSAGE(STATUS "flags.txt found. will load AMD_OCL_BUILD_OPTIONS_APPEND from it.")
-		set (LOAD_CL_FLAGS TRUE)
-		file (STRINGS "${CMAKE_SOURCE_DIR}/flags.txt" OCL_FLAGS)
-		MESSAGE(STATUS "OCLFLAGS: ${OCL_FLAGS}")
-		string(REPLACE "OCL " "OCL;" OCL_FLAGS_REPLACED ${OCL_FLAGS})
-		list(GET OCL_FLAGS_REPLACED 1 OCL_FLAGS_REPLACED_1)#flags for TAHITI
-		list(GET OCL_FLAGS_REPLACED 3 OCL_FLAGS_REPLACED_3)#flags for HAWAII 1
-		list(GET OCL_FLAGS_REPLACED 5 OCL_FLAGS_REPLACED_5)#flags for HAWAII 2
-		list(GET OCL_FLAGS_REPLACED 7 OCL_FLAGS_REPLACED_7)#flags for BONAIRE
-		#MESSAGE("${OCL_FLAGS_REPLACED_7}")
-	elseif(EXISTS ${CMAKE_SOURCE_DIR}/flags_public.txt)
-		MESSAGE(STATUS "flags_public.txt found. will load AMD_OCL_BUILD_OPTIONS_APPEND from it.")
-		set (LOAD_CL_FLAGS TRUE)
-		file (STRINGS "${CMAKE_SOURCE_DIR}/flags_public.txt" OCL_FLAGS)
-		MESSAGE(STATUS "OCLFLAGS: ${OCL_FLAGS}")
-		string(REPLACE "OCL " "OCL;" OCL_FLAGS_REPLACED ${OCL_FLAGS})
-		list(GET OCL_FLAGS_REPLACED 1 OCL_FLAGS_REPLACED_1)#flags for TAHITI
-		list(GET OCL_FLAGS_REPLACED 3 OCL_FLAGS_REPLACED_3)#flags for HAWAII 1
-		list(GET OCL_FLAGS_REPLACED 5 OCL_FLAGS_REPLACED_5)#flags for HAWAII 2
-		list(GET OCL_FLAGS_REPLACED 7 OCL_FLAGS_REPLACED_7)#flags for BONAIRE	
-	else()
-		MESSAGE(STATUS "flags.txt not found. will use the default flags.")
-		set (LOAD_CL_FLAGS FALSE)
-	endif()
-else()
-	MESSAGE(STATUS "loading of compiler flags requires OpenCL 2.0. will use default flags.")
-	set (LOAD_CL_FLAGS FALSE)
-endif()
+#if( OCL_VERSION STREQUAL "2.0")
+#	if(EXISTS ${CMAKE_SOURCE_DIR}/flags.txt)
+#		MESSAGE(STATUS "flags.txt found. will load AMD_OCL_BUILD_OPTIONS_APPEND from it.")
+#		set (LOAD_CL_FLAGS TRUE)
+#		file (STRINGS "${CMAKE_SOURCE_DIR}/flags.txt" OCL_FLAGS)
+#		MESSAGE(STATUS "OCLFLAGS: ${OCL_FLAGS}")
+#		string(REPLACE "OCL " "OCL;" OCL_FLAGS_REPLACED ${OCL_FLAGS})
+#		list(GET OCL_FLAGS_REPLACED 1 OCL_FLAGS_REPLACED_1)#flags for TAHITI
+#		list(GET OCL_FLAGS_REPLACED 3 OCL_FLAGS_REPLACED_3)#flags for HAWAII 1
+#		list(GET OCL_FLAGS_REPLACED 5 OCL_FLAGS_REPLACED_5)#flags for HAWAII 2
+#		list(GET OCL_FLAGS_REPLACED 7 OCL_FLAGS_REPLACED_7)#flags for BONAIRE
+#		#MESSAGE("${OCL_FLAGS_REPLACED_7}")
+#	elseif(EXISTS ${CMAKE_SOURCE_DIR}/flags_public.txt)
+#		MESSAGE(STATUS "flags_public.txt found. will load AMD_OCL_BUILD_OPTIONS_APPEND from it.")
+#		set (LOAD_CL_FLAGS TRUE)
+#		file (STRINGS "${CMAKE_SOURCE_DIR}/flags_public.txt" OCL_FLAGS)
+#		MESSAGE(STATUS "OCLFLAGS: ${OCL_FLAGS}")
+#		string(REPLACE "OCL " "OCL;" OCL_FLAGS_REPLACED ${OCL_FLAGS})
+#		list(GET OCL_FLAGS_REPLACED 1 OCL_FLAGS_REPLACED_1)#flags for TAHITI
+#		list(GET OCL_FLAGS_REPLACED 3 OCL_FLAGS_REPLACED_3)#flags for HAWAII 1
+#		list(GET OCL_FLAGS_REPLACED 5 OCL_FLAGS_REPLACED_5)#flags for HAWAII 2
+#		list(GET OCL_FLAGS_REPLACED 7 OCL_FLAGS_REPLACED_7)#flags for BONAIRE	
+#	else()
+#		MESSAGE(STATUS "flags.txt not found. will use the default flags.")
+#		set (LOAD_CL_FLAGS FALSE)
+#	endif()
+#else()
+#	MESSAGE(STATUS "loading of compiler flags requires OpenCL 2.0. will use default flags.")
+#	set (LOAD_CL_FLAGS FALSE)
+  #endif()
+set (LOAD_CL_FLAGS FALSE)
 
 #set( bingenBinaryDir "${CMAKE_BINARY_DIR}/library/tools/bingen/staging" )
 # if offline compilation is not chosen, bingen should not be built
