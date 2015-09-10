@@ -75,79 +75,79 @@ set( AUTOGEMM_PRECOMPILED_KERNELS
 )
 
 # AutoGemm options for pre-compiling kernels
-option( AutoGemm_PreCompile_PRECISION_SGEMM "AutoGemm: pre-compile sgemm kernels" OFF)
-option( AutoGemm_PreCompile_PRECISION_DGEMM "AutoGemm: pre-compile dgemm kernels" OFF)
-option( AutoGemm_PreCompile_PRECISION_CGEMM "AutoGemm: pre-compile cgemm kernels" OFF)
-option( AutoGemm_PreCompile_PRECISION_ZGEMM "AutoGemm: pre-compile zgemm kernels" OFF)
+option( PRECOMPILE_GEMM_PRECISION_SGEMM "AutoGemm: pre-compile sgemm kernels" OFF)
+option( PRECOMPILE_GEMM_PRECISION_DGEMM "AutoGemm: pre-compile dgemm kernels" OFF)
+option( PRECOMPILE_GEMM_PRECISION_CGEMM "AutoGemm: pre-compile cgemm kernels" OFF)
+option( PRECOMPILE_GEMM_PRECISION_ZGEMM "AutoGemm: pre-compile zgemm kernels" OFF)
 
-option( AutoGemm_PreCompile_TRANS_NN "AutoGemm: pre-compile NN transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_NT "AutoGemm: pre-compile NT transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_NC "AutoGemm: pre-compile NC transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_TN "AutoGemm: pre-compile TN transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_TT "AutoGemm: pre-compile TT transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_TC "AutoGemm: pre-compile TC transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
-option( AutoGemm_PreCompile_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_NN "AutoGemm: pre-compile NN transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_NT "AutoGemm: pre-compile NT transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_NC "AutoGemm: pre-compile NC transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_TN "AutoGemm: pre-compile TN transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_TT "AutoGemm: pre-compile TT transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_TC "AutoGemm: pre-compile TC transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
+option( PRECOMPILE_GEMM_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
 
 # opencl compiler version
-#set( AutoGemm_PreCompile_OPENCL_VERSION "2.0" CACHE STRING "OpenCL compiler version supported by device driver." )
-#set_property( CACHE AutoGemm_PreCompile_OPENCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
-#message( STATUS "AutoGemm PreCompiler will use OpenCL ${AutoGemm_PreCompile_OPENCL_VERSION} compiler." ) 
+#set( PRECOMPILE_GEMM_OPENCL_VERSION "2.0" CACHE STRING "OpenCL compiler version supported by device driver." )
+#set_property( CACHE PRECOMPILE_GEMM_OPENCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
+#message( STATUS "AutoGemm PreCompiler will use OpenCL ${PRECOMPILE_GEMM_OPENCL_VERSION} compiler." ) 
 
 # PreCompile precision selected?
-set( AutoGemm_PreCompile_PRECISION_SELECTED OFF)
-if (   AutoGemm_PreCompile_PRECISION_SGEMM
-    OR AutoGemm_PreCompile_PRECISION_DGEMM
-    OR AutoGemm_PreCompile_PRECISION_CGEMM
-    OR AutoGemm_PreCompile_PRECISION_ZGEMM )
-  set( AutoGemm_PreCompile_PRECISION_SELECTED ON)
+set( PRECOMPILE_GEMM_PRECISION_SELECTED OFF)
+if (   PRECOMPILE_GEMM_PRECISION_SGEMM
+    OR PRECOMPILE_GEMM_PRECISION_DGEMM
+    OR PRECOMPILE_GEMM_PRECISION_CGEMM
+    OR PRECOMPILE_GEMM_PRECISION_ZGEMM )
+  set( PRECOMPILE_GEMM_PRECISION_SELECTED ON)
 endif()
 
 # PreCompile transpose selected?
-set( AutoGemm_PreCompile_TRANS_SELECTED OFF)
-if (   AutoGemm_PreCompile_TRANS_NN
-    OR AutoGemm_PreCompile_TRANS_NT
-    OR AutoGemm_PreCompile_TRANS_NC
-    OR AutoGemm_PreCompile_TRANS_TN
-    OR AutoGemm_PreCompile_TRANS_TT
-    OR AutoGemm_PreCompile_TRANS_TC
-    OR AutoGemm_PreCompile_TRANS_CN
-    OR AutoGemm_PreCompile_TRANS_CT
-    OR AutoGemm_PreCompile_TRANS_CC )
-  set( AutoGemm_PreCompile_TRANS_SELECTED ON)
+set( PRECOMPILE_GEMM_TRANS_SELECTED OFF)
+if (   PRECOMPILE_GEMM_TRANS_NN
+    OR PRECOMPILE_GEMM_TRANS_NT
+    OR PRECOMPILE_GEMM_TRANS_NC
+    OR PRECOMPILE_GEMM_TRANS_TN
+    OR PRECOMPILE_GEMM_TRANS_TT
+    OR PRECOMPILE_GEMM_TRANS_TC
+    OR PRECOMPILE_GEMM_TRANS_CN
+    OR PRECOMPILE_GEMM_TRANS_CT
+    OR PRECOMPILE_GEMM_TRANS_CC )
+  set( PRECOMPILE_GEMM_TRANS_SELECTED ON)
 endif()
 
 # PreCompile is valid and active?
-set( AutoGemm_PreCompile_ACTIVE OFF)
-if ( AutoGemm_PreCompile_PRECISION_SELECTED
-    AND AutoGemm_PreCompile_TRANS_SELECTED)
+set( PRECOMPILE_GEMM_ACTIVE OFF)
+if ( PRECOMPILE_GEMM_PRECISION_SELECTED
+    AND PRECOMPILE_GEMM_TRANS_SELECTED)
   # valid selection
-  set( AutoGemm_PreCompile_ACTIVE ON)
+  set( PRECOMPILE_GEMM_ACTIVE ON)
   MESSAGE( STATUS "AutoGemm-PreCompile: selected kernels will be pre-compiled." )
-elseif(NOT AutoGemm_PreCompile_PRECISION_SELECTED
-    AND NOT AutoGemm_PreCompile_TRANS_SELECTED)
+elseif(NOT PRECOMPILE_GEMM_PRECISION_SELECTED
+    AND NOT PRECOMPILE_GEMM_TRANS_SELECTED)
   MESSAGE( STATUS "AutoGemm-PreCompile: no kernels to be pre-compiled." )
 else()
-  MESSAGE( SEND_ERROR "AutoGemm-PreCompile: To pre-compile gemm kernels, select at lease one option from each of AutoGemm_PreCompile_PRECISION_* and AutoGemm_PreCompile_TRANS_*; otherwise, unselect all AutoGemm_PreCompile_* options to not pre-compile any gemm kernels." )
+  MESSAGE( SEND_ERROR "AutoGemm-PreCompile: To pre-compile gemm kernels, select at lease one option from each of PRECOMPILE_GEMM_PRECISION_* and PRECOMPILE_GEMM_TRANS_*; otherwise, unselect all PRECOMPILE_GEMM_* options to not pre-compile any gemm kernels." )
 endif()
 
 # build commandline argument for AutoGemm
 set( AGPC_ARGS --output ${CMAKE_BINARY_DIR}/include )
 
-if ( AutoGemm_PreCompile_ACTIVE )
+if ( PRECOMPILE_GEMM_ACTIVE )
   # precisions
   set(AGPC_ARGS ${AGPC_ARGS} --precisions )
-  if (AutoGemm_PreCompile_PRECISION_SGEMM)
+  if (PRECOMPILE_GEMM_PRECISION_SGEMM)
     set(AGPC_ARGS ${AGPC_ARGS} s )
   endif()
-  if (AutoGemm_PreCompile_PRECISION_DGEMM)
+  if (PRECOMPILE_GEMM_PRECISION_DGEMM)
     set(AGPC_ARGS ${AGPC_ARGS} d )
   endif()
-  if (AutoGemm_PreCompile_PRECISION_CGEMM)
+  if (PRECOMPILE_GEMM_PRECISION_CGEMM)
     set(AGPC_ARGS ${AGPC_ARGS} c )
   endif()
-  if (AutoGemm_PreCompile_PRECISION_ZGEMM)
+  if (PRECOMPILE_GEMM_PRECISION_ZGEMM)
     set(AGPC_ARGS ${AGPC_ARGS} z )
   endif()
 
@@ -156,31 +156,31 @@ if ( AutoGemm_PreCompile_ACTIVE )
 
   # transposes
   set(AGPC_ARGS ${AGPC_ARGS} --transposes )
-  if (AutoGemm_PreCompile_TRANS_NN)
+  if (PRECOMPILE_GEMM_TRANS_NN)
     set(AGPC_ARGS ${AGPC_ARGS} NN )
   endif()
-  if (AutoGemm_PreCompile_TRANS_NT)
+  if (PRECOMPILE_GEMM_TRANS_NT)
     set(AGPC_ARGS ${AGPC_ARGS} NT )
   endif()
-  if (AutoGemm_PreCompile_TRANS_NC)
+  if (PRECOMPILE_GEMM_TRANS_NC)
     set(AGPC_ARGS ${AGPC_ARGS} NC )
   endif()
-  if (AutoGemm_PreCompile_TRANS_TN)
+  if (PRECOMPILE_GEMM_TRANS_TN)
     set(AGPC_ARGS ${AGPC_ARGS} TN )
   endif()
-  if (AutoGemm_PreCompile_TRANS_TT)
+  if (PRECOMPILE_GEMM_TRANS_TT)
     set(AGPC_ARGS ${AGPC_ARGS} TT )
   endif()
-  if (AutoGemm_PreCompile_TRANS_TC)
+  if (PRECOMPILE_GEMM_TRANS_TC)
     set(AGPC_ARGS ${AGPC_ARGS} TC )
   endif()
-  if (AutoGemm_PreCompile_TRANS_CN)
+  if (PRECOMPILE_GEMM_TRANS_CN)
     set(AGPC_ARGS ${AGPC_ARGS} CN )
   endif()
-  if (AutoGemm_PreCompile_TRANS_CT)
+  if (PRECOMPILE_GEMM_TRANS_CT)
     set(AGPC_ARGS ${AGPC_ARGS} CT )
   endif()
-  if (AutoGemm_PreCompile_TRANS_CC)
+  if (PRECOMPILE_GEMM_TRANS_CC)
     set(AGPC_ARGS ${AGPC_ARGS} CC )
   endif()
 
@@ -776,7 +776,7 @@ endif( )
 
 # clBLAS to depend on AutoGemm
 
-if ( ${AutoGemm_PreCompile_ACTIVE} )
+if ( ${PRECOMPILE_GEMM_ACTIVE} )
   set( AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL ${AUTOGEMM_PRECOMPILED_KERNELS} )
   MESSAGE( STATUS "clBLAS will depend on ${AUTOGEMM_PRECOMPILED_KERNELS}" )
 else()
@@ -800,7 +800,7 @@ add_library(clBLAS
 add_dependencies(clBLAS GENERATE_CLT)
 
 # AutoGemm needs compiler flag to utilize pre-compiled kernels
-if ( ${AutoGemm_PreCompile_ACTIVE} )
+if ( ${PRECOMPILE_GEMM_ACTIVE} )
   set_target_properties(clBLAS PROPERTIES COMPILE_FLAGS -DAUTOGEMM_USE_PRE_COMPILED_KERNELS)
 endif()
 
