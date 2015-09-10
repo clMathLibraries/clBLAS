@@ -104,14 +104,14 @@ gemmCorrectnessTest(TestParams *params)
         beta = convertMultiplier<T>(params->beta);
     }
 
-    ::std::cerr << "Generating input data... ";
+    //::std::cerr << "Generating input data... ";
     randomGemmMatrices<T>(params->order, params->transA, params->transB,
         params->M, params->N, params->K, useAlpha, &alpha, A, params->lda,
         B, params->ldb, useBeta, &beta, blasC, params->ldc);
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*blasC));
-    ::std::cerr << "Done" << ::std::endl;
+    //::std::cerr << "Done" << ::std::endl;
 
-    ::std::cerr << "Calling reference xGEMM routine... ";
+    //::std::cerr << "Calling reference xGEMM routine... ";
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::gemm(clblasColumnMajor, params->transA, params->transB,
                           params->M, params->N, params->K, alpha, A,
@@ -139,7 +139,7 @@ gemmCorrectnessTest(TestParams *params)
         delete[] reorderedB;
         delete[] reorderedA;
     }
-    ::std::cerr << "Done" << ::std::endl;
+    //::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                         sizeof(*A), params->offA * sizeof(*A),
@@ -167,7 +167,7 @@ gemmCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xGEMM routine... ";
+    //::std::cerr << "Calling clblas xGEMM routine... ";
     err = (cl_int)::clMath::clblas::gemm(params->order, params->transA,
         params->transB, params->M, params->N, params->K, alpha, bufA,
         params->offA, params->lda, bufB, params->offBX, params->ldb, beta,
@@ -188,7 +188,7 @@ gemmCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
+    //::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE,
                         params->offCY * sizeof(*clblasC),

@@ -106,21 +106,28 @@ printTestParams(
     size_t offC,
     size_t ldc)
 {
-    ::std::cerr << orderStr(order) << ", " << transStr(transA) << ", " <<
-        transStr(transB) << ::std::endl;
-    ::std::cerr << "M = " << M << ", N = " << N << ", K = " << K << ::std::endl;
-    ::std::cerr << "offA = " << offA << ", offB = " << offB << ", offC = " <<
-        offC << ::std::endl;
-    ::std::cerr << "lda = " << lda << ", ldb = " << ldb << ", ldc = " <<
-        ldc << ::std::endl;
+    ::std::cerr
+        << orderStr(order) << ", "
+        << transStr(transA) << ", "
+        << transStr(transB) << ", "
+        << "M = " << M << ", "
+        << "N = " << N << ", "
+        << "K = " << K << ", "
+        << "offA = " << offA << ", "
+        << "offB = " << offB << ", "
+        << "offC = " << offC << ", "
+        << "lda = " << lda << ", "
+        << "ldb = " << ldb << ", "
+        << "ldc = " << ldc;
     if (useAlpha) {
-        ::std::cerr << "alpha = (" << alpha.re << "," << alpha.imag
-            << ")" << ::std::endl;
+        ::std::cerr << ", "
+          << "alpha = (" << alpha.re << "," << alpha.imag << ")";
     }
     if (useBeta) {
-        ::std::cerr << "beta = (" << beta.re << "," << beta.imag
-            << ")" << ::std::endl;
+        ::std::cerr << ", "
+          << "beta = (" << beta.re << "," << beta.imag << ")";
     }
+    ::std::cerr << std::endl;
 }
 
 void
