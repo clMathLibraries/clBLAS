@@ -20,30 +20,20 @@ library does generate and enqueue optimized OpenCL kernels, relieving
 the user from the task of writing, optimizing and maintaining kernel
 code themselves.
 
-## clBLAS update notes 04/2015
--   A subset of GEMM and TRSM can be off-line compiled for Hawaii, Bonaire and Tahiti device at compile-time. This feature
-    eliminates the overhead of calling clBuildProgram() at run-time.
--   Off-line compilation can be done with OpenCL 1.1, OpenCL 1.2 and OpenCl 2.0 runtime. However, for better
-    performance OpenCL 2.0 is recommended. Library user can select "OCL_VERSION" from CMake to ensure the library with
-    OpenCL version. It is library user's responsibility to ensure compatible hardware and driver.
--   Added flags_public.txt file that contains OpenCL compiler flags used by off-line compilation. The flags_public.txt
-    will only be loaded when OCL_VERSION is 2.0.
--   User can off-line compile one or more supported device by selecting 
-    OCL_OFFLINE_BUILD_BONAIRE_KERNEL
-    OCL_OFFLINE_BUILD_HAWII_KERNEL
-    OCL_OFFLINE_BUILD_TAHITI_KERNEL.
-    However, compile for more than one device at a time might result in running out of heap memory. Thus, compile for
-    one device at a time is recommended.
--   User may also supply specific OpenCL compiler path with OCL_COMPILER_DIR or the library will load default OpenCL compiler.
--   The minimum driver requirement for off-line compilation is 14.502.
-    
+## clBLAS update notes 09/2015
+
+- Introducing [AutoGemm](http://github.com/clMathLibraries/clBLAS/wiki/AutoGemm)
+  - clBLAS's Gemm implementation has been comprehensively overhauled to use AutoGemm. AutoGemm is a suite of python scripts which generate optimized kernels and kernel selection logic, for all precisions, transposes, tile sizes and so on.
+  - CMake is configured to use AutoGemm for clBLAS so the build and usage experience of Gemm remains unchanged (only performance and maintainability has been improved). Kernel sources are generated at build time (not runtime) and can be configured within CMake to be pre-compiled at build time.
+  - clBLAS users with unique Gemm requirements can customize AutoGemm to their needs (such as non-default tile sizes for very small or very skinny matrices); see [AutoGemm](http://github.com/clMathLibraries/clBLAS/wiki/AutoGemm) documentation for details.
+
 
 ## clBLAS library user documentation
 
 [Library and API documentation][] for developers is available online as
 a GitHub Pages website
 
-### Google Groups
+## Google Groups
 
 Two mailing lists have been created for the clMath projects:
 
