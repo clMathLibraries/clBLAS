@@ -100,6 +100,8 @@ static void force_trsm_column_major(Args & args)
     assert(false); \
       }
 
+#define min(x,y) ((x)<(y)?(x):(y))
+
 static void makeKernel(
 	cl_kernel *clKernel,
 	cl_command_queue clQueue,
@@ -588,6 +590,81 @@ static clblasStatus gpu_dtrsm192(
 			CL_CHECK(err);
 
 			diag_dtrtri192(commandQueues[0], N, uplo, diag, A, offA, InvA, lda, inner_block_size, outer_block_size, events);
+
+			if (transA == clblasNoTrans)
+			{
+				/* the non-transpose case */
+				if (uplo == clblasLower)
+				{
+					/* the lower case */
+					/* handle the first block seperately with alpha */
+					// lower is not implemented yet
+
+
+				}
+				else
+				{
+					/* the upper case */
+					/* handle the first block seperately with alpha */
+					int nn = min(outer_block_size, (int)N);
+					//DGEMM_RIGHT(  M, nn, nn, alpha, _(B,0,0), _(InvA,0,0), zero, _(X,0,0) );
+					err = clblasDgemm(clblasColumnMajor, clblasNoTrans, clblasNoTrans, M, nn, nn, alpha, B, offB, ldb, InvA, offInvA, ldInvA, zero, X, offX, ldX, 1, commandQueues, 0, NULL, events);
+					CL_CHECK(err);
+
+					if (outer_block_size < N)
+					{
+
+						//DGEMM_RIGHT(  M, N-nb, nb, neg_one, _(X,0,0), _(A,0,nb), alpha, _(B,0,nb)  );
+						err = clblasDgemm(clblasColumnMajor, clblasNoTrans, clblasNoTrans, M, N - outer_block_size, outer_block_size, neg_one, X, offX, ldX, A, offA + lda*outer_block_size, lda, alpha, B, offB + outer_block_size*ldb, ldb, 1, commandQueues, 0, NULL, events);
+						assert(err == CL_SUCCESS);
+
+						/* the rest blocks */
+						for (i = outer_block_size; i < N; i += outer_block_size)
+						{
+							nn = min(outer_block_size, (int)N - i);
+							//DGEMM_RIGHT(  M, nn, nn, one, _(B,0,i), _(InvA,0,i), zero, _(X,0,i) );
+							err = clblasDgemm(clblasColumnMajor, clblasNoTrans, clblasNoTrans, M, nn, nn, one, B, offB + i*ldb, ldb, InvA, offInvA + i*outer_block_size, ldInvA, zero, X, offX + i*ldX, ldX, 1, commandQueues, 0, NULL, events);
+							assert(err == CL_SUCCESS);
+
+							if (i + outer_block_size >= N)
+								break;
+
+							//DGEMM_RIGHT(  M, N-i-nb, nb, neg_one, _(X,0,i),   _(A,i,i+nb), one, _(B,0,i+nb)  );
+							err = clblasDgemm(clblasColumnMajor, clblasNoTrans, clblasNoTrans, M, N - i - outer_block_size, outer_block_size, neg_one, X, offX + i*ldX, ldX, A, offA + i + (outer_block_size + i)*lda, lda, one, B, offB + (i + outer_block_size)*ldb, ldb, 1, commandQueues, 0, NULL, events);
+							assert(err == CL_SUCCESS);
+						}
+					}
+				}
+			}
+			else
+			{
+
+				/* the transpose case */
+				// trans is not implemented yet
+			}
+
+			  {
+				  size_t src_origin[3] = { 0, 0, 0 };
+				  size_t dst_origin[3] = { offB*sizeof(double), 0, 0 };
+				  size_t region[3] = { M*sizeof(double), N, 1 };
+
+
+				  err = clEnqueueCopyBufferRect(commandQueues[0],
+					  X,
+					  B,
+					  src_origin,
+					  dst_origin,
+					  region,
+					  ldX*sizeof(double), 0,
+					  ldb*sizeof(double), 0,
+					  0, NULL,
+					  events);
+				  CL_CHECK(err);
+
+				  clReleaseMemObject(InvA);
+				  clReleaseMemObject(X);
+
+			  }
 
 			specialCaseHandled = true;
 			return clblasSuccess;
