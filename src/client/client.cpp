@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
     deviceType	= CL_DEVICE_TYPE_ALL;
   }
 
-  if( profileCount > 1 )
+  if( profileCount >= 1 )
   {
     commandQueueFlags |= CL_QUEUE_PROFILING_ENABLE;
   }
