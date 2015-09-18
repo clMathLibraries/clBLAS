@@ -1,4 +1,4 @@
-m,n,k,lda,ldb,ldc,offa,offb,offc,alpha,beta,order,transa,transb,side,uplo,diag,function,device,library,label,GFLOPS
+m,n,k,lda,ldb,ldc,offa,offb,offc,alpha,beta,order,transa,transb,side,uplo,diag,function,device,library,numQueues,label,GFLOPS
 8,8,8,0,0,0,0,0,0,1.0,1.0,column,none,transpose,left,upper,unit,cgemm,gpu,clblas,4,S9150_14.50.2,0.361199
 16,16,16,0,0,0,0,0,0,1.0,1.0,column,none,transpose,left,upper,unit,cgemm,gpu,clblas,4,S9150_14.50.2,2.2276
 24,24,24,0,0,0,0,0,0,1.0,1.0,column,none,transpose,left,upper,unit,cgemm,gpu,clblas,4,S9150_14.50.2,2.32776

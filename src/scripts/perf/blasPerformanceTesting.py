@@ -1,12 +1,12 @@
 # ########################################################################
 # Copyright 2013 Advanced Micro Devices, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,6 @@ import sys
 from datetime import datetime
 
 # Common data and functions for the performance suite
-
-tableHeader = 'lengthx,lengthy,lengthz,batch,device,inlay,outlay,place,ldsComp,ldsFrac,cache,xfactor,label,GFLOPS'
 
 class TestCombination:
     def __init__(self,
@@ -115,7 +113,7 @@ def executable(library):
 
 def max_mem_available_in_bytes(exe, device):
     arguments = [exe, '-i', device]
-    
+
     deviceInfo = subprocess.check_output(arguments, stderr=subprocess.STDOUT).split(os.linesep)
     deviceInfo = itertools.ifilter( lambda x: x.count('MAX_MEM_ALLOC_SIZE'), deviceInfo)
     deviceInfo = list(itertools.islice(deviceInfo, None))
@@ -250,7 +248,7 @@ def decode_parameter_problemsize(problemsize):
     return problemsize
 
 def blas_table_header():
-    return 'm,n,k,lda,ldb,ldc,offa,offb,offc,alpha,beta,order,transa,transb,side,uplo,diag,function,device,library,label,GFLOPS'
+    return 'm,n,k,lda,ldb,ldc,offa,offb,offc,alpha,beta,order,transa,transb,side,uplo,diag,function,device,library,numQueues,label,GFLOPS'
 
 class BlasTestCombination:
     def __init__(self,
@@ -329,5 +327,5 @@ def open_file( filename ):
             filename = filename + datetime.now().isoformat().replace(':','.')
             message = 'A file with the name ' + oldname + ' already exists. Changing filename to ' + filename
             print message
-    
+
     return open(filename, 'w')
