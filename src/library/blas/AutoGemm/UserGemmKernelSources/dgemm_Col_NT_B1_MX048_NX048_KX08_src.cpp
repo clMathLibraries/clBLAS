@@ -26,7 +26,7 @@ const char * const dgemm_Col_NT_B1_MX048_NX048_KX08_src = STRINGIFY(
 \n  __global double2 *d2v;
 \n} GPtr;
 \n
-\n#define  M6x6 \
+#define  M6x6 \
             rA[0] = lA[offA +  0];                        \
             rA[1] = lA[offA +  1];                        \
             rA[2] = lA[offA + 16];                        \

@@ -4,6 +4,7 @@ import copy
 import Common
 import KernelParameters
 import AutoGemmParameters
+import argparse
 
 
 ##############################################################################
@@ -541,9 +542,46 @@ def writeOpenCLKernels():
 # Main
 ################################################################################
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
-    Common.setOutputPath(sys.argv[1])
+  ap = argparse.ArgumentParser(description="KernelOpenCL")
+  ap.add_argument("precision", choices=["s","d","c","z"], help="precision" )
+  ap.add_argument("order", choices=["row","col"], help="order: row major or column major" )
+  ap.add_argument("transA", choices=["N","T", "C"], help="transA" )
+  ap.add_argument("transB", choices=["N","T", "C"], help="transB" )
+  ap.add_argument("beta", choices=[0, 1], type=int, help="0 for beta is zero, 1 for beta is non-zero" )
+  ap.add_argument("workGroupNumRows", type=int )
+  ap.add_argument("workGroupNumCols", type=int )
+  ap.add_argument("microTileNumRows", type=int )
+  ap.add_argument("microTileNumCols", type=int )
+  ap.add_argument("unroll", type=int, help="number of iterations to unroll the loop over k" )
+  ap.add_argument("outputPath", default=".", help="output path; %s will be appended to path" % Common.getRelativeKernelSourcePath() )
+
+  args = ap.parse_args()
+
+  kernel = KernelParameters.KernelParameters()
+  kernel.precision = args.precision
+  if args.order == "col":
+    kernel.order = "clblasColumnMajor"
   else:
-    print "Warning: No output path specified; default is working directory."
-  writeOpenCLKernels()
+    kernel.order = "clblasRowMajor"
+  kernel.transA = args.transA
+  kernel.transB = args.transB
+  kernel.beta = args.beta
+  kernel.workGroupNumRows = args.workGroupNumRows
+  kernel.workGroupNumCols = args.workGroupNumCols
+  kernel.microTileNumRows = args.microTileNumRows
+  kernel.microTileNumCols = args.microTileNumCols
+  kernel.unroll = args.unroll
+  Common.setOutputPath(args.outputPath)
+
+  kernel.macroTileNumRows = kernel.workGroupNumRows * kernel.microTileNumRows
+  kernel.macroTileNumCols = kernel.workGroupNumCols * kernel.microTileNumCols
+
+  if not os.path.exists( Common.getKernelSourcePath() ):
+    os.makedirs( Common.getKernelSourcePath() )
+
+  writeOpenCLKernelToFile(kernel)
+
+  kernelName = kernel.getName()
+  kernelFileName = Common.getKernelSourcePath() + kernelName +"_src.cpp"
+  print "kernel \"%s\" written to %s" % (kernelName, kernelFileName)
 
