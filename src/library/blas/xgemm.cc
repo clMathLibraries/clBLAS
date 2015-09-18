@@ -55,7 +55,7 @@ static void force_gemm_column_major(
  *****************************************************************************/
 #define CL_CHECK(RET) \
   if(RET != CL_SUCCESS) { \
-    printf("OpenCL error %i on line %u\n", RET, __LINE__); \
+    printf("OpenCL error %i on line %u of %s\n", RET, __LINE__, __FILE__); \
     assert(false); \
   }
 
@@ -162,6 +162,24 @@ void makeGemmKernel(
         sourceBuildOptions, NULL, NULL );
       CL_CHECK(err)
     }
+
+    // print build failure
+    if (err != CL_SUCCESS) {
+      printf("clBuildProgram Failed\n");
+      printf("err = %d\n", err);
+
+      size_t len = 0;
+      clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, 0, NULL, &len);
+      char* buildLog = new char[len];
+
+      printf("Error: Failed to build program executable!\n");
+      clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, len*sizeof(char), buildLog, 0);
+      printf("\nBuild Log:\n\n");
+      printf("%s\n", buildLog);
+      //printf("\n\nKernel String:\n\n");
+      //printf("%s\n", kernelSource);
+    }
+
     err = clCreateKernelsInProgram(
       clProgram,
       1, clKernel,
