@@ -98,10 +98,10 @@ int PagesPerNB = NB / (blk * 2); \n
 
 	do {\n
 		double a[4]; \n
-		a[0] = READA; incA += lda; \n
-		a[1] = READA; incA += lda; \n
-		a[2] = READA; incA += lda; \n
-		a[3] = READA; incA += lda; \n
+		a[0] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		a[1] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		a[2] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		a[3] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
 
 		bs[inx][iny] = B[0 * ldb]; \n
 		bs[inx][iny + 4] = B[4 * ldb]; \n
@@ -122,20 +122,20 @@ int PagesPerNB = NB / (blk * 2); \n
 		//__syncthreads();
 		barrier(CLK_LOCAL_MEM_FENCE); \n
 
-		daxpy(a[0], &bs[0][0], c);  a[0] = READA; incA += lda; \n
-		daxpy(a[1], &bs[1][0], c);  a[1] = READA; incA += lda; \n
-		daxpy(a[2], &bs[2][0], c);  a[2] = READA; incA += lda; \n
-		daxpy(a[3], &bs[3][0], c);  a[3] = READA; incA += lda; \n
+		daxpy(a[0], &bs[0][0], c);  a[0] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[1], &bs[1][0], c);  a[1] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[2], &bs[2][0], c);  a[2] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[3], &bs[3][0], c);  a[3] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
 
-		daxpy(a[0], &bs[4][0], c);  a[0] = READA; incA += lda; \n
-		daxpy(a[1], &bs[5][0], c);  a[1] = READA; incA += lda; \n
-		daxpy(a[2], &bs[6][0], c);  a[2] = READA; incA += lda; \n
-		daxpy(a[3], &bs[7][0], c);  a[3] = READA; incA += lda; \n
+		daxpy(a[0], &bs[4][0], c);  a[0] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[1], &bs[5][0], c);  a[1] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[2], &bs[6][0], c);  a[2] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[3], &bs[7][0], c);  a[3] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
 
-		daxpy(a[0], &bs[8][0], c);  a[0] = READA; incA += lda; \n
-		daxpy(a[1], &bs[9][0], c);  a[1] = READA; incA += lda; \n
-		daxpy(a[2], &bs[10][0], c);  a[2] = READA; incA += lda; \n
-		daxpy(a[3], &bs[11][0], c);  a[3] = READA; incA += lda; \n
+		daxpy(a[0], &bs[8][0], c);  a[0] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[1], &bs[9][0], c);  a[1] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[2], &bs[10][0], c);  a[2] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
+		daxpy(a[3], &bs[11][0], c);  a[3] = ((incA < maxA) ? Ain[incA] : 0); incA += lda; \n
 
 		daxpy(a[0], &bs[12][0], c); \n
 		daxpy(a[1], &bs[13][0], c); \n
