@@ -165,7 +165,6 @@ static void makeKernel(
 			CL_CHECK(err)
 		}
 		else {
-			//std::cout << kernelSource << std::endl;
 			clProgram = clCreateProgramWithSource(
 				clContext,
 				1, &kernelSource,
@@ -749,7 +748,6 @@ cl_int diag_dtrtri128(
 	int outer_block_size,
 	cl_event *event)
 {
-	std::cout << "enter diag_dtrtri128 " << std::endl;
 	const char *diag_dtrtri_kernel_upper_KernelSource = NULL;
 	cl_kernel  *diag_dtrtri_kernel_upper_ClKernel = NULL;
 	size_t diag_dtrtri_kernel_upper_KernelBinarySize = 0;
@@ -871,6 +869,9 @@ cl_int diag_dtrtri128(
 		err = clEnqueueNDRangeKernel(queue, *diag_dtrtri_kernel_upper_ClKernel, 1, NULL,
 			globalThreads, globalLocal,
 			0, NULL, NULL);
+		CL_CHECK(err);
+		//err = clFinish(queue);
+		//CL_CHECK(err);
 			
 		if (err != CL_SUCCESS) {
 			//printf( "kernel -diag_dtrtri_kernel_upper- failed with %d\n", err );
@@ -899,7 +900,8 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				
+				//err = clFinish(queue);
+				//CL_CHECK(err);
 				break;
 
 			case 32:
@@ -915,6 +917,8 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
+				//err = clFinish(queue);
+				//CL_CHECK(err);
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_32_PART2_R_clKernel,
 					triple_dgemm_update_128_32_PART2_R_src,
 					TrtriBuildOptions,
@@ -924,6 +928,8 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
+				//err = clFinish(queue);
+				//CL_CHECK(err);
 				
 				break;
 
@@ -940,6 +946,8 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
+				//err = clFinish(queue);
+				//CL_CHECK(err);
 				
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_64_PART2_R_clKernel,
 					triple_dgemm_update_128_64_PART2_R_src,
@@ -950,6 +958,8 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
+				//err = clFinish(queue);
+				//CL_CHECK(err);
 				
 				break;
 
@@ -1020,8 +1030,6 @@ static clblasStatus gpu_dtrsm128(
 {
 	if (order != clblasColumnMajor)
 		return clblasNotImplemented;
-	if (M < 16 || N < 16)
-		return clblasNotImplemented;
 
 	//for now
 	if (side == clblasRight)
@@ -1076,7 +1084,7 @@ static clblasStatus gpu_dtrsm128(
 		err = clearBuffer(commandQueues[0], InvA, size_InvA);
 		CL_CHECK(err);
 
-		err = diag_dtrtri128(commandQueues[0], N, uplo, diag, A, offA, InvA, ldA, inner_block_size, outer_block_size, events);
+		err = diag_dtrtri128(commandQueues[0], M, uplo, diag, A, offA, InvA, ldA, inner_block_size, outer_block_size, events);
 		CL_CHECK(err);
 
 		//
@@ -1134,23 +1142,22 @@ static clblasStatus gpu_dtrsm128(
 			{
 				/* the upper case */
 				/* handle the first block seperately with alpha */
-				std::cout << "dtrtri trsm " << std::endl;
 				int mm = (M % outer_block_size == 0) ? outer_block_size : (M % outer_block_size);
 				i = M - mm;
-				//DGEMM_LEFT(mm, N, mm, alpha, _(InvA, 0, i), _(B, i, 0), zero, _(X, i, 0));
+				DGEMM_LEFT(mm, N, mm, alpha, _(InvA, 0, i), _(B, i, 0), zero, _(X, i, 0));
 
 				if (i - outer_block_size >= 0)
 				{
-					//DGEMM_LEFT(i, N, mm, neg_one, _(A, 0, i), _(X, i, 0), alpha, _(B, 0, 0));
+					DGEMM_LEFT(i, N, mm, neg_one, _(A, 0, i), _(X, i, 0), alpha, _(B, 0, 0));
 
 					/* the rest blocks */
 					for (i = M - mm - outer_block_size; i >= 0; i -= outer_block_size) {
-						//DGEMM_LEFT(outer_block_size, N, outer_block_size, one, _(InvA, 0, i), _(B, i, 0), zero, _(X, i, 0));
+						DGEMM_LEFT(outer_block_size, N, outer_block_size, one, _(InvA, 0, i), _(B, i, 0), zero, _(X, i, 0));
 
 						if (i - outer_block_size < 0)
 							break;
 
-						//DGEMM_LEFT(i, N, outer_block_size, neg_one, _(A, 0, i), _(X, i, 0), one, _(B, 0, 0));
+						DGEMM_LEFT(i, N, outer_block_size, neg_one, _(A, 0, i), _(X, i, 0), one, _(B, 0, 0));
 					}
 				}
 			}
@@ -1191,7 +1198,6 @@ static clblasStatus gpu_dtrsm128(
 			{
 				/* the upper case */
 				/* handle the first block seperately with alpha */
-				std::cout << "dtrtri trsm " << std::endl;
 				int mm = min(outer_block_size, (int)M);
 				DGEMM_LEFT(mm, N, mm, alpha, _(InvA, 0, 0), _(B, 0, 0), zero, _(X, 0, 0));
 
