@@ -770,26 +770,33 @@ cl_int diag_dtrtri128(
 
 	if (uplo == clblasLower) {
 
-		/*
-		cl_kernel diag_dtrtri_kernel_lower = clCreateKernel(prg, "DIAG_DTRTRI_KERNEL_LOWER", &err);
-		if (err != CL_SUCCESS) {
-			//printf( "create kernel -diag_dtrtri_kernel_lower- failed with %d\n", err );
-			return err;
-		}
+		
+		diag_dtrtri_kernel_lower_KernelSource = diag_dtrtri_lower_128_16_src;
+		diag_dtrtri_kernel_lower_ClKernel = &diag_dtrtri_lower_128_16_clKernel;
+		diag_dtrtri_kernel_lower_KernelBinary = diag_dtrtri_lower_128_16_bin;
+		diag_dtrtri_kernel_lower_KernelBinarySize = diag_dtrtri_lower_128_16_binSize;
+
+		makeKernel(diag_dtrtri_kernel_lower_ClKernel,
+			queue,
+			diag_dtrtri_kernel_lower_KernelSource,
+			TrtriBuildOptions,
+			&diag_dtrtri_kernel_lower_KernelBinary,
+			&diag_dtrtri_kernel_lower_KernelBinarySize,
+			TrtribinBuildOptions);
 
 		int isDiagUnit = (diag == clblasUnit);
-		clSetKernelArg(diag_dtrtri_kernel_lower, 0, sizeof(int), &isDiagUnit);
-		clSetKernelArg(diag_dtrtri_kernel_lower, 1, sizeof(cl_mem), &A);
-		clSetKernelArg(diag_dtrtri_kernel_lower, 2, sizeof(unsigned int), &offA);
-		clSetKernelArg(diag_dtrtri_kernel_lower, 3, sizeof(cl_mem), &d_dinvA);
-		clSetKernelArg(diag_dtrtri_kernel_lower, 4, sizeof(unsigned int), &lda);
-		clSetKernelArg(diag_dtrtri_kernel_lower, 5, sizeof(unsigned int), &m);
+		clSetKernelArg(*diag_dtrtri_kernel_lower_ClKernel, 0, sizeof(int), &isDiagUnit);
+		clSetKernelArg(*diag_dtrtri_kernel_lower_ClKernel, 1, sizeof(cl_mem), &A);
+		clSetKernelArg(*diag_dtrtri_kernel_lower_ClKernel, 2, sizeof(unsigned int), &offA);
+		clSetKernelArg(*diag_dtrtri_kernel_lower_ClKernel, 3, sizeof(cl_mem), &d_dinvA);
+		clSetKernelArg(*diag_dtrtri_kernel_lower_ClKernel, 4, sizeof(unsigned int), &lda);
+		clSetKernelArg(*diag_dtrtri_kernel_lower_ClKernel, 5, sizeof(unsigned int), &m);
 
 
 		size_t globalThreads[1] = { nthreads };
-		size_t globalLocal[1] = { BLOCK_SIZE };
+		size_t globalLocal[1] = { inner_block_size };
 
-		err = clEnqueueNDRangeKernel(queue, diag_dtrtri_kernel_lower, 1, NULL,
+		err = clEnqueueNDRangeKernel(queue, *diag_dtrtri_kernel_lower_ClKernel, 1, NULL,
 			globalThreads, globalLocal,
 			0, NULL, event);
 
@@ -798,41 +805,118 @@ cl_int diag_dtrtri128(
 			return err;
 		}
 
-		err = clReleaseKernel(diag_dtrtri_kernel_lower);
-		if (err != CL_SUCCESS) {
-			return err;
-		}
 
 
 		// update the inverse up to the size of BLOCK_SIZE
-		for (int i = BLOCK_SIZE; i < NB; i *= 2) {
+		for (int i = inner_block_size; i < outer_block_size; i *= 2) {
 
 			switch (i) {
 			case 16:
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_16_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_16_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_16_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_16_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_16_PART1_L_clKernel,
+					triple_dgemm_update_128_16_PART1_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_16_PART1_L_bin,
+					&triple_dgemm_update_128_16_PART1_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_16_PART2_L_clKernel,
+					triple_dgemm_update_128_16_PART2_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_16_PART2_L_bin,
+					&triple_dgemm_update_128_16_PART2_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
 				break;
 
 			case 32:
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_32_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_32_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_32_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_32_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_32_PART1_L_clKernel,
+					triple_dgemm_update_128_32_PART1_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_32_PART1_L_bin,
+					&triple_dgemm_update_128_32_PART1_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_32_PART2_L_clKernel,
+					triple_dgemm_update_128_32_PART2_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_32_PART2_L_bin,
+					&triple_dgemm_update_128_32_PART2_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
 				break;
 
 			case 64:
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_64_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_64_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_64_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_64_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_64_PART1_L_clKernel,
+					triple_dgemm_update_128_64_PART1_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_64_PART1_L_bin,
+					&triple_dgemm_update_128_64_PART1_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_64_PART2_L_clKernel,
+					triple_dgemm_update_128_64_PART2_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_64_PART2_L_bin,
+					&triple_dgemm_update_128_64_PART2_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
 				break;
 
 			default:
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_ABOVE64_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_ABOVE64_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_ABOVE64_PART3_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_ABOVE64_PART1_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_ABOVE64_PART2_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_ABOVE64_PART3_L", prg, queue, A, offA, d_dinvA, i, lda, M, event);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_ABOVE64_PART1_L_clKernel,
+					triple_dgemm_update_128_ABOVE64_PART1_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_ABOVE64_PART1_L_bin,
+					&triple_dgemm_update_128_ABOVE64_PART1_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_ABOVE64_PART2_L_clKernel,
+					triple_dgemm_update_128_ABOVE64_PART2_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_ABOVE64_PART2_L_bin,
+					&triple_dgemm_update_128_ABOVE64_PART2_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
+				err = call_kernel_triple_update128(&triple_dgemm_update_128_ABOVE64_PART3_L_clKernel,
+					triple_dgemm_update_128_ABOVE64_PART3_L_src,
+					TrtriBuildOptions,
+					(const unsigned char **)&triple_dgemm_update_128_ABOVE64_PART3_L_bin,
+					&triple_dgemm_update_128_ABOVE64_PART3_L_binSize,
+					TrtribinBuildOptions,
+					queue,
+					A, offA, d_dinvA, i, lda, M, event);
+				CL_CHECK(err);
 				break;
 
 			}
 			if (i * 2 >= M) break;
 		}
-		*/
+		
 	}
 	else {
 		
@@ -917,8 +1001,6 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				//err = clFinish(queue);
-				//CL_CHECK(err);
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_32_PART2_R_clKernel,
 					triple_dgemm_update_128_32_PART2_R_src,
 					TrtriBuildOptions,
@@ -928,8 +1010,6 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				//err = clFinish(queue);
-				//CL_CHECK(err);
 				
 				break;
 
@@ -946,9 +1026,6 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				//err = clFinish(queue);
-				//CL_CHECK(err);
-				
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_64_PART2_R_clKernel,
 					triple_dgemm_update_128_64_PART2_R_src,
 					TrtriBuildOptions,
@@ -958,8 +1035,6 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				//err = clFinish(queue);
-				//CL_CHECK(err);
 				
 				break;
 
@@ -1033,8 +1108,6 @@ static clblasStatus gpu_dtrsm128(
 
 	//for now
 	if (side == clblasRight)
-		return clblasNotImplemented;
-	if (uplo == clblasLower)
 		return clblasNotImplemented;
 
 	int inner_block_size = 16; // inner blocking size, <=32
@@ -1110,11 +1183,6 @@ static clblasStatus gpu_dtrsm128(
 				/* the lower case */
 				/* handle the first block seperately with alpha */
 
-				//return for now
-				clReleaseMemObject(InvA);
-				clReleaseMemObject(X);
-				return clblasNotImplemented;
-
 				int mm = min(outer_block_size, (int)M);
 				DGEMM_LEFT(mm, N, mm, alpha, _(InvA, 0, 0), _(B, 0, 0), zero, _(X, 0, 0));
 
@@ -1169,11 +1237,6 @@ static clblasStatus gpu_dtrsm128(
 			{
 				/* the lower case */
 				/* handle the first block seperately with alpha */
-
-				//return for now
-				clReleaseMemObject(InvA);
-				clReleaseMemObject(X);
-				return clblasNotImplemented;
 
 				int mm = (M % outer_block_size == 0) ? outer_block_size : (M % outer_block_size);
 				i = M - mm;

@@ -17,6 +17,7 @@
 #include "triple_dgemm_update_192_96_PART2_R.cpp"
 
 /*mod 128 dtrsm*/
+/*upper*/
 #include "diag_dtrtri_upper_128_16.cpp"
 #include "triple_dgemm_update_128_16_R.cpp"
 #include "triple_dgemm_update_128_32_PART1_R.cpp"
@@ -26,5 +27,17 @@
 #include "triple_dgemm_update_128_ABOVE64_PART1_R.cpp"
 #include "triple_dgemm_update_128_ABOVE64_PART2_R.cpp"
 #include "triple_dgemm_update_128_ABOVE64_PART3_R.cpp"
+
+/*lower*/
+#include "diag_dtrtri_lower_128_16.cpp"
+#include "triple_dgemm_update_128_16_PART1_L.cpp"
+#include "triple_dgemm_update_128_16_PART2_L.cpp"
+#include "triple_dgemm_update_128_32_PART1_L.cpp"
+#include "triple_dgemm_update_128_32_PART2_L.cpp"
+#include "triple_dgemm_update_128_64_PART1_L.cpp"
+#include "triple_dgemm_update_128_64_PART2_L.cpp"
+#include "triple_dgemm_update_128_ABOVE64_PART1_L.cpp"
+#include "triple_dgemm_update_128_ABOVE64_PART2_L.cpp"
+#include "triple_dgemm_update_128_ABOVE64_PART3_L.cpp"
 
 #endif
