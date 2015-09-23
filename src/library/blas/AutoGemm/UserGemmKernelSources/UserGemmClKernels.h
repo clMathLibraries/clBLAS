@@ -1,7 +1,12 @@
 
 #ifndef USERGEMM_CL_KERNELS_H
 #define USERGEMM_CL_KERNELS_H
-#include "CL/cl.h"
+
+#if defined( __APPLE__ ) || defined( __MACOSX )
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
 
 static cl_kernel sgemm_Col_NT_B1_MX128_NX128_KX16_clKernel = NULL;
 

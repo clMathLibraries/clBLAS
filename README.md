@@ -1,8 +1,11 @@
+## Build Status
+| Build branch | master | develop |
+|-----|-----|-----|
+| GCC/Clang x64 | [![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.svg?branch=master)](https://travis-ci.org/clMathLibraries/clBLAS/branches) | [![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.svg?branch=develop)](https://travis-ci.org/clMathLibraries/clBLAS/branches) |
+| Visual Studio x64 |  |[![Build status](https://ci.appveyor.com/api/projects/status/9yfwi3n31pj7a2og/branch/develop?svg=true)](https://ci.appveyor.com/project/clMathLibraries/clblas/branch/develop) |
+
 clBLAS
 =====
-[![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.png)](https://travis-ci.org/clMathLibraries/clBLAS)
-
-
 This repository houses the code for the OpenCL™ BLAS portion of clMath.
 The complete set of BLAS level 1, 2 & 3 routines is implemented. Please
 see Netlib BLAS for the list of supported routines. In addition to GPU
@@ -102,7 +105,7 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
         11, 12, 13,
         21, 22, 23,
         31, 32, 33,
-        41, 42, 43, 
+        41, 42, 43,
     };
     static const size_t ldc = N;        /* i.e. ldc = N */
 
@@ -147,7 +150,7 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
             M * N * sizeof( *C ), C, 0, NULL, NULL );
 
         /* Call clBLAS extended function. Perform gemm for the lower right sub-matrices */
-        err = clblasSgemm( clblasRowMajor, clblasNoTrans, clblasNoTrans, 
+        err = clblasSgemm( clblasRowMajor, clblasNoTrans, clblasNoTrans,
                                 M, N, K,
                                 alpha, bufA, 0, lda,
                                 bufB, 0, ldb, beta,

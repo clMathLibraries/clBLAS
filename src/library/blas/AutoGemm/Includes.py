@@ -173,13 +173,21 @@ class ClKernelIncludes:
     self.incFile.write( Common.getAutoGemmHeader() )
     self.incStr = "#ifndef AUTOGEMM_CL_KERNELS_H\n"
     self.incStr += "#define AUTOGEMM_CL_KERNELS_H\n"
-    self.incStr += "#include \"CL/cl.h\"\n"
+    self.incStr += "#if defined( __APPLE__ ) || defined( __MACOSX )\n"
+    self.incStr += "#include <OpenCL/cl.h>\n"
+    self.incStr += "#else\n"
+    self.incStr += "#include <CL/cl.h>\n"
+    self.incStr += "#endif\n"
     self.incStr += "\n"
 
     self.cppName = Common.getIncludePath() + "AutoGemmClKernels.cpp"
     self.cppFile = open(self.cppName, "w")
     self.cppFile.write( Common.getAutoGemmHeader() )
-    self.cppStr  = "#include \"CL/cl.h\"\n"
+    self.cppStr = "#if defined( __APPLE__ ) || defined( __MACOSX )\n"
+    self.cppStr += "#include <OpenCL/cl.h>\n"
+    self.cppStr += "#else\n"
+    self.cppStr += "#include <CL/cl.h>\n"
+    self.cppStr += "#endif\n"
     self.cppStr += "\n"
 
   def addKernel(self, kernel):
@@ -455,4 +463,3 @@ if __name__ == "__main__":
   else:
     print "Warning: No output path specified; default is working directory."
   writeIncludes()
-
