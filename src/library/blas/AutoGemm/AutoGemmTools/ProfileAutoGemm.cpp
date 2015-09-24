@@ -9,7 +9,11 @@
 #include <iomanip>
 #include <fstream>
 //#include <Windows.h>
+#if defined( __APPLE__ ) || defined( __MACOSX )
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 //#include "library/tools/ktest/naive/naive_blas.cpp"
 //using namespace NaiveBlas;
 #include "AutoGemmTools/AutoGemmUtil.h"
@@ -169,7 +173,7 @@ public:
     }
     printf("; fallback = %ux%u\n", tiles[fallbackTileIndex][0], tiles[fallbackTileIndex][1]);
 
-    
+
     printf("add(%4u,%4u)  rule::valid =", rule.startSize, rule.startSize, rule.validTileIndices[0]);
     for (unsigned int i = 0; i < rule.numValidTiles; i++) {
       printf("%ux%u, ", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
@@ -381,7 +385,7 @@ void makeGemmKernel(
       1, clKernel,
       NULL );
     CL_CHECK(err)
-    
+
 #if 0
     // get kernel name
     size_t kernelNameLength;
@@ -406,7 +410,7 @@ void makeGemmKernel(
   }
 }
 
- 
+
 /****************************************************************************
  * Compare Matrices
  ***************************************************************************/
@@ -436,7 +440,7 @@ compareMatrices(
             if (blasVal != naiveVal) {
               equal = false;
             }
-            
+
             if (blasVal != naiveVal) {
               if (numPrint-- > 0) {
 #if CGEMM || ZGEMM
@@ -530,7 +534,7 @@ float benchmarkKernel(
   size_t K
   ) {
 
-    
+
   DATA_TYPE beta;
   if (betaNonZero) {
     beta = DATA_TYPE_CONSTRUCTOR(1, 0);
@@ -543,7 +547,7 @@ float benchmarkKernel(
   bool needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
   bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
 
-    
+
 #if 1
   printf("Testing: %sgemm_%s_%s%s_%s_%03u_%03u_%02u\n",
 #if SGEMM
@@ -631,7 +635,7 @@ float benchmarkKernel(
   unsigned int microTileNumCols;
 
     //printf("Creating kernel.\n");
-  bool kernelFound = 
+  bool kernelFound =
   gemmSelectKernelSpecific<DATA_TYPE>(
     order,
     transA,
@@ -703,7 +707,7 @@ float benchmarkKernel(
   size_t rowKernelGlobalWorkSize[2] = { 1*workGroupNumRows, (N/(macroTileNumCols))*workGroupNumCols };
   size_t colKernelGlobalWorkSize[2] = { (M/(macroTileNumRows))*workGroupNumRows, 1*workGroupNumCols };
   size_t cornerKernelGlobalWorkSize[2] = { 1*workGroupNumRows, 1*workGroupNumCols };
-  
+
   /****************************************************************************
    * Row Kernel (along bottom of matrix)
    ***************************************************************************/
@@ -725,7 +729,7 @@ float benchmarkKernel(
     totalEnqueues++;
     // kernel dimensions
   }
-  
+
   /****************************************************************************
    * Col Kernel (along side of kernel)
    ***************************************************************************/
@@ -747,7 +751,7 @@ float benchmarkKernel(
     totalEnqueues++;
     // kernel dimensions
   }
-  
+
   /****************************************************************************
    * Corner Kernel (lower left corder of kernel)
    ***************************************************************************/
@@ -851,7 +855,7 @@ int main(void) {
   // load tiles for precision
   tiles = new unsigned int*[numTiles];
   for (unsigned int i = 0; i < numTiles; i++) {
-    tiles[i] = 
+    tiles[i] =
 #if SGEMM
           sgemmTileEnumeration[i];
 #elif DGEMM
@@ -873,7 +877,7 @@ int main(void) {
     file << tile[0] << "x" << tile[1] << ", ";
   }
   file << "fallback, fastest, would-be valid tiles\n";
-      
+
 
   int *fallbackBegin = new int[numTiles]; // size at which tile starts being fallback
   int   *fallbackEnd = new int[numTiles]; // size at which tile stops being fallback
@@ -888,7 +892,7 @@ int main(void) {
        validBegin[i] = -1;
          validEnd[i] = -1;
   }
-  
+
   platform = getPlatform(PLATFORM_NAME);
   assert(platform != NULL);
   device = getDevice(platform, DEVICE_NAME);
@@ -899,7 +903,7 @@ int main(void) {
   queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
   assert(queue != NULL);
 
-  
+
   clblasOrder order = clblasColumnMajor;
   clblasTranspose transA = clblasNoTrans;
   clblasTranspose transB = clblasTrans;
@@ -907,7 +911,7 @@ int main(void) {
 
   unsigned int systemSizeMin = 16;
   unsigned int systemSizeStep = 16;
-    
+
   //unsigned int kValues[] = {64, 512, 2048};
   //unsigned int numKValues = 3;
   unsigned int kValues[] = {0};
@@ -921,7 +925,7 @@ int main(void) {
     kMax = systemSizeMax;
   }
 
-  
+
   /******************************************************************
    * Largest Matrix Dimension
    *****************************************************************/
@@ -1010,7 +1014,7 @@ int main(void) {
   ksrFile.open( ksrFileName, std::ios_base::out); // or ::app for append
   KernelSelectionRules ksr(ksrFile);
   for (unsigned int systemSize = systemSizeMin; systemSize <= systemSizeMax; systemSize += systemSizeStep) {
-          
+
     unsigned int M = systemSize;
     unsigned int N = systemSize;
     file << M << ", " << N << ", ";
@@ -1025,7 +1029,7 @@ int main(void) {
     for (unsigned int kIdx = 0; kIdx < numKValues; kIdx++) {
       unsigned int K = kValues[kIdx];
       if (K == 0) K = systemSize;
-      
+
       // (3) for each tile
       for (unsigned int tileIdx = 0; tileIdx < numTiles; tileIdx++) {
         unsigned int *tile = tiles[tileIdx];
@@ -1047,7 +1051,7 @@ int main(void) {
             M-1, N-1, K
             );
         fallbackScore[tileIdx] += fallbackSpeed;
-        
+
         /******************************************************************
          * (5) tile speed
          *****************************************************************/
@@ -1067,7 +1071,7 @@ int main(void) {
 
         if (printDetails) printf("fs=%8.3f, ts=%8.3f\n", fallbackSpeed, tileSpeed );
       } // tile sizes
-      
+
     } // for k
 
       /**************************************************************
@@ -1082,7 +1086,7 @@ int main(void) {
         tileScore[tileIdx] /= numKValues;
         file << tileScore[tileIdx] << ", ";
       }
-      
+
 
       /**************************************************************
        * (7) get fastest fallback speed for this system size
@@ -1096,7 +1100,7 @@ int main(void) {
         }
       }
       file << tiles[fastestFallbackIdx][0] << "x" << tiles[fastestFallbackIdx][1] << ", ";
-      
+
       /**************************************************************
        * (8) ensure fallback tile has begun/ended
        *************************************************************/
@@ -1105,7 +1109,7 @@ int main(void) {
       //}
       //fallbackEnd[fastestFallbackIdx] = static_cast<int>(systemSize); // push the end back farther
 
-      
+
       /**************************************************************
        * (9) which tiles are valid for this system size
        * - tile must be faster than fallback
@@ -1199,7 +1203,7 @@ int main(void) {
     //free(C);
     //free(naiveC);
     //free(source);
-  
+
     //system("PAUSE");
     //Sleep(5000); // ms
     exit(EXIT_SUCCESS);
@@ -1375,4 +1379,3 @@ createKernel(
     }
     return kernel;
 }
-
