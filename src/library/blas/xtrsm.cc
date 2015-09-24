@@ -1106,9 +1106,6 @@ static clblasStatus gpu_dtrsm128(
 	if (order != clblasColumnMajor)
 		return clblasNotImplemented;
 
-	//for now
-	if (side == clblasRight)
-		return clblasNotImplemented;
 
 	int inner_block_size = 16; // inner blocking size, <=32
 	int outer_block_size = 128;// outer blocking size, >BLOCK_SIZE
@@ -1285,8 +1282,147 @@ static clblasStatus gpu_dtrsm128(
 	}
 	else
 	{
-		clReleaseMemObject(X);
-		return clblasNotImplemented;
+		//
+		// Helper for C = alpha * B * A + beta * C        
+		//
+		// In the calls below
+		//  - the 2nd matrix shall be either A or InvA transposed according to transA
+		//  - the 1st and 3rd matrices are either B and X
+		//
+#define DGEMM_RIGHT(m,n,k, alpha,  B, A, beta, C )   \
+    do { \
+      err = clblasDgemm(clblasColumnMajor, clblasNoTrans, transA , m, n, k, alpha, B, A, beta, C , 1, commandQueues, 0, NULL, events ) ; \
+      CL_CHECK(err); \
+	    } while(0) 
+
+
+		// side=R
+		/* invert the diagonals
+		* Allocate device memory for the inverted diagonal blocks, size=n*BLOCK_SIZE
+		*/
+
+		/* invert the diagonals
+		* Allocate device memory for the inverted diagonal blocks, size=m*nb
+		*/
+		size_t ldInvA = outer_block_size;
+		size_t offInvA = 0; //must be 0: needed by the _(X,i,j) macro
+		size_t size_InvA = ldInvA * BLOCKS(N, outer_block_size) * outer_block_size *sizeof(double);
+		InvA = clCreateBuffer(context, CL_MEM_READ_WRITE, size_InvA, NULL, &err);
+		CL_CHECK(err);
+		err = clearBuffer(commandQueues[0], InvA, size_InvA);
+		CL_CHECK(err);
+
+		err = diag_dtrtri128(commandQueues[0], N, uplo, diag, A, offA, InvA, ldA, inner_block_size, outer_block_size, events);
+		CL_CHECK(err);
+
+
+		if (transA == clblasNoTrans)
+		{
+			/* the non-transpose case */
+			if (uplo == clblasLower)
+			{
+				/* the lower case */
+				/* handle the first block seperately with alpha */
+
+				int nn = (N % outer_block_size == 0) ? outer_block_size : (N % outer_block_size);
+				i = N - nn;
+				DGEMM_RIGHT(M, nn, nn, alpha, _(B, 0, i), _(InvA, 0, i), zero, _(X, 0, i));
+
+				if (i - outer_block_size >= 0)
+				{
+
+					DGEMM_RIGHT(M, i, nn, neg_one, _(X, 0, i), _(A, i, 0), alpha, _(B, 0, 0));
+
+					/* the rest blocks */
+					for (i = N - nn - outer_block_size; i >= 0; i -= outer_block_size) {
+						DGEMM_RIGHT(M, outer_block_size, outer_block_size, one, _(B, 0, i), _(InvA, 0, i), zero, _(X, 0, i));
+
+						if (i - outer_block_size < 0)
+							break;
+
+						DGEMM_RIGHT(M, i, outer_block_size, neg_one, _(X, 0, i), _(A, i, 0), one, _(B, 0, 0));
+					}
+				}
+			}
+			else
+			{
+				/* the upper case */
+				/* handle the first block seperately with alpha */
+				int nn = min(outer_block_size, (int)N);
+				DGEMM_RIGHT(M, nn, nn, alpha, _(B, 0, 0), _(InvA, 0, 0), zero, _(X, 0, 0));
+
+				if (outer_block_size < N)
+				{
+
+					DGEMM_RIGHT(M, N - outer_block_size, outer_block_size, neg_one, _(X, 0, 0), _(A, 0, outer_block_size), alpha, _(B, 0, outer_block_size));
+
+					/* the rest blocks */
+					for (i = outer_block_size; i < N; i += outer_block_size) {
+						nn = min(outer_block_size, (int)N - i);
+						DGEMM_RIGHT(M, nn, nn, one, _(B, 0, i), _(InvA, 0, i), zero, _(X, 0, i));
+
+						if (i + outer_block_size >= N)
+							break;
+
+						DGEMM_RIGHT(M, N - i - outer_block_size, outer_block_size, neg_one, _(X, 0, i), _(A, i, i + outer_block_size), one, _(B, 0, i + outer_block_size));
+					}
+				}
+			}
+		}
+		else
+		{
+
+			/* the transpose case */
+			if (uplo == clblasLower)
+			{
+				/* the lower case */
+				/* handle the first block seperately with alpha */
+
+				int nn = min(outer_block_size, (int)N);
+				DGEMM_RIGHT(M, nn, nn, alpha, _(B, 0, 0), _(InvA, 0, 0), zero, _(X, 0, 0));
+
+				if (outer_block_size < N)
+				{
+
+					DGEMM_RIGHT(M, N - outer_block_size, outer_block_size, neg_one, _(X, 0, 0), _(A, outer_block_size, 0), alpha, _(B, 0, outer_block_size));
+
+					/* the rest blocks */
+					for (i = outer_block_size; i < N; i += outer_block_size) {
+						nn = min(outer_block_size, (int)N - i);
+						DGEMM_RIGHT(M, nn, nn, one, _(B, 0, i), _(InvA, 0, i), zero, _(X, 0, i));
+
+						if (i + outer_block_size >= N)
+							break;
+
+						DGEMM_RIGHT(M, N - i - outer_block_size, outer_block_size, neg_one, _(X, 0, i), _(A, outer_block_size + i, i), one, _(B, 0, i + outer_block_size));
+					}
+				}
+			}
+			else
+			{
+				/* the upper case */
+				/* handle the first block seperately with alpha */
+				int nn = (N % outer_block_size == 0) ? outer_block_size : (N % outer_block_size);
+				i = N - nn;
+				DGEMM_RIGHT(M, nn, nn, alpha, _(B, 0, i), _(InvA, 0, i), zero, _(X, 0, i));
+
+				if (i - outer_block_size >= 0)
+				{
+
+					DGEMM_RIGHT(M, i, nn, neg_one, _(X, 0, i), _(A, 0, i), alpha, _(B, 0, 0));
+
+					/* the rest blocks */
+					for (i = N - nn - outer_block_size; i >= 0; i -= outer_block_size) {
+						DGEMM_RIGHT(M, outer_block_size, outer_block_size, one, _(B, 0, i), _(InvA, 0, i), zero, _(X, 0, i));
+
+						if (i - outer_block_size < 0)
+							break;
+
+						DGEMM_RIGHT(M, i, outer_block_size, neg_one, _(X, 0, i), _(A, 0, i), one, _(B, 0, 0));
+					}
+				}
+			}
+		}
 	}
 
 	// Copy X(m,n) to B(m,n)
