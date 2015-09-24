@@ -1,7 +1,11 @@
 
 #ifndef TRTRI_CL_KERNELS_H
 #define TRTRI_CL_KERNELS_H
+#if defined( __APPLE__ ) || defined ( __MACOS )
+#include <OpenCL/cl.h>
+#else
 #include "CL/cl.h"
+#endif
 
 /*mod 192 dtrsm*/
 static cl_kernel diag_dtrtri_upper_192_12_clKernel = NULL;
