@@ -641,6 +641,7 @@ include_directories(${OPENCL_INCLUDE_DIRS}
     ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
 	${clBLAS_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources
 	${clBLAS_SOURCE_DIR}/library/blas/specialCases/include
+	${clBLAS_SOURCE_DIR}/library/blas/trtri
 )
 
 option( BLAS_DUMP_CLBLAS_KERNELS "Force the library to dump OpenCL kernels to disk" OFF )
