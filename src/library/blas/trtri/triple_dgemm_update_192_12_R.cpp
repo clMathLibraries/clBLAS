@@ -189,5 +189,6 @@ const char * const triple_dgemm_update_192_12_R_src = STRINGIFY(
 	} while (i < 12);\n
 
 }\n
+// end of kernel
 );
 #endif

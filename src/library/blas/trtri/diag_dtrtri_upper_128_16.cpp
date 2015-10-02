@@ -146,5 +146,6 @@ uint na)\n
   }\n
   
 }\n
+// end of kernel
 );
 #endif

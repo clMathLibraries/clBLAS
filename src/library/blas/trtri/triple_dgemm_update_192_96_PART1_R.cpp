@@ -151,5 +151,6 @@ const char * const triple_dgemm_update_192_96_PART1_R_src = STRINGIFY(
 
 
 }\n
+// end of kernel
 );
 #endif
