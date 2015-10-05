@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 
     //get the input path
     std::string inputPath = argv[1];
-    inputPath += "\\";
+    inputPath += "/";
     std::cout << "OCLBinaryGenerator input path is " << inputPath <<std::endl;
 
     //get the input filename
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
     
     //get the path to destination
     std::string outputPath = argv[3];
-    outputPath += "\\";
+    outputPath += "/";
     std::cout << "OCLBinaryGenerator output path is " << outputPath << std::endl;
 
     //output filename
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
     size_t kernelBinarySize;
 
     
-    std::ifstream inputfile(inputPath+inputFilename);
+    std::ifstream inputfile((inputPath+inputFilename).c_str());
     if (!inputfile.is_open())
     {
         printf("Input file does not exist. OCLBinaryGenerator aborted.\n");
