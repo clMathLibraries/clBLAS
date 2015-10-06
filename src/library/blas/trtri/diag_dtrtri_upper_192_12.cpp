@@ -144,5 +144,6 @@ for (i = 0; i < BLOCK_SIZE; i++)\n
 
 
 }\n
+// end of kernel
 );
 #endif

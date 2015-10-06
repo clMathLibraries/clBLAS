@@ -139,5 +139,6 @@ int PagesPerNB = NB / (blk * 2); \n
 	}\n
 	}\n
 }\n
+// end of kernel
 );
 #endif

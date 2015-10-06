@@ -40,6 +40,8 @@ double * __restrict__ c)\n
 	c[15] += alpha * b[15]; \n
 }\n
 #define NB 128\n
+#define ZERO              ( 0.0) \n
+#define ONE               ( 1.0) \n
 #define __mul(i,j) ((i)*(j))\n
 #define qmod(a, b) ((a)%(b))\n
 __kernel void TRIPLE_DGEMM_UPDATE_128_ABOVE64_PART3_L(__global const double *Ain, uint offAin, __global double *d_dinvA, int blk, int lda, int npages, int na)\n
@@ -84,5 +86,6 @@ int PagesPerNB = NB / (blk * 2); \n
 //__syncthreads();
 barrier(CLK_LOCAL_MEM_FENCE); \n
 }\n
+// end of kernel
 );
 #endif

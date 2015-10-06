@@ -138,5 +138,6 @@ Ain = Ain + offAin; \n
 //__syncthreads();
 barrier(CLK_LOCAL_MEM_FENCE); \n
 }\n
+// end of kernel
 );
 #endif

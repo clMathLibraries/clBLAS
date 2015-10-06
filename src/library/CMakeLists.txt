@@ -90,6 +90,7 @@ option( PRECOMPILE_GEMM_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
 
+
 # opencl compiler version
 #set( PRECOMPILE_GEMM_OPENCL_VERSION "2.0" CACHE STRING "OpenCL compiler version supported by device driver." )
 #set_property( CACHE PRECOMPILE_GEMM_OPENCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
@@ -291,7 +292,25 @@ source_group(AutoGemm\\src FILES ${AUTOGEMM_SRC} ${AUTOGEMM_PRECOMPILED_KERNELS}
 # AutoGemm End
 ################################################################################
 
+################################################################################
+# BEGIN Pre Compile General (static) Kernels
+################################################################################
+# options for pre-compiling trsm kernels
+option( PRECOMPILE_TRSM_STRSM "pre-compile available dtrsm kernels" OFF )
+option( PRECOMPILE_TRSM_DTRSM "pre-compile available strsm kernels" OFF )
+if(PRECOMPILE_TRSM_DTRSM)
+add_definitions(-DCLBLAS_OFFLINE_COMPILE_DTRSM)
+message(STATUS "precompile DTRSM kernels.")
+endif()
+if(PRECOMPILE_TRSM_STRSM)
+add_definitions(-DCLBLAS_OFFLINE_COMPILE_STRSM)
+message(STATUS "precompile STRSM kernels. (not yet implemented)")
+endif()
 
+
+################################################################################
+# END Pre Compile General (static) Kernels
+################################################################################
 
 set(SRC_BLAS
     blas/init.c
@@ -670,6 +689,40 @@ ExternalProject_Add( tplgen
     INSTALL_COMMAND ""
 )
 
+################OCLBinaryGenerator
+if (PRECOMPILE_TRSM_DTRSM OR PRECOMPILE_TRSM_STRSM)
+
+
+ExternalProject_Add( OCLBinaryGenerator
+	URL "${CMAKE_SOURCE_DIR}/library/tools/OCLBinaryGenerator"
+	CMAKE_ARGS -DOPENCL_LIBRARIES=${OPENCL_LIBRARIES} -DOPENCL_INCLUDE_DIRS=${OPENCL_INCLUDE_DIRS}
+	INSTALL_COMMAND ""
+)
+ExternalProject_Get_Property( OCLBinaryGenerator binary_dir )
+message(STATUS "OCLBinaryGenerator binary_dir =${binary_dir}")
+set( OCLBinaryGeneratorBinaryDir "${binary_dir}/staging" )
+
+# OCLBinaryGenerator requires at least three inputs
+# 1, path to the kernel file
+# 2, file name
+# 3, output directory
+# 4, [optional] compiler flags
+# 5, [optional] trageted hardware. If this is not supplied OCLBinaryGenerator will generate binary for the first device on system
+set( OCL_COMPILER_FLAGS " ")
+if( OPENCL_VERSION STREQUAL "2.0")
+    set( OCL_COMPILER_FLAGS "-cl-std=CL2.0")
+endif()
+
+add_custom_target( OCLBinaryGenerator_GEN )
+add_custom_command(TARGET OCLBinaryGenerator_GEN
+                   PRE_BUILD
+				   COMMAND ${CMAKE_COMMAND} -DOCLBinaryGeneratorBinaryDir=${OCLBinaryGeneratorBinaryDir} -DSOURCE_DIR=${CMAKE_SOURCE_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR} -DOCL_COMPILER_FLAGS=${OCL_COMPILER_FLAGS}
+				   -P "${CMAKE_SOURCE_DIR}/library/OCLBinaryGenerator.cmake"
+				   )	  
+add_dependencies( OCLBinaryGenerator_GEN OCLBinaryGenerator )
+
+endif()
+
 # if offline compilation is not chosen, bingen should not be built
 if(OPENCL_OFFLINE_BUILD_TAHITI_KERNEL OR OPENCL_OFFLINE_BUILD_HAWAII_KERNEL OR OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL)
 	ExternalProject_Add( bingen
@@ -800,6 +853,10 @@ add_library(clBLAS
 	#${USERGEMM_HEADERS}
   )
 add_dependencies(clBLAS GENERATE_CLT)
+
+if (PRECOMPILE_TRSM_DTRSM OR PRECOMPILE_TRSM_STRSM)
+add_dependencies(clBLAS OCLBinaryGenerator_GEN)
+endif()
 
 # AutoGemm needs compiler flag to utilize pre-compiled kernels
 if ( ${PRECOMPILE_GEMM_ACTIVE} )

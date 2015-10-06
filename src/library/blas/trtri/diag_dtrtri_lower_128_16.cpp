@@ -11,8 +11,10 @@
 #define STRINGIFY(...) STRINGIFY2(__VA_ARGS__)
 #endif
 
+
 unsigned char *diag_dtrtri_lower_128_16_bin = 0;
 size_t diag_dtrtri_lower_128_16_binSize = 0;
+
 
 const char * const diag_dtrtri_lower_128_16_src = STRINGIFY(
 #define BLOCK_SIZE 16 \n
@@ -165,5 +167,6 @@ for (i = BLOCK_SIZE - 2; i >= 0; i--) {\n
 for (i = 0; i < BLOCK_SIZE; i++)\n
 	*(d_dinvA + i*NB + tx) = Bs[i*BLOCK_SIZE + tx]; \n
 }\n
+// end of kernel
 );
 #endif

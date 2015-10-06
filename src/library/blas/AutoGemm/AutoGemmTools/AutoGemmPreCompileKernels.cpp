@@ -682,6 +682,7 @@ int main( int argc, char *argv[] ) {
 	clockStart = (unsigned long long)s.tv_sec * 1000000 + (unsigned long long)s.tv_usec;
 #endif
 	const int specialKernelCount = user_kernel_count;
+
 	totalKernelsToCompile = gemmPreCompileNum;
 	totalKernelsToCompile *= 4;
 	totalKernelsToCompile += specialKernelCount;
@@ -823,7 +824,7 @@ int main( int argc, char *argv[] ) {
 	  beta = 1.0;
 	  char *appendString = appendStringArray[i];
 
-
+  
 	  compileKernelAndWriteToFile<float>(
 		  context,
 		  clblasColumnMajor,
@@ -838,7 +839,7 @@ int main( int argc, char *argv[] ) {
 		  tileKernelSource,
 		  binaryBuildOptions,
 		  appendString);
-
+        
   }
   
   // for each kernel to be pre-compiled

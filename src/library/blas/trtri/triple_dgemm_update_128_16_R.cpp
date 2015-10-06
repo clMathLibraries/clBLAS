@@ -234,5 +234,6 @@ barrier(CLK_LOCAL_MEM_FENCE); \n
 	}\n
 }\n
 }\n
+// end of kernel
 );
 #endif
