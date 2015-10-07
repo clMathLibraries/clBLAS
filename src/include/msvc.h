@@ -27,7 +27,9 @@
 #define EOVERFLOW 1000
 #endif  /* EOVERFLOW */
 
+#if ( _MSC_VER < 1900 )
 #define snprintf _snprintf
+#endif
 
 typedef long ssize_t;
 
