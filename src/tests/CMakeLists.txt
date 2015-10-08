@@ -385,7 +385,7 @@ if( GTEST_FOUND )
             ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
             )
     
-    #get_target_property( testLocation test-correctness LOCATION )
+    get_target_property( testLocation test-correctness LOCATION )
 
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/copyTestDependencies.cmake.in"
