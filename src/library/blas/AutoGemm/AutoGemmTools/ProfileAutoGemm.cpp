@@ -8,7 +8,6 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-//#include <Windows.h>
 #if defined( __APPLE__ ) || defined( __MACOSX )
 #include <OpenCL/cl.h>
 #else
@@ -43,7 +42,7 @@ const char * const rawFileName = "prof_user_sgemm_raw.csv";
 const char * const ksrFileName = "prof_sgemm_ksr.txt";
 const char * const rawFileName = "prof_sgemm_raw.csv";
 #endif
-unsigned int systemSizeMax = 8000;
+unsigned int systemSizeMax = 1000;
 #endif
 
 #if DGEMM
@@ -167,21 +166,24 @@ public:
     unsigned int numValidTiles,
     unsigned int fallbackTileIndex ) {
 
-    printf("add(%4u,%4u) input::valid =", M, N, validTileIndices[0]);
+
+    // print rule
+    printf("rule[%4u+]: ", rule.startSize );
+    for (unsigned int i = 0; i < rule.numValidTiles; i++) {
+      printf("%ux%u, ", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
+    }
+    if (rule.fallbackTileIndex>=0) {
+      printf("; %ux%u", tiles[rule.fallbackTileIndex][0], tiles[rule.fallbackTileIndex][1]);
+    }
+    printf("\n");
+
+    // print add
+    printf("check[%4u,%4u]: ", M, N );
     for (unsigned int i = 0; i < numValidTiles; i++) {
       printf("%ux%u, ", tiles[validTileIndices[i]][0], tiles[validTileIndices[i]][1]);
     }
     printf("; fallback = %ux%u\n", tiles[fallbackTileIndex][0], tiles[fallbackTileIndex][1]);
 
-
-    printf("add(%4u,%4u)  rule::valid =", rule.startSize, rule.startSize, rule.validTileIndices[0]);
-    for (unsigned int i = 0; i < rule.numValidTiles; i++) {
-      printf("%ux%u, ", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
-    }
-    if (rule.fallbackTileIndex>=0) {
-      printf("; fallback = %ux%u", tiles[rule.fallbackTileIndex][0], tiles[rule.fallbackTileIndex][1]);
-    }
-    printf("\n");
 
     bool mismatch = false;
 
@@ -193,7 +195,7 @@ public:
     } else {
       if (rule.fallbackTileIndex != fallbackTileIndex) {
         mismatch = true;
-        printf("mismatch:rule fallback was %ux%u, whereas new fallback is %u,%u\n",
+        printf("mismatch:rule fallback was %ux%u, whereas new fallback is %ux%u\n",
           tiles[rule.fallbackTileIndex][0], tiles[rule.fallbackTileIndex][1],
           tiles[fallbackTileIndex][0], tiles[fallbackTileIndex][1]
           );
@@ -252,7 +254,7 @@ public:
       numRulesInHistory++;
 
       // print what we added
-      printf("add(%4u,%4u)   new::valid =", rule.startSize, rule.startSize, rule.validTileIndices[0]);
+      printf("new[%4u+]: ", rule.startSize);
       for (unsigned int i = 0; i < rule.numValidTiles; i++) {
         printf("%ux%u, ", tiles[rule.validTileIndices[i]][0], tiles[rule.validTileIndices[i]][1]);
       }
@@ -273,9 +275,9 @@ public:
       out.flush();
 
     }
-
+    printf("\n");
     return mismatch;
-  }
+  } // end add
 };
 
 
@@ -465,7 +467,7 @@ compareMatrices(
 
 
 const char PLATFORM_NAME[] = "AMD Accelerated Parallel Processing";
-const char DEVICE_NAME[] = "Hawaii";
+//const char DEVICE_NAME[] = "Hawaii";
 #if SGEMM || CGEMM
 const float peakGflops = 5.24e3; // sp for W9100
 #else
@@ -505,7 +507,7 @@ const unsigned int numFinishes = 1;
 
 char* loadFile(const char* path);
 cl_platform_id getPlatform(const char *name);
-cl_device_id getDevice(cl_platform_id platform, const char *name);
+cl_device_id getDevice(cl_platform_id platform);
 cl_kernel createKernel(const char *source, cl_context context,
     const char* options, cl_int *error);
 
@@ -548,7 +550,7 @@ float benchmarkKernel(
   bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
 
 
-#if 1
+#if 0
   printf("Testing: %sgemm_%s_%s%s_%s_%03u_%03u_%02u\n",
 #if SGEMM
     "s",
@@ -895,7 +897,7 @@ int main(void) {
 
   platform = getPlatform(PLATFORM_NAME);
   assert(platform != NULL);
-  device = getDevice(platform, DEVICE_NAME);
+  device = getDevice(platform);
   assert(device != NULL);
   props[1] = (cl_context_properties)platform;
   context = clCreateContext(props, 1, &device, NULL, NULL, &err);
@@ -1010,6 +1012,8 @@ int main(void) {
   CL_CHECK(err);
   assert(err == CL_SUCCESS);
 
+  // (0) for each precision
+
   // (1) for each system size
   ksrFile.open( ksrFileName, std::ios_base::out); // or ::app for append
   KernelSelectionRules ksr(ksrFile);
@@ -1036,7 +1040,7 @@ int main(void) {
         unsigned int macroTileNumRows = tile[0];
         unsigned int macroTileNumCols = tile[1];
         unsigned int unroll = tile[2];
-        if (printDetails) printf("%4ux%4ux%4u; %ux%u; ", M, N, K, macroTileNumRows, macroTileNumCols );
+        //if (printDetails) printf("%4ux%4ux%4u; %ux%u; ", M, N, K, macroTileNumRows, macroTileNumCols );
 
         /******************************************************************
          * (4) fallback speed
@@ -1069,7 +1073,7 @@ int main(void) {
           tileScore[tileIdx] += tileSpeed;
         }
 
-        if (printDetails) printf("fs=%8.3f, ts=%8.3f\n", fallbackSpeed, tileSpeed );
+        //if (printDetails) printf("fs=%8.3f, ts=%8.3f\n", fallbackSpeed, tileSpeed );
       } // tile sizes
 
     } // for k
@@ -1219,6 +1223,7 @@ getPlatform(const char *name)
     char platformName[64];
 
     err = clGetPlatformIDs(0, NULL, &nrPlatforms);
+    CL_CHECK(err);
     assert(err == CL_SUCCESS);
     if (err != CL_SUCCESS) {
         return NULL;
@@ -1230,6 +1235,7 @@ getPlatform(const char *name)
     }
 
     err = clGetPlatformIDs(nrPlatforms, list, NULL);
+    CL_CHECK(err);
     assert(err == CL_SUCCESS);
     if (err != CL_SUCCESS) {
         free(list);
@@ -1240,6 +1246,7 @@ getPlatform(const char *name)
     for (i = 0; i < nrPlatforms; i++) {
         err = clGetPlatformInfo(list[i], CL_PLATFORM_NAME,
             sizeof(platformName), platformName, NULL);
+    CL_CHECK(err);
         assert(err == CL_SUCCESS);
         if ((err == CL_SUCCESS) && (strcmp(platformName, name) == 0)) {
             platform = list[i];
@@ -1254,8 +1261,7 @@ getPlatform(const char *name)
 
 cl_device_id
 getDevice(
-    cl_platform_id platform,
-    const char *name)
+    cl_platform_id platform)
 {
 
     cl_int err;
@@ -1264,17 +1270,21 @@ getDevice(
     char deviceName[64];
 
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &nrDevices);
+    CL_CHECK(err);
     assert(err == CL_SUCCESS);
     if (err != CL_SUCCESS) {
         return NULL;
     }
+    assert( nrDevices > 0 );
     list = (cl_device_id*)malloc(nrDevices * sizeof(*list));
     assert(list);
     if (list == NULL) {
+      printf("Error: malloc device list\n");
         return NULL;
     }
 
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, nrDevices, list, NULL);
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, nrDevices, list, NULL);
+    CL_CHECK(err);
     assert(err == CL_SUCCESS);
     if (err != CL_SUCCESS) {
         free(list);
@@ -1285,8 +1295,9 @@ getDevice(
     for (i = 0; i < nrDevices; i++) {
         err = clGetDeviceInfo(list[i], CL_DEVICE_NAME,
             sizeof(deviceName), deviceName, NULL);
+        CL_CHECK(err);
         assert(err == CL_SUCCESS);
-        if ((err == CL_SUCCESS) && (strcmp(deviceName, name) == 0)) {
+        if ((err == CL_SUCCESS) ) {
             device = list[i];
             break;
         }
