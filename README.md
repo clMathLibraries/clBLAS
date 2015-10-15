@@ -2,7 +2,7 @@
 | Build branch | master | develop |
 |-----|-----|-----|
 | GCC/Clang x64 | [![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.svg?branch=master)](https://travis-ci.org/clMathLibraries/clBLAS/branches) | [![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.svg?branch=develop)](https://travis-ci.org/clMathLibraries/clBLAS/branches) |
-| Visual Studio x64 |  |[![Build status](https://ci.appveyor.com/api/projects/status/v384bi6e8xv8nxjm/branch/develop?svg=true)](https://ci.appveyor.com/project/kknox/clblas-5ph9i/branch/develop) |
+| Visual Studio x64 | [![Build status](https://ci.appveyor.com/api/projects/status/v384bi6e8xv8nxjm/branch/master?svg=true)](https://ci.appveyor.com/project/kknox/clblas-5ph9i/branch/master)|[![Build status](https://ci.appveyor.com/api/projects/status/v384bi6e8xv8nxjm/branch/develop?svg=true)](https://ci.appveyor.com/project/kknox/clblas-5ph9i/branch/develop) |
 
 clBLAS
 =====
