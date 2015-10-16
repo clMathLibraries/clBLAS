@@ -61,27 +61,37 @@ doDot(
 		retCode = checkMemObjects(X, Y, X, false, X_VEC_ERRSET, Y_VEC_ERRSET, X_VEC_ERRSET );
 		retCode |= checkMemObjects(scratchBuff, dotProduct, X, false, X_VEC_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET );
 		if (retCode) {
-			printf("Invalid mem object..\n");
+			#ifdef DEBUG_DOT
+            printf("Invalid mem object..\n");
+            #endif
             return retCode;
 		}
 
 		// Check wheather enough memory was allocated
 
 		if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET))) {
-			printf("Invalid Size for X\n");
+			#ifdef DEBUG_DOT
+            printf("Invalid Size for X\n");
+            #endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, N, Y, offy, incy, Y_VEC_ERRSET))) {
-			printf("Invalid Size for Y\n");
+			#ifdef DEBUG_DOT
+            printf("Invalid Size for Y\n");
+            #endif
             return retCode;
 		}
 		// Minimum size of scratchBuff is N
 		if ((retCode = checkVectorSizes(kargs->dtype, N, scratchBuff, 0, 1, X_VEC_ERRSET))) {
-			printf("Insufficient ScratchBuff\n");
+			#ifdef DEBUG_DOT
+            printf("Insufficient ScratchBuff\n");
+            #endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, 1, dotProduct, offDP, 1, Y_VEC_ERRSET))) {
-			printf("Invalid Size for dotProduct\n");
+			#ifdef DEBUG_DOT
+            printf("Invalid Size for dotProduct\n");
+            #endif
             return retCode;
 		}
 		///////////////////////////////////////////////////////////////

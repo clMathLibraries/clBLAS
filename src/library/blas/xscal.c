@@ -51,14 +51,18 @@ doScal(
 
         retCode = checkMemObjects(X, X, X, false, X_VEC_ERRSET, X_VEC_ERRSET, X_VEC_ERRSET );
 		if (retCode) {
-			printf("Invalid mem object..\n");
+			#ifdef DEBUG_SCAL
+            printf("Invalid mem object..\n");
+            #endif
             return retCode;
 		}
 
 		// Check wheather enough memory was allocated
 
 		if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET))) {
-			printf("Invalid Size for X\n");
+			#ifdef DEBUG_SCAL
+            printf("Invalid Size for X\n");
+            #endif
             return retCode;
 		}
 		///////////////////////////////////////////////////////////////

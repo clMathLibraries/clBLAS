@@ -59,7 +59,9 @@ doGer(
 		/* Validate arguments */
 
 		if ((retCode = checkMemObjects(A, X, Y, true, A_MAT_ERRSET, X_VEC_ERRSET, Y_VEC_ERRSET))) {
+			#ifdef DEBUG_GER
 			printf("Invalid mem object..\n");
+			#endif
             return retCode;
 		}
 
@@ -67,15 +69,21 @@ doGer(
 
 		if ((retCode = checkMatrixSizes(kargs->dtype, order, clblasNoTrans, M, N, A, offa, lda, A_MAT_ERRSET))) {
 
+			#ifdef DEBUG_GER
 			printf("Invalid Size for A %d\n",retCode );
+			#endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, M, X, offx, incx, X_VEC_ERRSET))) {
+			#ifdef DEBUG_GER
 			printf("Invalid Size for X\n");
+			#endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, N, Y, offy, incy, Y_VEC_ERRSET))) {
+			#ifdef DEBUG_GER
 			printf("Invalid Size for Y\n");
+			#endif
             return retCode;
 		}
 		///////////////////////////////////////////////////////////////
