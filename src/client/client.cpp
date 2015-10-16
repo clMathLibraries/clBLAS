@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
   int side_option;
   int uplo_option;
   int diag_option;
+  unsigned int numQueuesToUse;
 
   po::options_description desc( "clBLAS client command line options" );
   desc.add_options()
@@ -103,6 +104,7 @@ int main(int argc, char *argv[])
     ( "diag", po::value<int>( &diag_option )->default_value(0), "0 = unit diagonal, 1 = non unit diagonal. only used with [list of function families]" ) // xtrsm xtrmm
     ( "profile,p", po::value<cl_uint>( &profileCount )->default_value(20), "Time and report the kernel speed (default: 20)" )
 	( "apiCallCount", po::value<cl_uint>(&apiCallCount)->default_value(10), "Time and report the kernel speed on counds of API calls (default: 10)")
+	( "numQueues", po::value<unsigned int>(&numQueuesToUse)->default_value(1), "Number of cl_command_queues to use( default: 1)")
 	( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"including the time of OpenCL memory allocation and transportation; options:roundtrip, noroundtrip(default)")
 	( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd,rect_mem")
     ;
@@ -176,7 +178,7 @@ int main(int argc, char *argv[])
     deviceType	= CL_DEVICE_TYPE_ALL;
   }
 
-  if( profileCount > 1 )
+  if( profileCount >= 1 )
   {
     commandQueueFlags |= CL_QUEUE_PROFILING_ENABLE;
   }
@@ -195,13 +197,13 @@ int main(int argc, char *argv[])
   if (function == "gemm")
   {
     if (precision == "s")
-      my_function = new xGemm<cl_float>(timer, deviceType);
+      my_function = new xGemm<cl_float>(timer, deviceType, numQueuesToUse);
     else if (precision == "d")
-      my_function = new xGemm<cl_double>(timer, deviceType);
+      my_function = new xGemm<cl_double>(timer, deviceType, numQueuesToUse);
     else if (precision == "c")
-      my_function = new xGemm<cl_float2>(timer, deviceType);
+      my_function = new xGemm<cl_float2>(timer, deviceType, numQueuesToUse);
     else if (precision == "z")
-      my_function = new xGemm<cl_double2>(timer, deviceType);
+      my_function = new xGemm<cl_double2>(timer, deviceType, numQueuesToUse);
     else
     {
       std::cerr << "Unknown gemm function" << std::endl;

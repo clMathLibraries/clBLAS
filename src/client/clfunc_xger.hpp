@@ -182,14 +182,14 @@ public:
   {
     cl_int err;
 
-    err = clEnqueueWriteBuffer(queue_, buffer_.a_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.a_, CL_TRUE, 0,
                                buffer_.lda_*buffer_.a_num_vectors_*sizeof(T),
                                buffer_.A, 0, NULL, NULL);
 
-    err = clEnqueueWriteBuffer(queue_, buffer_.x_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.x_, CL_TRUE, 0,
                                buffer_.m_*sizeof(T),
                                buffer_.X, 0, NULL, NULL);
-    err = clEnqueueWriteBuffer(queue_, buffer_.y_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.y_, CL_TRUE, 0,
                                buffer_.n_*sizeof(T),
                                buffer_.Y, 0, NULL, NULL);
   }
@@ -197,7 +197,7 @@ public:
   void reset_gpu_write_buffer()
   {
     cl_int err;
-    err = clEnqueueWriteBuffer(queue_, buffer_.x_, CL_TRUE, 0,
+    err = clEnqueueWriteBuffer(queues_[0], buffer_.x_, CL_TRUE, 0,
                                buffer_.m_,
                                buffer_.x_, 0, NULL, NULL);
   }
@@ -257,7 +257,7 @@ call_func()
 {
     timer.Start(timer_id);
     clblasSger(buffer_.order_, buffer_.m_, buffer_.n_, buffer_.alpha, buffer_.x_, buffer_.offX, 1, buffer_.y_, buffer_.offY,
-      1, buffer_.a_, buffer_.offA, buffer_.lda_, 1, &queue_, 0, NULL,
+      1, buffer_.a_, buffer_.offA, buffer_.lda_, numQueues, queues_, 0, NULL,
                    &event_);
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -270,7 +270,7 @@ call_func()
 {
     timer.Start(timer_id);
     clblasDger(buffer_.order_, buffer_.m_, buffer_.n_, buffer_.alpha, buffer_.x_, buffer_.offX, 1, buffer_.y_, buffer_.offY,
-      1, buffer_.a_, buffer_.offA, buffer_.lda_, 1, &queue_, 0, NULL,
+      1, buffer_.a_, buffer_.offA, buffer_.lda_, numQueues, queues_, 0, NULL,
                    &event_);
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -283,7 +283,7 @@ call_func()
 //{
 //  timer.Start(timer_id);
 //  clblasCger(order_, buffer_.m_, buffer_.n, buffer_a_, 0,
-//                 buffer_.lda_, buffer_x_, 0, 1, 1, &queue_, 0, NULL,
+//                 buffer_.lda_, buffer_x_, 0, 1, numQueues, queues_, 0, NULL,
 //                 &event_);
 //  clWaitForEvents(1, &event_);
 //  timer.Stop(timer_id);
@@ -297,7 +297,7 @@ call_func()
 //  timer.Start(timer_id);
 //  clblasZger(order_, buffer_.uplo_, buffer_.trans_a_,
 //                 buffer_.diag_, buffer_.m_, buffer_a_, 0,
-//                 buffer_.lda_, buffer_x_, 0, 1, 1, &queue_, 0, NULL,
+//                 buffer_.lda_, buffer_x_, 0, 1, numQueues, queues_, 0, NULL,
 //                 &event_);
 //  clWaitForEvents(1, &event_);
 //  timer.Stop(timer_id);

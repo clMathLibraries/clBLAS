@@ -1,0 +1,105 @@
+# Appveyor OS list
+# Windows Server 2012 R2 (x64) <== Appveyor default image
+# Visual Studio 2015
+
+# os: expands the build matrix to include multiple os's
+os:
+  - Windows Server 2012
+
+# compiler: expands the build matrix to include multiple compilers (per os)
+platform:
+  - x64
+
+configuration:
+  - Release
+
+# Only clone the top level commit; don't bother with history
+shallow_clone: true
+
+# environment: specifies additional global variables to define per row in build matrix
+environment:
+  global:
+    CLBLAS_ROOT: "%APPVEYOR_BUILD_FOLDER%\\bin\\nmake\\release"
+    OPENCL_ROOT: "%APPVEYOR_BUILD_FOLDER%\\bin\\opencl"
+    # BOOST_ROOT: "C:/Libraries/boost"   # boost 1.56, 32-bit only
+    BOOST_ROOT: "C:\\Libraries\\boost_1_58_0"
+    OPENCL_REGISTRY: "https://www.khronos.org/registry/cl"
+
+init:
+  - echo init step
+  - cmake --version
+  - C:\"Program Files (x86)"\"Microsoft Visual Studio 12.0"\VC\vcvarsall.bat %PLATFORM%
+  # Uncomment the following to display Remote Desktop connection details
+  # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+# We need to create an opencl import library that clblas can link against
+# Vendor based OpenCL packages are hard to use because of download size, registration requirements
+# and unattended installs not well supported
+install:
+  - echo install step
+  - ps: mkdir $env:OPENCL_ROOT
+  - ps: pushd $env:OPENCL_ROOT
+  - ps: $opencl_registry = $env:OPENCL_REGISTRY
+  # This downloads the source to the example/demo icd library
+  - ps: wget $opencl_registry/specs/opencl-icd-1.2.11.0.tgz -OutFile opencl-icd-1.2.11.0.tgz
+  - ps: 7z x opencl-icd-1.2.11.0.tgz
+  - ps: 7z x opencl-icd-1.2.11.0.tar
+  - ps: mv .\icd\* .
+  # This downloads all the opencl header files
+  # The cmake build files expect a directory called inc
+  - ps: mkdir inc/CL
+  - ps: wget $opencl_registry/api/1.2/ | select -ExpandProperty links | where {$_.href -like "*.h*"} | select -ExpandProperty outerText | foreach{ wget $opencl_registry/api/1.2/$_ -OutFile inc/CL/$_ }
+  # - ps: dir; if( $lastexitcode -eq 0 ){ dir include/CL } else { Write-Output boom }
+  # Create the static import lib in a directory called lib, so findopencl() will find it
+  - ps: mkdir lib
+  - ps: pushd lib
+  - cmake -G "NMake Makefiles" ..
+  - nmake
+  - ps: popd
+  # Rename the inc directory to include, so FindOpencl() will find it
+  - ps: ren inc include
+  - ps: popd
+  - ps: popd
+
+# before_build is used to run configure steps
+before_build:
+  - echo before_build step
+  # Boost 1.58 is not installed in typical fashion, help FindBoost() find binary libs with BOOST_LIBRARYDIR
+  - ps: $env:BOOST_LIBRARYDIR = "$env:BOOST_ROOT/lib64-msvc-12.0"
+  - ps: mkdir $env:CLBLAS_ROOT
+  - ps: pushd $env:CLBLAS_ROOT
+  - cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOCL_VERSION=2.0 -DOPENCL_ROOT=%OPENCL_ROOT% %APPVEYOR_BUILD_FOLDER%/src
+
+# build_script invokes the compiler
+build_script:
+  - echo build_script step
+  - nmake package
+
+after_build:
+  - echo after_build step
+  - ps: ls $env:CLBLAS_ROOT
+  - ps: mv $env:CLBLAS_ROOT\*.zip $env:APPVEYOR_BUILD_FOLDER
+
+# Appyeyor will save a copy of the package in it's personal storage
+artifacts:
+  - path: '*.zip'
+    name: binary_zip
+    type: zip
+
+# on_finish always executes regardless of passed or failed builds
+on_finish:
+  - echo on_finish step
+
+# Appveyor will push the artifacts it has saved to GitHub 'releases' tab
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: dRXIWJKpU7h2RsHX7RqmyYCtCw+Q9O3X5MArloY6p34GZC1w7bp+jQYTZqbdO7bw
+  artifact: binary_zip
+  draft: true
+  prerelease: true
+  on:
+    appveyor_repo_tag: true
+
+  # Uncomment the following to pause the VM and wait for RDP connetion to debug
+  # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

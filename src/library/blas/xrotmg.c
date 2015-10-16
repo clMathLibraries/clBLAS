@@ -54,35 +54,49 @@ doRotmg(
 
         retCode = checkMemObjects(D1, D2, X1, true, X_VEC_ERRSET, Y_VEC_ERRSET, X_VEC_ERRSET );
 		if (retCode) {      // for mem objects A, B
+			#ifdef DEBUG_ROTMG
 			printf("Invalid mem object..\n");
+			#endif
             return retCode;
 		}
 		retCode = checkMemObjects(Y1, param, Y1, false, X_VEC_ERRSET, Y_VEC_ERRSET, X_VEC_ERRSET );
 		if (retCode) {      // for mem objects C, S
+			#ifdef DEBUG_ROTMG
 			printf("Invalid mem object..\n");
+			#endif
             return retCode;
 		}
 
 		// Check wheather enough memory was allocated
 
 		if ((retCode = checkVectorSizes(kargs->dtype, 1, D1, offD1, 1, X_VEC_ERRSET))) {
+			#ifdef DEBUG_ROTMG
 			printf("Invalid Size for D1\n");
+			#endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, 1, D2, offD2, 1, Y_VEC_ERRSET))) {
+			#ifdef DEBUG_ROTMG
 			printf("Invalid Size for D2\n");
+			#endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, 1, X1, offX1, 1, X_VEC_ERRSET))) {
+			#ifdef DEBUG_ROTMG
 			printf("Invalid Size for X1\n");
+			#endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, 1, Y1, offY1, 1, Y_VEC_ERRSET))) {
+			#ifdef DEBUG_ROTMG
 			printf("Invalid Size for Y1\n");
+			#endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(kargs->dtype, 1, param, offParam, 1, Y_VEC_ERRSET))) {
+			#ifdef DEBUG_ROTMG
 			printf("Invalid Size for PARAM\n");
+			#endif
             return retCode;
 		}
 		///////////////////////////////////////////////////////////////

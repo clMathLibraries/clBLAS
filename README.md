@@ -1,8 +1,11 @@
+## Build Status
+| Build branch | master | develop |
+|-----|-----|-----|
+| GCC/Clang x64 | [![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.svg?branch=master)](https://travis-ci.org/clMathLibraries/clBLAS/branches) | [![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.svg?branch=develop)](https://travis-ci.org/clMathLibraries/clBLAS/branches) |
+| Visual Studio x64 | [![Build status](https://ci.appveyor.com/api/projects/status/v384bi6e8xv8nxjm/branch/master?svg=true)](https://ci.appveyor.com/project/kknox/clblas-5ph9i/branch/master)|[![Build status](https://ci.appveyor.com/api/projects/status/v384bi6e8xv8nxjm/branch/develop?svg=true)](https://ci.appveyor.com/project/kknox/clblas-5ph9i/branch/develop) |
+
 clBLAS
 =====
-[![Build Status](https://travis-ci.org/clMathLibraries/clBLAS.png)](https://travis-ci.org/clMathLibraries/clBLAS)
-
-
 This repository houses the code for the OpenCL™ BLAS portion of clMath.
 The complete set of BLAS level 1, 2 & 3 routines is implemented. Please
 see Netlib BLAS for the list of supported routines. In addition to GPU
@@ -20,30 +23,20 @@ library does generate and enqueue optimized OpenCL kernels, relieving
 the user from the task of writing, optimizing and maintaining kernel
 code themselves.
 
-## clBLAS update notes 04/2015
--   A subset of GEMM and TRSM can be off-line compiled for Hawaii, Bonaire and Tahiti device at compile-time. This feature
-    eliminates the overhead of calling clBuildProgram() at run-time.
--   Off-line compilation can be done with OpenCL 1.1, OpenCL 1.2 and OpenCl 2.0 runtime. However, for better
-    performance OpenCL 2.0 is recommended. Library user can select "OCL_VERSION" from CMake to ensure the library with
-    OpenCL version. It is library user's responsibility to ensure compatible hardware and driver.
--   Added flags_public.txt file that contains OpenCL compiler flags used by off-line compilation. The flags_public.txt
-    will only be loaded when OCL_VERSION is 2.0.
--   User can off-line compile one or more supported device by selecting 
-    OCL_OFFLINE_BUILD_BONAIRE_KERNEL
-    OCL_OFFLINE_BUILD_HAWII_KERNEL
-    OCL_OFFLINE_BUILD_TAHITI_KERNEL.
-    However, compile for more than one device at a time might result in running out of heap memory. Thus, compile for
-    one device at a time is recommended.
--   User may also supply specific OpenCL compiler path with OCL_COMPILER_DIR or the library will load default OpenCL compiler.
--   The minimum driver requirement for off-line compilation is 14.502.
-    
+## clBLAS update notes 09/2015
+
+- Introducing [AutoGemm](http://github.com/clMathLibraries/clBLAS/wiki/AutoGemm)
+  - clBLAS's Gemm implementation has been comprehensively overhauled to use AutoGemm. AutoGemm is a suite of python scripts which generate optimized kernels and kernel selection logic, for all precisions, transposes, tile sizes and so on.
+  - CMake is configured to use AutoGemm for clBLAS so the build and usage experience of Gemm remains unchanged (only performance and maintainability has been improved). Kernel sources are generated at build time (not runtime) and can be configured within CMake to be pre-compiled at build time.
+  - clBLAS users with unique Gemm requirements can customize AutoGemm to their needs (such as non-default tile sizes for very small or very skinny matrices); see [AutoGemm](http://github.com/clMathLibraries/clBLAS/wiki/AutoGemm) documentation for details.
+
 
 ## clBLAS library user documentation
 
 [Library and API documentation][] for developers is available online as
 a GitHub Pages website
 
-### Google Groups
+## Google Groups
 
 Two mailing lists have been created for the clMath projects:
 
@@ -108,10 +101,10 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
     static const cl_float beta = 20;
 
     static cl_float C[M*N] = {
-    11, 12, 13,
-    21, 22, 23,
-    31, 32, 33,
-    41, 42, 43, 
+        11, 12, 13,
+        21, 22, 23,
+        31, 32, 33,
+        41, 42, 43,
     };
     static const size_t ldc = N;        /* i.e. ldc = N */
 
@@ -155,13 +148,13 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
     err = clEnqueueWriteBuffer( queue, bufC, CL_TRUE, 0,
         M * N * sizeof( *C ), C, 0, NULL, NULL );
 
-    /* Call clBLAS extended function. Perform gemm for the lower right sub-matrices */
-    err = clblasSgemm( clblasRowMajor, clblasNoTrans, clblasNoTrans, 
-							M, N, K,
-							alpha, bufA, 0, lda,
-							bufB, 0, ldb, beta,
-							bufC, 0, ldc,
-							1, &queue, 0, NULL, &event );
+        /* Call clBLAS extended function. Perform gemm for the lower right sub-matrices */
+        err = clblasSgemm( clblasRowMajor, clblasNoTrans, clblasNoTrans,
+                                M, N, K,
+                                alpha, bufA, 0, lda,
+                                bufB, 0, ldb, beta,
+                                bufC, 0, ldc,
+                                1, &queue, 0, NULL, &event );
 
     /* Wait for calculations to be finished. */
     err = clWaitForEvents( 1, &event );

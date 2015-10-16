@@ -56,23 +56,31 @@ doiAmax(
 
 		retCode = checkMemObjects(X, scratchBuf, iMax, true, X_VEC_ERRSET, A_MAT_ERRSET, X_VEC_ERRSET );
 		if (retCode) {
-			printf("Invalid mem object..\n");
+			#ifdef DEBUG_iAMAX
+            printf("Invalid mem object..\n");
+            #endif
             return retCode;
 		}
 
 		// Check wheather enough memory was allocated
 
 		if ((retCode = checkVectorSizes(kargs->dtype, N, X, offx, incx, X_VEC_ERRSET ))) {
-			printf("Invalid Size for X\n");
+			#ifdef DEBUG_iAMAX
+            printf("Invalid Size for X\n");
+            #endif
             return retCode;
 		}
 		// Minimum size of scratchBuff is 2 * N
 		if ((retCode = checkVectorSizes(kargs->dtype, (2 * N), scratchBuf, 0, 1, A_MAT_ERRSET ))) {
-			printf("Insufficient ScratchBuff A\n");
+			#ifdef DEBUG_iAMAX
+            printf("Insufficient ScratchBuff A\n");
+            #endif
             return retCode;
 		}
 		if ((retCode = checkVectorSizes(TYPE_UNSIGNED_INT, 1, iMax, offiMax, 1, X_VEC_ERRSET ))) {
-			printf("Invalid Size for iX\n");
+			#ifdef DEBUG_iAMAX
+            printf("Invalid Size for iX\n");
+            #endif
             return retCode;
 	    }
 		///////////////////////////////////////////////////////////////

@@ -27,6 +27,7 @@
 #include "hawaii_sgemmSplit64_32.h"
 #include "gcn_zgemm.h"
 #include "gpu_dtrsm192.h"
+#include "hawaii_sgemmBig1024Kernel.h"
 
 FunctorSelectorHawaii FunctorSelectorHawaii::instance ;
 
@@ -115,6 +116,24 @@ clblasSgemmFunctor * FunctorSelectorHawaii::select_sgemm_specific(clblasSgemmFun
   //functor = clBlashawaiiSgemmSplit64_32Functor::provide(args, "Hawaii");
   //if (functor)
   //  return functor;
+
+  if ((args.lda % 1024 == 0) && (args.ldb % 1024 == 0) && (args.K > args.lda / 4))
+  {
+	  if ((args.lda == args.ldb) && (args.lda >= 4096) && (args.lda <= 8192)) // between 4096 and 8192 for now
+	  {
+		  if (args.lda != 6144)// 6144 is handled by a special case split
+		  {
+			  // we are going to call 16 GEMMs with M=M/2, N=N/2, K=K/4
+			  // each GEMM requires M%128 == 0, N%128 == 0, K%16 == 0
+			  if (args.M % 256 == 0 && args.N % 256 == 0 && args.K % 64 == 0)
+			  {
+				  functor = clBlashawaiiSgemmBig1024KernelFunctor::provide(args, "Hawaii");
+				  if (functor)
+					  return functor;
+			  }
+		  }
+	  }
+  }
 
   if ((args.M >= 1184 && args.N >= 1184) && (args.M <= 3872 && args.N <= 3872) && (args.M % 64 != 0 && args.N % 64 != 0) && (args.M % 96 != 0 && args.N % 96 != 0) && (args.K % 16 == 0))
   {

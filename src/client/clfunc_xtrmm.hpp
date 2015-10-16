@@ -272,13 +272,13 @@ public:
     {
         cl_int err;
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(T),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(T),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(T),
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(T),
@@ -288,7 +288,7 @@ public:
     void reset_gpu_write_buffer()
     {
         cl_int err;
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(T),
                                    buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(T),
@@ -297,7 +297,7 @@ public:
 	void read_gpu_buffer()
 	{
 		cl_int err;
-		err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
 			                      buffer_.offB_ * sizeof(T), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(T),
 								  buffer_.b_, 0, NULL, NULL);
@@ -483,7 +483,7 @@ call_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, &event_);
+                     numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -507,13 +507,13 @@ roundtrip_func()
                                             buffer_.offB_) * sizeof(cl_float),
                                         NULL, &err);
 		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_float),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_float),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(cl_float),
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_float),
@@ -524,9 +524,9 @@ roundtrip_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
+                     numQueues, queues_, 0, NULL, NULL);
 		//read gpu buffer
-			err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
 			                      buffer_.offB_ * sizeof(cl_float), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_float),
 								  buffer_.b_, 0, NULL, &event_);
@@ -547,7 +547,7 @@ call_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offB_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, &event_);
+                     numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -571,13 +571,13 @@ roundtrip_func()
                                             buffer_.offB_) * sizeof(cl_double),
                                         NULL, &err);
 		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_double),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_double),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(cl_double),
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_double),
@@ -588,9 +588,9 @@ roundtrip_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
+                     numQueues, queues_, 0, NULL, NULL);
 		//read gpu buffer
-			err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
 			                      buffer_.offB_ * sizeof(cl_double), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_double),
 								  buffer_.b_, 0, NULL, &event_);
@@ -611,7 +611,7 @@ call_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, &event_);
+                     numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -635,13 +635,13 @@ roundtrip_func()
                                             buffer_.offB_) * sizeof(cl_float2),
                                         NULL, &err);
 		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_float2),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_float2),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(cl_float2),
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_float2),
@@ -652,9 +652,9 @@ roundtrip_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
+                     numQueues, queues_, 0, NULL, NULL);
 		//read gpu buffer
-			err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
 			                      buffer_.offB_ * sizeof(cl_float2), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_float2),
 								  buffer_.b_, 0, NULL, &event_);
@@ -675,7 +675,7 @@ call_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, &event_);
+                     numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -699,13 +699,13 @@ roundtrip_func()
                                             buffer_.offB_) * sizeof(cl_double2),
                                         NULL, &err);
 		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queue_, buffer_.buf_a_, CL_TRUE,
+		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_double2),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_double2),
                                    buffer_.a_, 0, NULL, NULL);
 
-        err = clEnqueueWriteBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(cl_double2),
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_double2),
@@ -716,9 +716,9 @@ roundtrip_func()
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-                     1, &queue_, 0, NULL, NULL);
+                     numQueues, queues_, 0, NULL, NULL);
 		//read gpu buffer
-			err = clEnqueueReadBuffer(queue_, buffer_.buf_b_, CL_TRUE,
+			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
 			                      buffer_.offB_ * sizeof(cl_double2), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_double2),
 								  buffer_.b_, 0, NULL, &event_);

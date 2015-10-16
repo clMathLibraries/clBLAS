@@ -1,54 +1,134 @@
+# Ubuntu name decoder ring; https://en.wikipedia.org/wiki/List_of_Ubuntu_releases
+# Ubuntu 12.04 LTS (Precise Pangolin) <== Travis CI VM image
+# Ubuntu 12.10 (Quantal Quetzal)
+# Ubuntu 13.04 (Raring Ringtail)
+# Ubuntu 13.10 (Saucy Salamander)
+# Ubuntu 14.04 LTS (Trusty Tahr)
+# Ubuntu 14.10 (Utopic Unicorn)
+# Ubuntu 15.04 (Vivid Vervet)
+# Ubuntu 15.10 (Wily Werewolf)
+# Ubuntu 16.04 LTS (Xenial Xantus)
+
+# language: instructs travis what compilers && environment to set up in build matrix
 language: cpp
 
+# sudo: false instructs travis to build our project in a docker VM (faster)
+# Can not yet install fglrx packages with 'false'
+sudo: required # false
+
+# os: expands the build matrix to include multiple os's
+# disable linux, as we get sporadic failures on building boost, needs investigation
+os:
+  - linux
+  - osx
+
+# compiler: expands the build matrix to include multiple compilers (per os)
 compiler:
   - gcc
+  - clang
+
+addons:
+  # apt: is disabled on osx builds
+  # apt: needed by docker framework to install project dependencies without
+  # sudo.  Apt uses published Ubunto PPA's from https://launchpad.net/
+  # https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
+  apt:
+    sources:
+      # ubuntu-toolchain-r-test contains newer versions of gcc to install
+      # - ubuntu-toolchain-r-test
+      # llvm-toolchain-precise-3.6 contains newer versions of clang to install
+      # - llvm-toolchain-precise-3.6
+      # kubuntu-backports contains newer versions of cmake to install
+      - kubuntu-backports
+      # boost-latest contains boost v1.55
+      - boost-latest
+    packages:
+      # g++-4.8 is minimum version considered to be the first good c++11 gnu compiler
+      # - g++-4.8
+      # - clang-3.6
+      # We require v2.8.12 minimum
+      - cmake
+      # I'm finding problems between pre-compiled versions of boost ublas, with gtest
+      # stl_algobase.h: error: no matching function for call to swap()
+      - libboost-program-options1.55-dev
+      # - libboost-serialization1.55-dev
+      # - libboost-filesystem1.55-dev
+      # - libboost-system1.55-dev
+      # - libboost-regex1.55-dev
+      # The package opencl-headers on 'precise' only installs v1.1 cl headers; uncomment for 'trusty' or greater
+#      - opencl-headers
+      # Uncomment one of the following when fglrx modules are added to the apt whitelist
+#      - fglrx
+#      - fglrx=2:8.960-0ubuntu1
+#      - fglrx=2:13.350.1-0ubuntu0.0.1
+
+# env: specifies additional global variables to define per row in build matrix
+env:
+  global:
+    - CLBLAS_ROOT=${TRAVIS_BUILD_DIR}/bin/make/release
+
+# The following filters our build matrix; we are interested in linux-gcc & osx-clang
+matrix:
+  exclude:
+    - os: linux
+      compiler: clang
+    - os: osx
+      compiler: gcc
 
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq fglrx libboost-program-options-dev
-# Uncomment below to help verify the installs above work
-#  - ls -la /usr/lib/libboost*
-#  - ls -la /usr/include/boost
+  # Remove the following linux clause when fglrx can be installed with sudo: false
+  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+      sudo apt-get update -qq &&
+      sudo apt-get install -qq fglrx=2:13.350.1-0ubuntu0.0.1;
+    fi
+  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+      export OPENCL_ROOT="${TRAVIS_BUILD_DIR}/opencl-headers";
+    fi
+  - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
+      brew update;
+      brew outdated boost || brew upgrade boost;
+      brew outdated cmake || brew upgrade cmake;
+    fi
+  # - if [ ${CXX} = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+  - cmake --version;
+  - ${CC} --version;
+  - ${CXX} --version;
 
+install:
+  # 'Precise' only distributes v1.1 opencl headers; download 1.2 headers from khronos website
+  # Remove when the travis VM upgrades to 'trusty' or beyond
+  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+      mkdir -p ${OPENCL_ROOT}/include/CL;
+      pushd ${OPENCL_ROOT}/include/CL;
+      wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/;
+      popd;
+    fi
+  # osx image does not contain cl.hpp file; download from Khronos
+  # - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
+  #     pushd /System/Library/Frameworks/OpenCL.framework/Versions/A/Headers/;
+  #     sudo wget -w 1 -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/cl.hpp;
+  #     popd;
+  #   fi
+
+# Use before_script: to run configure steps
 before_script:
-  - cd ${TRAVIS_BUILD_DIR}
-# download OpenCL 1.2 header files since Travis CI only provides 1.1
-  - mkdir -p OpenCLInclude/CL
-  - cd OpenCLInclude/CL
-  #- wget -r --no-parent -nH --cut-dirs=4 --reject="index.html*" https://www.khronos.org/registry/cl/api/1.2/
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl.hpp
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_d3d10.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_d3d11.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_dx9_media_sharing.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_egl.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_ext.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_gl.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_gl_ext.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/cl_platform.h
-  - wget https://www.khronos.org/registry/cl/api/1.2/opencl.h
-  - ls
-  - pwd
-  - cd ../..
-  - mkdir -p bin/clBLAS
-  - cd bin/clBLAS
-  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOPENCL_INCLUDE_DIRS:PATH=$PWD/../../OpenCLInclude -DCMAKE_INSTALL_PREFIX:PATH=$PWD/package ../../src
+  - mkdir -p ${CLBLAS_ROOT}
+  - pushd ${CLBLAS_ROOT}
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOCL_VERSION=2.0 -DOPENCL_ROOT=${OPENCL_ROOT} ${TRAVIS_BUILD_DIR}/src
 
-script: 
-  - make install
-#  - ls -Rla package
-# Run a simple test to validate that the build works; CPU device in a VM
-  - cd package/bin
-  - export LD_LIBRARY_PATH=${TRAVIS_BUILD_DIR}/bin/clBLAS/package/lib64:${LD_LIBRARY_PATH}
-  - ./clBLAS-client --cpu
-
-after_success:
-  - cd ${TRAVIS_BUILD_DIR}/bin/clBLAS
+# use script: to execute build steps
+script:
   - make package
 
-notifications:
-   email:
-     - clmath-developers@googlegroups.com
-   on_success: change
-   on_failure: always
-   
+deploy:
+  provider: releases
+  prerelease: true
+  draft: true
+  skip_cleanup: true
+  api_key:
+    secure: MBkxtcfSk+4UvGRO+WRhmS86vIVzAs0LIF2sAtr/S+Ed+OdUAuhZypUsDXGWtK3mL55v9c8BZXefFfHfJqElcNmyHKwCptbCR/JiM8YBtjoy2/RW1NcJUZp+QuRlk23xPADj7QkPjv7dfrQUMitkLUXAD+uTmMe2l8gmlbhMrQqPBKhb+31FNv6Lmo6oa6GjbiGi7qjsrJc7uQjhppLam+M7BZbBALGbIqMIrb2BMDMMhBoDbb4zSKrSg3+krd3kKiCClJlK7xjIlyFXZ527ETQ+PMtIeQb0eJ3aQwa4caBRCm5BDzt8GnJ48S88EkynbQioCEE87ebcyOM7M+wfslW/Fm1Y86X5odIljkOmTNKoDvgLxc9vUCBtMyVHNIgZcToPdsrMsGxcHV+JtU3yVQVm6dnA5P/zG5bA+aBjsd7p7BdOE4fdhvZV5XRAk/wmiyWalF7hKJxHIiWAKknL+tpPDDUF+fHmDDsdf7yRDJBegNcKfw4+m19MIvLn9fbiNVCtwCAL1T4yWkIEpi4MRMDPtftmkZPbi6UwluOJUTeCeHe4en99Yu2haemNPqXs6rR0LlXGk31GQwzlrNfb+94F5tT2a4Ka4PsruA2NMW/IYCYEE5Gu7PihVDR031Fn9cdCU9kefUgyB07rJD6q/W+ljsU0osyg7VxyfMg8rkw=
+  file: ${CLBLAS_ROOT}/clBLAS-build/*.tar.gz
+  file_glob: true
+  on:
+    all_branches: true
+    tags: true
