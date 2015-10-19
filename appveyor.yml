@@ -91,15 +91,15 @@ on_finish:
   - echo on_finish step
 
 # Appveyor will push the artifacts it has saved to GitHub 'releases' tab
-deploy:
-  provider: GitHub
-  auth_token:
-    secure: dRXIWJKpU7h2RsHX7RqmyYCtCw+Q9O3X5MArloY6p34GZC1w7bp+jQYTZqbdO7bw
-  artifact: binary_zip
-  draft: true
-  prerelease: true
-  on:
-    appveyor_repo_tag: true
+# deploy:
+#  provider: GitHub
+#  auth_token:
+#    secure: dRXIWJKpU7h2RsHX7RqmyYCtCw+Q9O3X5MArloY6p34GZC1w7bp+jQYTZqbdO7bw
+#  artifact: binary_zip
+#  draft: true
+#  prerelease: true
+#  on:
+#    appveyor_repo_tag: true
 
   # Uncomment the following to pause the VM and wait for RDP connetion to debug
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
