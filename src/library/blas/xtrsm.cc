@@ -14,7 +14,7 @@
  * limitations under the License.
  * ************************************************************************/
 
-
+#include <stdlib.h>
 #include <string.h>
 #include <clBLAS.h>
 
