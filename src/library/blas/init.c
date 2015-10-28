@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef BUILDING_CLBLAS
-#include "AutoGemmIncludes/AutoGemmClKernels.h"
+#include "AutoGemmTeardown.h"
 #endif
 
 clblasStatus
