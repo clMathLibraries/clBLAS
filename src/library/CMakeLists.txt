@@ -851,6 +851,7 @@ set(CLBLAS_ALL_SOURCES
 	#${USERGEMM_SRC}
 	#${USERGEMM_HEADERS}
 )
+add_definitions(-DOPENCL_VERSION="${OPENCL_VERSION}")
 add_library(clBLAS ${CLBLAS_ALL_SOURCES})
 add_dependencies(clBLAS GENERATE_CLT)
 

@@ -108,7 +108,7 @@ const char * const dgemm_Col_NT_B0_MX048_NX048_KX08_src = STRINGIFY(
 \n    C    += offsetC;
 \n
 \n
-\n    double rC[6][6] = {(double)0};
+\n    double rC[6][6] = { {(double)0} };
 \n    double rA[6];
 \n    double rB[6];
 \n
