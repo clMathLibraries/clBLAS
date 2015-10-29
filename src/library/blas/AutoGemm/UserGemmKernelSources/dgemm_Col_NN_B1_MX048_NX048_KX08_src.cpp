@@ -94,7 +94,7 @@ __kernel void dgemm_Col_NN_B1_MX048_NX048_KX08 (
     C += offsetC;
 
 
-    double rC[6][6] = {(double)0};
+    double rC[6][6] = { {(double)0} };
     double rA[6];
     double rB[6];
 

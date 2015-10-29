@@ -27,6 +27,7 @@
 #include <stdio.h>
 #ifdef BUILDING_CLBLAS
 #include "AutoGemmTeardown.h"
+#include "UserGemmClKernels.h"
 #endif
 
 clblasStatus
@@ -254,6 +255,7 @@ clblasTeardown(void)
     releaseMallocTrace();
 
 #ifdef BUILDING_CLBLAS
+   initUserGemmClKernels();
    initAutoGemmClKernels();
 #endif
 
