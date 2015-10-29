@@ -839,8 +839,7 @@ else()
   MESSAGE( STATUS "clBLAS will NOT depend on ${AUTOGEMM_PRECOMPILED_KERNELS}" )
 endif()
 
-
-add_library(clBLAS
+set(CLBLAS_ALL_SOURCES
     ${CLBLAS_SOURCES}
     ${GLOBAL_HEADERS}
     ${SRC_BLAS_HEADERS}
@@ -851,8 +850,22 @@ add_library(clBLAS
     ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
 	#${USERGEMM_SRC}
 	#${USERGEMM_HEADERS}
-  )
+)
+add_library(clBLAS ${CLBLAS_ALL_SOURCES})
 add_dependencies(clBLAS GENERATE_CLT)
+
+function (add_target_definitions target)
+  get_target_property(defs ${target} COMPILE_DEFINITIONS)
+  if (defs MATCHES "NOTFOUND")
+    set(defs "")
+  endif ()
+  foreach (def ${defs} ${ARGN})
+    list(APPEND deflist ${def})
+  endforeach ()
+  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${deflist}")
+endfunction ()
+
+add_target_definitions(clBLAS BUILDING_CLBLAS)
 
 if (PRECOMPILE_TRSM_DTRSM OR PRECOMPILE_TRSM_STRSM)
 add_dependencies(clBLAS OCLBinaryGenerator_GEN)

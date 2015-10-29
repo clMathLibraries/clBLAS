@@ -199,7 +199,7 @@ if( BUILD_TEST )
 	    else()
 			find_package( Netlib COMPONENTS BLAS REQUIRED )
         endif()
-	else( )
+		else( )
 		# Find ACML BLAS implementation
 		# platform dependent ACML subdirectory
 		if (WIN32)

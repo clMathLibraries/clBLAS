@@ -120,15 +120,15 @@ before_script:
 script:
   - make package
 
-deploy:
-  provider: releases
-  prerelease: true
-  draft: true
-  skip_cleanup: true
-  api_key:
-    secure: MBkxtcfSk+4UvGRO+WRhmS86vIVzAs0LIF2sAtr/S+Ed+OdUAuhZypUsDXGWtK3mL55v9c8BZXefFfHfJqElcNmyHKwCptbCR/JiM8YBtjoy2/RW1NcJUZp+QuRlk23xPADj7QkPjv7dfrQUMitkLUXAD+uTmMe2l8gmlbhMrQqPBKhb+31FNv6Lmo6oa6GjbiGi7qjsrJc7uQjhppLam+M7BZbBALGbIqMIrb2BMDMMhBoDbb4zSKrSg3+krd3kKiCClJlK7xjIlyFXZ527ETQ+PMtIeQb0eJ3aQwa4caBRCm5BDzt8GnJ48S88EkynbQioCEE87ebcyOM7M+wfslW/Fm1Y86X5odIljkOmTNKoDvgLxc9vUCBtMyVHNIgZcToPdsrMsGxcHV+JtU3yVQVm6dnA5P/zG5bA+aBjsd7p7BdOE4fdhvZV5XRAk/wmiyWalF7hKJxHIiWAKknL+tpPDDUF+fHmDDsdf7yRDJBegNcKfw4+m19MIvLn9fbiNVCtwCAL1T4yWkIEpi4MRMDPtftmkZPbi6UwluOJUTeCeHe4en99Yu2haemNPqXs6rR0LlXGk31GQwzlrNfb+94F5tT2a4Ka4PsruA2NMW/IYCYEE5Gu7PihVDR031Fn9cdCU9kefUgyB07rJD6q/W+ljsU0osyg7VxyfMg8rkw=
-  file: ${CLBLAS_ROOT}/clBLAS-build/*.tar.gz
-  file_glob: true
-  on:
-    all_branches: true
-    tags: true
+#deploy:
+#  provider: releases
+#  prerelease: true
+#  draft: true
+#  skip_cleanup: true
+#  api_key:
+#    secure: MBkxtcfSk+4UvGRO+WRhmS86vIVzAs0LIF2sAtr/S+Ed+OdUAuhZypUsDXGWtK3mL55v9c8BZXefFfHfJqElcNmyHKwCptbCR/JiM8YBtjoy2/RW1NcJUZp+QuRlk23xPADj7QkPjv7dfrQUMitkLUXAD+uTmMe2l8gmlbhMrQqPBKhb+31FNv6Lmo6oa6GjbiGi7qjsrJc7uQjhppLam+M7BZbBALGbIqMIrb2BMDMMhBoDbb4zSKrSg3+krd3kKiCClJlK7xjIlyFXZ527ETQ+PMtIeQb0eJ3aQwa4caBRCm5BDzt8GnJ48S88EkynbQioCEE87ebcyOM7M+wfslW/Fm1Y86X5odIljkOmTNKoDvgLxc9vUCBtMyVHNIgZcToPdsrMsGxcHV+JtU3yVQVm6dnA5P/zG5bA+aBjsd7p7BdOE4fdhvZV5XRAk/wmiyWalF7hKJxHIiWAKknL+tpPDDUF+fHmDDsdf7yRDJBegNcKfw4+m19MIvLn9fbiNVCtwCAL1T4yWkIEpi4MRMDPtftmkZPbi6UwluOJUTeCeHe4en99Yu2haemNPqXs6rR0LlXGk31GQwzlrNfb+94F5tT2a4Ka4PsruA2NMW/IYCYEE5Gu7PihVDR031Fn9cdCU9kefUgyB07rJD6q/W+ljsU0osyg7VxyfMg8rkw=
+#  file: ${CLBLAS_ROOT}/clBLAS-build/*.tar.gz
+#  file_glob: true
+#  on:
+#    all_branches: true
+#    tags: true

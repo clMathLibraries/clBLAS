@@ -218,7 +218,7 @@ def makeOpenCLKernelString(kernel):
   kStr += endLine
   kStr += (
     "  /* allocate registers */" + endLine +
-    "  DATA_TYPE_STR rC[MICRO_TILE_NUM_ROWS][MICRO_TILE_NUM_COLS] = {0};" + endLine +
+    "  DATA_TYPE_STR rC[MICRO_TILE_NUM_ROWS][MICRO_TILE_NUM_COLS] = { {0} };" + endLine +
     "  DATA_TYPE_STR rA[MICRO_TILE_NUM_ROWS];" + endLine +
     "  DATA_TYPE_STR rB[MICRO_TILE_NUM_COLS];" + endLine )
 
