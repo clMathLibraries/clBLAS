@@ -179,6 +179,14 @@ class ClKernelIncludes:
     self.incStr += "#include <CL/cl.h>\n"
     self.incStr += "#endif\n"
     self.incStr += "\n"
+    self.incStr += "#ifdef __cplusplus\n"
+    self.incStr += "extern \"C\" {\n"
+    self.incStr += "#endif\n"
+    self.incStr += "    void initAutoGemmClKernels(void);\n";
+    self.incStr += "#ifdef __cplusplus\n"
+    self.incStr += "}\n";
+    self.incStr += "#endif\n"
+    self.incStr += "\n";
 
     self.cppName = Common.getIncludePath() + "AutoGemmClKernels.cpp"
     self.cppFile = open(self.cppName, "w")
@@ -190,29 +198,50 @@ class ClKernelIncludes:
     self.cppStr += "#endif\n"
     self.cppStr += "\n"
 
+
+    self.initFunction = "";
+    self.initFunction += "extern \"C\" {\n";
+    self.initFunction += "    void initAutoGemmClKernels(void);\n";
+    self.initFunction += "}\n";
+    self.initFunction += "\n";
+    self.initFunction += "void initAutoGemmClKernels(void) {\n";
+    self.defines = "";
+
   def addKernel(self, kernel):
-    kernelName = kernel.getName()
-    self.incStr += "extern cl_kernel %s_clKernel;\n" % kernelName
-    self.cppStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
-    kernelName = kernel.getRowName()
-    self.incStr += "extern cl_kernel %s_clKernel;\n" % kernelName
-    self.cppStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
-    kernelName = kernel.getColName()
-    self.incStr += "extern cl_kernel %s_clKernel;\n" % kernelName
-    self.cppStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
-    kernelName = kernel.getCornerName()
-    self.incStr += "extern cl_kernel %s_clKernel;\n" % kernelName
-    self.cppStr += "cl_kernel %s_clKernel = NULL;\n" % kernelName
+    kernelNames = [
+      kernel.getName(),
+      kernel.getRowName(),
+      kernel.getColName(),
+      kernel.getCornerName()
+    ]
+    for kernelName in kernelNames:
+      self.incStr += "extern cl_kernel %s_clKernel;\n" % kernelName
+
+      self.defines += "cl_kernel %s_clKernel = NULL;\n" % kernelName
+
+      self.initFunction += "    if(%s_clKernel != NULL) {\n" % kernelName
+      self.initFunction += "        clReleaseKernel(%s_clKernel);\n" % kernelName
+      self.initFunction += "        %s_clKernel = NULL;\n" % kernelName
+      self.initFunction += "    }\n"
 
     self.incFile.write( self.incStr )
     self.incStr = ""
-    self.cppFile.write( self.cppStr )
-    self.cppStr = ""
+#   self.cppFile.write( self.cppStr )
+#   self.cppStr = ""
 
   def writeToFile(self):
     self.incFile.write( self.incStr )
     self.incFile.write( "\n#endif\n" )
     self.incFile.close()
+
+    self.initFunction += "}\n";
+    self.cppStr += self.defines + "\n";
+    self.defines = "";
+    self.cppStr += self.initFunction + "\n";
+    self.initFunction = "";
+
+#    self.cppStr += "\n";
+#    self.cppStr += "initAutoGemmClKernels();\n";
     self.cppFile.write( self.cppStr )
     self.cppFile.close()
 
