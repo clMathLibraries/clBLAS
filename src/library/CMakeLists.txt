@@ -43,6 +43,7 @@ set(AUTOGEMM_HEADERS
 )
 
 set(AUTOGEMM_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.cc
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.cpp
