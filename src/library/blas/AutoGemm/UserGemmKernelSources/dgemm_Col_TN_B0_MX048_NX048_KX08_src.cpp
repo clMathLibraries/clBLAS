@@ -36,7 +36,7 @@ __kernel void dgemm_Col_TN_B0_MX048_NX048_KX08_src (
   uint const offsetB,
   uint const offsetC )
 {
-    double rC[6][6]  = {(double)0};
+    double rC[6][6]  = { {(double)0} };
     double rA[1][6];
     double rB[1][6];
 

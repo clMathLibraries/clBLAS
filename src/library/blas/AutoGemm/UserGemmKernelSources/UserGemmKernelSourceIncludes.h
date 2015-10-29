@@ -9,8 +9,8 @@
 
 //**** compiler flags
 //**** online compilation flags
-const char * const User_srcBuildOptions = "-cl-std=CL2.0";
-const char * const User_binBuildOptions = "-cl-std=CL2.0";
+const char * const User_srcBuildOptions = "-cl-std=CL" OPENCL_VERSION;
+const char * const User_binBuildOptions = "-cl-std=CL" OPENCL_VERSION;
 
 
 extern const unsigned int sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_workGroupNumRows;
