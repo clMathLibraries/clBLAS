@@ -115,6 +115,9 @@ main(void)
         printf("Result : %f\n", asum);
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufX);
     clReleaseMemObject(bufAsum);

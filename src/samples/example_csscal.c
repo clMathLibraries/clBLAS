@@ -127,7 +127,10 @@ main(void)
         /* At this point you will get the result of CSSCAL placed in vector X. */
         printResult();
     }
-
+    
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+    
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufX);
 

@@ -116,6 +116,9 @@ main(void)
         printf("Result Euclidean Norm: %f\n", NRM2);
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufX);
     clReleaseMemObject(bufNRM2);
