@@ -148,7 +148,9 @@ main(void)
         /* At this point you will get the result of SROT placed in vector Y. */
         printResult();
     }
-	//printf("here\n");
+
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
 
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);

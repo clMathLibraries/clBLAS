@@ -163,6 +163,9 @@ main(void)
         printResult();
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);
     clReleaseMemObject(bufX);
