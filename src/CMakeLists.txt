@@ -82,8 +82,8 @@ message( STATUS "You have confirmed OpenCL ${OPENCL_VERSION} is supported in you
 if ( APPLE )
 	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
 else ( )
-	message(STATUS "CORR_TEST_WITH_ACML set to ON")
-	set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+	message(STATUS "CORR_TEST_WITH_ACML set to OFF. Try link with libblas.so")
+	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
 endif( )
 
 if( CMAKE_GENERATOR MATCHES "NMake" )

@@ -42,6 +42,7 @@ addons:
       - kubuntu-backports
       # boost-latest contains boost v1.55
       - boost-latest
+      - gfortran
     packages:
       # g++-4.8 is minimum version considered to be the first good c++11 gnu compiler
       # - g++-4.8
