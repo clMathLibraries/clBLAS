@@ -59,7 +59,7 @@ uint na)\n
   __local double workspace[BLOCK_SIZE]; \n   // workspace used to store the current working column
 
   // load A
-  #pragma unroll \n
+  _Pragma("unroll")\n
   for( i=0; i < BLOCK_SIZE; i++ )\n
     {\n
       if(tx <= i && i+bx*BLOCK_SIZE < na )\n
@@ -111,7 +111,7 @@ uint na)\n
     workspace[tx] = *(Bs+i*BLOCK_SIZE+tx);\n
     y = Bs+i*BLOCK_SIZE;\n
 
-    #pragma unroll\n
+    _Pragma("unroll")\n
     //for( j=tx; j < i; j++ )
     for( j=0; j < i; j++ )\n
 	{\n
@@ -139,7 +139,7 @@ uint na)\n
   }\n
   
     // write back A
-#pragma unroll\n
+  _Pragma("unroll")\n
   for( i=0; i < BLOCK_SIZE; i++ )\n
   {\n
     *(d_dinvA+i*NB+tx) = Bs[i*BLOCK_SIZE+tx];\n
