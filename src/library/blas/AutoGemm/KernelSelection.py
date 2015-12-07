@@ -675,9 +675,10 @@ def writeKernelSelection():
 # Main
 ################################################################################
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
+  if len(sys.argv) == 3:
     Common.setOutputPath(sys.argv[1])
+    AutoGemmParameters.setArchitecture(sys.argv[2])
+    writeKernelSelection()
   else:
-    print "Warning: No output path specified; default is working directory."
-  writeKernelSelection()
+    print "USAGE: python KernelSelection.py output_path architecture"
 
