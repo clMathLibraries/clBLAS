@@ -21,6 +21,7 @@ import getopt
 import Common
 import Includes
 import KernelSelection
+import AutoGemmParameters
 import KernelOpenCL
 
 
@@ -32,6 +33,7 @@ if __name__ == "__main__":
   ap = argparse.ArgumentParser(description="AutoGemm")
   ap.add_argument("--output-path", dest="output" )
   ap.add_argument("--opencl-compiler-version", dest="clCompilerVersion", action="store", choices=["1.1", "1.2", "2.0" ])
+  ap.add_argument("--architecture", dest="architecture", action="store", choices=["Hawaii", "Fiji" ])
   args = ap.parse_args()
   if args.output:
     Common.setOutputPath(args.output)
@@ -40,6 +42,7 @@ if __name__ == "__main__":
 
   print "AutoGemm.py: using OpenCL " + args.clCompilerVersion + " compiler"
   Common.setClCompilerVersion(args.clCompilerVersion)
+  AutoGemmParameters.setArchitecture(args.architecture)
 
   KernelOpenCL.writeOpenCLKernels()
   KernelSelection.writeKernelSelection()

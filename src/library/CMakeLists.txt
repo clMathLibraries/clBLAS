@@ -91,6 +91,10 @@ option( PRECOMPILE_GEMM_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
 
+set( AUTOGEMM_ARCHITECTURE "Hawaii" CACHE STRING "AutoGemm: device for kernel selection logic" )
+set_property( CACHE AUTOGEMM_ARCHITECTURE PROPERTY STRINGS "Hawaii" "Fiji" )
+
+
 
 # opencl compiler version
 #set( PRECOMPILE_GEMM_OPENCL_VERSION "2.0" CACHE STRING "OpenCL compiler version supported by device driver." )
@@ -239,7 +243,7 @@ endif()#endif precompile active
 ################################################################################
 add_custom_command(
   OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
-  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OPENCL_VERSION}
+  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OPENCL_VERSION} --architecture ${AUTOGEMM_ARCHITECTURE}
   DEPENDS ${AUTOGEMM_SCRIPTS}
 )
 
