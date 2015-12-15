@@ -117,7 +117,10 @@ static char *getKernelName(cl_kernel clKernel)
     sizeof(kernelNameLength),
     NULL,
     &kernelNameLength);
-  CL_CHECK(err)
+
+  // Do not check this error because of an nvidia bug.
+  // The kernelNameLength turns out to be of proper length.
+  // CL_CHECK(err)
 
   char *kernelName = new char[kernelNameLength];
   err = clGetKernelInfo(
