@@ -26,6 +26,13 @@ def makeOpenCLKernelString(kernel):
   kStr += endLine
 
   ####################################
+  # Double precision pragma
+  prec = kernel.getName()[0].lower()
+  if prec == "d" or prec == "z":
+    kStr += endLine
+    kStr += "#pragma OPENCL EXTENSION cl_khr_fp64 : enable" + endLine
+
+  ####################################
   # kernel parameters
   kStr += endLine
   kStr += "/* kernel parameters */" + endLine
