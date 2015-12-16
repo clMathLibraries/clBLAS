@@ -38,13 +38,12 @@ if __name__ == "__main__":
   if args.output:
     Common.setOutputPath(args.output)
   else:
-    print "AutoGemm.py: Warning: No output path specified; default is working directory."
+    print("AutoGemm.py: Warning: No output path specified; default is working directory.")
 
-  print "AutoGemm.py: using OpenCL " + args.clCompilerVersion + " compiler"
+  print("AutoGemm.py: using OpenCL " + args.clCompilerVersion + " compiler")
   Common.setClCompilerVersion(args.clCompilerVersion)
   AutoGemmParameters.setArchitecture(args.architecture)
 
   KernelOpenCL.writeOpenCLKernels()
   KernelSelection.writeKernelSelection()
   Includes.writeIncludes()
-

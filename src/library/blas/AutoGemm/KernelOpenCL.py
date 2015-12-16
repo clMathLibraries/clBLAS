@@ -175,14 +175,14 @@ def makeOpenCLKernelString(kernel):
   kStr += endLine
   kStr += "/* %dx%d micro-tile */%s" % (kernel.microTileNumRows, kernel.microTileNumCols, endLine)
   kStr += "#define MICRO_TILE \\\\" + endLine
-  for a in range(0, kernel.microTileNumRows):
+  for a in range(0, int(kernel.microTileNumRows)):
     kStr += "  rA[%d] = localA[offA + %d*WG_NUM_ROWS]; \\\\%s" % (a, a, endLine)
-  for b in range(0, kernel.microTileNumCols):
+  for b in range(0, int(kernel.microTileNumCols)):
     kStr += "  rB[%d] = localB[offB + %d*WG_NUM_COLS]; \\\\%s" % (b, b, endLine)
   kStr += "  offA += (MACRO_TILE_NUM_ROWS+LOCAL_COL_PAD); \\\\" + endLine
   kStr += "  offB += (MACRO_TILE_NUM_COLS+LOCAL_ROW_PAD); \\\\" + endLine
-  for a in range(0, kernel.microTileNumRows):
-    for b in range(0, kernel.microTileNumCols):
+  for a in range(0, int(kernel.microTileNumRows)):
+    for b in range(0, int(kernel.microTileNumCols)):
       kStr += "  TYPE_MAD(rA[%d],rB[%d],rC[%d][%d]); \\\\%s" % (a, b, a, b, endLine)
   kStr += "  mem_fence(CLK_LOCAL_MEM_FENCE);" + endLine
   kStr += endLine
@@ -372,7 +372,7 @@ def makeOpenCLKernelString(kernel):
     zeroString = "(double2)(0.0, 0.0)"
   else:
     zeroString = "0.0"
-  for a in range(0, numALoads):
+  for a in range(0, int(numALoads)):
     kStr += "    lA[ %d*localAStride ] = " % a
     if kernel.isRowKernel():
       kStr += "( globalARow(%d) >= M) ? %s : " % ( a, zeroString )
@@ -385,7 +385,7 @@ def makeOpenCLKernelString(kernel):
     kStr += "A[ GET_GLOBAL_INDEX_A( globalARow(%d), globalACol(%d) ) ];%s" % (numALoads, numALoads, endLine)
     kStr += "    }" + endLine
 
-  for b in range(0, numBLoads):
+  for b in range(0, int(numBLoads)):
     kStr += "    lB[ %d*localBStride ] = " % b
     if kernel.isColKernel():
       kStr += "( globalBCol(%d) >= N) ? %s : " % ( b, zeroString )
@@ -406,7 +406,7 @@ def makeOpenCLKernelString(kernel):
   # do mads
   kStr += endLine
   kStr += "    /* do mads */" + endLine
-  for u in range(0, kernel.unroll):
+  for u in range(0, int(kernel.unroll)):
     kStr += "    MICRO_TILE" + endLine
 
   ####################################
@@ -444,8 +444,8 @@ def makeOpenCLKernelString(kernel):
   if kernel.precision=="z":
     kStr += "  double type_mad_tmp;" + endLine
 
-  for a in range(0, kernel.microTileNumRows):
-    for b in range(0, kernel.microTileNumCols):
+  for a in range(0, int(kernel.microTileNumRows)):
+    for b in range(0, int(kernel.microTileNumCols)):
       if kernel.isRowKernel():
         kStr += "  if (globalCRow+%d*WG_NUM_ROWS < M)" % a
       if kernel.isColKernel():
@@ -541,7 +541,7 @@ def writeOpenCLKernels():
               cornerKernel.macroTileNumCols = 1
               writeOpenCLKernelToFile(cornerKernel)
               numKernels += 4
-  print "AutoGemm.py: generated %d kernels" % numKernels
+  print("AutoGemm.py: generated %d kernels" % numKernels)
 
 
 
@@ -590,5 +590,4 @@ if __name__ == "__main__":
 
   kernelName = kernel.getName()
   kernelFileName = Common.getKernelSourcePath() + kernelName +"_src.cpp"
-  print "kernel \"%s\" written to %s" % (kernelName, kernelFileName)
-
+  print("kernel \"%s\" written to %s" % (kernelName, kernelFileName))
