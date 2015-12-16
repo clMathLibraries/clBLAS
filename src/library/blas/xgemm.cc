@@ -14,6 +14,9 @@
  * limitations under the License.
  * ************************************************************************/
 
+#include <map>
+#include <string>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
@@ -86,11 +89,38 @@ bool isZero<DoubleComplex>( DoubleComplex value ) {
   return CREAL(value) == 0 && CIMAG(value) == 0;
 };
 
+static char *getKernelName(cl_kernel clKernel)
+{
+  cl_int err;
+  // get kernel name
+  size_t kernelNameLength;
+  err = clGetKernelInfo(
+    clKernel,
+    CL_KERNEL_FUNCTION_NAME,
+    sizeof(kernelNameLength),
+    NULL,
+    &kernelNameLength);
 
+  // Do not check this error because of an nvidia bug.
+  // The kernelNameLength turns out to be of proper length.
+  // CL_CHECK(err)
+
+  char *kernelName = new char[kernelNameLength];
+  err = clGetKernelInfo(
+    clKernel,
+    CL_KERNEL_FUNCTION_NAME,
+    kernelNameLength*sizeof(char),
+    kernelName,
+    NULL );
+  CL_CHECK(err)
+
+  return kernelName;
+}
 
 /******************************************************************************
  * Make Gemm Kernel
  *****************************************************************************/
+//FIXME: This function should be returning an error.
 void makeGemmKernel(
   cl_kernel *clKernel,
   cl_command_queue clQueue,
@@ -100,57 +130,79 @@ void makeGemmKernel(
   size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
+  //TODO: This will need to be converted to thread local when making clBLAS thread safe
+  typedef std::map<std::string, cl_kernel> kernel_map_t;
+  static kernel_map_t kernel_map;
+
+  cl_context clContext;
+  cl_device_id clDevice;
   cl_int err;
+
+  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
+  CL_CHECK(err)
+  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
+  CL_CHECK(err)
+
+  std::stringstream ss;
+  ss << clDevice << "_" << clContext;
+  std::string prefix = ss.str();
+
   if (*clKernel) {
+    char *kernelName = getKernelName(*clKernel);
     // kernel has already been built, return
 #ifdef AUTOGEMM_PRINT_DEBUG
-    // get kernel name
-    size_t kernelNameLength;
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      sizeof(kernelNameLength),
-      NULL,
-      &kernelNameLength );
-    CL_CHECK(err)
-    char *kernelName = new char[kernelNameLength];
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      kernelNameLength*sizeof(char),
-      kernelName,
-      NULL );
-    CL_CHECK(err)
     printf("makeGemmKernel: \"%s\" already built; returning.\n", kernelName);
-    delete[] kernelName;
 #endif
-    return;
-  } else {
+
+    // Check if kernel exists for this device
+    std::string key = prefix + "_" + kernelName;
+    kernel_map_t::iterator idx = kernel_map.find(key);
+
+
+    // If kernel not found for this device, set to NULL
+    if (idx == kernel_map.end()) {
+        *clKernel = NULL;
+    } else {
+        *clKernel = idx->second;
+    }
+
+    delete[] kernelName;
+  }
+
+  if (!*clKernel) {
     // kernel has not been built, so build it (from binary, preferably)
-    cl_context clContext;
-    cl_device_id clDevice;
-    err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
-    CL_CHECK(err)
-    err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
-    CL_CHECK(err)
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
 #ifdef AUTOGEMM_PRINT_DEBUG
       printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
+      printf("makeGemmKernel: Creating program from binary\n");
 #endif
       clProgram = clCreateProgramWithBinary(
         clContext,
         1, &clDevice,
         kernelBinarySize, kernelBinary,
         &clBinaryStatus, &err );
-      CL_CHECK(err)
+#ifdef AUTOGEMM_PRINT_DEBUG
+      if (err != CL_SUCCESS) {
+          printf("makeGemmKernel: Failed to create program with binary\n");
+      }
+#endif
       err = clBuildProgram(
         clProgram,
         1, &clDevice,
         binaryBuildOptions, NULL, NULL );
-      CL_CHECK(err)
-    } else {
+#ifdef AUTOGEMM_PRINT_DEBUG
+      if (err != CL_SUCCESS) {
+          printf("makeGemmKernel: Failed to build program from binary\n");
+      }
+#endif
+    }
+
+    if (!*kernelBinary || err != CL_SUCCESS) {
+#ifdef AUTOGEMM_PRINT_DEBUG
+      printf("makeGemmKernel: Creating program from source\n");
+#endif
       clProgram = clCreateProgramWithSource(
         clContext,
         1, &kernelSource,
@@ -178,6 +230,7 @@ void makeGemmKernel(
       printf("%s\n", buildLog);
       //printf("\n\nKernel String:\n\n");
       //printf("%s\n", kernelSource);
+      //FIXME: The function should be exiting at this point
     }
 
     err = clCreateKernelsInProgram(
@@ -187,32 +240,21 @@ void makeGemmKernel(
     CL_CHECK(err)
 	err = clReleaseProgram(clProgram);
 	CL_CHECK(err)
-    
+
+    char *kernelName = getKernelName(*clKernel);
+
 #ifdef AUTOGEMM_PRINT_DEBUG
-    // get kernel name
-    size_t kernelNameLength;
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      sizeof(kernelNameLength),
-      NULL,
-      &kernelNameLength );
-    CL_CHECK(err)
-    char *kernelName = new char[kernelNameLength];
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      kernelNameLength*sizeof(char),
-      kernelName,
-      NULL );
-    CL_CHECK(err)
     printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
-    delete[] kernelName;
 #endif
+
+    std::string key = prefix + "_" + kernelName;
+    kernel_map[key] = *clKernel;
+    delete[] kernelName;
   }
+
+  return;
 }
 
- 
 /******************************************************************************
  * Enqueue Gemm Kernel
  *****************************************************************************/
@@ -266,7 +308,7 @@ template<> clblasTranspose correctTranspose<DoubleComplex>( clblasTranspose tran
  * templated Gemm
  *****************************************************************************/
 template<typename Precision>
-clblasStatus 
+clblasStatus
 clblasGemm(
     clblasOrder order,
     clblasTranspose transA,
@@ -308,7 +350,7 @@ clblasGemm(
     M, N, offA, offB, lda, ldb, A, B );
 
 
-  
+
 /******************************************************************************
  * Handle Special Cases
  *
@@ -318,7 +360,7 @@ clblasGemm(
  * and are mod32 but not mod96 or mod64
  *
  *****************************************************************************/
-  
+
   bool specialCaseHandled = false;
 
   clblasStatus SpecialCaseStatus = GemmSpecialCases<Precision>(order,
@@ -339,8 +381,8 @@ clblasGemm(
 
   if (specialCaseHandled)
 	  return SpecialCaseStatus;
-  
-  
+
+
 /******************************************************************************
  * Optimal num elements per thread
  *****************************************************************************/
@@ -512,7 +554,7 @@ clblasGemm(
   gemmKernelArgs[11] = &offA;  gemmKernelArgSizes[11] = sizeof(cl_uint);
   gemmKernelArgs[12] = &offB;  gemmKernelArgSizes[12] = sizeof(cl_uint);
   gemmKernelArgs[13] = &offC;  gemmKernelArgSizes[13] = sizeof(cl_uint);
-  
+
 
 /******************************************************************************
  * Enqueue Tile kernel
@@ -577,8 +619,8 @@ clblasGemm(
 /******************************************************************************
  * SGEMM API call
  *****************************************************************************/
-extern "C" 
-clblasStatus 
+extern "C"
+clblasStatus
 clblasSgemm(
     clblasOrder order,
     clblasTranspose transA,
@@ -615,7 +657,7 @@ clblasSgemm(
 /******************************************************************************
  * DGEMM API call
  *****************************************************************************/
-extern "C" 
+extern "C"
 clblasStatus
 clblasDgemm( clblasOrder order,
              clblasTranspose transA,
@@ -652,7 +694,7 @@ clblasDgemm( clblasOrder order,
 /******************************************************************************
  * CGEMM API call
  *****************************************************************************/
-extern "C" 
+extern "C"
 clblasStatus
 clblasCgemm(
     clblasOrder order,
@@ -690,7 +732,7 @@ clblasCgemm(
 /******************************************************************************
  * ZGEMM API
  *****************************************************************************/
-extern "C" 
+extern "C"
 clblasStatus
 clblasZgemm(
     clblasOrder order,

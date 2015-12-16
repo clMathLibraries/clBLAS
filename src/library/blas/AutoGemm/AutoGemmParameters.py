@@ -127,20 +127,20 @@ def getTilesForPrecision(precision):
     validTiles = sizeData[2]
     # add valid tiles
     for tileParams in validTiles:
-      #print tileParams
+      #print(tileParams)
       tile.workGroupNumRows = tileParams[0]
       tile.workGroupNumCols = tileParams[1]
       tile.microTileNumRows = tileParams[2]
       tile.microTileNumCols = tileParams[3]
       tile.macroTileNumRows = tile.workGroupNumRows*tile.microTileNumRows
       tile.macroTileNumCols = tile.workGroupNumCols*tile.microTileNumCols
-      #print tile.getName()
+      #print(tile.getName())
       for unroll in unrolls[precision]:
         tile.unroll = unroll
         if tile.isValid():
           tiles.append( copy.copy(tile) )
         else:
-          print tile.getName() + " - SKIPPING - "
+          print(tile.getName() + " - SKIPPING - ")
 
     # add fallback tile
     tile.workGroupNumRows = fallbackTile[0]
@@ -154,7 +154,7 @@ def getTilesForPrecision(precision):
       if tile.isValid():
         tiles.append( copy.copy(tile) )
       else:
-        print tile.getName() + " - SKIPPING - "
+        print(tile.getName() + " - SKIPPING - ")
 
   setTiles = set(tiles)
   tiles = list( setTiles )
