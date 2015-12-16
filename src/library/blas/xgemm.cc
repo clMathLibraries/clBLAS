@@ -176,21 +176,32 @@ void makeGemmKernel(
     if (*kernelBinary) {
 #ifdef AUTOGEMM_PRINT_DEBUG
       printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
+      printf("makeGemmKernel: Creating program from binary\n");
 #endif
       clProgram = clCreateProgramWithBinary(
         clContext,
         1, &clDevice,
         kernelBinarySize, kernelBinary,
         &clBinaryStatus, &err );
-      CL_CHECK(err)
+#ifdef AUTOGEMM_PRINT_DEBUG
+      if (err != CL_SUCCESS) {
+          printf("makeGemmKernel: Failed to create program with binary\n");
+      }
+#endif
       err = clBuildProgram(
         clProgram,
         1, &clDevice,
         binaryBuildOptions, NULL, NULL );
-      CL_CHECK(err)
-    } else {
 #ifdef AUTOGEMM_PRINT_DEBUG
-      printf("makeGemmKernel: Creating program from source\n", *kernelBinarySize);
+      if (err != CL_SUCCESS) {
+          printf("makeGemmKernel: Failed to build program from binary\n");
+      }
+#endif
+    }
+
+    if (!*kernelBinary || err != CL_SUCCESS) {
+#ifdef AUTOGEMM_PRINT_DEBUG
+      printf("makeGemmKernel: Creating program from source\n");
 #endif
       clProgram = clCreateProgramWithSource(
         clContext,
