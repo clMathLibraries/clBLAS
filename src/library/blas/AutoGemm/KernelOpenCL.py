@@ -351,11 +351,11 @@ def makeOpenCLKernelString(kernel):
   kStr += endLine
   kStr += "    /* load global -> local */" + endLine
   numALoads  = (kernel.workGroupNumRows*kernel.microTileNumRows*kernel.unroll) \
-      / (kernel.workGroupNumRows*kernel.workGroupNumCols)
+      // (kernel.workGroupNumRows*kernel.workGroupNumCols) # // -- integer divide
   numALoadsR = (kernel.workGroupNumRows*kernel.microTileNumRows*kernel.unroll) \
       % (kernel.workGroupNumRows*kernel.workGroupNumCols)
   numBLoads  = (kernel.workGroupNumCols*kernel.microTileNumCols*kernel.unroll) \
-      / (kernel.workGroupNumRows*kernel.workGroupNumCols)
+      // (kernel.workGroupNumRows*kernel.workGroupNumCols) # // - integer divide
   numBLoadsR = (kernel.workGroupNumCols*kernel.microTileNumCols*kernel.unroll) \
       % (kernel.workGroupNumRows*kernel.workGroupNumCols)
 
