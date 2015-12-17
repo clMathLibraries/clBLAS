@@ -162,12 +162,6 @@ def makeOpenCLKernelString(kernel):
         "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + endLine +
         "  REG.s1 *= ALPHA.s0; \\\\" + endLine +
         "  REG.s1 = mad(  ALPHA.s1, type_mad_tmp, REG.s1 ); \\\\" + endLine +
-        "  /* (2) */ \\\\" + endLine +
-        "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + endLine +
-        "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + endLine +
-        "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + endLine +
-        "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + endLine +
-        "  /* (3) */ \\\\" + endLine +
         "  DST = REG;" + endLine )
 
   ####################################
