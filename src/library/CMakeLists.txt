@@ -14,6 +14,7 @@
 # limitations under the License.
 # ########################################################################
 
+find_package(PythonInterp REQUIRED)
 
 
 
@@ -202,7 +203,7 @@ set( AUTOGEMM_PRECOMPILE_HEADER_SRC ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/Ke
 set( AUTOGEMM_PRECOMPILE_HEADER_OUT ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelsToPreCompile.h )
 add_custom_command(
   OUTPUT ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
-  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
   DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
 )
 
@@ -243,7 +244,7 @@ endif()#endif precompile active
 ################################################################################
 add_custom_command(
   OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
-  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OPENCL_VERSION} --architecture ${AUTOGEMM_ARCHITECTURE}
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OPENCL_VERSION} --architecture ${AUTOGEMM_ARCHITECTURE}
   DEPENDS ${AUTOGEMM_SCRIPTS}
 )
 
