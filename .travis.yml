@@ -141,7 +141,7 @@ install:
 before_script:
   - mkdir -p ${CLBLAS_ROOT}
   - pushd ${CLBLAS_ROOT}
-  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOCL_VERSION=2.0 -DOPENCL_ROOT=${OPENCL_ROOT} ${TRAVIS_BUILD_DIR}/src
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=OFF -DOCL_VERSION=2.0 -DOPENCL_ROOT=${OPENCL_ROOT} ${TRAVIS_BUILD_DIR}/src
 
 # use script: to execute build steps
 script:
