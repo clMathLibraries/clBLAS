@@ -162,12 +162,6 @@ def makeOpenCLKernelString(kernel):
         "  REG.s0 = mad( -ALPHA.s1, REG.s1, REG.s0 ); \\\\" + endLine +
         "  REG.s1 *= ALPHA.s0; \\\\" + endLine +
         "  REG.s1 = mad(  ALPHA.s1, type_mad_tmp, REG.s1 ); \\\\" + endLine +
-        "  /* (2) */ \\\\" + endLine +
-        "  REG.s0 = mad(  BETA.s0, DST.s0, REG.s0 ); \\\\" + endLine +
-        "  REG.s0 = mad( -BETA.s1, DST.s1, REG.s0 ); \\\\" + endLine +
-        "  REG.s1 = mad(  BETA.s1, DST.s0, REG.s1 ); \\\\" + endLine +
-        "  REG.s1 = mad(  BETA.s0, DST.s1, REG.s1 ); \\\\" + endLine +
-        "  /* (3) */ \\\\" + endLine +
         "  DST = REG;" + endLine )
 
   ####################################
@@ -357,11 +351,11 @@ def makeOpenCLKernelString(kernel):
   kStr += endLine
   kStr += "    /* load global -> local */" + endLine
   numALoads  = (kernel.workGroupNumRows*kernel.microTileNumRows*kernel.unroll) \
-      / (kernel.workGroupNumRows*kernel.workGroupNumCols)
+      // (kernel.workGroupNumRows*kernel.workGroupNumCols) # // -- integer divide
   numALoadsR = (kernel.workGroupNumRows*kernel.microTileNumRows*kernel.unroll) \
       % (kernel.workGroupNumRows*kernel.workGroupNumCols)
   numBLoads  = (kernel.workGroupNumCols*kernel.microTileNumCols*kernel.unroll) \
-      / (kernel.workGroupNumRows*kernel.workGroupNumCols)
+      // (kernel.workGroupNumRows*kernel.workGroupNumCols) # // - integer divide
   numBLoadsR = (kernel.workGroupNumCols*kernel.microTileNumCols*kernel.unroll) \
       % (kernel.workGroupNumRows*kernel.workGroupNumCols)
 
