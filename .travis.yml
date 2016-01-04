@@ -15,6 +15,7 @@ language: cpp
 # sudo: false instructs travis to build our project in a docker VM (faster)
 # Can not yet install fglrx packages with 'false'
 sudo: required # false
+dist: trusty
 
 # os: expands the build matrix to include multiple os's
 # disable linux, as we get sporadic failures on building boost, needs investigation
