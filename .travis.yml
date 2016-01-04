@@ -67,6 +67,8 @@ addons:
 env:
   global:
     - CLBLAS_ROOT=${TRAVIS_BUILD_DIR}/bin/make/release
+    - OPENCL_REGISTRY=https://www.khronos.org/registry/cl
+    - OPENCL_ROOT=${TRAVIS_BUILD_DIR}/bin/opencl
 
 # The following filters our build matrix; we are interested in linux-gcc & osx-clang
 matrix:
@@ -80,11 +82,11 @@ before_install:
   # Remove the following linux clause when fglrx can be installed with sudo: false
   - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
       sudo apt-get update -qq &&
-      sudo apt-get install -qq fglrx=2:13.350.1-0ubuntu0.0.1;
+      sudo apt-get install -qq;
     fi
-  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-      export OPENCL_ROOT="${TRAVIS_BUILD_DIR}/opencl-headers";
-    fi
+  #- if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+  #    export OPENCL_ROOT="${TRAVIS_BUILD_DIR}/opencl-headers";
+  #  fi
   - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
       brew update;
       brew outdated boost || brew upgrade boost;
@@ -98,10 +100,33 @@ before_install:
 install:
   # 'Precise' only distributes v1.1 opencl headers; download 1.2 headers from khronos website
   # Remove when the travis VM upgrades to 'trusty' or beyond
+  #- if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+  #    mkdir -p ${OPENCL_ROOT}/include/CL;
+  #    pushd ${OPENCL_ROOT}/include/CL;
+  #    wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/;
+  #    popd;
+  #  fi
+  # The following linux logic is necessary because of Travis's move to the GCE platform, which does not
+  # currently contain packages for fglrx: https://github.com/travis-ci/travis-ci/issues/5221
+  # We build our own linkable .so file
   - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-      mkdir -p ${OPENCL_ROOT}/include/CL;
-      pushd ${OPENCL_ROOT}/include/CL;
-      wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/;
+      mkdir -p ${OPENCL_ROOT};
+      pushd ${OPENCL_ROOT};
+      wget ${OPENCL_REGISTRY}/specs/opencl-icd-1.2.11.0.tgz;
+      tar -xf opencl-icd-1.2.11.0.tgz;
+      mv ./icd/* .;
+      mkdir -p inc/CL;
+      pushd inc/CL;
+      wget -r -w 1 -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/;
+      wget -w 1 -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/2.1/cl.hpp;
+      popd;
+      mkdir -p lib;
+      pushd lib;
+      cmake -G "Unix Makefiles" ..;
+      make;
+      cp ../bin/libOpenCL.so .;
+      popd;
+      mv inc/ include/;
       popd;
     fi
   # osx image does not contain cl.hpp file; download from Khronos
