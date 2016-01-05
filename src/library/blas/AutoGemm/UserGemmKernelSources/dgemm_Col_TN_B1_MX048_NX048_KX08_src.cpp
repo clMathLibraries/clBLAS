@@ -18,6 +18,7 @@ const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_TN_B1_MX048_NX048_KX08_unroll = 8;
 
 const char * const dgemm_Col_TN_B1_MX048_NX048_KX08_src = STRINGIFY(
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable   \n
 
 __attribute__( (reqd_work_group_size(8, 8, 1)) )
 __kernel void dgemm_Col_TN_B1_MX048_NX048_KX08_src (
@@ -36,7 +37,7 @@ __kernel void dgemm_Col_TN_B1_MX048_NX048_KX08_src (
   uint const offsetB,
   uint const offsetC )
 {
-    double rC[6][6]  = {(double)0};
+    double rC[6][6]  = { {(double)0} };
     double rA[1][6];
     double rB[1][6];
 

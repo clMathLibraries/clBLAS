@@ -62,7 +62,7 @@ __local double Bs[BLOCK_SIZE*BLOCK_SIZE]; \n
 __local double workspace[BLOCK_SIZE]; \n   // workspace used to store the current working column
 
 // load A
-#pragma unroll\n
+_Pragma("unroll")\n
 for (i = 0; i < BLOCK_SIZE; i++)\n
 { \n
     if (tx >= i && gx < na)\n
@@ -138,7 +138,7 @@ for (i = BLOCK_SIZE - 2; i >= 0; i--) {\n
 
 	txw = (tx - i - 1); \n
 
-#pragma unroll\n
+_Pragma("unroll")\n
 	for (j = 0; j < BLOCK_SIZE - i - 1; j++)\n
 		Ystx += switcher*(*(Bw + j*BLOCK_SIZE + txw)*x[j]); \n
 
@@ -163,7 +163,7 @@ for (i = BLOCK_SIZE - 2; i >= 0; i--) {\n
 }\n
 
 // write back A
-#pragma unroll\n
+_Pragma("unroll")\n
 for (i = 0; i < BLOCK_SIZE; i++)\n
 	*(d_dinvA + i*NB + tx) = Bs[i*BLOCK_SIZE + tx]; \n
 }\n

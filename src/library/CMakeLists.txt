@@ -14,6 +14,7 @@
 # limitations under the License.
 # ########################################################################
 
+find_package(PythonInterp REQUIRED)
 
 
 
@@ -43,6 +44,7 @@ set(AUTOGEMM_HEADERS
 )
 
 set(AUTOGEMM_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.cc
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.cpp
@@ -89,6 +91,10 @@ option( PRECOMPILE_GEMM_TRANS_TC "AutoGemm: pre-compile TC transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
+
+set( AUTOGEMM_ARCHITECTURE "Hawaii" CACHE STRING "AutoGemm: device for kernel selection logic" )
+set_property( CACHE AUTOGEMM_ARCHITECTURE PROPERTY STRINGS "Hawaii" "Fiji" )
+
 
 
 # opencl compiler version
@@ -197,7 +203,7 @@ set( AUTOGEMM_PRECOMPILE_HEADER_SRC ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/Ke
 set( AUTOGEMM_PRECOMPILE_HEADER_OUT ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelsToPreCompile.h )
 add_custom_command(
   OUTPUT ${AUTOGEMM_PRECOMPILE_HEADER_OUT}
-  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/KernelsToPreCompile.py ${AGPC_ARGS}
   DEPENDS ${AUTOGEMM_PRECOMPILE_HEADER_SRC}
 )
 
@@ -238,7 +244,7 @@ endif()#endif precompile active
 ################################################################################
 add_custom_command(
   OUTPUT ${AUTOGEMM_HEADERS} ${AUTOGEMM_SRC}
-  COMMAND python ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OPENCL_VERSION}
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/AutoGemm.py --output-path ${CMAKE_BINARY_DIR}/include --opencl-compiler-version ${OPENCL_VERSION} --architecture ${AUTOGEMM_ARCHITECTURE}
   DEPENDS ${AUTOGEMM_SCRIPTS}
 )
 
@@ -851,6 +857,7 @@ set(CLBLAS_ALL_SOURCES
 	#${USERGEMM_SRC}
 	#${USERGEMM_HEADERS}
 )
+add_definitions(-DOPENCL_VERSION="${OPENCL_VERSION}")
 add_library(clBLAS ${CLBLAS_ALL_SOURCES})
 add_dependencies(clBLAS GENERATE_CLT)
 

@@ -82,8 +82,8 @@ message( STATUS "You have confirmed OpenCL ${OPENCL_VERSION} is supported in you
 if ( APPLE )
 	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
 else ( )
-	message(STATUS "CORR_TEST_WITH_ACML set to ON")
-	set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+	message(STATUS "CORR_TEST_WITH_ACML set to OFF. Try link with libblas.so")
+	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
 endif( )
 
 if( CMAKE_GENERATOR MATCHES "NMake" )
@@ -95,8 +95,8 @@ if( CMAKE_GENERATOR MATCHES "NMake" )
   endif( )
 endif( )
 
-# If we are on linux, and we wish to link with the netlib BLAS implementation, we need to have a valid fortran compiler
-if( NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE )
+# If we are on linux, and we wish to link with the netlib BLAS implementation when BUILD_TEST is ON, we need to have a valid fortran compiler
+if(BUILD_TEST AND NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE)
   project(clBLAS Fortran C CXX )
 else( )
   project(clBLAS C CXX)
@@ -108,7 +108,7 @@ if( NOT DEFINED clBLAS_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_MINOR )
-    set( clBLAS_VERSION_MINOR 8 )
+    set( clBLAS_VERSION_MINOR 10 )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_PATCH )

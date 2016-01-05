@@ -52,7 +52,8 @@ __kernel void %PREFIXger_C_kernel( __global %TYPE const* restrict _X, __global %
 	}
 
 	// create local memory
-	__local %TYPE localX[ BH * %V ];
+  __local %TYPE%V localXV[ BH ];
+  __local %TYPE *localX = (__local %TYPE *)localXV;
 	__local %TYPE localY[ BW ];
 
 	uint lID = get_local_id( 0 );
@@ -193,7 +194,8 @@ __kernel void %PREFIXger_R_kernel( __global %TYPE const* restrict _X, __global %
 	}
 
     __local %TYPE localX[ BH ];
-    __local %TYPE localY[ BW * %V ];
+    __local %TYPE%V localYV[ BW ];
+    __local %TYPE *localY = (__local %TYPE *)localYV;
 
     uint lID = get_local_id( 0 );
     uint gID = get_group_id( 0 );

@@ -165,6 +165,9 @@ main(void)
         printResult("clblasSgemvEx result");
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);
     clReleaseMemObject(bufX);

@@ -160,6 +160,9 @@ main(void)
         printResult("clblasSsyrkEx result");
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufC);
     clReleaseMemObject(bufA);

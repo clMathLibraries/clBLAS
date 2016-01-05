@@ -166,6 +166,9 @@ main(void)
         printResult("clblasSsymvEx result");
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);
     clReleaseMemObject(bufX);
