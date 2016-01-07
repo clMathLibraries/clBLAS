@@ -44,7 +44,6 @@ set(AUTOGEMM_HEADERS
 )
 
 set(AUTOGEMM_SRC
-  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.cc
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.cpp
@@ -54,9 +53,9 @@ set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.cpp
 )
 
-#set(USERGEMM_SRC
-#  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.cpp
-#)
+set(USERGEMM_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.cc
+)
 
 set(USERGEMM_HEADERS
    ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
@@ -854,8 +853,8 @@ set(CLBLAS_ALL_SOURCES
     ${AUTOGEMM_HEADERS}
     ${AUTOGEMM_SCRIPTS}
     ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
-	#${USERGEMM_SRC}
-	#${USERGEMM_HEADERS}
+    ${USERGEMM_SRC}
+    ${USERGEMM_HEADERS}
 )
 add_definitions(-DOPENCL_VERSION="${OPENCL_VERSION}")
 add_library(clBLAS ${CLBLAS_ALL_SOURCES})
