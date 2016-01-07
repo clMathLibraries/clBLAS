@@ -61,6 +61,9 @@ static void force_gemm_column_major(
     printf("OpenCL error %i on line %u of %s\n", RET, __LINE__, __FILE__); \
     assert(false); \
   }
+#define returnIfErr(err) \
+	if (err != CL_SUCCESS)\
+		return static_cast<clblasStatus>(err);
 
 const static unsigned int numGemmKernelArgs = 14;
 void *gemmKernelArgs[numGemmKernelArgs];
@@ -258,7 +261,7 @@ void makeGemmKernel(
 /******************************************************************************
  * Enqueue Gemm Kernel
  *****************************************************************************/
- void enqueueGemmKernel(
+ cl_int enqueueGemmKernel(
    cl_command_queue clQueue,
    cl_kernel clKernel,
    void **kernelArgs,
@@ -271,14 +274,20 @@ void makeGemmKernel(
    cl_event *clEvent)
  {
    for (unsigned int i = 0; i < numKernelArgs; i++) {
-     CL_CHECK( clSetKernelArg( clKernel, i, kernelArgSizes[i], kernelArgs[i]) )
+	   cl_int err = clSetKernelArg(clKernel, i, kernelArgSizes[i], kernelArgs[i]);
+	   if (err != CL_SUCCESS)
+		   return err;
    }
    /*printf("global={%llu, %llu} local={%llu, %llu}\n",
      globalWorkSize[0], globalWorkSize[1],
      localWorkSize[0], localWorkSize[1] );*/
-   CL_CHECK( clEnqueueNDRangeKernel( clQueue, clKernel,
-      2, NULL, globalWorkSize, localWorkSize,
-      numEventsInWaitList, eventWaitList, clEvent ) )
+   cl_uint err = clEnqueueNDRangeKernel(clQueue, clKernel,
+	   2, NULL, globalWorkSize, localWorkSize,
+	   numEventsInWaitList, eventWaitList, clEvent);
+   if (err != CL_SUCCESS)
+	   return err;
+
+   return CL_SUCCESS;
  }
 
 
@@ -325,6 +334,8 @@ clblasGemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+
+
   // cast types to opencl types
   cl_mem A = iA;
   cl_mem B = iB;
@@ -389,10 +400,13 @@ clblasGemm(
   cl_int err;
   cl_device_id clDevice;
   err = clGetCommandQueueInfo( commandQueues[0], CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
-  CL_CHECK(err)
+  //CL_CHECK(err)
+  returnIfErr(err);
+
   cl_uint clDeviceNumCUs;
   err = clGetDeviceInfo( clDevice, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(clDeviceNumCUs), &clDeviceNumCUs, NULL);
-  CL_CHECK(err)
+  //CL_CHECK(err)
+  returnIfErr(err);
   unsigned int deviceIdealNumThreads = (8 /*waves per CU*/)*(64 /*threads per wave*/)*clDeviceNumCUs;
   float optimalNumElementsPerThread = ((float)M*N) / deviceIdealNumThreads;
   //optimalNumElementsPerThread = 32;
@@ -562,11 +576,12 @@ clblasGemm(
   if (needTileKernel) {
     //printf("enqueueing tile kernel\n");
     size_t globalWorkSize[2] = {(M/macroTileNumRows)*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *tileClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *tileClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -576,11 +591,12 @@ clblasGemm(
   if (needRowKernel) {
     //printf("enqueueing row kernel\n");
     size_t globalWorkSize[2] = {1*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *rowClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *rowClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -590,11 +606,12 @@ clblasGemm(
   if (needColKernel) {
     //printf("enqueueing col kernel\n");
     size_t globalWorkSize[2] = { (M/macroTileNumRows)*workGroupNumRows, 1*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *colClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *colClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -604,11 +621,12 @@ clblasGemm(
   if (needCornerKernel) {
     //printf("enqueueing corner kernel\n");
     size_t globalWorkSize[2] = { 1*workGroupNumRows, 1*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *cornerClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *cornerClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -637,6 +655,29 @@ clblasSgemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+  
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_FLOAT, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  
+  	//check matrix B
+	clblasErr = checkMatrixSizes(TYPE_FLOAT, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+	if (clblasErr != clblasSuccess)
+		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_FLOAT, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+      return clblasErr;
+
   return clblasGemm(
        order,
        transA,
@@ -674,6 +715,29 @@ clblasDgemm( clblasOrder order,
              const cl_event *eventWaitList,
              cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+  
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  
+  	//check matrix B
+  	clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+      return clblasErr;
+
    return clblasGemm(
        order,
        transA,
@@ -712,6 +776,29 @@ clblasCgemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	return clblasErr;
+  
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  
+  	//check matrix B
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
    return clblasGemm(
        order,
        transA,
@@ -750,6 +837,29 @@ clblasZgemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+  
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  
+  	//check matrix B
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
    return clblasGemm(
        order,
        transA,
