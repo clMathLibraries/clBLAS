@@ -272,7 +272,7 @@ TEST(ERROR, InvalidMemObjectsymm) {
 }
 TEST(ERROR, InvalidValuesymm) {
     ErrorClass<SymmMetod<FloatComplex> > ec;
-    ec.error(clblasInsufficientMemMatB);
+    ec.error(clblasInsufficientMemMatA);
 }
 
 TEST(ERROR, InvalidDevicesymm) {
@@ -512,7 +512,7 @@ TEST(ERROR, InvalidMemObjecthemm) {
 TEST(ERROR, InvalidValuehemm) {
 
     ErrorClass<HemmMetod<DoubleComplex> > ec;
-    ec.error(clblasInsufficientMemMatB);
+    ec.error(clblasInsufficientMemMatA);
 }
 
 TEST(ERROR, InvalidDevicehemm) {
