@@ -133,25 +133,26 @@ __kernel void sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE (
 	int offset_x = gidx * 64 + idx;
 	int offset_y = gidy * 64 + idy;
 
-	//if(offset_x>=M || offset_y>=N )
-	//  return;
-
 	C += offset_x + offset_y*ldc;
 
 	int i = 0;
-	do
-	{
-		C[0] = mad(alpha, rC[i][0], beta*C[0]);
-		C[16 * ldc] = mad(alpha, rC[i][1], beta*C[16 * ldc]);
-
-
-		C += 16;
-		offset_x += 16;
-		//if(offset_x>=M )
-		//  return;
-
-
-	} while (++i < 2);
+    if (beta != 0) {
+      do
+      {
+        C[0] = mad(alpha, rC[i][0], beta*C[0]);
+        C[16 * ldc] = mad(alpha, rC[i][1], beta*C[16 * ldc]);
+        C += 16;
+        offset_x += 16;
+      } while (++i < 2);
+    } else {
+      do
+      {
+        C[0] = alpha * rC[i][0];
+        C[16 * ldc] = alpha * rC[i][1];
+        C += 16;
+        offset_x += 16;
+      } while (++i < 2);
+    }
 
 }
 );
