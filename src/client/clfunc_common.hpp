@@ -342,7 +342,7 @@ protected:
     cl_device_id device_;
     cl_context_properties props_[3];
     cl_context ctx_;
-    static const unsigned int numQueues = 4;
+    static const unsigned int numQueues = 1;
     cl_command_queue queues_[numQueues];
     clblasOrder order_;
     cl_event event_;
