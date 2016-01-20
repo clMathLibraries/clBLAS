@@ -64,7 +64,7 @@ public:
 
     double gflops()
     {
-        return buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return buffer_.n_*(buffer_.n_+1)*buffer_.k_/time_in_ns();
     }
 
     std::string gflops_formula()
@@ -645,7 +645,7 @@ template<>
 double
 xSyrk<cl_double2>::gflops()
 {
-        return 4*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return 4*buffer_.n_*(buffer_.n_+1)*buffer_.k_/time_in_ns();
 }
 
 template<>
