@@ -57,34 +57,34 @@ __kernel void sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src (
     float rC[2][2]  = { {(float)0} };
     float rA[1][2];
     float rB[1][2];
-    
-    
+
+
     A += offsetA;
     B += offsetB;
     C+=offsetC;
-    
+
     __local float lA[528];//16*32+16
     __local float lB[528];
-    
+
     uint gidx = get_group_id(0);
     uint gidy = get_group_id(1);
     uint idx = get_local_id(0);
     uint idy = get_local_id(1);
-    
+
     int CurrentOffSetA = gidx*32+ idy;
     int CurrentOffSetB = gidy*32+ idy;
 
     A +=  (gidx*32+idy)*lda + idx;
     B +=  (gidy*32+idy)*ldb + idx;
-    
-   
+
+
     uint block_k = K >> 4;
-    do 
+    do
     {
       __local float* plA = lA + idx*33+idy;
       __local float* plB = lB + idx*33+idy;
       barrier(CLK_LOCAL_MEM_FENCE);
-  
+
       plB[0]  = CurrentOffSetB>=N?0.0:B[0];
       plB[16] = CurrentOffSetB+16>=N?0.0:B[16*ldb];
 
@@ -127,21 +127,35 @@ __kernel void sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src (
 
     C+=offset_x+offset_y*ldc;
 
+
     int i = 0;
-    do 
-    {
-      C[0     ] = mad(alpha, rC[i][0], beta*C[0]);
-      if(offset_y+16<N)
-        C[16*ldc] = mad(alpha, rC[i][1], beta*C[16*ldc]);
+    if (beta != 0) {
+      do
+      {
+        C[0   ] = mad(alpha, rC[i][0], beta*C[0]);
+        if(offset_y+16<N)
+          C[16*ldc] = mad(alpha, rC[i][1], beta*C[16*ldc]);
 
-      C+=16;
-      offset_x+=16;
-      if(offset_x>=M )
-        return;
+        C+=16;
+        offset_x+=16;
+        if(offset_x>=M )
+          return;
+      }
+      while (++i < 2);
+    } else {
+      do
+      {
+        C[0   ] = alpha * rC[i][0];
+        if(offset_y+16<N)
+          C[16*ldc] = alpha * rC[i][1];
 
-
+        C+=16;
+        offset_x+=16;
+        if(offset_x>=M )
+          return;
+      }
+      while (++i < 2);
     }
-    while (++i < 2);
 }
 
 );

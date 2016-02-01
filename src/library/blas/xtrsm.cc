@@ -1683,7 +1683,7 @@ clblasDtrsm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
-   /*
+#if 0
    CHECK_QUEUES(numCommandQueues, commandQueues);
    CHECK_EVENTS(numEventsInWaitList, eventWaitList);
 
@@ -1718,7 +1718,8 @@ clblasDtrsm(
    functor->release();
 
    return res;
-   */
+
+#else
 	bool specialCaseHandled = false;
 
 	//outer block size = 192
@@ -1780,7 +1781,7 @@ clblasDtrsm(
 	   numEventsInWaitList,
 	   eventWaitList,
 	   events);
-
+#endif
 }
 
 extern "C"

@@ -143,15 +143,21 @@ __kernel void sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN (
 	C += offset_x + offset_y*ldc;
 
 	int i = 0;
-	do
-	{
+    if (beta != 0) {
+  	  do
+      {
 		C[0] = mad(alpha, rC[i][0], beta*C[0]);
 		C[16 * ldc] = mad(alpha, rC[i][1], beta*C[16 * ldc]);
-
 		C += 16;
-
-	} while (++i < 4);
-
+      } while (++i < 4);
+    } else {
+      do
+      {
+        C[0] = alpha * rC[i][0];
+		C[16 * ldc] = alpha * rC[i][1];
+		C += 16;
+      } while (++i < 4);
+    }
 }
 );
 #endif

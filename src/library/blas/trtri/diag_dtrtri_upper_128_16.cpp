@@ -94,6 +94,7 @@ uint na)\n
 	  Bs[tx*BLOCK_SIZE+tx] = ONE / ( Bs[tx*BLOCK_SIZE+tx]) ;\n
 	}\n      
     }\n
+    barrier(CLK_LOCAL_MEM_FENCE);\n
 
 	  /* the upper case */
   for( i=0; i < BLOCK_SIZE; i++ ) {\n
@@ -110,6 +111,7 @@ uint na)\n
     //dtrmv
     workspace[tx] = *(Bs+i*BLOCK_SIZE+tx);\n
     y = Bs+i*BLOCK_SIZE;\n
+    barrier(CLK_LOCAL_MEM_FENCE);\n
 
     _Pragma("unroll")\n
     //for( j=tx; j < i; j++ )

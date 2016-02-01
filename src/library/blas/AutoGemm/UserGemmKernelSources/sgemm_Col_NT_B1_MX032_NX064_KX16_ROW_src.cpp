@@ -145,8 +145,9 @@ __kernel void sgemm_Col_NT_B1_MX032_NX064_KX16_ROW (
 	C += offset_x + offset_y*ldc;
 
 	int i = 0;
-	do
-	{
+    if (beta != 0) {
+      do
+      {
 		C[0] = mad(alpha, rC[i][0], beta*C[0]);
 		C[16 * ldc] = mad(alpha, rC[i][1], beta*C[16 * ldc]);
 		C[32 * ldc] = mad(alpha, rC[i][2], beta*C[32 * ldc]);
@@ -155,7 +156,20 @@ __kernel void sgemm_Col_NT_B1_MX032_NX064_KX16_ROW (
 		offset_x += 16;
 		//if(offset_x>=M )
 		//  return;
-	} while (++i < 2);
+      } while (++i < 2);
+    } else {
+      do
+      {
+        C[0] = alpha * rC[i][0];
+		C[16 * ldc] = alpha * rC[i][1];
+		C[32 * ldc] = alpha * rC[i][2];
+		C[48 * ldc] = alpha * rC[i][3];
+		C += 16;
+		offset_x += 16;
+		//if(offset_x>=M )
+		//  return;
+      } while (++i < 2);
+    }
 }
 );
 #endif
