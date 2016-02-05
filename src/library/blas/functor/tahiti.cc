@@ -16,7 +16,6 @@
 
 #include <tahiti.h>
 #include "gpu_dtrsm.h"
-//#include "gcn_dgemm.h"
 #include "gcn_dgemmCommon.h"
 #include "gcn_dgemmSmallMatrices.h"
 #include "gcn_sgemmSmallMatrices.h"

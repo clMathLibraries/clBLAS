@@ -34,7 +34,7 @@ EXPORTS
 	clblasCgemm
 	clblasZgemm
 	;GEMMV2 is not exported
-    ;clblasSgemmV2
+	;clblasSgemmV2
 	;clblasDgemmV2
 	;clblasCgemmV2
 	;clblasZgemmV2
@@ -76,9 +76,9 @@ EXPORTS
 	clblasZtrsv
 	
 	clblasStpsv
-    clblasDtpsv
-    clblasCtpsv
-    clblasZtpsv
+	clblasDtpsv
+	clblasCtpsv
+	clblasZtpsv
     
 	clblasSsymm
 	clblasDsymm
@@ -213,20 +213,20 @@ EXPORTS
 	clblasScnrm2
 	clblasDznrm2
 
-    clblasSasum
-    clblasDasum
-    clblasScasum
-    clblasDzasum
+	clblasSasum
+	clblasDasum
+	clblasScasum
+	clblasDzasum
 
-    clblasiSamax
-    clblasiDamax
-    clblasiCamax
-    clblasiZamax
+	clblasiSamax
+	clblasiDamax
+	clblasiCamax
+	clblasiZamax
 	
 	clblasAddScratchImage
 	clblasRemoveScratchImage
 
-  clblasMatrixSizeInfo
+	clblasMatrixSizeInfo
 	clblasCreateMatrix
 	clblasCreateMatrixWithLd
 	clblasCreateMatrixFromHost

@@ -59,8 +59,8 @@ set(AUTOGEMM_SRC
 #)
 
 set(USERGEMM_HEADERS
-   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
-   ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.h
+	${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
+	${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.h
 )
 
 set(AUTOGEMM_TEST_SRC
@@ -104,36 +104,36 @@ set_property( CACHE AUTOGEMM_ARCHITECTURE PROPERTY STRINGS "Hawaii" "Fiji" )
 
 # PreCompile precision selected?
 set( PRECOMPILE_GEMM_PRECISION_SELECTED OFF)
-if (   PRECOMPILE_GEMM_PRECISION_SGEMM
-    OR PRECOMPILE_GEMM_PRECISION_DGEMM
-    OR PRECOMPILE_GEMM_PRECISION_CGEMM
-    OR PRECOMPILE_GEMM_PRECISION_ZGEMM )
+if (	PRECOMPILE_GEMM_PRECISION_SGEMM
+	 OR PRECOMPILE_GEMM_PRECISION_DGEMM
+	 OR PRECOMPILE_GEMM_PRECISION_CGEMM
+	 OR PRECOMPILE_GEMM_PRECISION_ZGEMM )
   set( PRECOMPILE_GEMM_PRECISION_SELECTED ON)
 endif()
 
 # PreCompile transpose selected?
 set( PRECOMPILE_GEMM_TRANS_SELECTED OFF)
-if (   PRECOMPILE_GEMM_TRANS_NN
-    OR PRECOMPILE_GEMM_TRANS_NT
-    OR PRECOMPILE_GEMM_TRANS_NC
-    OR PRECOMPILE_GEMM_TRANS_TN
-    OR PRECOMPILE_GEMM_TRANS_TT
-    OR PRECOMPILE_GEMM_TRANS_TC
-    OR PRECOMPILE_GEMM_TRANS_CN
-    OR PRECOMPILE_GEMM_TRANS_CT
-    OR PRECOMPILE_GEMM_TRANS_CC )
+if (	PRECOMPILE_GEMM_TRANS_NN
+	 OR PRECOMPILE_GEMM_TRANS_NT
+	 OR PRECOMPILE_GEMM_TRANS_NC
+	 OR PRECOMPILE_GEMM_TRANS_TN
+	 OR PRECOMPILE_GEMM_TRANS_TT
+	 OR PRECOMPILE_GEMM_TRANS_TC
+	 OR PRECOMPILE_GEMM_TRANS_CN
+	 OR PRECOMPILE_GEMM_TRANS_CT
+	 OR PRECOMPILE_GEMM_TRANS_CC )
   set( PRECOMPILE_GEMM_TRANS_SELECTED ON)
 endif()
 
 # PreCompile is valid and active?
 set( PRECOMPILE_GEMM_ACTIVE OFF)
 if ( PRECOMPILE_GEMM_PRECISION_SELECTED
-    AND PRECOMPILE_GEMM_TRANS_SELECTED)
+	 AND PRECOMPILE_GEMM_TRANS_SELECTED)
   # valid selection
   set( PRECOMPILE_GEMM_ACTIVE ON)
   MESSAGE( STATUS "AutoGemm-PreCompile: selected kernels will be pre-compiled." )
 elseif(NOT PRECOMPILE_GEMM_PRECISION_SELECTED
-    AND NOT PRECOMPILE_GEMM_TRANS_SELECTED)
+	 AND NOT PRECOMPILE_GEMM_TRANS_SELECTED)
   MESSAGE( STATUS "AutoGemm-PreCompile: no kernels to be pre-compiled." )
 else()
   MESSAGE( SEND_ERROR "AutoGemm-PreCompile: To pre-compile gemm kernels, select at lease one option from each of PRECOMPILE_GEMM_PRECISION_* and PRECOMPILE_GEMM_TRANS_*; otherwise, unselect all PRECOMPILE_GEMM_* options to not pre-compile any gemm kernels." )
@@ -146,16 +146,16 @@ if ( PRECOMPILE_GEMM_ACTIVE )
   # precisions
   set(AGPC_ARGS ${AGPC_ARGS} --precisions )
   if (PRECOMPILE_GEMM_PRECISION_SGEMM)
-    set(AGPC_ARGS ${AGPC_ARGS} s )
+	 set(AGPC_ARGS ${AGPC_ARGS} s )
   endif()
   if (PRECOMPILE_GEMM_PRECISION_DGEMM)
-    set(AGPC_ARGS ${AGPC_ARGS} d )
+	 set(AGPC_ARGS ${AGPC_ARGS} d )
   endif()
   if (PRECOMPILE_GEMM_PRECISION_CGEMM)
-    set(AGPC_ARGS ${AGPC_ARGS} c )
+	 set(AGPC_ARGS ${AGPC_ARGS} c )
   endif()
   if (PRECOMPILE_GEMM_PRECISION_ZGEMM)
-    set(AGPC_ARGS ${AGPC_ARGS} z )
+	 set(AGPC_ARGS ${AGPC_ARGS} z )
   endif()
 
   # orders
@@ -164,31 +164,31 @@ if ( PRECOMPILE_GEMM_ACTIVE )
   # transposes
   set(AGPC_ARGS ${AGPC_ARGS} --transposes )
   if (PRECOMPILE_GEMM_TRANS_NN)
-    set(AGPC_ARGS ${AGPC_ARGS} NN )
+	 set(AGPC_ARGS ${AGPC_ARGS} NN )
   endif()
   if (PRECOMPILE_GEMM_TRANS_NT)
-    set(AGPC_ARGS ${AGPC_ARGS} NT )
+	 set(AGPC_ARGS ${AGPC_ARGS} NT )
   endif()
   if (PRECOMPILE_GEMM_TRANS_NC)
-    set(AGPC_ARGS ${AGPC_ARGS} NC )
+	 set(AGPC_ARGS ${AGPC_ARGS} NC )
   endif()
   if (PRECOMPILE_GEMM_TRANS_TN)
-    set(AGPC_ARGS ${AGPC_ARGS} TN )
+	 set(AGPC_ARGS ${AGPC_ARGS} TN )
   endif()
   if (PRECOMPILE_GEMM_TRANS_TT)
-    set(AGPC_ARGS ${AGPC_ARGS} TT )
+	 set(AGPC_ARGS ${AGPC_ARGS} TT )
   endif()
   if (PRECOMPILE_GEMM_TRANS_TC)
-    set(AGPC_ARGS ${AGPC_ARGS} TC )
+	 set(AGPC_ARGS ${AGPC_ARGS} TC )
   endif()
   if (PRECOMPILE_GEMM_TRANS_CN)
-    set(AGPC_ARGS ${AGPC_ARGS} CN )
+	 set(AGPC_ARGS ${AGPC_ARGS} CN )
   endif()
   if (PRECOMPILE_GEMM_TRANS_CT)
-    set(AGPC_ARGS ${AGPC_ARGS} CT )
+	 set(AGPC_ARGS ${AGPC_ARGS} CT )
   endif()
   if (PRECOMPILE_GEMM_TRANS_CC)
-    set(AGPC_ARGS ${AGPC_ARGS} CC )
+	 set(AGPC_ARGS ${AGPC_ARGS} CC )
   endif()
 
   # betas
@@ -250,10 +250,10 @@ add_custom_command(
 
 
 include_directories(
-    ${OPENCL_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_BINARY_DIR}/include
-    .
+	 ${OPENCL_INCLUDE_DIRS}
+	 ${CMAKE_SOURCE_DIR}
+	 ${CMAKE_BINARY_DIR}/include
+	 .
 )
 
 ################################################################################
@@ -319,62 +319,62 @@ endif()
 ################################################################################
 
 set(SRC_BLAS
-    blas/init.c
-    blas/impl.c
-    blas/scimage.c
-    blas/xgemv.c
-    blas/xsymv.c
-    blas/xgemm.cc
-    blas/xtrmm.c
-    blas/xtrsm.cc
-    blas/xsyrk.c
-    blas/xsyr2k.c
-    blas/xtrmv.c
-    blas/xtrsv.c
-    blas/xsymm.c
-    blas/xgemm2.c
-    blas/xger.c
-    blas/xsyr.c
-    blas/xsyr2.c
-    blas/xher.c
-    blas/xher2.c
-    blas/xhemv.c
-    blas/xhemm.c
-    blas/xherk.c
-    blas/xhpmv.c
-    blas/xspmv.c
-    blas/xgbmv.c
-    blas/xtbmv.c
-    blas/xshbmv.c
-    blas/xtbsv.c
-    blas/xher2k.c
-    blas/xswap.c
-    blas/xscal.cc
-    blas/xcopy.c
-    blas/xaxpy.c
-    blas/xdot.c
-    blas/xrotg.c
-    blas/xrotmg.c
-    blas/xrot.c
-    blas/xrotm.c
-    blas/ixamax.c
-    blas/xnrm2.c
-    blas/xasum.c
-    blas/matrix.c
-    blas/fill.cc
-    blas/functor/functor.cc
-    blas/functor/functor_selector.cc
-    blas/functor/functor_xgemm.cc
-    blas/functor/functor_xscal.cc
-    blas/functor/functor_xtrsm.cc
-    blas/functor/functor_xscal_generic.cc
-    blas/functor/tahiti.cc
-    blas/functor/hawaii.cc
+	 blas/init.c
+	 blas/impl.c
+	 blas/scimage.c
+	 blas/xgemv.c
+	 blas/xsymv.c
+	 blas/xgemm.cc
+	 blas/xtrmm.c
+	 blas/xtrsm.cc
+	 blas/xsyrk.c
+	 blas/xsyr2k.c
+	 blas/xtrmv.c
+	 blas/xtrsv.c
+	 blas/xsymm.c
+	 blas/xgemm2.c
+	 blas/xger.c
+	 blas/xsyr.c
+	 blas/xsyr2.c
+	 blas/xher.c
+	 blas/xher2.c
+	 blas/xhemv.c
+	 blas/xhemm.c
+	 blas/xherk.c
+	 blas/xhpmv.c
+	 blas/xspmv.c
+	 blas/xgbmv.c
+	 blas/xtbmv.c
+	 blas/xshbmv.c
+	 blas/xtbsv.c
+	 blas/xher2k.c
+	 blas/xswap.c
+	 blas/xscal.cc
+	 blas/xcopy.c
+	 blas/xaxpy.c
+	 blas/xdot.c
+	 blas/xrotg.c
+	 blas/xrotmg.c
+	 blas/xrot.c
+	 blas/xrotm.c
+	 blas/ixamax.c
+	 blas/xnrm2.c
+	 blas/xasum.c
+	 blas/matrix.c
+	 blas/fill.cc
+	 blas/functor/functor.cc
+	 blas/functor/functor_selector.cc
+	 blas/functor/functor_xgemm.cc
+	 blas/functor/functor_xscal.cc
+	 blas/functor/functor_xtrsm.cc
+	 blas/functor/functor_xscal_generic.cc
+	 blas/functor/tahiti.cc
+	 blas/functor/hawaii.cc
 	blas/functor/bonaire.cc
-    blas/functor/gcn_dgemm.cc
-    blas/functor/gpu_dtrsm.cc
-    blas/functor/gpu_dtrsm192.cc
-    blas/functor/functor_fill.cc
+	 blas/functor/gcn_dgemm.cc
+	 blas/functor/gpu_dtrsm.cc
+	 blas/functor/gpu_dtrsm192.cc
+	 blas/functor/functor_fill.cc
 	blas/functor/hawaii_dgemmChannelConflict.cc
 	blas/functor/hawaii_dgemmSplitKernel.cc
 	blas/functor/hawaii_sgemmSplitKernel.cc
@@ -390,27 +390,27 @@ set(SRC_BLAS
 )
 
 set(SRC_BLAS_HEADERS
-    blas/include/blas_funcs.h
-    blas/include/matrix_dims.h
-    blas/include/matrix_props.h
-    blas/include/blas_mempat.h
-    blas/include/clblas-internal.h
-    blas/include/solution_seq.h
-    blas/include/events.h
+	 blas/include/blas_funcs.h
+	 blas/include/matrix_dims.h
+	 blas/include/matrix_props.h
+	 blas/include/blas_mempat.h
+	 blas/include/clblas-internal.h
+	 blas/include/solution_seq.h
+	 blas/include/events.h
 	blas/include/xgemm.h
-    blas/functor/include/functor.h
-    blas/functor/include/functor_xgemm.h
-    blas/functor/include/functor_xscal.h
-    blas/functor/include/functor_xtrsm.h
-    blas/functor/include/functor_xscal_generic.h
-    blas/functor/include/functor_selector.h
-    blas/functor/include/tahiti.h
-    blas/functor/include/hawaii.h
+	 blas/functor/include/functor.h
+	 blas/functor/include/functor_xgemm.h
+	 blas/functor/include/functor_xscal.h
+	 blas/functor/include/functor_xtrsm.h
+	 blas/functor/include/functor_xscal_generic.h
+	 blas/functor/include/functor_selector.h
+	 blas/functor/include/tahiti.h
+	 blas/functor/include/hawaii.h
 	blas/functor/include/bonaire.h
-    blas/functor/include/gcn_dgemm.h
-    blas/functor/include/gpu_dtrsm.h
-    blas/functor/include/gpu_dtrsm192.h
-    blas/functor/include/BinaryBuild.h
+	 blas/functor/include/gcn_dgemm.h
+	 blas/functor/include/gpu_dtrsm.h
+	 blas/functor/include/gpu_dtrsm192.h
+	 blas/functor/include/BinaryBuild.h
 	blas/functor/include/hawaii_dgemmChannelConflict.h
 	blas/functor/include/hawaii_dgemmSplitKernel.h
 	blas/functor/include/hawaii_sgemmSplitKernel.h
@@ -427,79 +427,79 @@ set(SRC_BLAS_HEADERS
 )
 
 set(SRC_BLAS_GENERIC
-    blas/generic/common.c
-    blas/generic/common2.cc
-    blas/generic/blas_funcs.c
-    blas/generic/events.c
-    blas/generic/matrix_props.c
-    blas/generic/matrix_dims.c
-    blas/generic/kdump.c
-    blas/generic/solution_assert.c
-    blas/generic/solution_seq.c
-    blas/generic/solution_seq_make.c
-    blas/generic/problem_iter.c
-    blas/generic/kernel_extra.c
-    blas/generic/binary_lookup.cc
-    blas/generic/functor_cache.cc
+	 blas/generic/common.c
+	 blas/generic/common2.cc
+	 blas/generic/blas_funcs.c
+	 blas/generic/events.c
+	 blas/generic/matrix_props.c
+	 blas/generic/matrix_dims.c
+	 blas/generic/kdump.c
+	 blas/generic/solution_assert.c
+	 blas/generic/solution_seq.c
+	 blas/generic/solution_seq_make.c
+	 blas/generic/problem_iter.c
+	 blas/generic/kernel_extra.c
+	 blas/generic/binary_lookup.cc
+	 blas/generic/functor_cache.cc
 )
 
 set(SRC_BLAS_GENS
-    blas/gens/gen_init.c
-    blas/gens/blas_kgen.c
-    blas/gens/blas_subgroup.c
-    blas/gens/gen_helper.c
-    blas/gens/tilemul.c
-    blas/gens/fetch.c
-    blas/gens/tile.c
-    blas/gens/tile_iter.c
-    blas/gens/decomposition.c
-    blas/gens/gemv.c
-    blas/gens/symv.c
-    blas/gens/gemm.c
-    blas/gens/trmm.c
-    blas/gens/trsm.c
-    blas/gens/syrxk.c
-    blas/gens/trxm_common.c
-    blas/gens/trsm_kgen.c
-    blas/gens/xxmv_common.c
-    blas/gens/legacy/blas_kgen_legacy.c
-    blas/gens/legacy/gen_helper_legacy.c
-    blas/gens/legacy/trxm_common_legacy.c
-    blas/gens/legacy/trsm_kgen_legacy.c
-    blas/gens/legacy/blkmul.c
-    blas/gens/legacy/gemm_lds.c
-    blas/gens/legacy/gemm_img.c
-    blas/gens/legacy/trmm_lds.c
-    blas/gens/legacy/trmm_img.c
-    blas/gens/legacy/trsm_lds.c
-    blas/gens/legacy/trsm_img.c
-    blas/gens/legacy/trsm_cached_lds.c
-    blas/gens/trmv_reg.cpp
-    blas/gens/ger_lds.cpp
-    blas/gens/trsv_trtri.cpp
-    blas/gens/trsv_gemv.cpp
-    blas/gens/kprintf.cpp
-    blas/gens/syr_lds.cpp
-    blas/gens/her_lds.cpp
-    blas/gens/syr2_lds.cpp
-    blas/gens/her2_lds.cpp
-    blas/gens/symm_cached.cpp
-    blas/gens/gemm_cached.cpp
-    blas/gens/gemm_tail_cached.cpp
-    blas/gens/gbmv.cpp
-    blas/gens/tuned_numbers.c
-    blas/gens/swap_reg.cpp
-    blas/gens/scal_reg.cpp
-    blas/gens/copy_reg.cpp
-    blas/gens/axpy_reg.cpp
-    blas/gens/dot.cpp
-    blas/gens/reduction.cpp
-    blas/gens/rotg_reg.cpp
-    blas/gens/rotmg_reg.cpp
-    blas/gens/rotm_reg.cpp
-    blas/gens/iamax.cpp
-    blas/gens/nrm2.cpp
-    blas/gens/asum.cpp
+	 blas/gens/gen_init.c
+	 blas/gens/blas_kgen.c
+	 blas/gens/blas_subgroup.c
+	 blas/gens/gen_helper.c
+	 blas/gens/tilemul.c
+	 blas/gens/fetch.c
+	 blas/gens/tile.c
+	 blas/gens/tile_iter.c
+	 blas/gens/decomposition.c
+	 blas/gens/gemv.c
+	 blas/gens/symv.c
+	 blas/gens/gemm.c
+	 blas/gens/trmm.c
+	 blas/gens/trsm.c
+	 blas/gens/syrxk.c
+	 blas/gens/trxm_common.c
+	 blas/gens/trsm_kgen.c
+	 blas/gens/xxmv_common.c
+	 blas/gens/legacy/blas_kgen_legacy.c
+	 blas/gens/legacy/gen_helper_legacy.c
+	 blas/gens/legacy/trxm_common_legacy.c
+	 blas/gens/legacy/trsm_kgen_legacy.c
+	 blas/gens/legacy/blkmul.c
+	 blas/gens/legacy/gemm_lds.c
+	 blas/gens/legacy/gemm_img.c
+	 blas/gens/legacy/trmm_lds.c
+	 blas/gens/legacy/trmm_img.c
+	 blas/gens/legacy/trsm_lds.c
+	 blas/gens/legacy/trsm_img.c
+	 blas/gens/legacy/trsm_cached_lds.c
+	 blas/gens/trmv_reg.cpp
+	 blas/gens/ger_lds.cpp
+	 blas/gens/trsv_trtri.cpp
+	 blas/gens/trsv_gemv.cpp
+	 blas/gens/kprintf.cpp
+	 blas/gens/syr_lds.cpp
+	 blas/gens/her_lds.cpp
+	 blas/gens/syr2_lds.cpp
+	 blas/gens/her2_lds.cpp
+	 blas/gens/symm_cached.cpp
+	 blas/gens/gemm_cached.cpp
+	 blas/gens/gemm_tail_cached.cpp
+	 blas/gens/gbmv.cpp
+	 blas/gens/tuned_numbers.c
+	 blas/gens/swap_reg.cpp
+	 blas/gens/scal_reg.cpp
+	 blas/gens/copy_reg.cpp
+	 blas/gens/axpy_reg.cpp
+	 blas/gens/dot.cpp
+	 blas/gens/reduction.cpp
+	 blas/gens/rotg_reg.cpp
+	 blas/gens/rotmg_reg.cpp
+	 blas/gens/rotm_reg.cpp
+	 blas/gens/iamax.cpp
+	 blas/gens/nrm2.cpp
+	 blas/gens/asum.cpp
 )
 
 #set (BIN_CL_TEMPLATES
@@ -508,40 +508,40 @@ set(SRC_BLAS_GENS
 #)
 
 set (SRC_CL_TEMPLATES
-    gemm.cl
-    gemm_helper.cl
-    gbmv.cl
-    ger.cl
-    her.cl
-    symm_helper.cl
-    syr2_her2.cl
-    syr_her.cl
-    trsv.cl
-    her2.cl
-    symm.cl
-    syr2.cl
-    syr.cl
-    trmv.cl
-    trsv_gemv.cl
-    swap.cl
-    scal.cl
-    copy.cl
-    axpy.cl
-    dot.cl
-    reduction.cl
-    rotg.cl
-    rotmg.cl
-    rotm.cl
-    iamax.cl
-    nrm2.cl
-    asum.cl
-    custom_gemm.cl
-    dgemm_hawai.cl
+	 gemm.cl
+	 gemm_helper.cl
+	 gbmv.cl
+	 ger.cl
+	 her.cl
+	 symm_helper.cl
+	 syr2_her2.cl
+	 syr_her.cl
+	 trsv.cl
+	 her2.cl
+	 symm.cl
+	 syr2.cl
+	 syr.cl
+	 trmv.cl
+	 trsv_gemv.cl
+	 swap.cl
+	 scal.cl
+	 copy.cl
+	 axpy.cl
+	 dot.cl
+	 reduction.cl
+	 rotg.cl
+	 rotmg.cl
+	 rotm.cl
+	 iamax.cl
+	 nrm2.cl
+	 asum.cl
+	 custom_gemm.cl
+	 dgemm_hawai.cl
 	dgemm_hawaiiChannelConfilct.cl
 	dgemm_hawaiiSplitKernel.cl
 	sgemm_hawaiiSplitKernel.cl
-    dtrsm_gpu.cl
-    dtrsm_gpu192.cl
+	 dtrsm_gpu.cl
+	 dtrsm_gpu192.cl
 	dgemm_gcn_SmallMatrices.cl
 	sgemm_gcn_SmallMatrices.cl
 	sgemm_gcn_bigMatrices.cl
@@ -550,103 +550,103 @@ set (SRC_CL_TEMPLATES
 )
 
 set(SRC_CL_TEMPLATES_GEN
-    dgemm_hawai.clHawaii_64.bin.cl
-    dtrsm_gpu.clHawaii_64.bin.cl
+	 dgemm_hawai.clHawaii_64.bin.cl
+	 dtrsm_gpu.clHawaii_64.bin.cl
 	dtrsm_gpu192.clHawaii_64.bin.cl
 	dgemm_hawaiiChannelConfilct.clHawaii_64.bin.cl
 	dgemm_hawaiiSplitKernel.clHawaii_64.bin.cl
 	sgemm_hawaiiSplitKernel.clHawaii_64.bin.cl	
 	sgemm_hawaiiSplitKernel.clBonaire_64.bin.cl	
-    dgemm_hawai.clTahiti_64.bin.cl
-    dtrsm_gpu.clTahiti_64.bin.cl
+	 dgemm_hawai.clTahiti_64.bin.cl
+	 dtrsm_gpu.clTahiti_64.bin.cl
 	dgemm_gcn_SmallMatrices.clHawaii_64.bin.cl
 	dgemm_gcn_SmallMatrices.clTahiti_64.bin.cl
 	sgemm_gcn_SmallMatrices.clHawaii_64.bin.cl
 	sgemm_gcn_SmallMatrices.clTahiti_64.bin.cl
-    sgemm_gcn_SmallMatrices.clBonaire_64.bin.cl
+	 sgemm_gcn_SmallMatrices.clBonaire_64.bin.cl
 	sgemm_gcn_bigMatrices.clHawaii_64.bin.cl
 	sgemm_gcn_bigMatrices.clTahiti_64.bin.cl
-    sgemm_gcn_bigMatrices.clBonaire_64.bin.cl
+	 sgemm_gcn_bigMatrices.clBonaire_64.bin.cl
 	sgemm_gcn.clHawaii_64.bin.cl
 	zgemm_gcn.clHawaii_64.bin.cl
-    sgemm_gcn.clBonaire_64.bin.cl
+	 sgemm_gcn.clBonaire_64.bin.cl
 	sgemm_gcn.clTahiti_64.bin.cl
 	sgemm_hawaiiSplit64_32.clHawaii_64.bin.cl
 )
 
 set(SRC_BLAS_GENERIC_HEADERS
-    blas/generic/solution_assert.h
-    blas/generic/problem_iter.h
+	 blas/generic/solution_assert.h
+	 blas/generic/problem_iter.h
 )
 
 set(SRC_BLAS_GENS_HEADERS
-    blas/gens/fetch.h
-    blas/gens/blas_kgen.h
-    blas/gens/blas_subgroup.h
-    blas/gens/gen_helper.h
-    blas/gens/init.h
-    blas/gens/trxm_common.h
-    blas/gens/trsm_kgen.h
-    blas/gens/xxmv_common.h
-    blas/gens/tile.h
-    blas/gens/tile_iter.h
-    blas/gens/tuned_numbers.h
+	 blas/gens/fetch.h
+	 blas/gens/blas_kgen.h
+	 blas/gens/blas_subgroup.h
+	 blas/gens/gen_helper.h
+	 blas/gens/init.h
+	 blas/gens/trxm_common.h
+	 blas/gens/trsm_kgen.h
+	 blas/gens/xxmv_common.h
+	 blas/gens/tile.h
+	 blas/gens/tile_iter.h
+	 blas/gens/tuned_numbers.h
 )
 
 set(SRC_COMMON
-    common/list.c
-    common/clkern.c
-    common/kern_cache.c
-    common/kerngen_core.c
-    common/kgen_basic.c
-    common/kgen_loop_helper.c
-    common/kgen_guard.c
-    common/misc.c
-    common/devinfo.c
-    common/devinfo-cache.c
-    common/mutex.c
-    common/rwlock.c
-    common/trace_malloc.c
-    common/md5sum.c
+	 common/list.c
+	 common/clkern.c
+	 common/kern_cache.c
+	 common/kerngen_core.c
+	 common/kgen_basic.c
+	 common/kgen_loop_helper.c
+	 common/kgen_guard.c
+	 common/misc.c
+	 common/devinfo.c
+	 common/devinfo-cache.c
+	 common/mutex.c
+	 common/rwlock.c
+	 common/trace_malloc.c
+	 common/md5sum.c
 )
 
 set(SRC_COMMON_GENS
-    common/gens/dblock_kgen.c
+	 common/gens/dblock_kgen.c
 )
 
 set(SRC_TOOLS
-    tools/tune/toolslib.c
-    tools/tune/fileio.c
-    tools/tune/dimension.c
-    tools/tune/storage_init.c
-    tools/tune/storage_io.c
-    tools/tune/storage_data.c
+	 tools/tune/toolslib.c
+	 tools/tune/fileio.c
+	 tools/tune/dimension.c
+	 tools/tune/storage_init.c
+	 tools/tune/storage_io.c
+	 tools/tune/storage_data.c
 )
 
 set(CLBLAS_SOURCES
-    ${SRC_COMMON} ${SRC_COMMON_GENS} ${SRC_BLAS} ${SRC_BLAS_GENERIC}
-    ${SRC_BLAS_GENS} ${SRC_TOOLS} ../clBLAS.def
+	 ${SRC_COMMON} ${SRC_COMMON_GENS} ${SRC_BLAS} ${SRC_BLAS_GENERIC}
+	 ${SRC_BLAS_GENS} ${SRC_TOOLS} ../clBLAS.def
 )
 set(GLOBAL_HEADERS
-    ${clBLAS_SOURCE_DIR}/clBLAS.h
-    ${clBLAS_SOURCE_DIR}/clBLAS-complex.h 
-    ${clBLAS_SOURCE_DIR}/include/clkern.h
-    ${clBLAS_SOURCE_DIR}/include/cltypes.h
-    ${clBLAS_SOURCE_DIR}/include/dblock_kgen.h
-    ${clBLAS_SOURCE_DIR}/include/defbool.h
-    ${clBLAS_SOURCE_DIR}/include/devinfo.h
-    ${clBLAS_SOURCE_DIR}/include/dis_warning.h
-    ${clBLAS_SOURCE_DIR}/include/kern_cache.h
-    ${clBLAS_SOURCE_DIR}/include/kernel_extra.h
-    ${clBLAS_SOURCE_DIR}/include/kerngen.h
-    ${clBLAS_SOURCE_DIR}/include/list.h
-    ${clBLAS_SOURCE_DIR}/include/mempat.h
-    ${clBLAS_SOURCE_DIR}/include/msvc.h
-    ${clBLAS_SOURCE_DIR}/include/mutex.h
-    ${clBLAS_SOURCE_DIR}/include/rwlock.h
-    ${clBLAS_SOURCE_DIR}/include/solver.h
-    ${clBLAS_SOURCE_DIR}/include/md5sum.h
-    ${clBLAS_SOURCE_DIR}/include/binary_lookup.h
+	 ${clBLAS_SOURCE_DIR}/clBLAS.h
+	 ${clBLAS_SOURCE_DIR}/clBLAS-complex.h 
+	 ${clBLAS_SOURCE_DIR}/include/clkern.h
+	 ${clBLAS_SOURCE_DIR}/include/cltypes.h
+	 ${clBLAS_SOURCE_DIR}/include/dblock_kgen.h
+	 ${clBLAS_SOURCE_DIR}/include/defbool.h
+	 ${clBLAS_SOURCE_DIR}/include/devinfo.h
+	 ${clBLAS_SOURCE_DIR}/include/dis_warning.h
+	 ${clBLAS_SOURCE_DIR}/include/kern_cache.h
+	 ${clBLAS_SOURCE_DIR}/include/kernel_extra.h
+	 ${clBLAS_SOURCE_DIR}/include/kerngen.h
+	 ${clBLAS_SOURCE_DIR}/include/list.h
+	 ${clBLAS_SOURCE_DIR}/include/mempat.h
+	 ${clBLAS_SOURCE_DIR}/include/msvc.h
+	 ${clBLAS_SOURCE_DIR}/include/mutex.h
+	 ${clBLAS_SOURCE_DIR}/include/rwlock.h
+	 ${clBLAS_SOURCE_DIR}/include/solver.h
+	 ${clBLAS_SOURCE_DIR}/include/md5sum.h
+	 ${clBLAS_SOURCE_DIR}/include/binary_lookup.h
 )
 
 source_group(common FILES ${SRC_COMMON})
@@ -657,13 +657,13 @@ source_group(blas\\generic FILES ${SRC_BLAS_GENERIC})
 source_group(blas\\gens FILES ${SRC_BLAS_GENS} ${SRC_BLAS_GENS_HEADERS})
 
 include_directories(${OPENCL_INCLUDE_DIRS}
-    ${clBLAS_SOURCE_DIR}
-    ${clBLAS_SOURCE_DIR}/include
-    ${clBLAS_SOURCE_DIR}/library/blas/include
-    ${clBLAS_SOURCE_DIR}/library/blas/functor/include
-    ${clBLAS_SOURCE_DIR}/library/tools/tune
-    ${clBLAS_BINARY_DIR}/include
-    ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
+	 ${clBLAS_SOURCE_DIR}
+	 ${clBLAS_SOURCE_DIR}/include
+	 ${clBLAS_SOURCE_DIR}/library/blas/include
+	 ${clBLAS_SOURCE_DIR}/library/blas/functor/include
+	 ${clBLAS_SOURCE_DIR}/library/tools/tune
+	 ${clBLAS_BINARY_DIR}/include
+	 ${clBLAS_SOURCE_DIR}/library/blas/AutoGemm
 	${clBLAS_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources
 	${clBLAS_SOURCE_DIR}/library/blas/specialCases/include
 	${clBLAS_SOURCE_DIR}/library/blas/trtri
@@ -671,28 +671,28 @@ include_directories(${OPENCL_INCLUDE_DIRS}
 
 option( BLAS_DUMP_CLBLAS_KERNELS "Force the library to dump OpenCL kernels to disk" OFF )
 if( BLAS_DUMP_CLBLAS_KERNELS )
-    add_definitions( -DDUMP_CLBLAS_KERNELS )
+	 add_definitions( -DDUMP_CLBLAS_KERNELS )
 endif()
 
 option( BLAS_KEEP_KERNEL_SOURCES "Prevent the library from stripping source from kernels" OFF )
 if( BLAS_KEEP_KERNEL_SOURCES )
-    add_definitions( -DKEEP_CLBLAS_KERNEL_SOURCES )
+	 add_definitions( -DKEEP_CLBLAS_KERNEL_SOURCES )
 endif()
 
 option( BLAS_TRACE_MALLOC "Simple functionality to track memory leaks" OFF )
 if( BLAS_TRACE_MALLOC )
-    add_definitions( -DTRACE_MALLOC )
+	 add_definitions( -DTRACE_MALLOC )
 endif()
 
 option( BLAS_PRINT_BUILD_ERRORS "Enable printing of OpenCL compiler errors on stdout" ON )
 if( BLAS_PRINT_BUILD_ERRORS )
-    add_definitions( -DPRINT_BUILD_ERRORS )
+	 add_definitions( -DPRINT_BUILD_ERRORS )
 endif()
 
 include( ExternalProject )
 ExternalProject_Add( tplgen
-    URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
-    INSTALL_COMMAND ""
+	 URL "${CMAKE_SOURCE_DIR}/library/tools/tplgen"
+	 INSTALL_COMMAND ""
 )
 
 ################OCLBinaryGenerator
@@ -716,15 +716,15 @@ set( OCLBinaryGeneratorBinaryDir "${binary_dir}/staging" )
 # 5, [optional] trageted hardware. If this is not supplied OCLBinaryGenerator will generate binary for the first device on system
 set( OCL_COMPILER_FLAGS " ")
 if( OPENCL_VERSION STREQUAL "2.0")
-    set( OCL_COMPILER_FLAGS "-cl-std=CL2.0")
+	 set( OCL_COMPILER_FLAGS "-cl-std=CL2.0")
 endif()
 
 add_custom_target( OCLBinaryGenerator_GEN )
 add_custom_command(TARGET OCLBinaryGenerator_GEN
-                   PRE_BUILD
-				   COMMAND ${CMAKE_COMMAND} -DOCLBinaryGeneratorBinaryDir=${OCLBinaryGeneratorBinaryDir} -DSOURCE_DIR=${CMAKE_SOURCE_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR} -DOCL_COMPILER_FLAGS=${OCL_COMPILER_FLAGS}
-				   -P "${CMAKE_SOURCE_DIR}/library/OCLBinaryGenerator.cmake"
-				   )	  
+						 PRE_BUILD
+					COMMAND ${CMAKE_COMMAND} -DOCLBinaryGeneratorBinaryDir=${OCLBinaryGeneratorBinaryDir} -DSOURCE_DIR=${CMAKE_SOURCE_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR} -DOCL_COMPILER_FLAGS=${OCL_COMPILER_FLAGS}
+					-P "${CMAKE_SOURCE_DIR}/library/OCLBinaryGenerator.cmake"
+					)	  
 add_dependencies( OCLBinaryGenerator_GEN OCLBinaryGenerator )
 
 endif()
@@ -778,32 +778,32 @@ if(OPENCL_OFFLINE_BUILD_TAHITI_KERNEL OR OPENCL_OFFLINE_BUILD_HAWAII_KERNEL OR O
 
 set( bingenBinaryDir "" )
 if( CMAKE_COMPILER_IS_GNUCXX )
-    set( bingenBinaryDir "${binary_dir}/staging" )
+	 set( bingenBinaryDir "${binary_dir}/staging" )
 else()
-    set( bingenBinaryDir "${binary_dir}/staging" )
-#    set( bingenBinaryDir "${binary_dir}/${CMAKE_CFG_INTDIR}" )
+	 set( bingenBinaryDir "${binary_dir}/staging" )
+#	 set( bingenBinaryDir "${binary_dir}/${CMAKE_CFG_INTDIR}" )
 endif()
 
 if (LOAD_CL_FLAGS)
 add_custom_target( GEN_CLBIN )
 add_custom_command(TARGET GEN_CLBIN
-                   PRE_BUILD
-				   COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates"  
-	               -DLOAD_CL_FLAGS=${LOAD_CL_FLAGS} -DTAHITI_FLAG=${OPENCL_FLAGS_REPLACED_1} -DHAWAII1_FLAG=${OPENCL_FLAGS_REPLACED_3} -DHAWAII2_FLAG=${OPENCL_FLAGS_REPLACED_5} -DBONAIRE_FLAG=${OPENCL_FLAGS_REPLACED_7} 
-				   -DENV_PATH=${ENV_PATH} -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL} 
-				   -DOPENCL_OFFLINE_BUILD_TAHITI_KERNEL=${OPENCL_OFFLINE_BUILD_TAHITI_KERNEL}
-				   -P "${CMAKE_SOURCE_DIR}/library/bingen.cmake"
-				   )	  
+						 PRE_BUILD
+					COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates"  
+						-DLOAD_CL_FLAGS=${LOAD_CL_FLAGS} -DTAHITI_FLAG=${OPENCL_FLAGS_REPLACED_1} -DHAWAII1_FLAG=${OPENCL_FLAGS_REPLACED_3} -DHAWAII2_FLAG=${OPENCL_FLAGS_REPLACED_5} -DBONAIRE_FLAG=${OPENCL_FLAGS_REPLACED_7} 
+					-DENV_PATH=${ENV_PATH} -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL} 
+					-DOPENCL_OFFLINE_BUILD_TAHITI_KERNEL=${OPENCL_OFFLINE_BUILD_TAHITI_KERNEL}
+					-P "${CMAKE_SOURCE_DIR}/library/bingen.cmake"
+					)	  
 add_dependencies( GEN_CLBIN bingen )
 else()
 add_custom_target( GEN_CLBIN )
 add_custom_command(TARGET GEN_CLBIN
-                   PRE_BUILD
-				   COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates" 
-				   -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL} 
-				   -DOPENCL_OFFLINE_BUILD_TAHITI_KERNEL=${OPENCL_OFFLINE_BUILD_TAHITI_KERNEL}
-				   -P "${CMAKE_SOURCE_DIR}/library/bingen.cmake"
-				   )
+						 PRE_BUILD
+					COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates" 
+					-DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL} 
+					-DOPENCL_OFFLINE_BUILD_TAHITI_KERNEL=${OPENCL_OFFLINE_BUILD_TAHITI_KERNEL}
+					-P "${CMAKE_SOURCE_DIR}/library/bingen.cmake"
+					)
 add_dependencies( GEN_CLBIN bingen )
 endif()
 endif()#if(OPENCL_OFFLINE_BUILD_TAHITI_KERNEL OR OPENCL_OFFLINE_BUILD_HAWAII_KERNEL OR OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL)
@@ -812,15 +812,15 @@ ExternalProject_Get_Property( tplgen binary_dir )
 
 set( tplgenBinaryDir "" )
 if( CMAKE_COMPILER_IS_GNUCXX )
-    set( tplgenBinaryDir ${binary_dir} )
+	 set( tplgenBinaryDir ${binary_dir} )
 else()
-    set( tplgenBinaryDir "${binary_dir}/${CMAKE_CFG_INTDIR}" )
+	 set( tplgenBinaryDir "${binary_dir}/${CMAKE_CFG_INTDIR}" )
 endif()
 
 add_custom_target( GENERATE_CLT
-    COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include -i ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates/ ${SRC_CL_TEMPLATES}
-    COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include -i ${bingenBinaryDir}/ ${SRC_CL_TEMPLATES_GEN}
-    #WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
+	 COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include -i ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates/ ${SRC_CL_TEMPLATES}
+	 COMMAND ${tplgenBinaryDir}/tplgen -o ${clBLAS_BINARY_DIR}/include -i ${bingenBinaryDir}/ ${SRC_CL_TEMPLATES_GEN}
+	 #WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates
 	WORKING_DIRECTORY ${bingenBinaryDir}
 )
 
@@ -828,11 +828,11 @@ add_custom_target( GENERATE_CLT
 add_dependencies( GENERATE_CLT tplgen )
 
 if( CMAKE_COMPILER_IS_GNUCC )
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/clBLAS.pc.in
-                    ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc @ONLY )
+	 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/clBLAS.pc.in
+						  ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc @ONLY )
 
-    install( FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc
-             DESTINATION lib${SUFFIX_LIB}/pkgconfig )
+	 install( FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLAS.pc
+				 DESTINATION lib${SUFFIX_LIB}/pkgconfig )
 endif( )
 
 # clBLAS to depend on AutoGemm
@@ -846,14 +846,14 @@ else()
 endif()
 
 set(CLBLAS_ALL_SOURCES
-    ${CLBLAS_SOURCES}
-    ${GLOBAL_HEADERS}
-    ${SRC_BLAS_HEADERS}
-    ${SRC_BLAS_GENS_HEADERS}
-    ${AUTOGEMM_SRC}
-    ${AUTOGEMM_HEADERS}
-    ${AUTOGEMM_SCRIPTS}
-    ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
+	 ${CLBLAS_SOURCES}
+	 ${GLOBAL_HEADERS}
+	 ${SRC_BLAS_HEADERS}
+	 ${SRC_BLAS_GENS_HEADERS}
+	 ${AUTOGEMM_SRC}
+	 ${AUTOGEMM_HEADERS}
+	 ${AUTOGEMM_SCRIPTS}
+	 ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
 	#${USERGEMM_SRC}
 	#${USERGEMM_HEADERS}
 )
@@ -864,10 +864,10 @@ add_dependencies(clBLAS GENERATE_CLT)
 function (add_target_definitions target)
   get_target_property(defs ${target} COMPILE_DEFINITIONS)
   if (defs MATCHES "NOTFOUND")
-    set(defs "")
+	 set(defs "")
   endif ()
   foreach (def ${defs} ${ARGN})
-    list(APPEND deflist ${def})
+	 list(APPEND deflist ${def})
   endforeach ()
   set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "${deflist}")
 endfunction ()
@@ -890,10 +890,10 @@ target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBLAS
-         EXPORT Library
-         RUNTIME DESTINATION bin${SUFFIX_BIN}
-         LIBRARY DESTINATION lib${SUFFIX_LIB}
-		 ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
+			EXPORT Library
+			RUNTIME DESTINATION bin${SUFFIX_BIN}
+			LIBRARY DESTINATION lib${SUFFIX_LIB}
+			ARCHIVE DESTINATION lib${SUFFIX_LIB}/import
 		)
 
 # For debug builds, include the debug runtimes into the package for testing on non-developer machines
@@ -902,27 +902,27 @@ set( CMAKE_INSTALL_DEBUG_LIBRARIES true )
 set( CMAKE_INSTALL_DEBUG_LIBRARIES_ONLY true )
 
 if( WIN32 )
-    set( CLBLAS_RUNTIME_DESTINATION bin${SUFFIX_BIN} )
+	 set( CLBLAS_RUNTIME_DESTINATION bin${SUFFIX_BIN} )
 else( )
-    set( CLBLAS_RUNTIME_DESTINATION lib${SUFFIX_LIB} )
+	 set( CLBLAS_RUNTIME_DESTINATION lib${SUFFIX_LIB} )
 endif( )
 
 include( InstallRequiredSystemLibraries )
 
 # Install necessary runtime files for debug builds
-install(    PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
-            CONFIGURATIONS Debug
-            DESTINATION ${CLBLAS_RUNTIME_DESTINATION} )
+install(	 PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+				CONFIGURATIONS Debug
+				DESTINATION ${CLBLAS_RUNTIME_DESTINATION} )
 
 # Install all *.pdb files for debug builds
-install(    DIRECTORY ${PROJECT_BINARY_DIR}/staging/
-            DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
-            OPTIONAL
-            CONFIGURATIONS Debug
-            FILES_MATCHING PATTERN "*.pdb" )
+install(	 DIRECTORY ${PROJECT_BINARY_DIR}/staging/
+				DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
+				OPTIONAL
+				CONFIGURATIONS Debug
+				FILES_MATCHING PATTERN "*.pdb" )
 
 # Install a snapshot of the source as it was for this build; useful for the .pdb's
-install(    DIRECTORY ${PROJECT_SOURCE_DIR}
-            DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
-            OPTIONAL
-            CONFIGURATIONS Debug )
+install(	 DIRECTORY ${PROJECT_SOURCE_DIR}
+				DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
+				OPTIONAL
+				CONFIGURATIONS Debug )
