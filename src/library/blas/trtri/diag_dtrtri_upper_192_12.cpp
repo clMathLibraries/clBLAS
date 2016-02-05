@@ -15,135 +15,121 @@ unsigned char *diag_dtrtri_upper_192_12_bin = 0;
 size_t diag_dtrtri_upper_192_12_binSize = 0;
 
 const char * const diag_dtrtri_upper_192_12_src = STRINGIFY(
-#define BLOCK_SIZE 12 \n
-#define NB 192 \n
-#define ZERO              ( 0.0) \n
-#define ONE               ( 1.0) \n
-#ifdef DOUBLE_PRECISION \n
-#ifdef cl_khr_fp64 \n
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable \n
-#else \n
-#pragma OPENCL EXTENSION cl_amd_fp64 : enable \n
-#endif \n
-#endif \n
-__kernel void diag_dtrtri_upper_192_12_src(\n
-int  isDiagUnit,\n
-__global double const * restrict A, \n
-uint offA, \n
-__global double *d_dinvA, \n
-uint lda, \n
-uint na)\n
-{ \n
-int i, j;\n
-double Ystx = 0; \n
-__local double *y = 0; \n
-double switcher; \n
-double neg_switcher; \n
+#define BLOCK_SIZE 12 
+#define NB 192 
+#define ZERO			  ( 0.0) 
+#define ONE			   ( 1.0) 
+#ifdef DOUBLE_PRECISION 
+#ifdef cl_khr_fp64 
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable 
+#else 
+#pragma OPENCL EXTENSION cl_amd_fp64 : enable 
+#endif 
+#endif 
+__kernel void diag_dtrtri_upper_192_12_src(
+int  isDiagUnit,
+__global double const * restrict A, 
+uint offA, 
+__global double *d_dinvA, 
+uint lda, 
+uint na)
+{ 
+int i, j;
+double Ystx = 0; 
+__local double *y = 0; 
+double switcher; 
+double neg_switcher; 
 
 // Thread index
-int tx = get_local_id(0); \n
+int tx = get_local_id(0); 
 
 // Thread index 
-int gx = get_global_id(0); \n
+int gx = get_global_id(0); 
 
 // Block index 
-int bx = get_group_id(0); \n
+int bx = get_group_id(0); 
 
-A = A + offA; \n
+A = A + offA; 
 
-__global const double *Aoff = A + bx*lda*BLOCK_SIZE + bx*BLOCK_SIZE; \n
-int NumBLperNB = NB / BLOCK_SIZE; \n
-d_dinvA += bx / NumBLperNB*NB*NB + (bx % NumBLperNB)*(NB*BLOCK_SIZE + BLOCK_SIZE); \n
+__global const double *Aoff = A + bx*lda*BLOCK_SIZE + bx*BLOCK_SIZE; 
+int NumBLperNB = NB / BLOCK_SIZE; 
+d_dinvA += bx / NumBLperNB*NB*NB + (bx % NumBLperNB)*(NB*BLOCK_SIZE + BLOCK_SIZE); 
 
-__local double Bs[BLOCK_SIZE*BLOCK_SIZE]; \n
-__local double workspace[BLOCK_SIZE];\n    // workspace used to store the current working column 
+__local double Bs[BLOCK_SIZE*BLOCK_SIZE]; 
+__local double workspace[BLOCK_SIZE];	// workspace used to store the current working column 
 
-// load A \n
-_Pragma("unroll")\n
-for (i = 0; i < BLOCK_SIZE; i++)\n
-{ \n
-    if (tx <= i && i + bx*BLOCK_SIZE < na)\n
-    { \n
-		Bs[i*BLOCK_SIZE + tx] = *(Aoff + i*lda + tx); \n
-    }\n
-    else\n
-    { \n
-        Bs[i*BLOCK_SIZE + tx] = ZERO; \n
-    }\n
-}\n
+// load A 
+_Pragma("unroll")
+for (i = 0; i < BLOCK_SIZE; i++)
+{ 
+	if (tx <= i && i + bx*BLOCK_SIZE < na)
+	{ 
+		Bs[i*BLOCK_SIZE + tx] = *(Aoff + i*lda + tx); 
+	}
+	else
+	{ 
+		Bs[i*BLOCK_SIZE + tx] = ZERO; 
+	}
+}
 // read in the whole square block of my A and zero out the non data triangular
 
 // Synchronize to make sure the matrices are loaded
 //__syncthreads(); 
-barrier(CLK_LOCAL_MEM_FENCE); \n
+barrier(CLK_LOCAL_MEM_FENCE); 
 
 // solve the diagonals
 
-if (isDiagUnit == 1)\n
-{ \n
-    Bs[tx*BLOCK_SIZE + tx] = ONE; \n
-}\n
-else\n
-{ \n
-    if (Bs[tx*BLOCK_SIZE + tx] == ZERO)\n
-    { \n
-        Bs[tx*BLOCK_SIZE + tx] = ONE; \n
-    }\n
-    else\n
-    { \n
-        Bs[tx*BLOCK_SIZE + tx] = ONE / (Bs[tx*BLOCK_SIZE + tx]); \n
-    }\n
-}\n
+if (isDiagUnit == 1)
+{ 
+	Bs[tx*BLOCK_SIZE + tx] = ONE; 
+}
+else
+{ 
+	if (Bs[tx*BLOCK_SIZE + tx] == ZERO)
+	{ 
+		Bs[tx*BLOCK_SIZE + tx] = ONE; 
+	}
+	else
+	{ 
+		Bs[tx*BLOCK_SIZE + tx] = ONE / (Bs[tx*BLOCK_SIZE + tx]); 
+	}
+}
 
 
 /* the upper case */
-for (i = 0; i < BLOCK_SIZE; i++) {\n
-	Ystx = ZERO; \n
-	if (tx < i)\n
-	{ \n
-	    switcher = ONE; \n
-	}\n
-	else\n
-	{ \n
-	    switcher = ZERO; \n
-	}\n
+for (i = 0; i < BLOCK_SIZE; i++) {
+	Ystx = ZERO; 
+	switcher = i >= tx; 
 
 	//dtrmv
-	workspace[tx] = *(Bs + i*BLOCK_SIZE + tx); \n
-	y = Bs + i*BLOCK_SIZE; \n
+	workspace[tx] = *(Bs + i*BLOCK_SIZE + tx); 
+	y = Bs + i*BLOCK_SIZE; 
 
-_Pragma("unroll")\n
+_Pragma("unroll")
 	//for( j=tx; j < i; j++ )
-	for (j = 0; j < i; j++)\n
-		Ystx += switcher * (*(Bs + j*BLOCK_SIZE + tx)*workspace[j]); \n
+	for (j = 0; j < i; j++)
+		Ystx += switcher * (*(Bs + j*BLOCK_SIZE + tx)*workspace[j]); 
 
 	//sscal
 	// if (tx != i) y[tx]=switcher*Ystx*(-Bs[i*BLOCK_SIZE+i]);
 
-	if (tx != i)\n
-	{ \n
-	    switcher = ONE; \n
-	    neg_switcher = ZERO; \n
-	}\n
-	else\n
-	{ \n
-	    switcher = ZERO; \n
-	    neg_switcher = ONE; \n
-	}\n
+	
+	switcher = tx != i; 
+	neg_switcher = tx == i;
 
-	y[tx] = switcher *Ystx*(-Bs[i*BLOCK_SIZE + i]) + neg_switcher*y[tx]; \n
+	y[tx] = switcher *Ystx*(-Bs[i*BLOCK_SIZE + i]) + neg_switcher*y[tx]; 
 
 	// __syncthreads();
-	barrier(CLK_LOCAL_MEM_FENCE); \n
-}\n
+	barrier(CLK_LOCAL_MEM_FENCE); 
+}
 
 // write back A
-_Pragma("unroll")\n
-for (i = 0; i < BLOCK_SIZE; i++)\n
-	*(d_dinvA + i*NB + tx) = Bs[i*BLOCK_SIZE + tx]; \n
+_Pragma("unroll")
+for (i = 0; i < BLOCK_SIZE; i++)
+	*(d_dinvA + i*NB + tx) = Bs[i*BLOCK_SIZE + tx]; 
 
 
-}\n
+}
 // end of kernel
 );
 #endif

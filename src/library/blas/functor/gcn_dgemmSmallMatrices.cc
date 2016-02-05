@@ -99,39 +99,7 @@
 // Just because the full name is too long
 typedef clBlasGCNDgemmSmallMatricesFunctor::Variant Variant ; 
 
-////define the string name of the soure/binary code
-//#define DGEMM_SRC_NAME(TA,TB,MULT)    dgemm_##TA##TB##_SMALL##MULT
-//#define DGEMM_SRC_NAME_HAWAII(TA,TB,  MULT, BITS)   dgemm_##TA##TB##_SMALL##MULT##_##BITS##_bin_Hawaii
-//
-////variant name used to differentiate the different ones
-//#define DGEMM_VARIANT_NAME(TA,TB, MULT) "dgemm_" #TA #TB "_SMALL" #MULT
-////DGEMM_VARIANT_NAME(TA, TB, DIVM , DIVN, DIVK, GREATER48M, GREATER48N, NBKERNEL),    
-//
-//#define DGEMM_KERNEL_NAME(TA,TB,DIVM,DIVN,DIVK,BS0,BS1,NV0,NV1,MULT, BLOC) "dgemm_"  #TA #TB "_" #DIVM "_" #DIVN "_" #DIVK "_" #BS0 "x" #BS1 "_" #NV0 "x" #NV1 #MULT "_SPLIT_" #BLOC
-//
-//
-//#define trans_N clblasNoTrans
-//#define trans_T clblasTrans
-//
-//// Fill a variant descriptor using OpenCL source 
-//#define DGEMM_VARIANT_OBJ(TA,TB,DIVK,BS0,BS1,NV0,NV1, BITS, MULT,  \
-//  KERNEL_NAME_MAIN, KERNEL_NAME_ROW, \
-//  KERNELS_SRC,  \
-//  KERNEL_BUILD_OPTIONS,  \
-//  KERNELS_BIN,  \
-//  KERNEL_BIN_SIZE) { \
-//  DGEMM_VARIANT_NAME(TA,TB, MULT),                                          \
-//{ KERNEL_NAME_MAIN, KERNEL_NAME_ROW } , \
-//  KERNELS_SRC,  \
-//  KERNEL_BUILD_OPTIONS, \
-//  KERNELS_BIN, \
-//  KERNEL_BIN_SIZE, \
-//  trans_##TA, trans_##TB,                                       \
-//  DIVK ,                                                        \
-//{ BS0, BS1 } ,                                                \
-//{ NV0, NV1 } ,                                                      \
-//#MULT                                                               \
-//} 
+
 
 typedef clblasFunctorCache<clBlasGCNDgemmSmallMatricesFunctor,const Variant *> CacheSMall ;
 static CacheSMall cachesmall  ;
