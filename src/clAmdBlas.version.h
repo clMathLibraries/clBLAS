@@ -18,5 +18,5 @@
 /* the configured version and settings for clblas
  */
 #define clAmdBlasVersionMajor 2
-#define clAmdBlasVersionMinor 0
+#define clAmdBlasVersionMinor 10
 #define clAmdBlasVersionPatch 0
