@@ -136,11 +136,9 @@ void makeGemmKernel(
 {
   //TODO: This will need to be converted to thread local when making clBLAS thread safe
   typedef std::map<std::string, cl_kernel> kernel_map_t;
-  
+
 #if defined( _WIN32 )
   __declspec( thread ) static kernel_map_t *kernel_map = 0;
-
-  
 #else
   __thread static kernel_map_t *kernel_map = 0;
 #endif
