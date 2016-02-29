@@ -17,6 +17,7 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <thread>
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
@@ -135,7 +136,17 @@ void makeGemmKernel(
 {
   //TODO: This will need to be converted to thread local when making clBLAS thread safe
   typedef std::map<std::string, cl_kernel> kernel_map_t;
-  static kernel_map_t kernel_map;
+  
+#if defined( _WIN32 )
+  __declspec( thread ) static kernel_map_t *kernel_map = 0;
+
+  
+#else
+  __thread static kernel_map_t *kernel_map = 0;
+#endif
+  if (!kernel_map) {
+    kernel_map = new kernel_map_t();
+  }
 
   cl_context clContext;
   cl_device_id clDevice;
@@ -159,11 +170,11 @@ void makeGemmKernel(
 
     // Check if kernel exists for this device
     std::string key = prefix + "_" + kernelName;
-    kernel_map_t::iterator idx = kernel_map.find(key);
+    kernel_map_t::iterator idx = kernel_map->find(key);
 
 
     // If kernel not found for this device, set to NULL
-    if (idx == kernel_map.end()) {
+    if (idx == kernel_map->end()) {
         *clKernel = NULL;
     } else {
         *clKernel = idx->second;
@@ -251,7 +262,7 @@ void makeGemmKernel(
 #endif
 
     std::string key = prefix + "_" + kernelName;
-    kernel_map[key] = *clKernel;
+    (*kernel_map)[key] = *clKernel;
     delete[] kernelName;
   }
 
