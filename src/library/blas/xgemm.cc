@@ -17,7 +17,6 @@
 #include <map>
 #include <string>
 #include <sstream>
-#include <thread>
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
@@ -27,6 +26,16 @@
  #include <functor.h>
 // #include <functor_selector.h>
 #include "xgemm.h"
+
+//#define GCC_VERSION (__GNUC__ * 10000 \
+//    + __GNUC_MINOR__ * 100 \
+//    + __GNUC_PATCHLEVEL__)
+
+#ifdef _WIN32
+//#include <thread>
+#else
+#include <pthread.h>
+#endif
 
 /******************************************************************************
  * Row major -> column major
@@ -140,6 +149,7 @@ void makeGemmKernel(
 #if defined( _WIN32 )
   __declspec( thread ) static kernel_map_t *kernel_map = 0;
 #else
+#include <pthread.h>
   __thread static kernel_map_t *kernel_map = 0;
 #endif
   if (!kernel_map) {
