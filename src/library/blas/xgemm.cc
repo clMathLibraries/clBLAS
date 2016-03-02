@@ -27,10 +27,6 @@
 // #include <functor_selector.h>
 #include "xgemm.h"
 
-//#define GCC_VERSION (__GNUC__ * 10000 \
-//    + __GNUC_MINOR__ * 100 \
-//    + __GNUC_PATCHLEVEL__)
-
 #ifdef _WIN32
 //#include <thread>
 #else
@@ -143,13 +139,11 @@ void makeGemmKernel(
   size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
-  //TODO: This will need to be converted to thread local when making clBLAS thread safe
   typedef std::map<std::string, cl_kernel> kernel_map_t;
 
 #if defined( _WIN32 )
   __declspec( thread ) static kernel_map_t *kernel_map = 0;
 #else
-#include <pthread.h>
   __thread static kernel_map_t *kernel_map = 0;
 #endif
   if (!kernel_map) {
