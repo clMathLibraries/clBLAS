@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
+#include "mutex.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelection.h"
 #include "GemmSpecialCases.h"
 
@@ -126,12 +127,38 @@ static char *getKernelName(cl_kernel clKernel)
   return kernelName;
 }
 
+typedef struct kernel_map_key_ {
+  cl_context context; // address of context
+  cl_device_id device; // address of device
+  const char *kernelSource; // address of kernel source
+} kernel_map_key;
+
+bool operator<(const kernel_map_key & l, const kernel_map_key & r) {
+  if (l.context < r.context) {
+    return true;
+  } else if (r.context < l.context) {
+    return false;
+  }
+  if (l.device < r.device) {
+    return true;
+  } else if (r.device < l.device) {
+    return false;
+  }
+  if (l.kernelSource < r.kernelSource) {
+    return true;
+  } else if (r.kernelSource < l.kernelSource) {
+    return false;
+  }
+  return false;
+}
+
+
 /******************************************************************************
  * Make Gemm Kernel
  *****************************************************************************/
 //FIXME: This function should be returning an error.
 void makeGemmKernel(
-  cl_kernel *clKernel,
+  cl_kernel *clKernel, // ignored as input; returns as output
   cl_command_queue clQueue,
   const char *kernelSource,
   const char *sourceBuildOptions,
@@ -139,9 +166,8 @@ void makeGemmKernel(
   size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
-  typedef std::map<std::string, cl_kernel> kernel_map_t;
-
-#if defined( _WIN32 )
+  typedef std::map<kernel_map_key, cl_kernel> kernel_map_t;
+  #if defined( _WIN32 )
   __declspec( thread ) static kernel_map_t *kernel_map = 0;
 #else
   __thread static kernel_map_t *kernel_map = 0;
@@ -159,33 +185,20 @@ void makeGemmKernel(
   err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
   CL_CHECK(err)
 
-  std::stringstream ss;
-  ss << clDevice << "_" << clContext;
-  std::string prefix = ss.str();
-
-  if (*clKernel) {
-    char *kernelName = getKernelName(*clKernel);
-    // kernel has already been built, return
-#ifdef AUTOGEMM_PRINT_DEBUG
-    printf("makeGemmKernel: \"%s\" already built; returning.\n", kernelName);
-#endif
-
-    // Check if kernel exists for this device
-    std::string key = prefix + "_" + kernelName;
-    kernel_map_t::iterator idx = kernel_map->find(key);
-
-
-    // If kernel not found for this device, set to NULL
-    if (idx == kernel_map->end()) {
-        *clKernel = NULL;
-    } else {
-        *clKernel = idx->second;
-    }
-
-    delete[] kernelName;
+  // is kernel already compiled?
+  kernel_map_key key;
+  key.kernelSource = kernelSource;
+  key.context = clContext;
+  key.device = clDevice;
+  kernel_map_t::iterator idx = kernel_map->find(key);
+  if (idx == kernel_map->end()) {
+    *clKernel = NULL;
+  } else {
+    *clKernel = idx->second;
+    return;
   }
 
-  if (!*clKernel) {
+  if (true /*!*clKernel*/) { // since kernel wasn't found in map
     // kernel has not been built, so build it (from binary, preferably)
     cl_program clProgram;
     cl_int clBinaryStatus;
@@ -257,17 +270,13 @@ void makeGemmKernel(
 	err = clReleaseProgram(clProgram);
 	CL_CHECK(err)
 
-    char *kernelName = getKernelName(*clKernel);
-
 #ifdef AUTOGEMM_PRINT_DEBUG
     printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
 #endif
 
-    std::string key = prefix + "_" + kernelName;
+    //put kernel in map
     (*kernel_map)[key] = *clKernel;
-    delete[] kernelName;
   }
-
   return;
 }
 
@@ -557,6 +566,11 @@ clblasGemm(
 /******************************************************************************
  * Build kernels
  *****************************************************************************/
+  
+  tileClKernel       = NULL;
+  rowClKernel        = NULL;
+  colClKernel        = NULL;
+  cornerClKernel     = NULL;
   if (needTileKernel)   makeGemmKernel(  tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary,   tileKernelBinarySize, binaryBuildOptions);
   if (needRowKernel)    makeGemmKernel(   rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary,    rowKernelBinarySize, binaryBuildOptions);
   if (needColKernel)    makeGemmKernel(   colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary,    colKernelBinarySize, binaryBuildOptions);
