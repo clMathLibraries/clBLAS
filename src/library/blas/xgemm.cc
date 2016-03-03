@@ -158,7 +158,7 @@ bool operator<(const kernel_map_key & l, const kernel_map_key & r) {
  *****************************************************************************/
 //FIXME: This function should be returning an error.
 void makeGemmKernel(
-  cl_kernel *clKernel, // ignored as input; returns as output
+  cl_kernel *clKernel, // ignored as input; returns as output only
   cl_command_queue clQueue,
   const char *kernelSource,
   const char *sourceBuildOptions,
@@ -461,10 +461,10 @@ clblasGemm(
   size_t *colKernelBinarySize    = 0;
   size_t *cornerKernelBinarySize = 0;
   const char *binaryBuildOptions = NULL;
-  cl_kernel  *tileClKernel       = NULL;
-  cl_kernel  *rowClKernel        = NULL;
-  cl_kernel  *colClKernel        = NULL;
-  cl_kernel  *cornerClKernel     = NULL;
+  cl_kernel  *tileClKernelDummy       = NULL; // no longer used; broke thread safety
+  cl_kernel  *rowClKernelDummy        = NULL; // no longer used; broke thread safety
+  cl_kernel  *colClKernelDummy        = NULL; // no longer used; broke thread safety
+  cl_kernel  *cornerClKernelDummy     = NULL; // no longer used; broke thread safety
   unsigned int workGroupNumRows;
   unsigned int workGroupNumCols;
   unsigned int microTileNumRows;
@@ -489,10 +489,10 @@ clblasGemm(
     &colKernelBinarySize,
     &cornerKernelBinarySize,
     &binaryBuildOptions,
-    &tileClKernel,
-    &rowClKernel,
-    &colClKernel,
-    &cornerClKernel,
+    &tileClKernelDummy,
+    &rowClKernelDummy,
+    &colClKernelDummy,
+    &cornerClKernelDummy,
     &workGroupNumRows,
     &workGroupNumCols,
     &microTileNumRows,
@@ -530,10 +530,10 @@ clblasGemm(
           &colKernelBinarySize,
           &cornerKernelBinarySize,
           &binaryBuildOptions,
-          &tileClKernel,
-          &rowClKernel,
-          &colClKernel,
-          &cornerClKernel,
+          &tileClKernelDummy,
+          &rowClKernelDummy,
+          &colClKernelDummy,
+          &cornerClKernelDummy,
           &workGroupNumRows,
           &workGroupNumCols,
           &microTileNumRows,
@@ -567,14 +567,15 @@ clblasGemm(
  * Build kernels
  *****************************************************************************/
   
-  tileClKernel       = NULL;
-  rowClKernel        = NULL;
-  colClKernel        = NULL;
-  cornerClKernel     = NULL;
-  if (needTileKernel)   makeGemmKernel(  tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary,   tileKernelBinarySize, binaryBuildOptions);
-  if (needRowKernel)    makeGemmKernel(   rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary,    rowKernelBinarySize, binaryBuildOptions);
-  if (needColKernel)    makeGemmKernel(   colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary,    colKernelBinarySize, binaryBuildOptions);
-  if (needCornerKernel) makeGemmKernel(cornerClKernel, commandQueues[0], cornerKernelSource, sourceBuildOptions, &cornerKernelBinary, cornerKernelBinarySize, binaryBuildOptions);
+  
+  cl_kernel  tileClKernel       = NULL;
+  cl_kernel  rowClKernel        = NULL;
+  cl_kernel  colClKernel        = NULL;
+  cl_kernel  cornerClKernel     = NULL;
+  if (needTileKernel)   makeGemmKernel(  &tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary,   tileKernelBinarySize, binaryBuildOptions);
+  if (needRowKernel)    makeGemmKernel(   &rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary,    rowKernelBinarySize, binaryBuildOptions);
+  if (needColKernel)    makeGemmKernel(   &colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary,    colKernelBinarySize, binaryBuildOptions);
+  if (needCornerKernel) makeGemmKernel(&cornerClKernel, commandQueues[0], cornerKernelSource, sourceBuildOptions, &cornerKernelBinary, cornerKernelBinarySize, binaryBuildOptions);
   const size_t localWorkSize[2] = { workGroupNumRows, workGroupNumCols };
   unsigned int numKernelsEnqueued = 0;
 
@@ -603,7 +604,7 @@ clblasGemm(
   if (needTileKernel) {
     //printf("enqueueing tile kernel\n");
     size_t globalWorkSize[2] = {(M/macroTileNumRows)*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *tileClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], tileClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
@@ -618,7 +619,7 @@ clblasGemm(
   if (needRowKernel) {
     //printf("enqueueing row kernel\n");
     size_t globalWorkSize[2] = {1*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *rowClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], rowClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
@@ -633,7 +634,7 @@ clblasGemm(
   if (needColKernel) {
     //printf("enqueueing col kernel\n");
     size_t globalWorkSize[2] = { (M/macroTileNumRows)*workGroupNumRows, 1*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *colClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], colClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
@@ -648,7 +649,7 @@ clblasGemm(
   if (needCornerKernel) {
     //printf("enqueueing corner kernel\n");
     size_t globalWorkSize[2] = { 1*workGroupNumRows, 1*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *cornerClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], cornerClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
