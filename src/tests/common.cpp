@@ -18,6 +18,7 @@
 #include <iostream>
 #include <string.h>
 #include <clBLAS.h>
+#include <gtest/gtest.h>
 
 #include <common.h>
 
@@ -1015,4 +1016,24 @@ functionBlasLevel(BlasFunctionID funct) {
     default:
         return 0;
     }
+}
+
+
+template<>
+void gtestAssertElementsEqual( const float & a, const float & b) {
+  ASSERT_FLOAT_EQ(a, b);
+}
+template<>
+void gtestAssertElementsEqual( const double & a, const double & b) {
+  ASSERT_DOUBLE_EQ(a, b);
+}
+template<>
+void gtestAssertElementsEqual( const FloatComplex & a, const FloatComplex & b) {
+  ASSERT_FLOAT_EQ(CREAL(a), CREAL(b));
+  ASSERT_FLOAT_EQ(CIMAG(a), CIMAG(b));
+}
+template<>
+void gtestAssertElementsEqual( const DoubleComplex & a, const DoubleComplex & b) {
+  ASSERT_DOUBLE_EQ(CREAL(a), CREAL(b));
+  ASSERT_DOUBLE_EQ(CIMAG(a), CIMAG(b));
 }

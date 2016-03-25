@@ -298,6 +298,7 @@ reorderMatrix(
     }
 }
 
+
 template <typename T>
 static void
 compareMatrices(
@@ -315,207 +316,41 @@ compareMatrices(
 
     if( lda > 0 ) // General case
     {
-    for (m = 0; m < M; m++) {
-        for (n = 0; n < N; n++) {
-            a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
-            b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
-            delta = 0.0;
-            if (absDelta != NULL) {
-                delta = absDelta[m * N + n];
+        for (m = 0; m < M; m++) {
+            for (n = 0; n < N; n++) {
+                a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
+                b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
+                gtestAssertElementsEqual(a, b);
             }
-			if( module(a-b) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
-            ASSERT_NEAR(a, b, delta);
         }
-    }
     }
     else // Packed case
     {
-	if ( order == clblasColumnMajor)
-	{
-		for ( n = 0; n < N; n++)
-		{
-			for( m=n; m < M; m++)
-			{
-            			a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
-            			delta = 0.0;
-            			if (absDelta != NULL) {
-                			//delta = absDelta[m * N + n];
-            			}
-						if( module(a-b) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(a, b, delta);
-			}
-		}
-	}
-	else
-	{
-		for ( m = 0; m < M; m++)
-		{
-			for( n = 0; n <= m; n++)
-			{
-            			a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
-            			delta = 0.0;
-            			if (absDelta != NULL) {
-                			//delta = absDelta[m * N + n];
-            			}
-						if( module(a-b) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(a, b, delta);
-			}
-		}
-	}
-    }
-}
-
-template<>
-__template_static void
-compareMatrices<FloatComplex>(
-    clblasOrder order,
-    size_t M,
-    size_t N,
-    const FloatComplex *A,
-    const FloatComplex *B,
-    size_t lda,
-    const cl_double *absDelta)
-{
-    size_t m = 0, n = 0;
-    FloatComplex a, b;
-    cl_double delta;
-
-if ( lda > 0 )
-{
-    for (m = 0; m < M; m++) {
-        for (n = 0; n < N; n++) {
-            a = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
-            b = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
-            delta = 0.0;
-            if (absDelta != NULL) {
-                delta = absDelta[m * N + n];
+        if ( order == clblasColumnMajor)
+        {
+            for ( n = 0; n < N; n++)
+            {
+                for( m=n; m < M; m++)
+                {
+                    a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
+                    b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
+                    gtestAssertElementsEqual(a, b);
+                }
             }
-			if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
-					printf("m : %d\t n: %d\n", (int)m, (int)n);
-            ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-            ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+        }
+        else
+        {
+            for ( m = 0; m < M; m++)
+            {
+                for( n = 0; n <= m; n++)
+                {
+                    a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
+                    b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
+                    gtestAssertElementsEqual(a, b);
+                }
+            }
         }
     }
-}
-    else // Packed case
-    {
-	if ( order == clblasColumnMajor)
-	{
-		for ( n = 0; n < N; n++)
-		{
-			for( m=n; m < M; m++)
-			{
-            			a = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
-				        b = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
-            			delta = 0.0;
-            			if (absDelta != NULL) {
-                			//delta = absDelta[m * N + n];
-            			}
-            			if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
-							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
-			}
-		}
-	}
-	else
-	{
-		for ( m = 0; m < M; m++)
-		{
-			for( n = 0; n <= m; n++)
-			{
-            			a = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
-            			delta = 0.0;
-            			if (absDelta != NULL) {
-                			//delta = absDelta[m * N + n];
-            			}
-						if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
-							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
-			}
-		}
-	}
-    }
-
-}
-
-template<>
-__template_static void
-compareMatrices<DoubleComplex>(
-    clblasOrder order,
-    size_t M,
-    size_t N,
-    const DoubleComplex *A,
-    const DoubleComplex *B,
-    size_t lda,
-    const cl_double *absDelta)
-{
-    size_t m = 0, n = 0;
-    DoubleComplex a, b;
-    cl_double delta;
-if( lda > 0 )
-{
-    for (m = 0; m < M; m++) {
-        for (n = 0; n < N; n++) {
-            a = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
-            b = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
-            delta = 0.0;
-            if (absDelta != NULL) {
-                delta = absDelta[m * N + n];
-            }
-			if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
-					printf("m : %d\t n: %d\n", (int)m, (int)n);
-            ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-            ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
-        }
-    }
-}
-    else // Packed case
-    {
-	if ( order == clblasColumnMajor)
-	{
-		for ( n = 0; n < N; n++)
-		{
-			for( m=n; m < M; m++)
-			{
-            			a = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
-            			delta = 0.0;
-            			if (absDelta != NULL) {
-                			//delta = absDelta[m * N + n];
-            			}
-						if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
-							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
-			}
-		}
-	}
-	else
-	{
-		for ( m = 0; m < M; m++)
-		{
-			for( n = 0; n <= m; n++)
-			{
-            			a = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
-            			delta = 0.0;
-            			if (absDelta != NULL) {
-                			//delta = absDelta[m * N + n];
-            			}
-						if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
-							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
-			}
-		}
-	}
-    }
-
 }
 
 template <typename T>
