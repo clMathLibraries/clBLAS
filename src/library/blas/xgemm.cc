@@ -153,6 +153,24 @@ bool operator<(const kernel_map_key & l, const kernel_map_key & r) {
 }
 
 
+typedef std::map<kernel_map_key, cl_kernel> kernel_map_t;
+kernel_map_t *kernel_map = 0;
+
+void xgemmInit() {
+    if(kernel_map == 0) {
+        kernel_map = new kernel_map_t();
+    }
+}
+
+void xgemmTeardown() {
+    for(kernel_map_t::iterator it = kernel_map->begin(); it != kernel_map->end(); it++) {
+        cl_kernel this_kernel = it->second;
+        cl_int err = clReleaseKernel(this_kernel);
+        CL_CHECK(err)
+    }
+    kernel_map->clear();
+}
+
 /******************************************************************************
  * Make Gemm Kernel
  *****************************************************************************/
@@ -166,16 +184,6 @@ void makeGemmKernel(
   size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
-  typedef std::map<kernel_map_key, cl_kernel> kernel_map_t;
-  #if defined( _WIN32 )
-  __declspec( thread ) static kernel_map_t *kernel_map = 0;
-#else
-  __thread static kernel_map_t *kernel_map = 0;
-#endif
-  if (!kernel_map) {
-    kernel_map = new kernel_map_t();
-  }
-
   cl_context clContext;
   cl_device_id clDevice;
   cl_int err;
@@ -271,7 +279,7 @@ void makeGemmKernel(
 	CL_CHECK(err)
 
 #ifdef AUTOGEMM_PRINT_DEBUG
-    printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
+    printf("makeGemmKernel: now built; returning.\n");
 #endif
 
     //put kernel in map
