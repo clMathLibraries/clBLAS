@@ -271,7 +271,7 @@ void makeGemmKernel(
 	CL_CHECK(err)
 
 #ifdef AUTOGEMM_PRINT_DEBUG
-    printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
+    printf("makeGemmKernel now built; returning.\n");
 #endif
 
     //put kernel in map
