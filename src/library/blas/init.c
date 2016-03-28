@@ -258,9 +258,8 @@ clblasTeardown(void)
     releaseMallocTrace();
 
 #ifdef BUILDING_CLBLAS
-   initUserGemmClKernels();
-   initAutoGemmClKernels();
    xgemmTeardown();
+   initAutoGemmClKernels();
 #endif
 
     clblasInitialized = 0;
