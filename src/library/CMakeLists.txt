@@ -91,6 +91,8 @@ option( PRECOMPILE_GEMM_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
 
+option( INSTALL_SRC "Install source tree" ON )
+
 set( AUTOGEMM_ARCHITECTURE "Hawaii" CACHE STRING "AutoGemm: device for kernel selection logic" )
 set_property( CACHE AUTOGEMM_ARCHITECTURE PROPERTY STRINGS "Hawaii" "Fiji" )
 
@@ -920,8 +922,11 @@ install(    DIRECTORY ${PROJECT_BINARY_DIR}/staging/
             CONFIGURATIONS Debug
             FILES_MATCHING PATTERN "*.pdb" )
 
+if(INSTALL_SRC)
 # Install a snapshot of the source as it was for this build; useful for the .pdb's
-install(    DIRECTORY ${PROJECT_SOURCE_DIR}
-            DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
-            OPTIONAL
-            CONFIGURATIONS Debug )
+    install(    DIRECTORY ${PROJECT_SOURCE_DIR}
+                DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
+                OPTIONAL
+                CONFIGURATIONS Debug )
+endif()
+
