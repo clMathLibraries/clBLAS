@@ -26,3 +26,6 @@
 
 src/build/
 
+# python compiled files
+*.pyc
+
