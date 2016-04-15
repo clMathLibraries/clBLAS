@@ -33,8 +33,7 @@ do {                                                                        \
                                                                             \
     if (err == CL_INVALID_DEVICE && !base->isDevSupportDoublePrecision()) { \
         ::std::cerr << std::endl << ">> " << funcName <<                    \
-                "() reported that this device doesn't support double "      \
-                "precision floating point arithmetic. Test is skipped" <<   \
+                "() no double; test is skipped" <<   \
         ::std::endl;                                                        \
         SUCCEED();                                                          \
                                                                             \

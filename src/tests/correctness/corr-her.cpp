@@ -101,7 +101,6 @@ herCorrectnessTest(TestParams *params)
     }
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
 	randomHerMatrices( params->order, params->uplo, params->N, &alpha_, (A + params->offa), params->lda, (X + params->offBX), params->incx );
     memcpy(backA, A, (lengthA + params->offa)* sizeof(*A));
 	::std::cerr << "Done" << ::std::endl;
@@ -109,8 +108,6 @@ herCorrectnessTest(TestParams *params)
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offa) * sizeof(*A), 0, CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX) * sizeof(*X), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xHER routine... ";
 
     clblasOrder fOrder;
     clblasUplo fUplo;
@@ -124,7 +121,6 @@ herCorrectnessTest(TestParams *params)
 		fUplo = (fUplo == clblasLower)? clblasUpper : clblasLower;
 	}
 	clMath::blas::her( fOrder, fUplo, params->N, CREAL(alpha_), X , params->offBX, params->incx, A, params->offa, params->lda );
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufA == NULL) || (bufX == NULL) ) {
         /* Skip the test, the most probable reason is
@@ -151,8 +147,6 @@ herCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xHER routine... ";
-
     err = (cl_int)::clMath::clblas::her( params->order, params->uplo, params->N, CREAL(alpha_),
 						bufX, params->offBX, params->incx, bufA, params->offa, params->lda,
 						params->numCommandQueues, base->commandQueues(),
@@ -173,7 +167,6 @@ herCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufA, CL_TRUE, 0,
         (lengthA + params->offa) * sizeof(*A), backA, 0,
