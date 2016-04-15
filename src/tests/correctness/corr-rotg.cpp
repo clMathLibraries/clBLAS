@@ -144,15 +144,15 @@ rotgCorrectnessTest(TestParams *params)
     back_SB[params->offCY] = SB[params->offCY];
 
     //printing the inputs, as they change after processing
-    ::std::cerr << "A = ";
-    printElement<T1>(SA[params->offBX]);
-    ::std::cerr << "\tB = ";
-    printElement<T1>(SB[params->offCY]);
-    ::std::cerr << "\tC = ";
-    printElement<T2>(C[params->offa]);
-    ::std::cerr << "\tS = ";
-    printElement<T1>(S[params->offb]);
-    ::std::cout << std::endl << std::endl;
+    //::std::cerr << "A = ";
+    //printElement<T1>(SA[params->offBX]);
+    //::std::cerr << "\tB = ";
+    //printElement<T1>(SB[params->offCY]);
+    //::std::cerr << "\tC = ";
+    //printElement<T2>(C[params->offa]);
+    //::std::cerr << "\tS = ";
+    //printElement<T1>(S[params->offb]);
+    //::std::cout << std::endl << std::endl;
 
 	// Allocate buffers
     bufSA = base->createEnqueueBuffer(SA, (length + params->offBX) * sizeof(T1), 0, CL_MEM_READ_WRITE);
@@ -240,6 +240,12 @@ rotgCorrectnessTest(TestParams *params)
 
     delta = deltaForType * returnMax<T1>(back_S[params->offb]);
     compareValues<T1>( (back_S + params->offb), (S + params->offb), delta);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->offBX, params->offCY, params->offa, params->offb);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T1>(SA, SB, S, back_SA, back_SB, back_S);
     deleteBuffers<T2>(C, back_C);

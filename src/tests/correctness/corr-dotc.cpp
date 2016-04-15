@@ -173,6 +173,14 @@ dotcCorrectnessTest(TestParams *params)
     releaseMemObjects(bufX, bufY, bufDP, scratchBuff);
 
     compareMatrices<T>(clblasColumnMajor, 1 , 1, (blasDP), (clblasDP+params->offa), 1);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "offDP = " << params->offa << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(blasX, blasY, blasDP, clblasDP);
     delete[] events;
 }

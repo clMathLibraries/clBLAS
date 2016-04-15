@@ -227,6 +227,15 @@ symmCorrectnessTest(TestParams *params)
 
     // handle lda correctly based on row-major/col-major..
     compareMatrices<T>(params->order, params->M , params->N, (C + params->offc), (backC + params->offc), params->ldc);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->side, params->uplo, params->M, params->N, 1, params->alpha, 1, params->beta, params->lda, params->ldb, params->ldc, params->offa, params->offb, params->offc);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, C, backC);
     delete[] events;
 }

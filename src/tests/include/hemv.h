@@ -121,11 +121,6 @@ protected:
         if (base->useIncY()) {
             incy = base->incY();
         }
-
-        printTestParams(order, uplo, N, paramAlpha, offA,
-                        lda, offx, incx, paramBeta, offy, incy);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

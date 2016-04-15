@@ -229,9 +229,16 @@ syrCorrectnessTest(TestParams *params)
 //    compareMatrices<T>(clblasColumnMajor, 1, (params->lda - params->N), (blasA + params->offa + params->N), (tempA + params->offa + params->N),
 //    					params->lda);
 //	delete[] tempA;
-	printf("Comparing the results\n");
 	compareMatrices<T>(params->order, params->N , params->N, (blasA + params->offa), (clblasA + params->offa),
                        params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, alpha, params->offBX, params->incx, params->offa, params->lda);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
 	deleteBuffers<T>(blasA, clblasA, X);
     delete[] events;

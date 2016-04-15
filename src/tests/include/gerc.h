@@ -98,12 +98,6 @@ protected:
 	if( lda == 0 )
         	lda = ::std::max(M, N);
 
-	printTestParams(order, M, N, useAlpha,
-                   	base->alpha(),
-			lda, incx, incy, offa, offx, offy);
-
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

@@ -227,11 +227,6 @@ protected:
         if (!seqY) {
             incy = incy > 0 ? (int)ldc : (int)(0-ldc);
         }
-
-        printTestParams(order, transA, M, N, useAlpha, base->alpha(), offA,
-                        lda, incx, useBeta, base->beta(), incy);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

@@ -188,6 +188,15 @@ trsmCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(params->order, params->M, params->N, blasB, clblasB,
                        params->ldb, delta);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->side, params->uplo, params->transA, params->diag, params->M, params->N, useAlpha,
+            base->alpha(), params->offA, params->lda, params->offBX, params->ldb);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, blasB, clblasB, delta);
     delete[] events;
 }

@@ -161,6 +161,13 @@ iamaxCorrectnessTest(TestParams *params)
 	}
 
     compareValues<int>((blasiAmax), (clblasiAmax+params->offa), 0);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx);
+        ::std::cerr << "offiAmax = " << params->offa << ::std::endl;
+    }
+
     releaseMemObjects(bufX, bufiAmax, scratchBuff);
     deleteBuffers<T>(blasX, blasiAmax, clblasiAmax);
     delete[] events;

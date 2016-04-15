@@ -120,7 +120,6 @@ her2CorrectnessTest(TestParams *params)
 
 	// Copy blasA to clblasA
     memcpy(clblasA, blasA, (lengthA + params->offa)* sizeof(*blasA));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(clblasA, (lengthA + params->offa)* sizeof(*clblasA), 0,CL_MEM_READ_WRITE);
@@ -193,6 +192,14 @@ her2CorrectnessTest(TestParams *params)
 
 	compareMatrices<T>(params->order, params->N , params->N, (blasA + params->offa), (clblasA + params->offa),
                        params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, 1, params->alpha, params->offBX, params->incx, params->offCY, params->incy, params->offa, params->lda);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
 	deleteBuffers<T>(blasA, clblasA, X, Y);
     delete[] events;

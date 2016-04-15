@@ -151,11 +151,6 @@ protected:
             break;
         }
         
-        ::std::cerr << "             seed = " << seed << ", "
-          << "queues = " << numCommandQueues << ", ";
-        printTestParams(order, transA, transB, M, N, K, useAlpha,
-                        base->alpha(), offA, lda, offB, ldb, useBeta,
-                        base->beta(), offC, ldc);
     }
 
     clblasOrder order;

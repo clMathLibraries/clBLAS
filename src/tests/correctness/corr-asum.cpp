@@ -167,6 +167,14 @@ asumCorrectnessTest(TestParams *params)
     releaseMemObjects(bufX, bufAsum, scratchBuff);
 
     compareMatrices<T2>(clblasColumnMajor, 1 , 1, (blasAsum), (clblasAsum+params->offa), 1);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx);
+        ::std::cerr << "offAsum = " << params->offa << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T1>(blasX);
     deleteBuffers<T2>(blasAsum, clblasAsum);
     delete[] events;

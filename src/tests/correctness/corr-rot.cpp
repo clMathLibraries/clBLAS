@@ -182,6 +182,12 @@ rotCorrectnessTest(TestParams *params)
     compareMatrices<T>(clblasRowMajor, lengthx , 1, (back_X + params->offa), (X + params->offa), 1);
     compareMatrices<T>(clblasRowMajor, lengthy , 1, (back_Y + params->offb), (Y + params->offb), 1);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offa, params->incx, params->offb, params->incy, params->alpha, params->beta);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(X, Y, back_X, back_Y);
     delete[] events;
 }

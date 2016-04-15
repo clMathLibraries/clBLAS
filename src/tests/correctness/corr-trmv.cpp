@@ -213,6 +213,14 @@ trmvCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX), (clblasX + params->offBX),
                        lengthX);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->diag, params->N, params->lda, params->incx, params->offa, params->offBX);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasX, clblasX);
     delete[] events;
 }

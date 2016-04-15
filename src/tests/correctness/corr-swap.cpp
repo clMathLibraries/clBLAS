@@ -174,6 +174,13 @@ swapCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX), (X + params->offBX), lengthX);
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (Y + params->offCY), lengthY);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(X, Y, blasX, blasY);
     delete[] events;
 }

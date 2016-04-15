@@ -101,11 +101,6 @@ protected:
 //		if (base->useAlpha()) {
 //			alpha = base->Alpha();
 //		}
-
-		printTestParams(order, uplo, N, alpha, offx, incx, offa, lda);
-
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

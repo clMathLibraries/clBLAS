@@ -194,6 +194,15 @@ symvCorrectnessTest(TestParams *params)
     compareVectors(params->offCY, params->N, abs(params->incy),
                    params->columnsC * params->rowsC, blasC, clblasC);
 
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, useAlpha, base->alpha(), params->offA, params->lda,
+            params->incx, useBeta, base->beta(), params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;
 }

@@ -199,6 +199,12 @@ rotmCorrectnessTest(TestParams *params)
     compareMatrices<T>(clblasColumnMajor, lengthx , 1, (back_X + params->offa), (X + params->offa), lengthx);
     compareMatrices<T>(clblasColumnMajor, lengthy , 1, (back_Y + params->offb), (Y + params->offb), lengthy);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offa, params->incx, params->offb, params->incy, params->offc, params->alpha);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(X, Y, PARAM, back_X, back_Y, back_PARAM);
     delete[] events;
 }

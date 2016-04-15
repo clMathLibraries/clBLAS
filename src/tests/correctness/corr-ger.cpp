@@ -218,6 +218,17 @@ gerCorrectnessTest(TestParams *params)
 
     // handle lda correctly based on row-major/col-major..
     compareMatrices<T>(params->order, params->M , params->N, A+ params->offa, backA + params->offa, params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->M, params->N, useAlpha,
+            base->alpha(),
+            params->lda, params->incx, params->incy, params->offa, params->offBX, params->offCY);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, x, y, backA);
     delete[] events;
 }

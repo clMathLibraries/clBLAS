@@ -249,6 +249,12 @@ rotmgCorrectnessTest(TestParams *params)
     }
     compareMatrices<T>(clblasColumnMajor, 5 , 1, (back_PARAM + params->offc), (PARAM + params->offc), 5, deltaArr);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->offBX, params->offCY, params->offa, params->offb, params->offc, params->alpha);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(D1, D2, X, Y, PARAM);
     deleteBuffers<T>(back_D1, back_D2, back_X, back_Y, back_PARAM);
 

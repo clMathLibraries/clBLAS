@@ -173,6 +173,13 @@ nrm2CorrectnessTest(TestParams *params)
     }
     compareValues<T2>( (blasNRM2), (clblasNRM2+params->offa), delta);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx);
+        ::std::cerr << "offNRM2 = " << params->offa << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T1>(blasX);
     deleteBuffers<T2>(blasNRM2,  clblasNRM2);
     delete[] events;

@@ -187,6 +187,14 @@ syr2CorrectnessTest(TestParams *params)
     compareMatrices<T>(clblasColumnMajor, params->N , params->N, (blasA + params->offa), (clblasA + params->offa),
                        params->lda);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, alpha, params->offBX, params->incx, params->offCY, params->incy, params->offa, params->lda);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
 	deleteBuffers<T>(blasA, clblasA, X, Y);
     delete[] events;
 }

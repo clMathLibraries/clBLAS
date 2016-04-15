@@ -198,6 +198,15 @@ tbsvCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufX);
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX), (clblasX + params->offBX),
                        lengthX, (deltaX + params->offBX) );
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->diag, params->N, params->K, params->offA,
+            params->lda, params->offBX, params->incx, 0, 1);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasX, clblasX, deltaX);
     delete[] events;
 }

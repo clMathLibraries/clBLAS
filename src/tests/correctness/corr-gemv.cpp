@@ -202,6 +202,14 @@ gemvCorrectnessTest(TestParams *params)
     compareVectors(params->offCY, lenY, abs(params->incy),
                    params->columnsC * params->rowsC, blasC, clblasC);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->transA, params->M, params->N, base->useAlpha(), base->alpha(), params->offA,
+            params->lda, params->incx, base->useBeta(), base->beta(), params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;
 }

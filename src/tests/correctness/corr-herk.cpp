@@ -211,6 +211,14 @@ herkCorrectnessTest(TestParams *params)
     compareMatrices<T>(params->order, params->N, params->N, blasC, clblasC,
                        params->ldc);
 
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->N, params->K, true, params->alpha,
+            params->offA, params->lda, true, params->beta, params->offCY, params->ldc);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasC, clblasC);
     delete[] events;
 }

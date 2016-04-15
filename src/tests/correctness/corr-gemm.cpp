@@ -103,12 +103,10 @@ gemmCorrectnessTest(TestParams *params)
         beta = convertMultiplier<T>(params->beta);
     }
 
-    //::std::cerr << "Generating input data... ";
     randomGemmMatrices<T>(params->order, params->transA, params->transB,
         params->M, params->N, params->K, useAlpha, &alpha, A, params->lda,
         B, params->ldb, useBeta, &beta, blasC, params->ldc);
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*blasC));
-    //::std::cerr << "Done" << ::std::endl;
 
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::gemm(clblasColumnMajor, params->transA, params->transB,
@@ -193,6 +191,16 @@ gemmCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufB, bufC);
     compareMatrices<T>(params->order, params->M, params->N, blasC, clblasC,
                        params->ldc);
+
+    if (::testing::Test::HasFailure( ) )
+    {
+        printTestParams(params->order, params->transA, params->transB, params->M, params->N, params->K, base->useAlpha(),
+            base->alpha(), params->offA, params->lda, params->offBX, params->ldb, base->useBeta(),
+            base->beta(), params->offCY, params->ldc);
+        ::std::cerr << "             seed = " << params->seed << ", "
+            << "queues = " << params->numCommandQueues << ", ";
+    }
+
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;
 }

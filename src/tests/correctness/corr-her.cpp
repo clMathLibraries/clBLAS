@@ -103,7 +103,6 @@ herCorrectnessTest(TestParams *params)
 
 	randomHerMatrices( params->order, params->uplo, params->N, &alpha_, (A + params->offa), params->lda, (X + params->offBX), params->incx );
     memcpy(backA, A, (lengthA + params->offa)* sizeof(*A));
-	::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offa) * sizeof(*A), 0, CL_MEM_READ_WRITE);
@@ -178,9 +177,17 @@ herCorrectnessTest(TestParams *params)
 
     releaseMemObjects(bufA, bufX);
 
-	printf("Comparing the results\n");
 	compareMatrices<T>(params->order, params->N , params->N, (A + params->offa), (backA + params->offa),
                        params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, params->alpha.re,
+            params->offBX, params->incx, params->offa, params->lda);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
 	deleteBuffers<T>( A, backA, X);
     delete[] events;

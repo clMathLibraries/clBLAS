@@ -189,6 +189,15 @@ spmvCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (clblasY + params->offCY),
                        lengthY);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, base->alpha(), params->offA,
+            0, params->offBX, params->incx, base->beta(), params->offCY, params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(AP, X, blasY, clblasY);
     delete[] events;
 }

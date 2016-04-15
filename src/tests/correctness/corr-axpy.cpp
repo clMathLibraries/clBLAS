@@ -170,6 +170,13 @@ axpyCorrectnessTest(TestParams *params)
     releaseMemObjects(bufX, bufY);
 
     compareMatrices<T>(clblasRowMajor, lengthY , 1, (blasY + params->offCY), (Y + params->offCY), 1);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->alpha, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(X, Y, blasX, blasY);
     delete[] events;
 }

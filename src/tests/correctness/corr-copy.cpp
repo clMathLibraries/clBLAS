@@ -165,6 +165,13 @@ copyCorrectnessTest(TestParams *params)
     releaseMemObjects(bufX, bufY);
 
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (clblasY + params->offCY), lengthY, NULL);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(blasX, blasY, clblasY);
     delete[] events;
 }

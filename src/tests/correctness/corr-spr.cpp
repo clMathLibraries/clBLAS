@@ -192,7 +192,6 @@ sprCorrectnessTest(TestParams *params)
 	}
 
     releaseMemObjects(bufAP, bufX);
-	printf("Comparing the results\n");
 	compareMatrices<T>(clblasColumnMajor, lengthAP , 1, (blasAP + params->offa), (clblasAP + params->offa),
                        lengthAP);
 

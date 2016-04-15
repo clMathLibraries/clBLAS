@@ -215,6 +215,16 @@ gemm2CorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufB, bufC);
     compareMatrices<T>(params->order, params->M, params->N, blasC, clblasC,
                        params->ldc);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->transA, params->transB, params->M, params->N, params->K, base->useAlpha(),
+            base->alpha(), params->offA, params->lda, params->offBX, params->ldb, base->useBeta(),
+            base->beta(), params->offCY, params->ldc);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;
 }

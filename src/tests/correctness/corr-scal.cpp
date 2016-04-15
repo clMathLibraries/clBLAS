@@ -150,6 +150,14 @@ void scalCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX),
                         (clblasX + params->offBX), lengthX);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->alpha, params->offBX, params->incx);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(blasX, clblasX);
     delete[] events;
 }

@@ -208,6 +208,14 @@ trsvCorrectnessTest(TestParams *params)
     // handle lda correctly based on row-major/col-major..
     compareMatrices<T>( clblasColumnMajor, lengthX , 1, blasX, backX,
                        lengthX, deltaX );
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->diag, params->N, params->lda, params->incx, params->offa, params->offBX);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasX, backX, deltaX);
     delete[] events;
 }

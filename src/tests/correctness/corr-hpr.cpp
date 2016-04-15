@@ -176,8 +176,6 @@ hprCorrectnessTest(TestParams *params)
 
     releaseMemObjects(bufAP, bufX);
 
-	printf("Comparing the results\n");
-
     compareMatrices<T>(clblasColumnMajor, lengthAP, 1, (AP + params->offa), (backA + params->offa), lengthAP);
 
 	deleteBuffers<T>( AP, backA, X);
