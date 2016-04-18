@@ -3307,11 +3307,8 @@ INSTANTIATE_TEST_CASE_P(MultipleQueues, iAMAX, Combine(
 int
 main(int argc, char *argv[])
 {
-    ::clMath::BlasBase *base;
-    TestParams params;
     int ret;
-
-    if( (argc > 1) && ( !strcmp(argv[1], "--test-help") || !strcmp(argv[1], "-?") || !strcmp(argv[1], "-h") ) )
+    if( (argc > 1) && ( !strcmp(argv[1], "--test-help") || !strcmp(argv[1], "-?") || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help") ) )
 	{
         printUsage("test-correctness");
 		::testing::InitGoogleTest(&argc, argv);
@@ -3331,58 +3328,63 @@ main(int argc, char *argv[])
 	}
 
     ::testing::InitGoogleTest(&argc, argv);
-    ::std::cerr << "Initialize OpenCL and clblas..." << ::std::endl;
-    base = ::clMath::BlasBase::getInstance();
+    TestParams params;
+    params.optFlags = NO_FLAGS;
+    params.devType = CL_DEVICE_TYPE_ALL;
+    params.devName = NULL;
+    params.devOrd = 0;
+    params.platOrd = 0;
+
+    if (argc != 1) {
+        if (parseBlasCmdLineArgs(argc, argv, &params) != 0) {
+            printUsage(argv[0]);
+            return 1;
+        }
+    }
+
+    ::std::cout << "Initialize default OpenCL and clblas..." << ::std::endl;
+    ::clMath::BlasBase* base = ::clMath::BlasBase::getInstance( );
     if (base == NULL) {
         ::std::cerr << "Fatal error, OpenCL or clblas initialization failed! "
-                       "Leaving the test." << ::std::endl;
+            "Leaving the test." << ::std::endl;
         return -1;
     }
 
     base->setSeed(DEFAULT_SEED);
 
-    if (argc != 1) {
-        params.optFlags = NO_FLAGS;
-        params.devType = CL_DEVICE_TYPE_GPU;
-        params.devName = NULL;
-        if (parseBlasCmdLineArgs(argc, argv, &params) != 0) {
-            printUsage(argv[0]);
-            return 1;
-        }
-        if (params.optFlags & SET_SEED) {
-            base->setSeed(params.seed);
-        }
-        if (params.optFlags & SET_ALPHA) {
-            base->setAlpha(params.alpha);
-        }
-        if (params.optFlags & SET_BETA) {
-            base->setBeta(params.beta);
-        }
-        if (params.optFlags & SET_M) {
-            base->setM(params.M);
-        }
-        if (params.optFlags & SET_N) {
-            base->setN(params.N);
-        }
-        if (params.optFlags & SET_K) {
-            base->setK(params.K);
-        }
-        if (params.optFlags & SET_INCX) {
-            base->setIncX(params.incx);
-        }
-        if (params.optFlags & SET_INCY) {
-            base->setIncY(params.incy);
-        }
-        if (params.optFlags & SET_DEVICE_TYPE) {
-            if (!base->setDeviceType(&params.devType, params.devName)) {
-                ::std::cerr << "Fatal error, OpenCL or clblas "
-                        "initialization failed! Leaving the test." <<
-                        ::std::endl;
-                return -1;
-            }
-        }
-        if (params.optFlags & SET_NUM_COMMAND_QUEUES) {
-            base->setNumCommandQueues(params.numCommandQueues);
+    if (params.optFlags & SET_SEED) {
+        base->setSeed(params.seed);
+    }
+    if (params.optFlags & SET_ALPHA) {
+        base->setAlpha(params.alpha);
+    }
+    if (params.optFlags & SET_BETA) {
+        base->setBeta(params.beta);
+    }
+    if (params.optFlags & SET_M) {
+        base->setM(params.M);
+    }
+    if (params.optFlags & SET_N) {
+        base->setN(params.N);
+    }
+    if (params.optFlags & SET_K) {
+        base->setK(params.K);
+    }
+    if (params.optFlags & SET_INCX) {
+        base->setIncX(params.incx);
+    }
+    if (params.optFlags & SET_INCY) {
+        base->setIncY(params.incy);
+    }
+    if (params.optFlags & SET_NUM_COMMAND_QUEUES) {
+        base->setNumCommandQueues(params.numCommandQueues);
+    }
+    if ((params.optFlags & SET_DEVICE_TYPE) || (params.optFlags & SET_PLATFORM_ORD) || (params.optFlags & SET_DEVICE_ORD)) {
+        if (!base->setDeviceType(params)) {
+            ::std::cerr << "Fatal error, OpenCL or clblas "
+                "initialization failed! Leaving the test." <<
+                ::std::endl;
+            return -1;
         }
     }
 
@@ -3407,7 +3409,7 @@ main(int argc, char *argv[])
     }
 
     /*
-     * Explicitely tell the singleton to release all resources,
+     * Explicitly tell singleton to release all resources,
      * before we return from main.
      */
     base->release( );
