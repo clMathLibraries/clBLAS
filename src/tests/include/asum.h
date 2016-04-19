@@ -61,10 +61,6 @@ protected:
         if (base->useN()) {
             N = base->N();
         }
-
-		printTestParams(N, offx, incx);
-        ::std::cerr << "offAsum = " << offAsum << ::std::endl;
-		::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     size_t N;

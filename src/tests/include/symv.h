@@ -154,11 +154,6 @@ protected:
             columnsC = N;
             break;
         }
-
-        printTestParams(order, uplo, N, useAlpha, base->alpha(), offsetA, lda,
-                        incx, useBeta, base->beta(), incy);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

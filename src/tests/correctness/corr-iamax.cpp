@@ -106,20 +106,15 @@ iamaxCorrectnessTest(TestParams *params)
 	}
 
     srand(params->seed);
-    ::std::cerr << "Generating input data... ";
 
 	randomVectors<T>(params->N, (blasX + params->offBX), params->incx, NULL, 0);
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufX = base->createEnqueueBuffer(blasX, (lengthX + params->offBX)* sizeof(T), 0, CL_MEM_READ_ONLY);
     bufiAmax = base->createEnqueueBuffer(NULL, (1 + params->offa) * sizeof(int), 0, CL_MEM_READ_WRITE);
 	scratchBuff = base->createEnqueueBuffer(NULL, (2 * lengthX * sizeof(T)), 0, CL_MEM_READ_WRITE);
 
-    ::std::cerr << "Calling reference xiAMAX routine... ";
-
 	*blasiAmax = ::clMath::blas::iamax( params->N, blasX, params->offBX, params->incx);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufX == NULL) || (bufiAmax == NULL) || (scratchBuff == NULL)) {
         releaseMemObjects(bufX, bufiAmax, scratchBuff);
@@ -133,8 +128,6 @@ iamaxCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xiAMAX routine... ";
 
     DataType type;
     type = ( typeid(T) == typeid(cl_float))? TYPE_FLOAT : ( typeid(T) == typeid(cl_double))? TYPE_DOUBLE: ( typeid(T) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT:TYPE_COMPLEX_DOUBLE;
@@ -159,8 +152,6 @@ iamaxCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufiAmax, CL_TRUE, 0,
         (1 + params->offa) * sizeof(*clblasiAmax), clblasiAmax, 0, NULL, NULL);
@@ -170,6 +161,13 @@ iamaxCorrectnessTest(TestParams *params)
 	}
 
     compareValues<int>((blasiAmax), (clblasiAmax+params->offa), 0);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx);
+        ::std::cerr << "offiAmax = " << params->offa << ::std::endl;
+    }
+
     releaseMemObjects(bufX, bufiAmax, scratchBuff);
     deleteBuffers<T>(blasX, blasiAmax, clblasiAmax);
     delete[] events;

@@ -125,11 +125,6 @@ protected:
             rowsC = ldc;
             break;
         }
-
-        printTestParams(order, uplo, transA, N, K, useAlpha, base->alpha(),
-                        offA, lda, useBeta, base->beta(), offC, ldc);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

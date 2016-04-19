@@ -102,8 +102,6 @@ tbsvCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
 	if((A == NULL) || (blasX == NULL) || (clblasX == NULL))
 	{
 		deleteBuffers<T>(A, blasX, clblasX, deltaX);
@@ -124,13 +122,10 @@ tbsvCorrectnessTest(TestParams *params)
 	                (A + params->offA), params->lda, (blasX + params->offBX), params->incx, (deltaX + params->offBX) );
 
     memcpy(clblasX, blasX, (lengthX + params->offBX)* sizeof(*blasX));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offA)* sizeof(*A), 0, CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(blasX, (lengthX + params->offBX)* sizeof(*blasX), 0, CL_MEM_READ_WRITE);
-
-    ::std::cerr << "Calling reference xTBSV routine... ";
 
 	clblasOrder fOrder;
 	clblasTranspose fTrans;
@@ -151,7 +146,6 @@ tbsvCorrectnessTest(TestParams *params)
    	}
 
 	clMath::blas::tbsv(fOrder, fUplo, fTrans, params->diag, fN, fK, A, params->offA, params->lda, blasX, params->offBX, params->incx);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufA == NULL) || (bufX == NULL)) {
         // Skip the test, the most probable reason is
@@ -169,7 +163,6 @@ tbsvCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xTBSV routine... ";
     DataType type;
     type = ( typeid(T) == typeid(cl_float))? TYPE_FLOAT:( typeid(T) == typeid(cl_double))? TYPE_DOUBLE:
                                       ( typeid(T) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT: TYPE_COMPLEX_DOUBLE;
@@ -193,8 +186,6 @@ tbsvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufX, CL_TRUE, 0,
                                 (lengthX + params->offBX) * sizeof(*clblasX), clblasX, 0,
@@ -207,6 +198,15 @@ tbsvCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufX);
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX), (clblasX + params->offBX),
                        lengthX, (deltaX + params->offBX) );
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->diag, params->N, params->K, params->offA,
+            params->lda, params->offBX, params->incx, 0, 1);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasX, clblasX, deltaX);
     delete[] events;
 }

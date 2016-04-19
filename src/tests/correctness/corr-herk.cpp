@@ -118,15 +118,11 @@ herkCorrectnessTest(TestParams *params)
     alpha = convertMultiplier<T>(params->alpha);
     beta  = convertMultiplier<T>(params->beta);
 
-    ::std::cerr << "Generating input data... ";
-
     randomGemmMatrices<T>(params->order, params->transA, clblasNoTrans,
         params->N, params->N, params->K, useAlpha, &alpha, A, params->lda,
         NULL, 0, useBeta, &beta, blasC, params->ldc);
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*blasC));
-    ::std::cerr << "Done" << ::std::endl;
 
-    ::std::cerr << "Calling reference xHERK routine... ";
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::herk(clblasColumnMajor, params->uplo, params->transA,
                           params->N, params->K, CREAL(alpha), A, params->lda,
@@ -158,7 +154,6 @@ herkCorrectnessTest(TestParams *params)
 						 A, params->lda, CREAL(beta), blasC, params->ldc);
 
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                      sizeof(*A), params->offA * sizeof(*A),
@@ -184,7 +179,6 @@ herkCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xHERK routine... ";
     err = (cl_int)::clMath::clblas::herk(params->order, params->uplo,
                                          params->transA, params->N, params->K,
                                          CREAL(alpha), bufA, params->offA, params->lda,
@@ -207,7 +201,6 @@ herkCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE,
                         params->offCY * sizeof(*clblasC),
@@ -217,6 +210,14 @@ herkCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufC);
     compareMatrices<T>(params->order, params->N, params->N, blasC, clblasC,
                        params->ldc);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->N, params->K, true, params->alpha,
+            params->offA, params->lda, true, params->beta, params->offCY, params->ldc);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(A, blasC, clblasC);
     delete[] events;

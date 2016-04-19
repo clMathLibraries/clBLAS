@@ -102,14 +102,6 @@ protected:
             lda = ::std::max(lda, rowsA);
             break;
         }
-
-
-	printTestParams(order, M, N, useAlpha,
-                   	base->alpha(),
-			lda, incx, incy, offa, offx, offy);
-
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

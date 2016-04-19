@@ -93,11 +93,6 @@ protected:
         KLU = KLU % N;
 
         lda = ::std::max(lda, (KLU+1));
-
-        printTestParams(order, uplo, N, KLU, paramAlpha, offA,
-                            lda, offx, incx, paramBeta, offy, incy);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

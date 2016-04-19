@@ -104,22 +104,15 @@ copyCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     // Populate A and blasX
     randomVectors( params->N, (blasX+params->offBX), params->incx, (blasY+params->offCY), params->incy );
 	memcpy(clblasY, blasY, (lengthY + params->offCY)* sizeof(*blasY));
-
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufX = base->createEnqueueBuffer(blasX, (lengthX + params->offBX)* sizeof(*blasX), 0, CL_MEM_READ_WRITE);
     bufY = base->createEnqueueBuffer(blasY, (lengthY + params->offCY)* sizeof(*blasY), 0, CL_MEM_READ_WRITE);
 
-    ::std::cerr << "Calling reference xCOPY routine... ";
-
 	::clMath::blas::copy( params->N, blasX, params->offBX, params->incx, blasY, params->offCY, params->incy);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufX == NULL) || (bufY == NULL)) {
         /* Skip the test, the most probable reason is
@@ -136,8 +129,6 @@ copyCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xCOPY routine... ";
 
     DataType type;
     type = ( typeid(T) == typeid(cl_float))? TYPE_FLOAT : ( typeid(T) == typeid(cl_double))? TYPE_DOUBLE: ( typeid(T) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT:TYPE_COMPLEX_DOUBLE;
@@ -162,8 +153,6 @@ copyCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufY, CL_TRUE, 0,
         ((lengthY + params->offCY) * sizeof(*blasY)), clblasY, 0,
@@ -176,6 +165,13 @@ copyCorrectnessTest(TestParams *params)
     releaseMemObjects(bufX, bufY);
 
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (clblasY + params->offCY), lengthY, NULL);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(blasX, blasY, clblasY);
     delete[] events;
 }

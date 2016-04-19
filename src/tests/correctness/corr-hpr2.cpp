@@ -115,20 +115,16 @@ hpr2CorrectnessTest(TestParams *params)
 	}
 	alpha =  convertMultiplier<T>(params->alpha);
 
-    ::std::cerr << "Generating input data... ";
     randomHer2Matrices<T>(params->order, params->uplo, params->N, &alpha, (blasAP + params->offa), params->lda,
 							(X + params->offBX), params->incx, (Y + params->offCY), params->incy);
 
 	// Copy blasA to clblasA
     memcpy(clblasAP, blasAP, (lengthAP + params->offa)* sizeof(*blasAP));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufAP = base->createEnqueueBuffer(clblasAP, (lengthAP + params->offa)* sizeof(*clblasAP), 0,CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
 	bufY = base->createEnqueueBuffer(Y, (lengthY + params->offCY)* sizeof(*Y), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xHPR2 routine... ";
 
 	clblasOrder order;
     clblasUplo fUplo;
@@ -146,7 +142,6 @@ hpr2CorrectnessTest(TestParams *params)
 	else {
 		::clMath::blas::hpr2( order, fUplo, params->N, alpha, X, params->offBX, params->incx, Y, params->offCY, params->incy, blasAP, params->offa);
 	}
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufAP == NULL) || (bufX == NULL) || (bufY == NULL)) {
         /* Skip the test, the most probable reason is
@@ -163,8 +158,6 @@ hpr2CorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xHPR2 routine... ";
 
     err = (cl_int)::clMath::clblas::hpr2( params->order, params->uplo, params->N, alpha,
 						bufX, params->offBX, params->incx, bufY, params->offCY, params->incy, bufAP, params->offa,
@@ -186,8 +179,6 @@ hpr2CorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufAP, CL_TRUE, 0,
         (lengthAP + params->offa) * sizeof(*clblasAP), clblasAP, 0,

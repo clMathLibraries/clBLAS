@@ -97,10 +97,6 @@ protected:
         if (base->useN()) {
             N = base->N();
         }
-
-	    printTestParams(order, uplo, transA, diag, N, lda, incx, offa, offx);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

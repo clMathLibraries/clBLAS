@@ -70,9 +70,6 @@ protected:
         {
             numCommandQueues = base->numCommandQueues();
         }
-
-		printTestParams(N, offa, incx, offb, incy, offc, alpha);
-		::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     size_t N, offa, offb, offc;

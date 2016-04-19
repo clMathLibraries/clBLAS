@@ -99,9 +99,6 @@ sprCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
-
 	memset(blasAP, -1, (lengthAP + params->offa));
 	memset(clblasAP, -1, (lengthAP + params->offa));
 	memset(X, -1, (lengthX + params->offBX));
@@ -127,12 +124,8 @@ sprCorrectnessTest(TestParams *params)
 
     memcpy(clblasAP, blasAP, (lengthAP + params->offa)* sizeof(*blasAP));
 
-	::std::cerr << "Done" << ::std::endl;
-
     bufAP = base->createEnqueueBuffer(clblasAP, (lengthAP + params->offa) * sizeof(*clblasAP), 0, CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xSPR routine... ";
 
 	clblasOrder order;
     clblasUplo fUplo;
@@ -152,7 +145,6 @@ sprCorrectnessTest(TestParams *params)
     }
 
     clMath::blas::spr( clblasColumnMajor, fUplo, params->N, alpha, X, params->offBX, params->incx, blasAP, params->offa);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufAP == NULL) || (bufX == NULL) ) {
         /* Skip the test, the most probable reason is
@@ -169,8 +161,6 @@ sprCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xSPR routine... ";
 
     err = (cl_int)::clMath::clblas::spr( params->order, params->uplo, params->N, alpha,
 						bufX, params->offBX, params->incx, bufAP, params->offa,
@@ -192,7 +182,6 @@ sprCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufAP, CL_TRUE, 0,
         (lengthAP + params->offa) * sizeof(*clblasAP), clblasAP, 0,
@@ -203,7 +192,6 @@ sprCorrectnessTest(TestParams *params)
 	}
 
     releaseMemObjects(bufAP, bufX);
-	printf("Comparing the results\n");
 	compareMatrices<T>(clblasColumnMajor, lengthAP , 1, (blasAP + params->offa), (clblasAP + params->offa),
                        lengthAP);
 

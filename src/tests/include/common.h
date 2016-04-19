@@ -692,10 +692,6 @@ printTestParams(
     size_t offx,
     int incx);
 
-
-template<typename T>
-void gtestAssertElementsEqual( const T & a, const T & b);
-
 #endif  // __cplusplus
 
 #endif  /* COMMON_H_ */
