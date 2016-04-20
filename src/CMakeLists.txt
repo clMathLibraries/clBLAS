@@ -266,7 +266,7 @@ if( BUILD_TEST )
 endif( )
 
 # This will define OPENCL_FOUND
-find_package( OpenCL )
+find_package( OpenCL ${OPENCL_VERSION} )
 
 # Find Boost on the system, and configure the type of boost build we want
 set( Boost_USE_MULTITHREADED ON )
@@ -288,7 +288,7 @@ endif()
 
 # Turn on maximum compiler verbosity
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-pedantic -Wall -Wextra
+    add_definitions(# -pedantic -Wall -Wextra
         -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=500
     )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wstrict-prototypes" CACHE STRING

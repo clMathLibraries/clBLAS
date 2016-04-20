@@ -4,7 +4,6 @@
 
 #ifndef KERNEL_DIAG_DTRTRI_UPPER_128_16_SRC_CPP
 #define KERNEL_DIAG_DTRTRI_UPPER_128_16_SRC_CPP
-#pragma message("#define KERNEL_DIAG_DTRTRI_UPPER_128_16_SRC_CPP.")
 
 #ifndef STRINGIFY
 #define STRINGIFY2(...) #__VA_ARGS__
@@ -64,17 +63,17 @@ uint na)\n
     {\n
       if(tx <= i && i+bx*BLOCK_SIZE < na )\n
         {\n
-	  Bs[i*BLOCK_SIZE+tx] = *(Aoff+i*lda+tx);\n    
+	  Bs[i*BLOCK_SIZE+tx] = *(Aoff+i*lda+tx);\n
         }\n
       else\n
         {\n
 	  Bs[i*BLOCK_SIZE+tx] = ZERO;\n
         }\n
-    }\n 
+    }\n
   // read in the whole square block of my A and zero out the non data triangular
- 
+
   // Synchronize to make sure the matrices are loaded
-  //__syncthreads(); 
+  //__syncthreads();
   barrier(CLK_LOCAL_MEM_FENCE);\n
 
   // solve the diagonals
@@ -92,7 +91,7 @@ uint na)\n
       else \n
 	{\n
 	  Bs[tx*BLOCK_SIZE+tx] = ONE / ( Bs[tx*BLOCK_SIZE+tx]) ;\n
-	}\n      
+	}\n
     }\n
     barrier(CLK_LOCAL_MEM_FENCE);\n
 
@@ -139,14 +138,14 @@ uint na)\n
     // __syncthreads();
     barrier(CLK_LOCAL_MEM_FENCE);\n
   }\n
-  
+
     // write back A
   _Pragma("unroll")\n
   for( i=0; i < BLOCK_SIZE; i++ )\n
   {\n
     *(d_dinvA+i*NB+tx) = Bs[i*BLOCK_SIZE+tx];\n
   }\n
-  
+
 }\n
 // end of kernel
 );

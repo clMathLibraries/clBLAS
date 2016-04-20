@@ -482,7 +482,7 @@ def writeOpenCLKernelToFile(kernel):
   kernelFile.write("\";\n")
   kernelFile.write("\n")
   kernelFile.write("#else\n")
-  kernelFile.write("#pragma message(\"AutoGemmKernelSources.cpp: %s was overriden by user kernel.\")\n" % kernel.getName() )
+  # kernelFile.write("#pragma message(\"AutoGemmKernelSources.cpp: %s was overriden by user kernel.\")\n" % kernel.getName() )
   kernelFile.write("#endif\n")
   kernelFile.close()
 

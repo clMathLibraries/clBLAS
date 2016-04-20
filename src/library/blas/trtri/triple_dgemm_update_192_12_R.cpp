@@ -1,14 +1,13 @@
 /*******************************************************************************
  * Hand-tuned kernel
- 
+
  * B21 = -inv(A11)*A12*inv(A22)
  * 12 to 24
- 
+
  ******************************************************************************/
 
 #ifndef KERNEL_TRIPLE_DGEMM_UPDATE_192_12_R_SRC_CPP
 #define KERNEL_TRIPLE_DGEMM_UPDATE_192_12_R_SRC_CPP
-#pragma message("#define KERNEL_TRIPLE_DGEMM_UPDATE_192_12_R_SRC_CPP.")
 
 #ifndef STRINGIFY
 #define STRINGIFY2(...) #__VA_ARGS__

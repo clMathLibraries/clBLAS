@@ -44,7 +44,7 @@ typedef enum SetoptFlags {
     SET_INCY  = (1 << 9),
     SET_NUM_COMMAND_QUEUES = (1 << 10),
     SET_DEVICE_ORD = (1 << 11),
-    SET_PLATFORM_ORD = (1 << 12),
+    SET_PLATFORM_ORD = (1 << 12)
 } SetoptFlags;
 
 typedef struct TestParams {

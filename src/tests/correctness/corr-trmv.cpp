@@ -127,7 +127,7 @@ trmvCorrectnessTest(TestParams *params)
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offa)* sizeof(*A), 0, CL_MEM_READ_ONLY);
     bufX = base->createEnqueueBuffer(clblasX, (lengthX + params->offBX)* sizeof(*clblasX), 0, CL_MEM_WRITE_ONLY);
-    bufXTemp = base->createEnqueueBuffer(NULL, lengthX * sizeof(*clblasX), 0, CL_MEM_READ_ONLY);
+    bufXTemp = base->createEnqueueBuffer(NULL, lengthX * sizeof(*clblasX), 0, CL_MEM_READ_WRITE);
 
 	//printData( "bufX", blasX, lengthX, 1, lengthX);
 	//printData( "clblasX", clblasX, lengthX, 1, lengthX);
