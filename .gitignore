@@ -24,7 +24,7 @@
 # vim temp files
 .*.swp
 
-src/build/
+src/build*/
 
 # python compiled files
 *.pyc

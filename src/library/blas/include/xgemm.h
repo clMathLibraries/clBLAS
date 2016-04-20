@@ -31,6 +31,8 @@ void makeGemmKernel(
 	const unsigned char **kernelBinary,
 	size_t *kernelBinarySize,
 	const char *binaryBuildOptions);
+void xgemmInit();
+void xgemmTeardown();
 
 #ifdef __cplusplus
 }

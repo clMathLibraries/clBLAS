@@ -28,6 +28,7 @@
 #ifdef BUILDING_CLBLAS
 #include "AutoGemmTeardown.h"
 #include "UserGemmClKernels.h"
+#include "xgemm.h"
 #endif
 
 clblasStatus
@@ -203,6 +204,10 @@ clblasSetup(void)
 		kCacheLimit *= (1024 * 1024);
 	}
 
+#ifdef BUILDING_CLBLAS
+  xgemmInit();
+#endif
+
     if (kCacheLimit || (tmp == NULL)) {
         clblasKernelCache = createKernelCache(sidsNum, kCacheLimit);
     	if (clblasKernelCache == NULL) {
@@ -217,7 +222,6 @@ clblasSetup(void)
     decomposeEventsSetup();
 
     initStorageCache();
-
     clblasInitialized = 1;
     return clblasSuccess;
 }
@@ -235,7 +239,6 @@ clblasTeardown(void)
     if (!clblasInitialized) {
         return;
     }
-
     printMallocStatistics();
 
     if (clblasKernelCache != NULL) {
@@ -255,7 +258,7 @@ clblasTeardown(void)
     releaseMallocTrace();
 
 #ifdef BUILDING_CLBLAS
-   initUserGemmClKernels();
+   xgemmTeardown();
    initAutoGemmClKernels();
 #endif
 
