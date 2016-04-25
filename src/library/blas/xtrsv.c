@@ -406,7 +406,7 @@ doTrsv(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = x;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->offBX = offx;
 	kargs->offa = offa;
 	kargs->offA = offa;

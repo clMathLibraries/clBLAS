@@ -132,9 +132,9 @@ doTrmv(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = x;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->C = y;
-    kargs->ldc.vector = incx;
+    kargs->ldc.Vector = incx;
     kargs->offBX = offx;
     kargs->offCY = 0; // Not used by assignKargs(); Just for clarity
 	kargs->offa = offa;

@@ -104,7 +104,7 @@ doSyr(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = X;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->offBX = offx;
     kargs->offa = offa;
 	kargs->offA = offa;

@@ -143,9 +143,9 @@ doTbmv(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = y;       // Now it becomes x = A * y
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->C = x;
-    kargs->ldc.vector = incx;
+    kargs->ldc.Vector = incx;
     kargs->offBX = 0;           // Not used by assignKargs(); Just for clarity
     kargs->offCY = offx;
 	kargs->offa = offa;

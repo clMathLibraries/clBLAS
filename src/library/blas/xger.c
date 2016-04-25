@@ -121,10 +121,10 @@ doGer(
 		kargs->lda.matrix = lda;
 		kargs->B = X;
 		kargs->offBX = offx;
-		kargs->ldb.vector = incx;	// Will be using this as incx
+		kargs->ldb.Vector = incx;	// Will be using this as incx
 		kargs->C = Y;
 		kargs->offCY = offy;
-		kargs->ldc.vector = incy;	// Will be using this as incy
+		kargs->ldc.Vector = incy;	// Will be using this as incy
 		kargs->offsetM = 0;
 		kargs->offsetN = 0;
 		kargs->scimage[0] = 0;

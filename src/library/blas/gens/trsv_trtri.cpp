@@ -382,7 +382,7 @@ assignKargs(KernelArg *args, const void *params, const void*)
     INIT_KARG(&args[0], blasArgs->A);     //A - input matrix - argument
     INIT_KARG(&args[1], blasArgs->B);     //x - result buffer = _xnew argument
     initSizeKarg(&args[2], blasArgs->N);
-    inc = blasArgs->ldb.vector;
+    inc = blasArgs->ldb.Vector;
     INIT_KARG(&args[3], inc);
     unity = (blasArgs->diag == clblasUnit);
     INIT_KARG(&args[4], unity);
