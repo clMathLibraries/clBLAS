@@ -4,7 +4,7 @@
 
 #ifndef KERNEL_SGEMM_COL_TN_B1_MX032_NX032_KX16_BRANCH_SRC_H
 #define KERNEL_SGEMM_COL_TN_B1_MX032_NX032_KX16_BRANCH_SRC_H
-#pragma message("AutoGemm's sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src overriden by user.")
+// #pragma message("AutoGemm's sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)

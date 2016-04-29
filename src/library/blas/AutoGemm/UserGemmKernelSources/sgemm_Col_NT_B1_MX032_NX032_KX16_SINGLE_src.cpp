@@ -6,7 +6,7 @@
 
 #ifndef KERNEL_SGEMM_COL_NT_B1_MX032_NX032_KX16_SINGLE_SRC_H
 #define KERNEL_SGEMM_COL_NT_B1_MX032_NX032_KX16_SINGLE_SRC_H
-#pragma message("AutoGemm's sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_src (if exists) overriden by user.")
+// #pragma message("AutoGemm's sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_src (if exists) overriden by user.")
 #include "UserGemmKernelSourceIncludes.h"
 
 #ifndef STRINGIFY
