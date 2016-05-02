@@ -18,6 +18,11 @@
 #ifndef DEFBOOL_H_
 #define DEFBOOL_H_
 
+#if defined(__powerpc64__) && defined(__ALTIVEC__)
+#include "altivec.h"
+#undef bool
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER <= 1700
 
 /*
