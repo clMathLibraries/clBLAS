@@ -45,8 +45,8 @@ SymvStep::declareVars(Step *masterStep)
     args.K = args.N;
 
     args.lda = addConst("lda", "cl_uint", kargs().lda.matrix);
-    args.ldb = addConst("incx", "cl_int", kargs().ldb.vector);
-    args.ldc = addConst("incy", "cl_int", kargs().ldc.vector);
+    args.ldb = addConst("incx", "cl_int", kargs().ldb.Vector);
+    args.ldc = addConst("incy", "cl_int", kargs().ldc.Vector);
 
     args.offsetN = addConst("offsetN", "cl_uint", kargs().offsetN);
 
@@ -108,11 +108,11 @@ SymvStep::fixLD()
         args.lda.matrix = args.N;
     }
 
-    if (args.ldb.vector == 0) {
-        args.ldb.vector = 1;
+    if (args.ldb.Vector == 0) {
+        args.ldb.Vector = 1;
     }
-    if (args.ldc.vector == 0) {
-        args.ldc.vector = 1;
+    if (args.ldc.Vector == 0) {
+        args.ldc.Vector = 1;
     }
     args.K = args.N; //store original N
 
