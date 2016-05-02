@@ -4,7 +4,6 @@
 
 #ifndef KERNEL_DIAG_DTRTRI_UPPER_192_12_SRC_CPP
 #define KERNEL_DIAG_DTRTRI_UPPER_192_12_SRC_CPP
-#pragma message("#define KERNEL_DIAG_DTRTRI_UPPER_192_12_SRC_CPP.")
 
 #ifndef STRINGIFY
 #define STRINGIFY2(...) #__VA_ARGS__
@@ -43,10 +42,10 @@ double neg_switcher; \n
 // Thread index
 int tx = get_local_id(0); \n
 
-// Thread index 
+// Thread index
 int gx = get_global_id(0); \n
 
-// Block index 
+// Block index
 int bx = get_group_id(0); \n
 
 A = A + offA; \n
@@ -56,7 +55,7 @@ int NumBLperNB = NB / BLOCK_SIZE; \n
 d_dinvA += bx / NumBLperNB*NB*NB + (bx % NumBLperNB)*(NB*BLOCK_SIZE + BLOCK_SIZE); \n
 
 __local double Bs[BLOCK_SIZE*BLOCK_SIZE]; \n
-__local double workspace[BLOCK_SIZE];\n    // workspace used to store the current working column 
+__local double workspace[BLOCK_SIZE];\n    // workspace used to store the current working column
 
 // load A \n
 _Pragma("unroll")\n
@@ -74,7 +73,7 @@ for (i = 0; i < BLOCK_SIZE; i++)\n
 // read in the whole square block of my A and zero out the non data triangular
 
 // Synchronize to make sure the matrices are loaded
-//__syncthreads(); 
+//__syncthreads();
 barrier(CLK_LOCAL_MEM_FENCE); \n
 
 // solve the diagonals

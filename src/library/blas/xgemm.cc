@@ -170,7 +170,7 @@ void makeGemmKernel(
   #if defined( _WIN32 )
   __declspec( thread ) static kernel_map_t *kernel_map = 0;
 #else
-  __thread static kernel_map_t *kernel_map = 0;
+  static __thread kernel_map_t *kernel_map = 0;
 #endif
   if (!kernel_map) {
     kernel_map = new kernel_map_t();
@@ -317,11 +317,11 @@ void makeGemmKernel(
  * get precision string
  *****************************************************************************/
 template<typename Precision>
-char * getPrecision();
-template<> char * getPrecision<float>() { return "s"; }
-template<> char * getPrecision<double>() { return "d"; }
-template<> char * getPrecision<FloatComplex>()  { return "c"; }
-template<> char * getPrecision<DoubleComplex>() { return "z"; }
+const char * getPrecision();
+template<> const char * getPrecision<float>() { return "s"; }
+template<> const char * getPrecision<double>() { return "d"; }
+template<> const char * getPrecision<FloatComplex>()  { return "c"; }
+template<> const char * getPrecision<DoubleComplex>() { return "z"; }
 
 
 /******************************************************************************
@@ -500,7 +500,7 @@ clblasGemm(
     &unroll);
   // make sure gemmSelectKernel found a valid kernel
   if (!tileKernelSource) {
-    printf("ERROR: gemmSelectKernel() couldn't find kernel(s) for { order=%s, transA=%s, transB=%s, M=%llu, N=%llu, K=%llu, beta=%u, onept=%f }\n",
+    printf("ERROR: gemmSelectKernel() couldn't find kernel(s) for { order=%s, transA=%s, transB=%s, M=%u, N=%u, K=%u, beta=%u, onept=%f }\n",
       order==clblasColumnMajor ? "ColMajor" : "RowMajor",
       transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
       transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
@@ -566,8 +566,7 @@ clblasGemm(
 /******************************************************************************
  * Build kernels
  *****************************************************************************/
-  
-  
+
   cl_kernel  tileClKernel       = NULL;
   cl_kernel  rowClKernel        = NULL;
   cl_kernel  colClKernel        = NULL;
@@ -688,14 +687,14 @@ clblasSgemm(
   clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
   if (clblasErr != clblasSuccess)
   	  return clblasErr;
-  
+
   if (K != 0)
   {
   	//check matrix A
   	clblasErr = checkMatrixSizes(TYPE_FLOAT, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
   		return clblasErr;
-  
+
   	//check matrix B
 	clblasErr = checkMatrixSizes(TYPE_FLOAT, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
 	if (clblasErr != clblasSuccess)
@@ -748,14 +747,14 @@ clblasDgemm( clblasOrder order,
   clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
   if (clblasErr != clblasSuccess)
   	  return clblasErr;
-  
+
   if (K != 0)
   {
   	//check matrix A
   	clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
   		return clblasErr;
-  
+
   	//check matrix B
   	clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
@@ -809,14 +808,14 @@ clblasCgemm(
   clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
   if (clblasErr != clblasSuccess)
   	return clblasErr;
-  
+
   if (K != 0)
   {
   	//check matrix A
   	clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
   		return clblasErr;
-  
+
   	//check matrix B
   	clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
@@ -870,14 +869,14 @@ clblasZgemm(
   clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
   if (clblasErr != clblasSuccess)
   	  return clblasErr;
-  
+
   if (K != 0)
   {
   	//check matrix A
   	clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
   		return clblasErr;
-  
+
   	//check matrix B
   	clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
   	if (clblasErr != clblasSuccess)
