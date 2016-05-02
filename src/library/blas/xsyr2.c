@@ -109,10 +109,10 @@ doSyr2(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = X;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->offBX = offx;
 	kargs->C = Y;
-	kargs->ldc.vector = incy;
+	kargs->ldc.Vector = incy;
 	kargs->offCY = offy;
     kargs->offa = offa;
     kargs->offA = offa;

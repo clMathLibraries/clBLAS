@@ -85,10 +85,10 @@ doHpmv(
     kargs->lda.matrix = 0;      // Set lda as zero for packed matrices
     kargs->B = X;
     kargs->offBX = offx;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->C = Y;
     kargs->offCY = offy;
-    kargs->ldc.vector = incy;
+    kargs->ldc.Vector = incy;
 	kargs->transA = clblasNoTrans;
 	kargs->diag = clblasNonUnit;
 

@@ -434,12 +434,12 @@ assignKargs(KernelArg *args, const void *params, const void *extra)
         initSizeKarg(&args[i++], blasArgs->offCY);
     }
     if (!(kflags & KEXTRA_INCX_ONE)) {
-        inc = blasArgs->ldb.vector;
+        inc = blasArgs->ldb.Vector;
         INIT_KARG(&args[i], inc);
         i++;
     }
     if (!(kflags & KEXTRA_INCY_ONE)) {
-        inc = blasArgs->ldc.vector;
+        inc = blasArgs->ldc.Vector;
         INIT_KARG(&args[i], inc);
         i++;
     }
@@ -479,12 +479,12 @@ fixupArgs(void *args, SubproblemDim *subdims, void *extra)
         else {
             kargs->offA += off * kargs->lda.matrix;
         }
-        if (kargs->ldc.vector < 0) {
+        if (kargs->ldc.Vector < 0) {
             // K store the original height of the matrix A
-            kargs->offCY += (kargs->K - off) * abs(kargs->ldc.vector);
+            kargs->offCY += (kargs->K - off) * abs(kargs->ldc.Vector);
         }
         else {
-            kargs->offCY += off * kargs->ldc.vector;
+            kargs->offCY += off * kargs->ldc.Vector;
         }
     }
 

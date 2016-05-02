@@ -84,10 +84,10 @@ doSymv(
     kargs->lda.matrix = lda;
     kargs->B = x;
     kargs->offBX = offx;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->C = y;
     kargs->offCY = offy;
-    kargs->ldc.vector = incy;
+    kargs->ldc.Vector = incy;
 
     #ifndef USE_SYMV
 
