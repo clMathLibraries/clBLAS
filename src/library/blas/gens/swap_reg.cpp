@@ -130,10 +130,10 @@ setBuildOpts(
 		printf("Setting build options ... Double... for DOUBLE PRECISION support\n");
 		#endif
 	}
-	if( (kargs->ldb.vector) != 1) {
+	if( (kargs->ldb.Vector) != 1) {
         addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DINCX_NONUNITY");
     }
-    if( (kargs->ldc.vector) != 1) {
+    if( (kargs->ldc.Vector) != 1) {
         addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DINCY_NONUNITY");
     }
 
@@ -265,10 +265,10 @@ assignKargs(KernelArg *args, const void *params, const void* )
 	INIT_KARG(&args[1], blasArgs->B);
     initSizeKarg(&args[2], blasArgs->N);
     initSizeKarg(&args[3], blasArgs->offBX);
-    incx = blasArgs->ldb.vector;
+    incx = blasArgs->ldb.Vector;
     INIT_KARG(&args[4], incx);
     initSizeKarg(&args[5], blasArgs->offCY);
-    incy = blasArgs->ldc.vector;
+    incy = blasArgs->ldc.Vector;
     INIT_KARG(&args[6], incy);
 
 	return;

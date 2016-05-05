@@ -338,10 +338,10 @@ assignKargs(KernelArg *args, const void *params, const void*)
 	INIT_KARG(&args[2], blasArgs->C); 	//Y - y vector
 	initSizeKarg(&args[3], blasArgs->N);
 	initSizeKarg(&args[4], blasArgs->offBX);
-    inc = blasArgs->ldb.vector;
+    inc = blasArgs->ldb.Vector;
     INIT_KARG(&args[5], inc);
 	initSizeKarg(&args[6], blasArgs->offCY);
-	inc = blasArgs->ldc.vector;
+	inc = blasArgs->ldc.Vector;
 	INIT_KARG(&args[7], inc);
     initSizeKarg(&args[8], blasArgs->offa);
 	initSizeKarg(&args[9], blasArgs->lda.matrix);

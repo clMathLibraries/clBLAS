@@ -103,10 +103,10 @@ doAxpy(
 		kargs->N = N;
 		kargs->A = X;
 		kargs->offBX = offx;
-		kargs->ldb.vector = incx;	// Will be using this as incx
+		kargs->ldb.Vector = incx;	// Will be using this as incx
 		kargs->B = Y;
 		kargs->offCY = offy;
-		kargs->ldc.vector = incy;	// Will be using this as incy
+		kargs->ldc.Vector = incy;	// Will be using this as incy
 
 		#ifdef DEBUG_AXPY
 		printf("Calling makeSolutionSeq from DoAxpy: AXPY\n");
