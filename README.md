@@ -199,7 +199,9 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
 *  Googletest v1.6
 *  Latest Boost
 *  CPU BLAS
-  - Netlib CBLAS (recommended: "apt-get install libblas-dev" if on ubuntu)
+  - Netlib CBLAS (recommended)
+    Ubuntu: install by "apt-get install libblas-dev"
+    Windows: download & install lapack-3.6.0 which comes with CBLAS
   - or ACML on windows/linux; Accelerate on Mac OSX 
 
 ### Performance infrastructure
