@@ -48,6 +48,7 @@ include_directories(
     ${clBLAS_SOURCE_DIR}
     ${clBLAS_SOURCE_DIR}/include
     ${clBLAS_SOURCE_DIR}/tests/include
+    ${Netlib_INCLUDE_DIRS}
     .)
 
 add_executable(client ${CLIENT_SRC} ${CLIENT_HEADER})

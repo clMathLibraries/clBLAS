@@ -265,6 +265,14 @@ if( BUILD_TEST )
 	endif( )
 endif( )
 
+if( BUILD_CLIENT )
+    if( NETLIB_FOUND )
+    else( )
+        message( WARNING "Not find Netlib; BUILD_CLIENT needs the Netlib CBLAS library" )
+    endif()
+endif()
+
+
 # This will define OPENCL_FOUND
 find_package( OpenCL ${OPENCL_VERSION} )
 
