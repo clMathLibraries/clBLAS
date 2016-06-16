@@ -21,7 +21,6 @@
 #define CLBLAS_BENCHMARK_XGEMM_HXX__
 
 #include "clfunc_common.hpp"
-#include "cblas.h"
 
 template <typename T>
 struct xGemmBuffer
@@ -76,10 +75,12 @@ public:
         timer.Stop(timer_id);
     }
 
-	
+
     void validate_with_cblas(int validate)
     {
-	if(validate)
+        #if defined ( _WIN32 ) || defined ( _WIN64 )
+        #else
+        if(validate)
         {
     	    initialize_cpu_buffer();
     	    initialize_gpu_buffer();
@@ -87,6 +88,7 @@ public:
             read_gpu_buffer();
             validation();
         }
+        #endif
     }
 
 
@@ -1004,7 +1006,11 @@ private:
     void xGemm_Function(bool flush, cl_uint apiCallCount = 1);
     unsigned int numQueuesToUse;
     cl_event events_[numQueues];
+
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
     void validation();
+#endif
 }; // class xgemm
 
 template<>
@@ -1219,6 +1225,10 @@ gflops_formula()
     return "8.0*M*N*K/time";
 }
 
+#if defined ( _WIN32 ) || defined (_WIN64 )
+
+#else
+
 template<>
 void
 xGemm<cl_float>::
@@ -1292,5 +1302,7 @@ validation()
 		cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.c_, 1);
     printf("Error of clblas_zgemm against cblas_zgemm = %f \n", norm_error);
 }
+
+#endif
 
 #endif // ifndef CLBLAS_BENCHMARK_XGEMM_HXX__

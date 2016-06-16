@@ -68,6 +68,8 @@ public:
 
     void validate_with_cblas(int validate)
     {
+        #if defined ( _WIN32 ) || defined ( _WIN64 )
+        #else
         if(validate)
         {
             initialize_cpu_buffer();
@@ -76,6 +78,7 @@ public:
             read_gpu_buffer();
             validation();
         }
+        #endif
     }
 
 
@@ -486,7 +489,10 @@ protected:
 
 private:
     xTrmmBuffer<T> buffer_;
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
     void validation();
+#endif
 }; // class xTrmm
 
 template<>
@@ -808,14 +814,17 @@ gflops_formula()
     }
 }
 
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+
 template<>
 void
 xTrmm<cl_float>::
 validation()
 {
     cblas_strmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
-                clblasToCblas_fill(buffer_.uplo_), 
-                clblasToCblas_operation(buffer_.trans_a_), 
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
 		clblasToCblas_diag(buffer_.diag_),
                 buffer_.m_, buffer_.n_, buffer_.alpha_,
                 buffer_.a_ + buffer_.offA_, buffer_.lda_,
@@ -834,8 +843,8 @@ xTrmm<cl_double>::
 validation()
 {
     cblas_dtrmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
-                clblasToCblas_fill(buffer_.uplo_), 
-                clblasToCblas_operation(buffer_.trans_a_), 
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
 		clblasToCblas_diag(buffer_.diag_),
                 buffer_.m_, buffer_.n_, buffer_.alpha_,
                 buffer_.a_ + buffer_.offA_, buffer_.lda_,
@@ -853,8 +862,8 @@ xTrmm<cl_float2>::
 validation()
 {
     cblas_ctrmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
-                clblasToCblas_fill(buffer_.uplo_), 
-                clblasToCblas_operation(buffer_.trans_a_), 
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
 		clblasToCblas_diag(buffer_.diag_),
                 buffer_.m_, buffer_.n_, &(buffer_.alpha_),
                 buffer_.a_ + buffer_.offA_, buffer_.lda_,
@@ -874,8 +883,8 @@ xTrmm<cl_double2>::
 validation()
 {
     cblas_ztrmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
-                clblasToCblas_fill(buffer_.uplo_), 
-                clblasToCblas_operation(buffer_.trans_a_), 
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
 		clblasToCblas_diag(buffer_.diag_),
                 buffer_.m_, buffer_.n_, &(buffer_.alpha_),
                 buffer_.a_ + buffer_.offA_, buffer_.lda_,
@@ -886,9 +895,8 @@ validation()
     double norm_error = cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.b_copy, 1)/
                 cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.b_, 1);
     printf("Error of clblas_ztrmm against cblas_ztrmm = %f \n", norm_error);
-
-
 }
 
+#endif
 
 #endif // ifndef CLBLAS_BENCHMARK_XTRMM_HXX__

@@ -26,7 +26,11 @@
 #include "blas-math.h"
 #include "test-limits.h"
 #include "dis_warning.h"
+
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
 #include "cblas.h"
+#endif
 
 #include "clBLAS.h"
 #if defined(__APPLE__) || defined(__MACOSX)
@@ -78,6 +82,9 @@ randomScale()
     return t;
 }
 
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+
 CBLAS_ORDER
 clblasToCblas_order(clblasOrder value)
 {
@@ -123,6 +130,8 @@ clblasToCblas_diag(clblasDiag value)
         case clblasUnit:              return CblasUnit;
     }
 }
+
+#endif
 
 std::string
 prettyPrintClStatus( const cl_int& status )
@@ -352,7 +361,7 @@ public:
     }
 
     virtual void validate_with_cblas(int v) {}
-    
+
     virtual void call_func() = 0;
     virtual double gflops() = 0;
     virtual std::string gflops_formula() = 0;
