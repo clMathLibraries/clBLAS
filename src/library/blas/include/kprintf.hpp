@@ -77,7 +77,7 @@ private:
     void registerType(const char *baseType, int vecWidth, int internalVecWidth=1);
     void registerReducedTypes( const char* in, int div);
     void registerSuperTypes( const char* in, int mul);
-    char* mystrtok( char* in, const char* tok); //NOTE: strtok overwrites the string. we dont like that...
+    char* mystrtok( char* in, const char* tok); //NOTE: strtok overwrites the string. we don't like that...
     //
     // VLOAD %TYPE%V from (%PTYPE*) kind of memory locations
     // The Kernel writers should use "%TYPE" and "%TYPE%V" for kernel aguments, local variables etc..
