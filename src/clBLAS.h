@@ -7809,9 +7809,9 @@ clblasDtrmm(
  * @param[in] M         Number of rows in matrix \b B.
  * @param[in] N         Number of columns in matrix \b B.
  * @param[in] alpha     The factor of matrix \b A.
+ * @param[in] A         Buffer object storing matrix \b A.
  * @param[in] offA      Offset of the first element of the matrix \b A in the
  *                      buffer object. Counted in elements.
- * @param[in] A         Buffer object storing matrix \b A.
  * @param[in] lda       Leading dimension of matrix \b A. For detailed
  *                      description, see clblasStrmm().
  * @param[out] B        Buffer object storing matrix \b B.
