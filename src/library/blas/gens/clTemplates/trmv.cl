@@ -170,7 +170,7 @@ __kernel void %PREFIXtrmv_CU_kernel( __global %TYPE const* restrict _A, __global
 
 			//
 			// Only TARGET_WIDTH threads points are to be read from X-vector
-			// We dont't use VLOAD here because incx could be > 1
+			// We don't use VLOAD here because incx could be > 1
 			// Minimal prototyping shows that having separate loading code
 			// for incx value of 1 does not change anything in performance
 			// In fact, the extra IF costs us.
@@ -421,7 +421,7 @@ __kernel void %PREFIXtrmv_CL_kernel( __global %TYPE const* restrict _A, __global
 
 			//
 			// Only TARGET_WIDTH threads points are to be read from X-vector
-			// We dont't use VLOAD here because incx could be > 1
+			// We don't use VLOAD here because incx could be > 1
 			// Minimal prototyping shows that having separate loading code
 			// for incx value of 1 does not change anything in performance
 			// In fact, the extra IF costs us.

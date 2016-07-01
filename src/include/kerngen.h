@@ -244,7 +244,7 @@ kgenSyncFormatting(
  *
  * @return 0 on success; -1 if the source code exceeds the buffer,
  *           or level of the code nesting is not zero, or the returned
- *           type is not defined, or there is not a paranthesis opening
+ *           type is not defined, or there is not a parenthesis opening
  *           the argument list
  */
 int

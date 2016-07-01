@@ -98,7 +98,7 @@ __kernel void GEMM_NN__KERNEL ( __global %TYPE const * restrict _A, __global %TY
     // %V     - Vectoring Width
     // %PANEL(*) - Panel Width to access Rows of A and Columns of B
     //               Right now, %V is assumed to be the panel width.
-    //               We dont use %PANEL in the current implementation.
+    //               We don't use %PANEL in the current implementation.
     //
     MV = M;
     #ifndef TAIL_RUN
@@ -118,7 +118,7 @@ __kernel void GEMM_NN__KERNEL ( __global %TYPE const * restrict _A, __global %TY
         bidX = ( get_group_id(0) / ( blockDimY));
         //
         // Note:
-        // Using the new Map function does not yeild any performnce gain.
+        // Using the new Map function does not yield any performnce gain.
         // In fact, it degraded the performance
         // Keep this commented.
         //
@@ -613,7 +613,7 @@ __kernel void GEMM_NT__KERNEL ( __global %TYPE const * restrict _A, __global %TY
     // %V     - Vectoring Width
     // %PANEL(*) - Panel Width to access Rows of A and Columns of B
     //               Right now, %V is assumed to be the panel width.
-    //               We dont use %PANEL in the current implementation.
+    //               We don't use %PANEL in the current implementation.
     //
     MV = M;
     NV = N;
@@ -1141,7 +1141,7 @@ __kernel void GEMM_TN__KERNEL ( __global %TYPE const * restrict _A, __global %TY
     // %V     - Vectoring Width
     // %PANEL(*) - Panel Width to access Rows of A and Columns of B
     //               Right now, %V is assumed to be the panel width.
-    //               We dont use %PANEL in the current implementation.
+    //               We don't use %PANEL in the current implementation.
     //
     MV = M;
     #ifndef TAIL_RUN

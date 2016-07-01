@@ -214,7 +214,7 @@ selectVectorization(
         }
 
 		//
-		// Routines that dont use LDS have to be below the isLdsUsed() code
+		// Routines that don't use LDS have to be below the isLdsUsed() code
 		//
 		if (step->funcID == CLBLAS_GEMM2)
 		{
