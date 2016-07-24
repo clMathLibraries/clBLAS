@@ -172,6 +172,7 @@ endif( )
 # add the math library for Linux
 if( UNIX )
     set(MATH_LIBRARY "m")
+    set(THREAD_LIBRARY "pthread")
 endif()
 
 # set the path to specific OpenCL compiler
