@@ -886,7 +886,7 @@ endif()
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
 set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
+target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY} ${THREAD_LIBRARY})
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBLAS
