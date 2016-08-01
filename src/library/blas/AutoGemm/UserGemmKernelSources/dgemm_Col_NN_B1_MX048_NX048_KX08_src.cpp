@@ -17,9 +17,9 @@ const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_microTileNumRows = 6;
 const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_unroll = 8;
 
-const char * const dgemm_Col_NN_B1_MX048_NX048_KX08_src = STRINGIFY(
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable   \n
-
+const char * const dgemm_Col_NN_B1_MX048_NX048_KX08_src = 
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable   \n"
+STRINGIFY(
 #define  M6x6 \
             rA[0] = lA[offA + 0];                       \
             rA[1] = lA[offA + 8];                       \

@@ -17,8 +17,9 @@ const unsigned int dgemm_Col_NT_B0_MX048_NX048_KX08_microTileNumRows = 6;
 const unsigned int dgemm_Col_NT_B0_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_NT_B0_MX048_NX048_KX08_unroll = 8;
 
-const char * const dgemm_Col_NT_B0_MX048_NX048_KX08_src = STRINGIFY(
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable   \n
+const char * const dgemm_Col_NT_B0_MX048_NX048_KX08_src = 
+"#pragma OPENCL EXTENSION cl_khr_fp64 : enable   \n"
+STRINGIFY(
 \n
 \ntypedef union _GPtr {
 \n  __global float *f;
