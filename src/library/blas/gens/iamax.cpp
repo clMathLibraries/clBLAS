@@ -108,7 +108,7 @@ selectVectorization(
 	KernelExtraFlags kflags = KEXTRA_NO_FLAGS;
 	CLBlasKargs *kargs  = (CLBlasKargs *)args;
 
-    if( (((kargs->offa) % vlen) != 0))
+    if( (((kargs->offb) % vlen) != 0))
     {
         kflags = KEXTRA_NO_COPY_VEC_A;
     }
