@@ -138,8 +138,8 @@ __kernel void %PREFIXher2_CL_kernel( __global const %TYPE* _A, __global const %T
 				%CONJUGATE(1, res1);
 			#endif
             %MUL( res5, alpha, res1 );
-            res1 = Y[c * incx];
-            res3 = Y[r * incx];
+            res1 = Y[c * incy];
+            res3 = Y[r * incy];
             #ifndef HER2_ROWMAJOR
 				%CONJUGATE(1, res1);
             #endif
@@ -461,8 +461,8 @@ __kernel void %PREFIXher2_CU_kernel( __global const %TYPE* _A, __global const %T
 				%CONJUGATE(1, res1);
 			#endif
             %MUL( res5, alpha, res1 );
-            res1 = Y[c * incx];
-            res3 = Y[r * incx];
+            res1 = Y[c * incy];
+            res3 = Y[r * incy];
             #ifndef HER2_ROWMAJOR
 				%CONJUGATE(1, res1);
             #endif
