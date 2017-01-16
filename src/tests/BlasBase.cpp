@@ -105,10 +105,11 @@ BlasBase::getDevice(cl_device_type type, const char* name,
 {
     cl_int err;
     cl_uint nrDevices, i, p;
-    cl_device_id *devices, result = NULL;
+    cl_device_id *devices = NULL;
+    cl_device_id result = 0;
     size_t sz;
     char *str;
-    cl_platform_id *platforms, selPlatform = NULL;
+    cl_platform_id* platforms = NULL;
     cl_uint nrPlatforms;
 
     nrPlatforms = getPlatforms(&platforms, &err);

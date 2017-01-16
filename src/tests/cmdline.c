@@ -18,6 +18,7 @@
 #include <string.h>         /* strcmp */
 #include <stdlib.h>         /* atoi, strtol */
 #include <stdio.h>          /* printf */
+#include <ctype.h>
 
 #include <cmdline.h>
 
@@ -92,7 +93,7 @@ doParseCmdLine(
         currArg = (const char*)argv[i];
         i++;
 
-        if (currArg[0] != '-') {
+        if ( (currArg[0] != '-') && isdigit( currArg[0] ) ){
             // some of size arguments
             switch (j) {
             case 0:
