@@ -655,7 +655,7 @@ complex cdotu( int n, complex *x, int incx, complex *y, int incy)
     #elif defined( __APPLE__)
         cblas_cdotu_sub(n, x, incx, y, incy, &ans);
     #else
-        cdotusub_(&n, x, &incx, y, &incy, &ans);
+        ans = cdotu_(&n, x, &incx, y, &incy);
     #endif
 
     return ans;
@@ -670,7 +670,7 @@ doublecomplex zdotu( int n, doublecomplex *x, int incx,  doublecomplex *y, int i
     #elif defined(__APPLE__)
         cblas_zdotu_sub(n, x, incx, y, incy, &ans);
     #else
-        zdotusub_(&n, x, &incx, y, &incy, &ans);
+        ans = zdotu_(&n, x, &incx, y, &incy);
     #endif
 
     return ans;
@@ -685,7 +685,7 @@ complex cdotc( int n, complex *x, int incx, complex *y, int incy)
     #elif defined(__APPLE__)
         cblas_cdotc_sub(n, x, incx, y, incy, &ans);
     #else
-        cdotcsub_(&n, x, &incx, y, &incy, &ans);
+        ans = cdotc_(&n, x, &incx, y, &incy);
     #endif
 
     return ans;
@@ -700,7 +700,7 @@ doublecomplex zdotc( int n, doublecomplex *x, int incx,  doublecomplex *y, int i
     #elif defined(__APPLE__)
         cblas_zdotc_sub(n, x, incx, y, incy, &ans);
     #else
-        zdotcsub_(&n, x, &incx, y, &incy, &ans);
+        ans = zdotc_(&n, x, &incx, y, &incy);
     #endif
 
     return ans;

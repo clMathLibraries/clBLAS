@@ -19,9 +19,9 @@ We want to ensure that the project code base maintains a level of quality over t
 guidelines over time
     *  separate check-ins that modify a files style from the ones that add/change/delete code.
 * target the **develop** branch in the repository
-* ensure that the [code properly builds]( https://github.com/kknox/clBLAS/wiki/Build )
+* ensure that the [code properly builds]( https://github.com/clMathLibraries/clBLAS/wiki/Build )
 * cannot break existing test cases
-    * we encourage contributors to [run the test-short]( https://github.com/kknox/clBLAS/wiki/Testing ) suite of tests on their end before the pull-request
+    * we encourage contributors to [run the test-short]( https://github.com/clMathLibraries/clBLAS/wiki/Testing ) suite of tests on their end before the pull-request
         * if possible, upload the test results associated with the pull request to a personal [gist repository]( https://gist.github.com/ ) and insert a link to the test results in the pull request so that collaborators can browse the results
         * if no test results are provided with the pull request, official collaborators will run the test suite on their test machines against the patch before we will accept the pull-request
             * if we detect failing test cases, we will request that the code associated with the pull request be fixed before the pull request will be merged

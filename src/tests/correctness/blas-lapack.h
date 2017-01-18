@@ -1170,10 +1170,10 @@ double ddot_(int *n, double *x, int *incx, double* y, int *incy);
     complex cdotc_(int *n, complex *x, int *incx, complex* y, int *incy);
     doublecomplex zdotc_(int *n, doublecomplex *x, int *incx, doublecomplex* y, int *incy);
 #else
-    void cdotusub_(int *n, complex *x, int *incx, complex* y, int *incy, complex *ans);
-    void zdotusub_(int *n, doublecomplex *x, int *incx, doublecomplex* y, int *incy, doublecomplex *ans);
-    void cdotcsub_(int *n, complex *x, int *incx, complex* y, int *incy, complex *ans);
-    void zdotcsub_(int *n, doublecomplex *x, int *incx, doublecomplex* y, int *incy, doublecomplex *ans);
+    complex cdotu_(int *n, complex *x, int *incx, complex* y, int *incy);
+    doublecomplex zdotu_(int *n, doublecomplex *x, int *incx, doublecomplex* y, int *incy);
+    complex cdotc_(int *n, complex *x, int *incx, complex* y, int *incy);
+    doublecomplex zdotc_(int *n, doublecomplex *x, int *incx, doublecomplex* y, int *incy);
 #endif
 
 void sswap_(int *n, float *x, int *incx, float* y, int *incy);

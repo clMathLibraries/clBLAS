@@ -111,20 +111,16 @@ spr2CorrectnessTest(TestParams *params)
 	alpha =  convertMultiplier<T>(params->alpha);
 	useAlpha = true;
 
-    ::std::cerr << "Generating input data... ";
     randomSyr2Matrices<T>(params->order, params->uplo, params->N, useAlpha, &alpha, (blasAP + params->offa), params->lda,
 							(X + params->offBX), params->incx, (Y + params->offCY), params->incy);
 
 	// Copy blasAP to clblasAP
     memcpy(clblasAP, blasAP, (lengthAP + params->offa)* sizeof(*blasAP));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufAP = base->createEnqueueBuffer(clblasAP, (lengthAP + params->offa)* sizeof(*clblasAP), 0,CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
 	bufY = base->createEnqueueBuffer(Y, (lengthY + params->offCY)* sizeof(*Y), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xSPR2 routine... ";
 
 	clblasOrder order;
     clblasUplo fUplo;
@@ -140,7 +136,6 @@ spr2CorrectnessTest(TestParams *params)
 
 	::clMath::blas::spr2( order, fUplo, params->N, alpha, X, params->offBX, params->incx,
 		                Y, params->offCY, params->incy, blasAP, params->offa);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufAP == NULL) || (bufX == NULL) || (bufY == NULL)) {
         /* Skip the test, the most probable reason is
@@ -157,8 +152,6 @@ spr2CorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xSPR2 routine... ";
 
     err = (cl_int)::clMath::clblas::spr2( params->order, params->uplo, params->N, alpha,
 						bufX, params->offBX, params->incx, bufY, params->offCY, params->incy, bufAP, params->offa,
@@ -180,8 +173,6 @@ spr2CorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufAP, CL_TRUE, 0,
                                 (lengthAP + params->offa) * sizeof(*clblasAP), clblasAP, 0,

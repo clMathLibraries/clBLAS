@@ -278,7 +278,7 @@ static bool isTransposeFeasible(size_t triangle, size_t blockSize, size_t vecLen
 /*
  * NOTE:
  * No-Transpose case - The code iterates along the X direction. Vectoring is along Y Direction.
- * Since we dont iterate on Y direction (triangle height), this fixes the "blocky" component of the blocksize.
+ * Since we don't iterate on Y direction (triangle height), this fixes the "blocky" component of the blocksize.
  * The blockSize then determines how much width the block has on X direction and thus the number of loops
  * can be calculated from that information.
  */
@@ -474,7 +474,7 @@ assignKargs(KernelArg *args, const void *params, const void*)
     INIT_KARG(&args[0], blasArgs->A); 	//A - input matrix - argument
     INIT_KARG(&args[1], blasArgs->B); 	//x - result buffer = _xnew argument
     initSizeKarg(&args[2], blasArgs->N);
-    inc = blasArgs->ldb.vector;
+    inc = blasArgs->ldb.Vector;
     INIT_KARG(&args[3], inc);
 	unity = (blasArgs->diag == clblasUnit);
    	INIT_KARG(&args[4], unity);

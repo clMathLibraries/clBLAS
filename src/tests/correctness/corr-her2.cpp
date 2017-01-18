@@ -115,21 +115,16 @@ her2CorrectnessTest(TestParams *params)
 	}
 	alpha =  convertMultiplier<T>(params->alpha);
 
-    ::std::cerr << "Generating input data... ";
-
     randomHer2Matrices<T>(params->order, params->uplo, params->N, &alpha, (blasA + params->offa), params->lda,
 							(X + params->offBX), params->incx, (Y + params->offCY), params->incy);
 
 	// Copy blasA to clblasA
     memcpy(clblasA, blasA, (lengthA + params->offa)* sizeof(*blasA));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(clblasA, (lengthA + params->offa)* sizeof(*clblasA), 0,CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
 	bufY = base->createEnqueueBuffer(Y, (lengthY + params->offCY)* sizeof(*Y), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xHER2 routine... ";
 
 	clblasOrder order;
     clblasUplo fUplo;
@@ -147,7 +142,6 @@ her2CorrectnessTest(TestParams *params)
 	else {
 		::clMath::blas::her2( order, fUplo, params->N, alpha, X, params->offBX, params->incx, Y, params->offCY, params->incy, blasA, params->offa, params->lda);
 	}
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufA == NULL) || (bufX == NULL) || (bufY == NULL)) {
         /* Skip the test, the most probable reason is
@@ -164,8 +158,6 @@ her2CorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xHER2 routine... ";
 
     err = (cl_int)::clMath::clblas::her2( params->order, params->uplo, params->N, alpha,
 						bufX, params->offBX, params->incx, bufY, params->offCY, params->incy, bufA, params->offa, params->lda,
@@ -187,8 +179,6 @@ her2CorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufA, CL_TRUE, 0,
         (lengthA + params->offa) * sizeof(*clblasA), clblasA, 0,
@@ -202,6 +192,14 @@ her2CorrectnessTest(TestParams *params)
 
 	compareMatrices<T>(params->order, params->N , params->N, (blasA + params->offa), (clblasA + params->offa),
                        params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, 1, params->alpha, params->offBX, params->incx, params->offCY, params->incy, params->offa, params->lda);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
 	deleteBuffers<T>(blasA, clblasA, X, Y);
     delete[] events;

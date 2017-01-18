@@ -4,7 +4,6 @@
 
 #ifndef KERNEL_TRIPLE_DGEMM_UPDATE_192_48_PART1_R_SRC_CPP
 #define KERNEL_TRIPLE_DGEMM_UPDATE_192_48_PART1_R_SRC_CPP
-#pragma message("#define KERNEL_TRIPLE_DGEMM_UPDATE_192_48_PART1_R_SRC_CPP.")
 
 #ifndef STRINGIFY
 #define STRINGIFY2(...) #__VA_ARGS__
@@ -54,7 +53,7 @@ const char * const triple_dgemm_update_192_48_PART1_R_src = STRINGIFY(
 	//each workgroup loads half of B (up or down)
 	B = d_dinvA + page_block*NB*NB + page*blk * 2 * NB + page*blk * 2 + blk*NB + blk + gidy*(blk / 2)*NB; \n
 
-	//decide invA12 location for each page; 
+	//decide invA12 location for each page;
 	//Actually this will be stored in invA21 temporarily
 	//each workgroup writes 1/4 of C
 	C = d_dinvA + page_block*NB*NB + page*blk * 2 * NB + page*blk * 2 + blk*NB + gidx % 2 * (blk / 2) + gidy*(blk / 2)*NB; \n

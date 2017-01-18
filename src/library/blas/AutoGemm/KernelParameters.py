@@ -89,11 +89,11 @@ class TileParameters:
     return True
     """
     numALoads = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
-        / (self.workGroupNumRows*self.workGroupNumCols)
+        // (self.workGroupNumRows*self.workGroupNumCols)
     numALoadsR = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
         % (self.workGroupNumRows*self.workGroupNumCols)
     numBLoads = (self.workGroupNumCols*self.microTileNumCols*self.unroll) \
-        / (self.workGroupNumRows*self.workGroupNumCols)
+        // (self.workGroupNumRows*self.workGroupNumCols)
     numBLoadsR = (self.workGroupNumCols*self.microTileNumCols*self.unroll) \
         % (self.workGroupNumRows*self.workGroupNumCols)
     if (numALoads>0 and numALoadsR>0):

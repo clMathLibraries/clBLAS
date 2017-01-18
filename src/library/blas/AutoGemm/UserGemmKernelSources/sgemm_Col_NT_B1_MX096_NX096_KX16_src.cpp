@@ -4,7 +4,7 @@
 
 #ifndef KERNEL_SGEMM_COL_NT_B1_MX096_NX096_KX16_SRC_H
 #define KERNEL_SGEMM_COL_NT_B1_MX096_NX096_KX16_SRC_H
-#pragma message("AutoGemm's sgemm_Col_NT_B1_MX096_NX096_KX16_src overriden by user.")
+// #pragma message("AutoGemm's sgemm_Col_NT_B1_MX096_NX096_KX16_src overriden by user.")
 
 #include "UserGemmKernelSourceIncludes.h"
 

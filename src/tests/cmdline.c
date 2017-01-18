@@ -18,13 +18,14 @@
 #include <string.h>         /* strcmp */
 #include <stdlib.h>         /* atoi, strtol */
 #include <stdio.h>          /* printf */
+#include <ctype.h>
 
 #include <cmdline.h>
 
 static const char *testUsage =
     "<M N K> [--seed s] [--alpha a] [--beta b] "
     "[--alpha-real a] [--beta-real b] [--alpha-imag a] [--beta-imag b] "
-    "[--use-images f] [--device dev] [--queues n]\n"
+    "[--use-images f] [--platform ordinal] [--device string] [--device-ord ordinal] [--queues n]\n"
     "\n"
     "seed - seed for the random number generator"
     "\n"
@@ -42,8 +43,12 @@ static const char *testUsage =
     "\n"
     "use-images - allow the library to use images for computing"
     "\n"
-    "device - device to run the test on, 'cpu' or 'gpu'(default)"
+    "platform-ord - platform ordinal containing device of interest as reported by clinfo; (default 0)"
     "\n"
+    "device-ord - device ordinal as device under test as reported by clinfo; (default 0)"
+    "\n"
+    "device-type - device type to filter device enumeration: 'default', 'all', 'gpu' or 'cpu'\n"
+    "\t\tWith 'default', platform-ord && device-ord should both be 0\n"
     "queues - number of command queues to use"
     "\n"
     "Parameters defined through the command line are kept over the whole "
@@ -88,7 +93,7 @@ doParseCmdLine(
         currArg = (const char*)argv[i];
         i++;
 
-        if (currArg[0] != '-') {
+        if ( (currArg[0] != '-') && isdigit( currArg[0] ) ){
             // some of size arguments
             switch (j) {
             case 0:
@@ -169,7 +174,7 @@ setMult(SetterArg *sarg)
 }
 
 static int
-setDevice(SetterArg *sarg)
+setDevice_type(SetterArg *sarg)
 {
     if (!strcmp(sarg->arg, "cpu")) {
         sarg->params->devType = CL_DEVICE_TYPE_CPU;
@@ -181,7 +186,33 @@ setDevice(SetterArg *sarg)
         sarg->params->devName = NULL;
         return 0;
     }
+    if (!strcmp(sarg->arg, "all")) {
+        sarg->params->devType = CL_DEVICE_TYPE_ALL;
+        sarg->params->devName = NULL;
+        return 0;
+    }
+    if (!strcmp(sarg->arg, "default")) {
+        sarg->params->devType = CL_DEVICE_TYPE_DEFAULT;
+        sarg->params->devName = NULL;
+        return 0;
+    }
     sarg->params->devName = sarg->arg;
+
+    return 0;
+}
+
+static int
+setDevice(SetterArg *sarg)
+{
+    sarg->params->devOrd = atoi(sarg->arg);
+
+    return 0;
+}
+
+static int
+setPlatform(SetterArg *sarg)
+{
+    sarg->params->platOrd = atoi(sarg->arg);
 
     return 0;
 }
@@ -202,7 +233,9 @@ static const CmdLineOpt opts[] = {
     {"alpha-imag", SET_ALPHA, setMult, MULT_ALPHA | MULT_IMAG_ONLY},
     {"beta-real", SET_BETA, setMult, MULT_BETA | MULT_REAL_ONLY},
     {"beta-imag", SET_BETA, setMult, MULT_BETA | MULT_IMAG_ONLY},
-    {"device", SET_DEVICE_TYPE, setDevice, 0},
+    {"platform-ord", SET_PLATFORM_ORD, setPlatform, 0 },
+    {"device-type", SET_DEVICE_TYPE, setDevice_type, 0},
+    {"device-ord", SET_DEVICE_ORD, setDevice, 0 },
     {"queues", SET_NUM_COMMAND_QUEUES, setNumCommandQueues, 0},
 };
 static const unsigned int nrOpts = sizeof(opts) / sizeof(CmdLineOpt);

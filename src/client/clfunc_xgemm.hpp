@@ -43,13 +43,15 @@ struct xGemmBuffer
     T* a_;
     T* b_;
     T* c_;
+    T* c_copy;
     cl_mem buf_a_;
     cl_mem buf_b_;
     cl_mem buf_c_;
     T alpha_;
     T beta_;
-	cl_uint apiCallCount;
+    cl_uint apiCallCount;
 }; // struct buffer
+
 
 template <typename T>
 class xGemm : public clblasFunc
@@ -68,20 +70,37 @@ public:
 
     void call_func()
     {
-		timer.Start(timer_id);
-		xGemm_Function(true, buffer_.apiCallCount);
-		timer.Stop(timer_id);
+        timer.Start(timer_id);
+        xGemm_Function(true, buffer_.apiCallCount);
+        timer.Stop(timer_id);
     }
+
+
+    void validate_with_cblas(int validate)
+    {
+        #if defined ( _WIN32 ) || defined ( _WIN64 )
+        #else
+        if(validate)
+        {
+    	    initialize_cpu_buffer();
+    	    initialize_gpu_buffer();
+            xGemm_Function(true, 1);
+            read_gpu_buffer();
+            validation();
+        }
+        #endif
+    }
+
 
     double gflops()
     {
-		return (2.0*buffer_.m_*buffer_.n_*buffer_.k_) / (time_in_ns() / buffer_.apiCallCount);
+        return (2.0*buffer_.m_*buffer_.n_*buffer_.k_) / (time_in_ns() / buffer_.apiCallCount);
     }
 
-	void setup_apiCallCount(cl_uint apiCallCount)
-	{
-		buffer_.apiCallCount = apiCallCount;
-	}
+    void setup_apiCallCount(cl_uint apiCallCount)
+    {
+        buffer_.apiCallCount = apiCallCount;
+    }
     std::string gflops_formula()
     {
         return "2.0*M*N*K/time";
@@ -322,6 +341,7 @@ public:
         buffer_.a_ = new T[buffer_.lda_*buffer_.a_num_vectors_];
         buffer_.b_ = new T[buffer_.ldb_*buffer_.b_num_vectors_];
         buffer_.c_ = new T[buffer_.ldc_*buffer_.c_num_vectors_ ];
+        buffer_.c_copy = new T[buffer_.ldc_*buffer_.c_num_vectors_ ];
 
         cl_int err;
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
@@ -366,7 +386,7 @@ public:
         {
             for (size_t j = 0; j < buffer_.ldc_; ++j)
             {
-                buffer_.c_[i*buffer_.ldc_+j] = random<T>(UPPER_BOUND<T>()) /
+                buffer_.c_copy[i*buffer_.ldc_+j] = buffer_.c_[i*buffer_.ldc_+j] = random<T>(UPPER_BOUND<T>()) /
                                                randomScale<T>();
             }
         }
@@ -375,7 +395,7 @@ public:
     void initialize_gpu_buffer()
     {
 
-		cl_int err;
+        cl_int err;
 
         err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(T),
@@ -408,19 +428,19 @@ public:
                                    buffer_.c_, 0, NULL, NULL);
     }
 
-	void read_gpu_buffer()
-	{
-		cl_int err;
-		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
-			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
+    void read_gpu_buffer()
+    {
+        cl_int err;
+        err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
+                                  buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
-								  buffer_.c_, 0, NULL, NULL);
-	}
+                                  buffer_.c_, 0, NULL, NULL);
+    }
 
-	void roundtrip_func()
-	{
-	timer.Start(timer_id);
-		cl_int err;
+    void roundtrip_func()
+    {
+    timer.Start(timer_id);
+        cl_int err;
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                        (buffer_.lda_*buffer_.a_num_vectors_ +
                                            buffer_.offA_) * sizeof(T),
@@ -452,42 +472,42 @@ public:
                                    buffer_.ldc_ * buffer_.c_num_vectors_ *
                                    sizeof(T),
                                    buffer_.c_, 0, NULL, NULL);
-		xGemm_Function(false);
-		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
-			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
+        xGemm_Function(false);
+        err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
+                                  buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
-								  buffer_.c_, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-	}
-	void roundtrip_func_rect()
-	{
-	timer.Start(timer_id);
-		cl_int err;
-		//rect
-		size_t a_buffer_origin[3] = {0,0,0}; 
-		size_t a_host_origin[3] = {0,0,0};
-		size_t a_region[3] = {buffer_.m_*sizeof(T),buffer_.k_,1};
-		size_t a_buffer_row_pitch=0*sizeof(T);//lda
-		size_t a_buffer_slice_pitch=0;
-		size_t a_host_row_pitch=buffer_.lda_*sizeof(T);
-		size_t a_host_slice_pitch=0;
+                                  buffer_.c_, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+    }
+    void roundtrip_func_rect()
+    {
+    timer.Start(timer_id);
+        cl_int err;
+        //rect
+        size_t a_buffer_origin[3] = {0,0,0};
+        size_t a_host_origin[3] = {0,0,0};
+        size_t a_region[3] = {buffer_.m_*sizeof(T),buffer_.k_,1};
+        size_t a_buffer_row_pitch=0*sizeof(T);//lda
+        size_t a_buffer_slice_pitch=0;
+        size_t a_host_row_pitch=buffer_.lda_*sizeof(T);
+        size_t a_host_slice_pitch=0;
 
-		size_t b_buffer_origin[3] = {0,0,0}; 
-		size_t b_host_origin[3] = {0,0,0};
-		size_t b_region[3] = {buffer_.k_*sizeof(T),buffer_.n_,1};
-		size_t b_buffer_row_pitch=0*sizeof(T);//ldb
-		size_t b_buffer_slice_pitch=0;
-		size_t b_host_row_pitch=buffer_.ldb_*sizeof(T);
-		size_t b_host_slice_pitch=0;
+        size_t b_buffer_origin[3] = {0,0,0};
+        size_t b_host_origin[3] = {0,0,0};
+        size_t b_region[3] = {buffer_.k_*sizeof(T),buffer_.n_,1};
+        size_t b_buffer_row_pitch=0*sizeof(T);//ldb
+        size_t b_buffer_slice_pitch=0;
+        size_t b_host_row_pitch=buffer_.ldb_*sizeof(T);
+        size_t b_host_slice_pitch=0;
 
-		size_t c_buffer_origin[3] = {0,0,0}; 
-		size_t c_host_origin[3] = {0,0,0};
-		size_t c_region[3] = {buffer_.m_*sizeof(T),buffer_.n_,1};
-		size_t c_buffer_row_pitch=0*sizeof(T);//ldc
-		size_t c_buffer_slice_pitch=0;
-		size_t c_host_row_pitch=buffer_.ldc_*sizeof(T);
-		size_t c_host_slice_pitch=0;
+        size_t c_buffer_origin[3] = {0,0,0};
+        size_t c_host_origin[3] = {0,0,0};
+        size_t c_region[3] = {buffer_.m_*sizeof(T),buffer_.n_,1};
+        size_t c_buffer_row_pitch=0*sizeof(T);//ldc
+        size_t c_buffer_slice_pitch=0;
+        size_t c_host_row_pitch=buffer_.ldc_*sizeof(T);
+        size_t c_host_slice_pitch=0;
 
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                        (buffer_.k_*buffer_.m_ +
@@ -504,12 +524,12 @@ public:
                                             buffer_.offC_) * sizeof(T),
                                         NULL, &err);
         /*
-		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(T),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(T),
                                    buffer_.a_, 0, NULL, NULL);
-		
+
         err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
                                    buffer_.offB_ * sizeof(T),
                                    buffer_.ldb_ * buffer_.b_num_vectors_ *
@@ -522,47 +542,47 @@ public:
                                    sizeof(T),
                                    buffer_.c_, 0, NULL, NULL);*/
         err = clEnqueueWriteBufferRect(queues_[0], buffer_.buf_a_, CL_TRUE, a_buffer_origin, a_host_origin, a_region, a_buffer_row_pitch,
-										a_buffer_slice_pitch, a_host_row_pitch, a_host_slice_pitch, buffer_.a_, 0, NULL, NULL);
+                                        a_buffer_slice_pitch, a_host_row_pitch, a_host_slice_pitch, buffer_.a_, 0, NULL, NULL);
         err = clEnqueueWriteBufferRect(queues_[0], buffer_.buf_b_, CL_TRUE, b_buffer_origin, b_host_origin, b_region, b_buffer_row_pitch,
-										b_buffer_slice_pitch, b_host_row_pitch, b_host_slice_pitch, buffer_.b_, 0, NULL, NULL);
+                                        b_buffer_slice_pitch, b_host_row_pitch, b_host_slice_pitch, buffer_.b_, 0, NULL, NULL);
         err = clEnqueueWriteBufferRect(queues_[0], buffer_.buf_c_, CL_TRUE, c_buffer_origin, c_host_origin, c_region, c_buffer_row_pitch,
-										c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, NULL);
+                                        c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, NULL);
 
-		if(buffer_.trans_a_==clblasNoTrans)
-		{
-			buffer_.lda_=buffer_.m_;
-		}
-		else
-		{
-			buffer_.lda_=buffer_.k_;
-		}
-		if(buffer_.trans_b_==clblasNoTrans)
-		{
-			buffer_.ldb_=buffer_.k_;
-		}
-		else
-		{
-			buffer_.ldb_=buffer_.n_;
-		}
-		buffer_.ldc_=buffer_.m_;
-		xGemm_Function(false);
-		/*
-		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
-			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
+        if(buffer_.trans_a_==clblasNoTrans)
+        {
+            buffer_.lda_=buffer_.m_;
+        }
+        else
+        {
+            buffer_.lda_=buffer_.k_;
+        }
+        if(buffer_.trans_b_==clblasNoTrans)
+        {
+            buffer_.ldb_=buffer_.k_;
+        }
+        else
+        {
+            buffer_.ldb_=buffer_.n_;
+        }
+        buffer_.ldc_=buffer_.m_;
+        xGemm_Function(false);
+        /*
+        err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
+                                  buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
-								  buffer_.c_, 0, NULL, &event_);
-		*/
-		err = ::clEnqueueReadBufferRect(queues_[0], buffer_.buf_c_, CL_TRUE, c_buffer_origin, c_host_origin, c_region, c_buffer_row_pitch,
-										c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-	}	
-	void allochostptr_roundtrip_func()
-	{
-	timer.Start(timer_id);
+                                  buffer_.c_, 0, NULL, &event_);
+        */
+        err = ::clEnqueueReadBufferRect(queues_[0], buffer_.buf_c_, CL_TRUE, c_buffer_origin, c_host_origin, c_region, c_buffer_row_pitch,
+                                        c_buffer_slice_pitch, c_host_row_pitch, c_host_slice_pitch, buffer_.c_, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+    }
+    void allochostptr_roundtrip_func()
+    {
+    timer.Start(timer_id);
 
-		cl_int err;
-		// Create buffers with CL_MEM_ALLOC_HOST_PTR for zero copy
+        cl_int err;
+        // Create buffers with CL_MEM_ALLOC_HOST_PTR for zero copy
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
                                        (buffer_.lda_*buffer_.a_num_vectors_ +
                                            buffer_.offA_) * sizeof(T),
@@ -578,45 +598,45 @@ public:
                                             buffer_.offC_) * sizeof(T),
                                         NULL, &err);
 
-		// map the buffers to pointers at host device
-		T *map_a,*map_b,*map_c;
-		map_a = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0, 
-										  (buffer_.lda_*buffer_.a_num_vectors_ +
+        // map the buffers to pointers at host device
+        T *map_a,*map_b,*map_c;
+        map_a = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.lda_*buffer_.a_num_vectors_ +
                                            buffer_.offA_) * sizeof(T),
-										   0, NULL, NULL, &err);
-		map_b = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0, 
-										  (buffer_.ldb_*buffer_.b_num_vectors_ +
+                                           0, NULL, NULL, &err);
+        map_b = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.ldb_*buffer_.b_num_vectors_ +
                                            buffer_.offB_) * sizeof(T),
-										   0, NULL, NULL, &err);
-	    map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_WRITE, 0, 
-										  (buffer_.lda_*buffer_.c_num_vectors_ +
+                                           0, NULL, NULL, &err);
+        map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.lda_*buffer_.c_num_vectors_ +
                                            buffer_.offC_) * sizeof(T),
-										   0, NULL, NULL, &err);
-		// memcpy the input A, B, C to the host pointers
-		memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( T ) );
-		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
-		memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
-		// unmap the buffers
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_a_, map_a, 0, NULL, NULL);
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_b_, map_b, 0, NULL, NULL);
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, NULL);
-		// calling clBLAS
-		xGemm_Function(false);
-		// map the C buffer again to read output
-	    map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_READ, 0, 
-										  (buffer_.lda_*buffer_.c_num_vectors_ +
+                                           0, NULL, NULL, &err);
+        // memcpy the input A, B, C to the host pointers
+        memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( T ) );
+        memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
+        memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
+        // unmap the buffers
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_a_, map_a, 0, NULL, NULL);
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_b_, map_b, 0, NULL, NULL);
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, NULL);
+        // calling clBLAS
+        xGemm_Function(false);
+        // map the C buffer again to read output
+        map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_READ, 0,
+                                          (buffer_.lda_*buffer_.c_num_vectors_ +
                                            buffer_.offC_) * sizeof(T),
-										   0, NULL, NULL, &err);
-		memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
+                                           0, NULL, NULL, &err);
+        memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
 
-	timer.Stop(timer_id);
-	}
-	void usehostptr_roundtrip_func()
-	{
-	timer.Start(timer_id);
-		cl_int err;
+        timer.Stop(timer_id);
+    }
+    void usehostptr_roundtrip_func()
+    {
+        timer.Start(timer_id);
+        cl_int err;
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                                        (buffer_.lda_*buffer_.a_num_vectors_ +
                                            buffer_.offA_) * sizeof(T),
@@ -631,13 +651,13 @@ public:
                                         (buffer_.ldc_ * buffer_.c_num_vectors_ +
                                             buffer_.offC_) * sizeof(T),
                                         buffer_.c_, &err);
-		xGemm_Function(true);
-	timer.Stop(timer_id);
-	}
-	void copyhostptr_roundtrip_func()
-	{
-	timer.Start(timer_id);
-		cl_int err;
+        xGemm_Function(true);
+    timer.Stop(timer_id);
+    }
+    void copyhostptr_roundtrip_func()
+    {
+    timer.Start(timer_id);
+        cl_int err;
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                        (buffer_.lda_*buffer_.a_num_vectors_ +
                                            buffer_.offA_) * sizeof(T),
@@ -652,20 +672,20 @@ public:
                                         (buffer_.ldc_ * buffer_.c_num_vectors_ +
                                             buffer_.offC_) * sizeof(T),
                                         buffer_.c_, &err);
-		xGemm_Function(false);
-		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
-			                      buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
+        xGemm_Function(false);
+        err = clEnqueueReadBuffer(queues_[0], buffer_.buf_c_, CL_TRUE,
+                                  buffer_.offC_ * sizeof(T), buffer_.ldc_ * buffer_.c_num_vectors_ *
                                        sizeof(T),
-								  buffer_.c_, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
-	timer.Stop(timer_id);
-	}
-	void usepersismem_roundtrip_func()
-	{
+                                  buffer_.c_, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
+    timer.Stop(timer_id);
+    }
+    void usepersismem_roundtrip_func()
+    {
 #if defined(CL_MEM_USE_PERSISTENT_MEM_AMD)
-	timer.Start(timer_id);
+    timer.Start(timer_id);
 
-		cl_int err;
+        cl_int err;
 
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY | CL_MEM_USE_PERSISTENT_MEM_AMD,
                                        (buffer_.lda_*buffer_.a_num_vectors_ +
@@ -682,46 +702,46 @@ public:
                                             buffer_.offC_) * sizeof(T),
                                         NULL, &err);
 
-		// map the buffers to pointers at host devices
-		T *map_a,*map_b,*map_c;
-		map_a = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0, 
-										  (buffer_.lda_*buffer_.a_num_vectors_ +
+        // map the buffers to pointers at host devices
+        T *map_a,*map_b,*map_c;
+        map_a = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_a_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.lda_*buffer_.a_num_vectors_ +
                                            buffer_.offA_) * sizeof(T),
-										   0, NULL, NULL, &err);
-		map_b = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0, 
-										  (buffer_.ldb_*buffer_.b_num_vectors_ +
+                                           0, NULL, NULL, &err);
+        map_b = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_b_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.ldb_*buffer_.b_num_vectors_ +
                                            buffer_.offB_) * sizeof(T),
-										   0, NULL, NULL, &err);
-	    map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_WRITE, 0, 
-										  (buffer_.lda_*buffer_.c_num_vectors_ +
+                                           0, NULL, NULL, &err);
+        map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_WRITE, 0,
+                                          (buffer_.lda_*buffer_.c_num_vectors_ +
                                            buffer_.offC_) * sizeof(T),
-										   0, NULL, NULL, &err);
-		// memcpy the input A, B, C to the host pointers
-		memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( T ) );
-		memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
-		memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
-		// unmap the buffers
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_a_, map_a, 0, NULL, NULL);
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_b_, map_b, 0, NULL, NULL);
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, NULL);
-		// calling clBLAS
-		xGemm_Function(false);
-		// map the C buffer again to read output
-	    map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_READ, 0, 
-										  (buffer_.lda_*buffer_.c_num_vectors_ +
+                                           0, NULL, NULL, &err);
+        // memcpy the input A, B, C to the host pointers
+        memcpy( map_a, buffer_.a_, ( buffer_.lda_*buffer_.a_num_vectors_ + buffer_.offA_) * sizeof( T ) );
+        memcpy( map_b, buffer_.b_, ( buffer_.ldb_*buffer_.b_num_vectors_ + buffer_.offB_) * sizeof( T ) );
+        memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
+        // unmap the buffers
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_a_, map_a, 0, NULL, NULL);
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_b_, map_b, 0, NULL, NULL);
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, NULL);
+        // calling clBLAS
+        xGemm_Function(false);
+        // map the C buffer again to read output
+        map_c = (T*)clEnqueueMapBuffer(queues_[0], buffer_.buf_c_, CL_TRUE, CL_MAP_READ, 0,
+                                          (buffer_.lda_*buffer_.c_num_vectors_ +
                                            buffer_.offC_) * sizeof(T),
-										   0, NULL, NULL, &err);
-		memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
-		clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, &event_);
-		clWaitForEvents(1, &event_);
+                                           0, NULL, NULL, &err);
+        memcpy( map_c, buffer_.c_, ( buffer_.ldc_*buffer_.c_num_vectors_ + buffer_.offC_) * sizeof( T ) );
+        clEnqueueUnmapMemObject(queues_[0], buffer_.buf_c_, map_c, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
 
-	timer.Stop(timer_id);
+    timer.Stop(timer_id);
 #else
-		std::cout<<"CL_MEM_USE_PERSISTENT_MEM_AMD is only supported on AMD hardware"<<std::endl;
+        std::cout<<"CL_MEM_USE_PERSISTENT_MEM_AMD is only supported on AMD hardware"<<std::endl;
 #endif
 
-	}
-	void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
+    }
+    void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
                       size_t M, size_t N, size_t K, size_t lda, size_t ldb,
                       size_t ldc, size_t offA, size_t offBX, size_t offCY,
@@ -958,20 +978,21 @@ public:
         buffer_.c_ = new T[buffer_.ldc_*buffer_.c_num_vectors_ ];
 
     }
-	void releaseGPUBuffer_deleteCPUBuffer()
-	{
-		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
-		//need to do this before we eventually hit the destructor
-		delete buffer_.a_;
+    void releaseGPUBuffer_deleteCPUBuffer()
+    {
+        //this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+        //need to do this before we eventually hit the destructor
+        delete buffer_.a_;
         delete buffer_.b_;
         delete buffer_.c_;
+        delete buffer_.c_copy;
         OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_a_),
                         "releasing buffer A");
         OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_b_),
                         "releasing buffer B");
         OPENCL_V_THROW( clReleaseMemObject(buffer_.buf_c_),
                         "releasing buffer C");
-	}
+    }
 
 protected:
     void initialize_scalars(double alpha, double beta)
@@ -982,33 +1003,37 @@ protected:
 
 private:
     xGemmBuffer<T> buffer_;
-	void xGemm_Function(bool flush, cl_uint apiCallCount = 1);
-  unsigned int numQueuesToUse;
-  cl_event events_[numQueues];
+    void xGemm_Function(bool flush, cl_uint apiCallCount = 1);
+    unsigned int numQueuesToUse;
+    cl_event events_[numQueues];
 
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+    void validation();
+#endif
 }; // class xgemm
 
 template<>
-void 
+void
 xGemm<cl_float>::
 xGemm_Function(bool flush, cl_uint apiCallCount )
 {
   for (unsigned int i = 0; i < numQueues; i++) {
     events_[i] = NULL;
   }
-	for (unsigned int i = 0; i < apiCallCount; i++)
-	{
-		clblasSgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
-			buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
-			buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
-			buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
-			buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-			buffer_.ldc_, numQueuesToUse, queues_, 0, NULL, events_);
-	}
-	//flush==true if only the kernel time (library call) is timed
-	//flush==false if memory time is also timed
-	if (flush==true)
-	{
+    for (unsigned int i = 0; i < apiCallCount; i++)
+    {
+        clblasSgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
+            buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
+            buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
+            buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
+            buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
+            buffer_.ldc_, numQueuesToUse, queues_, 0, NULL, events_);
+    }
+    //flush==true if only the kernel time (library call) is timed
+    //flush==false if memory time is also timed
+    if (flush==true)
+    {
     // check if any valid events returned
     cl_uint numValidEvents = 0;
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
@@ -1025,16 +1050,16 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
         //printf("events[%u/%u] is NULL\n", i, numQueuesToUse );
       }
     }
-    
+
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
       clFlush(queues_[i]);
     }
-		clWaitForEvents(numValidEvents, events_);
-	}
+        clWaitForEvents(numValidEvents, events_);
+    }
 }
 
 template<>
-void 
+void
 xGemm<cl_double>::
 xGemm_Function(bool flush, cl_uint apiCallCount )
 {
@@ -1042,18 +1067,18 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
     events_[i] = NULL;
   }
   for (unsigned int i = 0; i < apiCallCount; i++)
-	{
-	  clblasDgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
+    {
+      clblasDgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
                      buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
                      buffer_.ldc_, numQueuesToUse, queues_, 0, NULL, events_);
   }
-	//flush==true if only the kernel time (library call) is timed
-	//flush==false if memory time is also timed
-	if (flush==true)
-	{
+    //flush==true if only the kernel time (library call) is timed
+    //flush==false if memory time is also timed
+    if (flush==true)
+    {
     // check if any valid events returned
     cl_uint numValidEvents = 0;
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
@@ -1070,16 +1095,16 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
         //printf("events[%u/%u] is NULL\n", i, numQueuesToUse );
       }
     }
-    
+
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
       clFlush(queues_[i]);
     }
-		clWaitForEvents(numValidEvents, events_);
-	}
+        clWaitForEvents(numValidEvents, events_);
+    }
 }
 
 template<>
-void 
+void
 xGemm<cl_float2>::
 xGemm_Function(bool flush, cl_uint apiCallCount )
 {
@@ -1087,18 +1112,18 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
     events_[i] = NULL;
   }
   for (unsigned int i = 0; i < apiCallCount; i++)
-	{
-	  clblasCgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
+    {
+      clblasCgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
                      buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
                      buffer_.ldc_, numQueuesToUse, queues_, 0, NULL, events_);
   }
-	//flush==true if only the kernel time (library call) is timed
-	//flush==false if memory time is also timed
-	if (flush==true)
-	{
+    //flush==true if only the kernel time (library call) is timed
+    //flush==false if memory time is also timed
+    if (flush==true)
+    {
     // check if any valid events returned
     cl_uint numValidEvents = 0;
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
@@ -1115,16 +1140,16 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
         //printf("events[%u/%u] is NULL\n", i, numQueuesToUse );
       }
     }
-    
+
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
       clFlush(queues_[i]);
     }
-		clWaitForEvents(numValidEvents, events_);
-	}
+        clWaitForEvents(numValidEvents, events_);
+    }
 }
 
 template<>
-void 
+void
 xGemm<cl_double2>::
 xGemm_Function(bool flush, cl_uint apiCallCount )
 {
@@ -1132,18 +1157,18 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
     events_[i] = NULL;
   }
   for (unsigned int i = 0; i < apiCallCount; i++)
-	{
-	  clblasZgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
+    {
+      clblasZgemm(order_, buffer_.trans_a_, buffer_.trans_b_,
                      buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
                      buffer_.ldc_, numQueuesToUse, queues_, 0, NULL, events_);
   }
-	//flush==true if only the kernel time (library call) is timed
-	//flush==false if memory time is also timed
-	if (flush==true)
-	{
+    //flush==true if only the kernel time (library call) is timed
+    //flush==false if memory time is also timed
+    if (flush==true)
+    {
     // check if any valid events returned
     cl_uint numValidEvents = 0;
     for (unsigned int i = 0; i < numQueuesToUse; i++) {
@@ -1164,8 +1189,8 @@ xGemm_Function(bool flush, cl_uint apiCallCount )
       clFlush(queues_[i]);
     }
 
-		clWaitForEvents(numValidEvents, events_);
-	}
+        clWaitForEvents(numValidEvents, events_);
+    }
 }
 
 template<>
@@ -1199,5 +1224,85 @@ gflops_formula()
 {
     return "8.0*M*N*K/time";
 }
+
+#if defined ( _WIN32 ) || defined (_WIN64 )
+
+#else
+
+template<>
+void
+xGemm<cl_float>::
+validation()
+{
+    cblas_sgemm(clblasToCblas_order(order_), clblasToCblas_operation(buffer_.trans_a_), clblasToCblas_operation(buffer_.trans_b_),
+        buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
+        buffer_.a_ + buffer_.offA_, buffer_.lda_,
+        buffer_.b_ + buffer_.offB_, buffer_.ldb_,
+        buffer_.beta_,
+        buffer_.c_copy + buffer_.offC_, buffer_.ldc_);
+
+    cblas_saxpy(buffer_.lda_ * buffer_.n_, -1.0, buffer_.c_, 1, buffer_.c_copy, 1);
+    float norm_error = cblas_snrm2(buffer_.lda_ * buffer_.n_, buffer_.c_copy, 1)/
+		cblas_snrm2(buffer_.lda_ * buffer_.n_, buffer_.c_, 1);
+    printf("Error of clblas_sgemm against cblas_sgemm = %f \n", norm_error);
+}
+
+template<>
+void
+xGemm<cl_double>::
+validation()
+{
+    cblas_dgemm(clblasToCblas_order(order_), clblasToCblas_operation(buffer_.trans_a_), clblasToCblas_operation(buffer_.trans_b_),
+        buffer_.m_, buffer_.n_, buffer_.k_, buffer_.alpha_,
+        buffer_.a_ + buffer_.offA_, buffer_.lda_,
+        buffer_.b_ + buffer_.offB_, buffer_.ldb_,
+        buffer_.beta_,
+        buffer_.c_copy + buffer_.offC_, buffer_.ldc_);
+
+    cblas_daxpy(buffer_.lda_ * buffer_.n_, -1.0, buffer_.c_, 1, buffer_.c_copy, 1);
+    double norm_error = cblas_dnrm2(buffer_.lda_ * buffer_.n_, buffer_.c_copy, 1)/
+		cblas_dnrm2(buffer_.lda_ * buffer_.n_, buffer_.c_, 1);
+    printf("Error of clblas_dgemm against cblas_dgemm = %f \n", norm_error);
+}
+
+template<>
+void
+xGemm<cl_float2>::
+validation()
+{
+    cblas_cgemm(clblasToCblas_order(order_), clblasToCblas_operation(buffer_.trans_a_), clblasToCblas_operation(buffer_.trans_b_),
+        buffer_.m_, buffer_.n_, buffer_.k_, &(buffer_.alpha_),
+        buffer_.a_ + buffer_.offA_, buffer_.lda_,
+        buffer_.b_ + buffer_.offB_, buffer_.ldb_,
+        &(buffer_.beta_),
+        buffer_.c_copy + buffer_.offC_, buffer_.ldc_);
+
+    cl_float2 neg_one = makeScalar<cl_float2>(-1.0);
+    cblas_caxpy(buffer_.lda_ * buffer_.n_, &neg_one, buffer_.c_, 1, buffer_.c_copy, 1);
+    float norm_error = cblas_scnrm2(buffer_.lda_ * buffer_.n_, buffer_.c_copy, 1)/
+		cblas_scnrm2(buffer_.lda_ * buffer_.n_, buffer_.c_, 1);
+    printf("Error of clblas_cgemm against cblas_cgemm = %f \n", norm_error);
+}
+
+template<>
+void
+xGemm<cl_double2>::
+validation()
+{
+    cblas_zgemm(clblasToCblas_order(order_), clblasToCblas_operation(buffer_.trans_a_), clblasToCblas_operation(buffer_.trans_b_),
+        buffer_.m_, buffer_.n_, buffer_.k_, &(buffer_.alpha_),
+        buffer_.a_ + buffer_.offA_, buffer_.lda_,
+        buffer_.b_ + buffer_.offB_, buffer_.ldb_,
+        &(buffer_.beta_),
+        buffer_.c_copy + buffer_.offC_, buffer_.ldc_);
+
+    cl_double2 neg_one = makeScalar<cl_double2>(-1.0);
+    cblas_zaxpy(buffer_.lda_ * buffer_.n_, &neg_one, buffer_.c_, 1, buffer_.c_copy, 1);
+    double norm_error = cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.c_copy, 1)/
+		cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.c_, 1);
+    printf("Error of clblas_zgemm against cblas_zgemm = %f \n", norm_error);
+}
+
+#endif
 
 #endif // ifndef CLBLAS_BENCHMARK_XGEMM_HXX__

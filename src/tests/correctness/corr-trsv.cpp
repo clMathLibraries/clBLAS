@@ -109,8 +109,6 @@ trsvCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
 	//custom generation function in blas-random.h
 	randomTrsvMatrices<T>( params->order, params->uplo, params->diag, params->N, (A + params->offa), params->lda, (blasX + params->offBX), params->incx);
 
@@ -127,9 +125,6 @@ trsvCorrectnessTest(TestParams *params)
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offa)* sizeof(T), 0, CL_MEM_READ_ONLY);
     bufX = base->createEnqueueBuffer(backX, (lengthX + params->offBX)* sizeof(T), 0, CL_MEM_WRITE_ONLY);
-    ::std::cerr << "Done" << ::std::endl;
-
-    ::std::cerr << "Calling reference xTRSV routine... ";
 
     clblasOrder order;
     clblasUplo fUplo;
@@ -150,7 +145,6 @@ trsvCorrectnessTest(TestParams *params)
             doConjugate((A + params->offa), params->N, params->N, params->lda );
     }
 	::clMath::blas::trsv( order, fUplo, fTrans, params->diag, params->N, A, params->offa, params->lda, blasX, params->offBX, params->incx);
-	::std::cerr << "Done" << ::std::endl;
 
 	/*
 	printf("\n\n acml result X\n");
@@ -172,8 +166,6 @@ trsvCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xTRSV routine... ";
 
     DataType type;
     type = ( typeid(T) == typeid(cl_float))? TYPE_FLOAT : ( typeid(T) == typeid(cl_double))? TYPE_DOUBLE: ( typeid(T) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT: TYPE_COMPLEX_DOUBLE;
@@ -198,7 +190,6 @@ trsvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufX, CL_TRUE, 0,
         lengthX * sizeof(*backX), backX, 0,
@@ -217,6 +208,14 @@ trsvCorrectnessTest(TestParams *params)
     // handle lda correctly based on row-major/col-major..
     compareMatrices<T>( clblasColumnMajor, lengthX , 1, blasX, backX,
                        lengthX, deltaX );
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->diag, params->N, params->lda, params->incx, params->offa, params->offBX);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasX, backX, deltaX);
     delete[] events;
 }

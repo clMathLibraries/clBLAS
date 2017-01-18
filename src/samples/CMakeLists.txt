@@ -1,12 +1,12 @@
 # ########################################################################
 # Copyright 2013 Advanced Micro Devices, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,8 @@ set(SSYMV_SAMPLE_SRC example_ssymv.c)
 set(SGEMM_SAMPLE_SRC example_sgemm.c)
 set(STRMM_SAMPLE_SRC example_strmm.c)
 set(STRSM_SAMPLE_SRC example_strsm.c)
+set(STRSM_SAMPLE_SRCPP example_strsm.cpp)
+set(CTRSM_SAMPLE_SRC example_ctrsm.c)
 set(SSYRK_SAMPLE_SRC example_ssyrk.c)
 set(SSYR2K_SAMPLE_SRC example_ssyr2k.c)
 
@@ -90,6 +92,14 @@ set_property( TARGET example_strmm PROPERTY FOLDER "Samples")
 add_executable(example_strsm ${STRSM_SAMPLE_SRC})
 target_link_libraries(example_strsm ${OPENCL_LIBRARIES} clBLAS)
 set_property( TARGET example_strsm PROPERTY FOLDER "Samples")
+
+add_executable(example_strsm_cpp ${STRSM_SAMPLE_SRCPP})
+target_link_libraries(example_strsm_cpp ${OPENCL_LIBRARIES} clBLAS)
+set_property( TARGET example_strsm_cpp PROPERTY FOLDER "Samples")
+
+add_executable(example_ctrsm ${CTRSM_SAMPLE_SRC})
+target_link_libraries(example_ctrsm ${OPENCL_LIBRARIES} clBLAS)
+set_property( TARGET example_ctrsm PROPERTY FOLDER "Samples")
 
 add_executable(example_ssyrk ${SSYRK_SAMPLE_SRC})
 target_link_libraries(example_ssyrk ${OPENCL_LIBRARIES} clBLAS)
@@ -267,11 +277,11 @@ else( )
     set( CLBLAS_EXAMPLE_INSTALL_DESTINATION share/clBLAS/samples)
 endif()
 install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
-         example_ssyr2k example_strmm example_strsm 
-         example_strmv example_strsv example_sger example_cher example_ssyr 
+         example_ssyr2k example_strmm example_strsm
+         example_strmv example_strsv example_sger example_cher example_ssyr
          example_ssyr2 example_cherk example_ssymm example_chemm
          example_stpmv example_chpmv example_stpsv example_sspmv example_sspr example_chpr
-         example_sspr2 example_zhpr2 
+         example_sspr2 example_zhpr2
          example_sgbmv example_stbmv example_ssbmv example_chbmv example_stbsv
          example_cher2k
          example_sswap example_sscal example_csscal example_scopy example_saxpy example_sdot
@@ -286,16 +296,16 @@ install( TARGETS example_sgemm example_sgemv example_ssymv example_ssyrk
 
 configure_file( "${PROJECT_SOURCE_DIR}/samples/CMakeLists.pack"
 		"${PROJECT_BINARY_DIR}/samples/CMakeLists.txt" COPYONLY )
-		
+
 if( WIN32 )
     set( CLBLAS_SAMPLE_INSTALL_DESTINATION samples)
 else( )
     set( CLBLAS_SAMPLE_INSTALL_DESTINATION share/clBLAS/samples/src)
 endif()
-		
+
 install(FILES
             example_sgemv.c
-            example_ssymv.c 
+            example_ssymv.c
             example_sgemm.c
             example_strmm.c
             example_strsm.c
@@ -303,11 +313,11 @@ install(FILES
             example_ssyr2k.c
 			example_strmv.c
 			example_strsv.c
-			example_sger.c 
-			example_ssyr.c 
+			example_sger.c
+			example_ssyr.c
 			example_ssyr2.c
 			example_ssymm.c
-			example_cher.c 
+			example_cher.c
             example_chemm.cpp
             example_cherk.cpp
             example_ssymm.c

@@ -310,21 +310,21 @@ compareMatrices(
     const cl_double *absDelta = NULL)
 {
     size_t m = 0, n = 0;
-    T a, b;
+    T ref, clresult;
     cl_double delta;
 
     if( lda > 0 ) // General case
     {
     for (m = 0; m < M; m++) {
         for (n = 0; n < N; n++) {
-            a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
-            b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
+            ref = getElement<T>(order, clblasNoTrans, m, n, A, lda);
+            clresult = getElement<T>(order, clblasNoTrans, m, n, B, lda);
             delta = 0.0;
             if (absDelta != NULL) {
                 delta = absDelta[m * N + n];
             }
-			if( module(a-b) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
-            ASSERT_NEAR(a, b, delta);
+			if( module(ref-clresult) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
+            ASSERT_NEAR(ref, clresult, delta);
         }
     }
     }
@@ -336,14 +336,14 @@ compareMatrices(
 		{
 			for( m=n; m < M; m++)
 			{
-            			a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
+            			ref = getElement<T>(order, clblasNoTrans, m, n, A, lda);
+			        clresult = getElement<T>(order, clblasNoTrans, m, n, B, lda);
             			delta = 0.0;
             			if (absDelta != NULL) {
                 			//delta = absDelta[m * N + n];
             			}
-						if( module(a-b) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(a, b, delta);
+						if( module(ref-clresult) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
+            			ASSERT_NEAR(ref, clresult, delta);
 			}
 		}
 	}
@@ -353,14 +353,14 @@ compareMatrices(
 		{
 			for( n = 0; n <= m; n++)
 			{
-            			a = getElement<T>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<T>(order, clblasNoTrans, m, n, B, lda);
+            			ref = getElement<T>(order, clblasNoTrans, m, n, A, lda);
+			        clresult = getElement<T>(order, clblasNoTrans, m, n, B, lda);
             			delta = 0.0;
             			if (absDelta != NULL) {
                 			//delta = absDelta[m * N + n];
             			}
-						if( module(a-b) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(a, b, delta);
+						if( module(ref-clresult) > delta )		printf("m : %d\t n: %d\n", (int)m, (int)n);
+            			ASSERT_NEAR(ref, clresult, delta);
 			}
 		}
 	}
@@ -379,23 +379,23 @@ compareMatrices<FloatComplex>(
     const cl_double *absDelta)
 {
     size_t m = 0, n = 0;
-    FloatComplex a, b;
+    FloatComplex ref, clresult;
     cl_double delta;
 
 if ( lda > 0 )
 {
     for (m = 0; m < M; m++) {
         for (n = 0; n < N; n++) {
-            a = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
-            b = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
+            ref = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
+            clresult = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
             delta = 0.0;
             if (absDelta != NULL) {
                 delta = absDelta[m * N + n];
             }
-			if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
+			if( (module(CREAL(ref) - CREAL(clresult)) > delta) || (module(CIMAG(ref) - CIMAG(clresult)) > delta) )
 					printf("m : %d\t n: %d\n", (int)m, (int)n);
-            ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-            ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+            ASSERT_NEAR(CREAL(ref), CREAL(clresult), delta);
+            ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), delta);
         }
     }
 }
@@ -407,16 +407,16 @@ if ( lda > 0 )
 		{
 			for( m=n; m < M; m++)
 			{
-            			a = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
-				        b = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
+            			ref = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
+				        clresult = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
             			delta = 0.0;
             			if (absDelta != NULL) {
                 			//delta = absDelta[m * N + n];
             			}
-            			if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
+            			if( (module(CREAL(ref) - CREAL(clresult)) > delta) || (module(CIMAG(ref) - CIMAG(clresult)) > delta) )
 							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+            			ASSERT_NEAR(CREAL(ref), CREAL(clresult), delta);
+		            	ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), delta);
 			}
 		}
 	}
@@ -426,16 +426,16 @@ if ( lda > 0 )
 		{
 			for( n = 0; n <= m; n++)
 			{
-            			a = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
+            			ref = getElement<FloatComplex>(order, clblasNoTrans, m, n, A, lda);
+			        clresult = getElement<FloatComplex>(order, clblasNoTrans, m, n, B, lda);
             			delta = 0.0;
             			if (absDelta != NULL) {
                 			//delta = absDelta[m * N + n];
             			}
-						if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
+						if( (module(CREAL(ref) - CREAL(clresult)) > delta) || (module(CIMAG(ref) - CIMAG(clresult)) > delta) )
 							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+            			ASSERT_NEAR(CREAL(ref), CREAL(clresult), delta);
+		            	ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), delta);
 			}
 		}
 	}
@@ -455,22 +455,22 @@ compareMatrices<DoubleComplex>(
     const cl_double *absDelta)
 {
     size_t m = 0, n = 0;
-    DoubleComplex a, b;
+    DoubleComplex ref, clresult;
     cl_double delta;
 if( lda > 0 )
 {
     for (m = 0; m < M; m++) {
         for (n = 0; n < N; n++) {
-            a = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
-            b = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
+            ref = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
+            clresult = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
             delta = 0.0;
             if (absDelta != NULL) {
                 delta = absDelta[m * N + n];
             }
-			if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
+			if( (module(CREAL(ref) - CREAL(clresult)) > delta) || (module(CIMAG(ref) - CIMAG(clresult)) > delta) )
 					printf("m : %d\t n: %d\n", (int)m, (int)n);
-            ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-            ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+            ASSERT_NEAR(CREAL(ref), CREAL(clresult), delta);
+            ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), delta);
         }
     }
 }
@@ -482,16 +482,16 @@ if( lda > 0 )
 		{
 			for( m=n; m < M; m++)
 			{
-            			a = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
+            			ref = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
+			        clresult = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
             			delta = 0.0;
             			if (absDelta != NULL) {
                 			//delta = absDelta[m * N + n];
             			}
-						if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
+						if( (module(CREAL(ref) - CREAL(clresult)) > delta) || (module(CIMAG(ref) - CIMAG(clresult)) > delta) )
 							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+            			ASSERT_NEAR(CREAL(ref), CREAL(clresult), delta);
+		            	ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), delta);
 			}
 		}
 	}
@@ -501,16 +501,16 @@ if( lda > 0 )
 		{
 			for( n = 0; n <= m; n++)
 			{
-            			a = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
-			        b = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
+            			ref = getElement<DoubleComplex>(order, clblasNoTrans, m, n, A, lda);
+			        clresult = getElement<DoubleComplex>(order, clblasNoTrans, m, n, B, lda);
             			delta = 0.0;
             			if (absDelta != NULL) {
                 			//delta = absDelta[m * N + n];
             			}
-						if( (module(CREAL(a) - CREAL(b)) > delta) || (module(CIMAG(a) - CIMAG(b)) > delta) )
+						if( (module(CREAL(ref) - CREAL(clresult)) > delta) || (module(CIMAG(ref) - CIMAG(clresult)) > delta) )
 							printf("m : %d\t n: %d\n", (int)m, (int)n);
-            			ASSERT_NEAR(CREAL(a), CREAL(b), delta);
-		            	ASSERT_NEAR(CIMAG(a), CIMAG(b), delta);
+            			ASSERT_NEAR(CREAL(ref), CREAL(clresult), delta);
+		            	ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), delta);
 			}
 		}
 	}
@@ -764,10 +764,10 @@ template <typename T>
 static void compareValues(
     const T *A, const T *B, const cl_double absDelta=0.0 )
 {
-    T a, b;
-    a = *A;
-    b = *B;
-    ASSERT_NEAR(a, b, absDelta);
+    T ref, clresult;
+    ref = *A;
+    clresult = *B;
+    ASSERT_NEAR(ref, clresult, absDelta);
 }
 
  template<>
@@ -775,12 +775,12 @@ __template_static void
 compareValues<FloatComplex> (
     const FloatComplex *A, const FloatComplex *B, const cl_double absDelta )
 {
-    FloatComplex a, b;
+    FloatComplex ref, clresult;
 
-    a = *A;
-    b = *B;
-    ASSERT_NEAR(CREAL(a), CREAL(b), absDelta);
-    ASSERT_NEAR(CIMAG(a), CIMAG(b), absDelta);
+    ref = *A;
+    clresult = *B;
+    ASSERT_NEAR(CREAL(ref), CREAL(clresult), absDelta);
+    ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), absDelta);
 }
 
  template<>
@@ -788,11 +788,11 @@ __template_static void
 compareValues<DoubleComplex> (
     const DoubleComplex *A, const DoubleComplex *B, const cl_double absDelta )
 {
-    DoubleComplex a, b;
+    DoubleComplex ref, clresult;
 
-    a = *A;
-    b = *B;
-    ASSERT_NEAR(CREAL(a), CREAL(b), absDelta);
-    ASSERT_NEAR(CIMAG(a), CIMAG(b), absDelta);
+    ref = *A;
+    clresult = *B;
+    ASSERT_NEAR(CREAL(ref), CREAL(clresult), absDelta);
+    ASSERT_NEAR(CIMAG(ref), CIMAG(clresult), absDelta);
 }
 #endif  // MATRIX_H_

@@ -4,7 +4,6 @@
 
 #ifndef KERNEL_DIAG_DTRTRI_LOWER_128_16_SRC_CPP
 #define KERNEL_DIAG_DTRTRI_LOWER_128_16_SRC_CPP
-#pragma message("#define KERNEL_DIAG_DTRTRI_UPPER_128_16_SRC_CPP.")
 
 #ifndef STRINGIFY
 #define STRINGIFY2(...) #__VA_ARGS__
@@ -101,6 +100,7 @@ else\n
 	}\n
 }\n
 
+barrier(CLK_LOCAL_MEM_FENCE);\n
 /*
 * the lower case
 */
@@ -135,6 +135,7 @@ for (i = BLOCK_SIZE - 2; i >= 0; i--) {\n
 	workspace[tx] = *(Bs + i*BLOCK_SIZE + tx); \n
 	x = workspace + i + 1; \n
 	y = Bs + i*BLOCK_SIZE; \n
+    barrier(CLK_LOCAL_MEM_FENCE);\n
 
 	txw = (tx - i - 1); \n
 

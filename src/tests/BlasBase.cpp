@@ -40,10 +40,10 @@ BlasBase::BlasBase()
     useNumCommandQueues_(false), numCommandQueues_(1),
     useAlpha_(false), useBeta_(false), useSeed_(false),
     useM_(false), useN_(false), useK_(false),
-    M_(0), N_(0), K_(0),
+    M_(0), N_(0), K_(0), devOrd_(0), platOrd_(0),
     useIncX_(false), useIncY_(false),
     incX_(0), incY_(0),
-    useImages_(false), devType_(CL_DEVICE_TYPE_GPU), imageA_(0), imageB_(0)
+    useImages_(false), devType_(CL_DEVICE_TYPE_DEFAULT), imageA_(0), imageB_(0)
 {
     memset(&alpha_, 0, sizeof(alpha_));
     memset(&beta_, 0, sizeof(beta_));
@@ -57,7 +57,7 @@ BlasBase::~BlasBase()
     /*
      * Teardown() is disabled due to troubles with test interrupting
      * with CTRL-C in windows. This occurs since after pressing of these keys
-     * the OpenCL runtime is destroyed before calling global object destructors.
+     * the OpenCL runtime is destroyed before calling global object destructor's.
      */
 #if 0
     TearDown();
@@ -105,12 +105,12 @@ BlasBase::getDevice(cl_device_type type, const char* name,
 {
     cl_int err;
     cl_uint nrDevices, i, p;
-    cl_device_id *devices, result = NULL;
+    cl_device_id *devices = NULL;
+    cl_device_id result = 0;
     size_t sz;
     char *str;
-    cl_platform_id *platforms, selPlatform = NULL;
+    cl_platform_id* platforms = NULL;
     cl_uint nrPlatforms;
-    cl_device_info devInfo;
 
     nrPlatforms = getPlatforms(&platforms, &err);
 
@@ -118,29 +118,9 @@ BlasBase::getDevice(cl_device_type type, const char* name,
         *error = CL_SUCCESS;
     }
 
-    /*
-     * If device name is not specified, then any AMD device is preferable.
-     * It there are not AMD devices of such a type presented in the system,
-     * then get a device of another vendor. If this is the additional device
-     * which is being tried to get, it must be supported by the same platform
-     * as the primary device does.
-     */
-
-    if (name == NULL) {
-        name = "Advanced Micro Devices, Inc.";
-        devInfo = CL_DEVICE_VENDOR;
-    }
-    else {
-        devInfo = CL_DEVICE_NAME;
-        type = CL_DEVICE_TYPE_ALL;
-    }
-
-    for (p = 0; p < nrPlatforms; p++) {
-        cl_platform_id platform = platforms[p];
-        err = clGetDeviceIDs(platform, type, 0, NULL, &nrDevices);
-        if (err == CL_DEVICE_NOT_FOUND) {
-            continue;
-        }
+    if (platOrd_ < nrPlatforms) {
+        platform_ = platforms[platOrd_];
+        err = clGetDeviceIDs(platform_, type, 0, NULL, &nrDevices);
         if (err != CL_SUCCESS) {
             if (error != NULL) {
                 *error = err;
@@ -152,7 +132,7 @@ BlasBase::getDevice(cl_device_type type, const char* name,
         }
 
         devices = new cl_device_id[nrDevices];
-        err = clGetDeviceIDs(platform, type, nrDevices, devices, NULL);
+        err = clGetDeviceIDs(platform_, type, nrDevices, devices, NULL);
         if (err != CL_SUCCESS) {
             if (error != NULL) {
                 *error = err;
@@ -161,40 +141,15 @@ BlasBase::getDevice(cl_device_type type, const char* name,
             return NULL;
         }
 
-        for (i = 0; i < nrDevices; i++) {
-            err = clGetDeviceInfo(devices[i], devInfo, 0, NULL, &sz);
-            if (err != CL_SUCCESS) {
-                continue;
-            }
-            str = new char[sz + 1];
-            memset(str, 0, sz + 1);
-            err = clGetDeviceInfo(devices[i], devInfo, sz, str, NULL);
-            if (err != CL_SUCCESS) {
-                delete[] str;
-                continue;
-            }
-            if ((devInfo == CL_DEVICE_VENDOR) && (result == NULL) &&
-                ((platform_ == NULL) || (platform == platform_))) {
-
-                result = devices[i];
-                selPlatform = platform;
-            }
-                printf("---- %s\n", str);
-            if (strcmp(str, name) == 0) {
-                //printf("---- %s\n", str);
-                platform_ = platform;
-                result = devices[i];
-                delete[] str;
-                break;
-            }
-            delete[] str;
+        if (devOrd_ < nrDevices) {
+            result = devices[devOrd_];
         }
         delete[] devices;
         devices = NULL;
     }
-
-    if (platform_ == NULL) {
-        platform_ = selPlatform;
+    else
+    {
+        platform_ = NULL;
     }
 
     delete[] platforms;
@@ -211,6 +166,7 @@ BlasBase::SetUp()
     cl_device_id devices[2] = {NULL, NULL};
 
     primaryDevice_ = getDevice(devType_, devName_, &err);
+
     if ((err != CL_SUCCESS) || (primaryDevice_ == NULL)) {
         ASSERT_EQ(CL_SUCCESS, clGetPlatformIDs(1, &platform_, NULL));
         ASSERT_EQ(CL_SUCCESS,
@@ -243,7 +199,7 @@ BlasBase::SetUp()
 	printf("SetUp: Created context %p\n", context_);
 	#endif
 	printf("SetUp: about to create command queues\n");
-    for (i = 0; i < MAX_COMMAND_QUEUES; i++) {
+    for (i = 0; i < numCommandQueues_; i++) {
         cl_device_id dev;
 
         dev = (i == addDevQueueIdx) ? additionalDevice_ : primaryDevice_;
@@ -260,10 +216,9 @@ BlasBase::TearDown()
 {
     cl_uint i;
 
-    for (i = 0; i < MAX_COMMAND_QUEUES; i++) {
+    for (i = 0; i < numCommandQueues_; i++) {
         clReleaseCommandQueue(commandQueues_[i]);
     }
-    numCommandQueues_ = 1;
 
     if (context_ != NULL) {
         clReleaseContext(context_);
@@ -282,20 +237,23 @@ BlasBase::initialized()
 }
 
 bool
-BlasBase::setDeviceType(cl_device_type* devType, const char* devName)
+BlasBase::setDeviceType(const TestParams& params)
 {
-    if (devType_ == *devType && devName_ == devName) {
+    // Early exit if no device state changed
+    if (devType_ == params.devType && devName_ == params.devName && platOrd_ == params.platOrd && devOrd_ == params.devOrd) {
         return true;
     }
 
-    devType_ = *devType;
-    devName_ = devName;
+    devType_ = params.devType;
+    devName_ = params.devName;
+    platOrd_ = params.platOrd;
+    devOrd_ = params.devOrd;
     if (!initialized()) {
         return true;
     }
     TearDown();
     SetUp();
-    *devType = devType_;
+
     return initialized();
 }
 

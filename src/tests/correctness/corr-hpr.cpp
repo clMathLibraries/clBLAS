@@ -100,16 +100,12 @@ hprCorrectnessTest(TestParams *params)
     }
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
     randomHerMatrices( params->order, params->uplo, params->N, &alpha_, (AP + params->offa), params->lda, (X + params->offBX), params->incx );
     memcpy(backA, AP, (lengthAP + params->offa)* sizeof(T));
-	::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufAP = base->createEnqueueBuffer(AP, (lengthAP + params->offa) * sizeof(T), 0, CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX) * sizeof(*X), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xHPR routine... ";
 
     clblasOrder fOrder;
     clblasUplo fUplo;
@@ -123,7 +119,6 @@ hprCorrectnessTest(TestParams *params)
 		fUplo = (fUplo == clblasLower)? clblasUpper : clblasLower;
 	}
 	clMath::blas::hpr( fOrder, fUplo, params->N, CREAL(alpha_), X , params->offBX, params->incx, AP, params->offa);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufAP == NULL) || (bufX == NULL) ) {
         /* Skip the test, the most probable reason is
@@ -150,8 +145,6 @@ hprCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xHPR routine... ";
-
     err = (cl_int)::clMath::clblas::hpr( params->order, params->uplo, params->N, CREAL(alpha_),
 						bufX, params->offBX, params->incx, bufAP, params->offa,
 						params->numCommandQueues, base->commandQueues(),
@@ -172,7 +165,6 @@ hprCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufAP, CL_TRUE, 0,
         (lengthAP + params->offa) * sizeof(T), backA, 0,
@@ -183,8 +175,6 @@ hprCorrectnessTest(TestParams *params)
 	}
 
     releaseMemObjects(bufAP, bufX);
-
-	printf("Comparing the results\n");
 
     compareMatrices<T>(clblasColumnMajor, lengthAP, 1, (AP + params->offa), (backA + params->offa), lengthAP);
 

@@ -95,19 +95,14 @@ void scalCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     randomVectors(params->N, (blasX+params->offBX), params->incx);
     alpha = convertMultiplier<T>(params->alpha);
     memcpy(clblasX, blasX, (lengthX + params->offBX)* sizeof(*blasX));
-    ::std::cerr << "Done" << ::std::endl;
     bufX = base->createEnqueueBuffer(clblasX, (lengthX + params->offBX)* sizeof(*clblasX), 0, CL_MEM_READ_WRITE);
 
-    ::std::cerr << "Calling reference xSCAL routine... ";
     // Both blas and clBlas wrapper functions consider the real part of alpha in case of css/zdscal
     // This is to make sure both get the same scalar alpha. check wrapper functions
     ::clMath::blas::scal(is_css_zds, params->N, alpha, blasX, params->offBX, params->incx);
-    ::std::cerr << "Done" << ::std::endl;
 
     if (bufX == NULL) {
         /* Skip the test, the most probable reason is
@@ -125,7 +120,6 @@ void scalCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xSCAL routine... ";
     // Both blas and clBlas wrapper functions consider the real part of alpha in case of css/zdscal
     // This is to make sure both get the same scalar alpha. check wrapper functions
     err = (cl_int)::clMath::clblas::scal(is_css_zds, params->N, alpha, bufX, params->offBX,
@@ -145,8 +139,6 @@ void scalCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufX, CL_TRUE, 0,
                    (lengthX + params->offBX) * sizeof(*clblasX), clblasX, 0, NULL, NULL);
@@ -158,6 +150,14 @@ void scalCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX),
                         (clblasX + params->offBX), lengthX);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->alpha, params->offBX, params->incx);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(blasX, clblasX);
     delete[] events;
 }

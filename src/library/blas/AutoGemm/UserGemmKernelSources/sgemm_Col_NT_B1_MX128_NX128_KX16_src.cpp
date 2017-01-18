@@ -4,7 +4,7 @@
 
 #ifndef KERNEL_SGEMM_COL_NT_B1_MX128_NX128_KX16_SRC_H
 #define KERNEL_SGEMM_COL_NT_B1_MX128_NX128_KX16_SRC_H
-#pragma message("AutoGemm's sgemm_Col_NT_B1_MX128_NX128_KX16_src (if exists) overriden by user.")
+// #pragma message("AutoGemm's sgemm_Col_NT_B1_MX128_NX128_KX16_src (if exists) overriden by user.")
 
 #include "UserGemmKernelSourceIncludes.h"
 
@@ -53,7 +53,7 @@ const char * const sgemm_Col_NT_B1_MX128_NX128_KX16_src = STRINGIFY(
             rC[4][0] = mad(rA[0][4],rB[0][0],rC[4][0]); \
             rC[5][0] = mad(rA[0][5],rB[0][0],rC[5][0]); \
             rC[6][0] = mad(rA[0][6],rB[0][0],rC[6][0]); \
-            rC[7][0] = mad(rA[0][7],rB[0][0],rC[7][0]); \		
+            rC[7][0] = mad(rA[0][7],rB[0][0],rC[7][0]); \
             rC[0][1] = mad(rA[0][0], rB[0][1], rC[0][1]); \
             rC[1][1] = mad(rA[0][1], rB[0][1], rC[1][1]); \
             rC[2][1] = mad(rA[0][2], rB[0][1], rC[2][1]); \
@@ -284,7 +284,7 @@ uint offsetC)
 	C[80 * ldc] = alpha*rC[7][5] + beta*C[80 * ldc];
 	C[96 * ldc] = alpha*rC[7][6] + beta*C[96 * ldc];
 	C[112 * ldc] = alpha*rC[7][7] + beta*C[112 * ldc];
-	
+
 }
 );
 #endif

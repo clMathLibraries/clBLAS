@@ -135,8 +135,6 @@ rotgCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     //Filling random values for SA and SB. C & S are only for output sake
     randomVectors(1, (SA+params->offBX), 1, (SB+params->offCY), 1);
     S[params->offb] =  back_S[params->offb] = ZERO<T1>();
@@ -144,18 +142,17 @@ rotgCorrectnessTest(TestParams *params)
 
     back_SA[params->offBX] = SA[params->offBX];
     back_SB[params->offCY] = SB[params->offCY];
-    ::std::cerr << "Done" << ::std::endl;
 
     //printing the inputs, as they change after processing
-    ::std::cerr << "A = ";
-    printElement<T1>(SA[params->offBX]);
-    ::std::cerr << "\tB = ";
-    printElement<T1>(SB[params->offCY]);
-    ::std::cerr << "\tC = ";
-    printElement<T2>(C[params->offa]);
-    ::std::cerr << "\tS = ";
-    printElement<T1>(S[params->offb]);
-    ::std::cout << std::endl << std::endl;
+    //::std::cerr << "A = ";
+    //printElement<T1>(SA[params->offBX]);
+    //::std::cerr << "\tB = ";
+    //printElement<T1>(SB[params->offCY]);
+    //::std::cerr << "\tC = ";
+    //printElement<T2>(C[params->offa]);
+    //::std::cerr << "\tS = ";
+    //printElement<T1>(S[params->offb]);
+    //::std::cout << std::endl << std::endl;
 
 	// Allocate buffers
     bufSA = base->createEnqueueBuffer(SA, (length + params->offBX) * sizeof(T1), 0, CL_MEM_READ_WRITE);
@@ -163,10 +160,7 @@ rotgCorrectnessTest(TestParams *params)
     bufC  = base->createEnqueueBuffer(C,  (length + params->offa ) * sizeof(T2), 0, CL_MEM_WRITE_ONLY);
     bufS  = base->createEnqueueBuffer(S,  (length + params->offb ) * sizeof(T1), 0, CL_MEM_WRITE_ONLY);
 
-    ::std::cerr << "Calling reference xROTG routine... ";
-
 	::clMath::blas::rotg(back_SA, params->offBX, back_SB, params->offCY, back_C, params->offa, back_S, params->offb);
-    ::std::cerr << "Done" << ::std::endl;
 
     // Hold X vector
 
@@ -184,8 +178,6 @@ rotgCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xROTG routine... ";
 
     DataType type;
     type = ( typeid(T1) == typeid(cl_float)) ? TYPE_FLOAT :
@@ -214,8 +206,6 @@ rotgCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufSA, CL_TRUE, 0,
         (length + params->offBX) * sizeof(T1), SA, 0, NULL, NULL);
@@ -250,6 +240,12 @@ rotgCorrectnessTest(TestParams *params)
 
     delta = deltaForType * returnMax<T1>(back_S[params->offb]);
     compareValues<T1>( (back_S + params->offb), (S + params->offb), delta);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->offBX, params->offCY, params->offa, params->offb);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T1>(SA, SB, S, back_SA, back_SB, back_S);
     deleteBuffers<T2>(C, back_C);

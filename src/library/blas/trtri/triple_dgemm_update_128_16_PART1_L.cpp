@@ -5,7 +5,6 @@
 
 #ifndef KERNEL_TRIPLE_DGEMM_UPDATE_128_16_PART1_L_SRC_CPP
 #define KERNEL_TRIPLE_DGEMM_UPDATE_128_16_PART1_L_SRC_CPP
-#pragma message("#define KERNEL_TRIPLE_DGEMM_UPDATE_128_16_PART1_L_SRC_CPP.")
 
 #ifndef STRINGIFY
 #define STRINGIFY2(...) #__VA_ARGS__
@@ -74,13 +73,13 @@ Ain = Ain + offAin; \n
 	int ya = page*blk * 2; \n
 	int incA = ya * lda + xa; \n
 
-	// maxA will be used to detect overflow on all subsequent accesses on A(xa, ya:ya+???) 
+	// maxA will be used to detect overflow on all subsequent accesses on A(xa, ya:ya+???)
 
 	int maxA; \n
 	if (xa < na)\n
-		maxA = lda*na; \n // macro READA will detect overflow on y dimension 
+		maxA = lda*na; \n // macro READA will detect overflow on y dimension
 	else\n
-	    maxA = 0; \n  // there is already an overflow on xa 
+	    maxA = 0; \n  // there is already an overflow on xa
 
 #define READA ( (incA < maxA ) ? Ain[incA] : 0 )  \n
 
@@ -139,7 +138,7 @@ Ain = Ain + offAin; \n
 		daxpy(a[1], &bs[13][0], c); \n
 		daxpy(a[2], &bs[14][0], c); \n
 		daxpy(a[3], &bs[15][0], c); \n
-	
+
 		B += 16; \n
 		//__syncthreads();
 		barrier(CLK_LOCAL_MEM_FENCE); \n

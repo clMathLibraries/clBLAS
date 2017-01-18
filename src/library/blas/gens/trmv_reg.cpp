@@ -426,7 +426,7 @@ assignKargs(KernelArg *args, const void *params, const void* )
     	INIT_KARG(&args[2], blasArgs->C); 	//y - scratch == _x_vector argument
     }
 	initSizeKarg(&args[3], blasArgs->N);
-    inc = blasArgs->ldb.vector;
+    inc = blasArgs->ldb.Vector;
     INIT_KARG(&args[4], inc);
 	unity = (blasArgs->diag == clblasUnit);
    	INIT_KARG(&args[5], unity);
@@ -444,7 +444,7 @@ assignKargs(KernelArg *args, const void *params, const void* )
 	// For HEMV both alpha and beta has to be passed.
 	if( (step->funcID == CLBLAS_HEMV) || (blasArgs->pigFuncID == CLBLAS_HPMV) || (blasArgs->pigFuncID == CLBLAS_SPMV) )
 	{
-		inc = blasArgs->ldc.vector;
+		inc = blasArgs->ldc.Vector;
 		INIT_KARG(&args[10], inc);
 		initSizeKarg(&args[11], blasArgs->offCY);
 		assignScalarKarg(&args[12], &(blasArgs->alpha), blasArgs->dtype);

@@ -119,10 +119,10 @@ doDot(
         kargs->offa = offDP;
 		kargs->B = X;
 		kargs->offBX = offx;
-		kargs->ldb.vector = incx;   // Will be using this as incx
+		kargs->ldb.Vector = incx;   // Will be using this as incx
 		kargs->C = Y;
 		kargs->offCY = offy;
-		kargs->ldc.vector = incy;	// Will be using this as incy
+		kargs->ldc.Vector = incy;	// Will be using this as incy
         kargs->D = scratchBuff;
         kargs->redctnType = REDUCE_BY_SUM;
         kargs->K = (size_t)doConj;

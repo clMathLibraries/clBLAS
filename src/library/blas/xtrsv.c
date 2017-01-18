@@ -60,7 +60,7 @@ orchestrateNonTransposeTRSV(CLBlasKargs *kargs, ListHead *trtriSeq, ListHead *ge
 
 	if ((trtri->subdims->y) != (gemv->subdims->y))
 	{
-		printf("TRSV: WARNING:	TRTRI and GEMV dont have identical sub-divisions!!! %lu and %lu\n", trtri->subdims->y, gemv->subdims->y);
+		printf("TRSV: WARNING:	TRTRI and GEMV don't have identical sub-divisions!!! %lu and %lu\n", trtri->subdims->y, gemv->subdims->y);
 		return clblasNotImplemented;
 	} else {
 		#ifdef DEBUG_TRSV
@@ -166,7 +166,7 @@ orchestrateTransposeTRSV(CLBlasKargs *kargs, ListHead *trtriSeq, ListHead *gemvS
 
 	if ((trtri->subdims->y) != (gemv->subdims->y))
 	{
-		printf("TRSV: Transpose: WARNING: TRTRI and GEMV dont have identical sub-divisions!!! %lu and %lu\n", trtri->subdims->y, gemv->subdims->y);
+		printf("TRSV: Transpose: WARNING: TRTRI and GEMV don't have identical sub-divisions!!! %lu and %lu\n", trtri->subdims->y, gemv->subdims->y);
 		return clblasNotImplemented;
 	} else {
 		#ifdef DEBUG_TRSV
@@ -406,7 +406,7 @@ doTrsv(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = x;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->offBX = offx;
 	kargs->offa = offa;
 	kargs->offA = offa;

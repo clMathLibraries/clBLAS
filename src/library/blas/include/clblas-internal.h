@@ -61,7 +61,7 @@ typedef union ArgMultiplier {
 
 typedef union LeadingDimention {
     size_t matrix;  /**< Positive ld value for matrixes */
-    int vector;     /**< Integer offset value for vectors */
+    int Vector;     /**< Integer offset value for vectors */
 } LeadingDimention;
 
 typedef enum reductionType {

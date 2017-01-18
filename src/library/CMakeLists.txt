@@ -1,12 +1,12 @@
 # ########################################################################
 # Copyright 2013 Advanced Micro Devices, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,6 @@ set(AUTOGEMM_HEADERS
 )
 
 set(AUTOGEMM_SRC
-  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.cc
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmClKernels.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBuildOptionsBinary.cpp
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelBinaries.cpp
@@ -54,9 +53,9 @@ set(AUTOGEMM_SRC
   ${CMAKE_BINARY_DIR}/include/AutoGemmIncludes/AutoGemmKernelSources.cpp
 )
 
-#set(USERGEMM_SRC
-#  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.cpp
-#)
+set(USERGEMM_SRC
+  ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmClKernels.cc
+)
 
 set(USERGEMM_HEADERS
    ${CMAKE_SOURCE_DIR}/library/blas/AutoGemm/UserGemmKernelSources/UserGemmKernelSourceIncludes.h
@@ -92,6 +91,8 @@ option( PRECOMPILE_GEMM_TRANS_CN "AutoGemm: pre-compile CN transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CT "AutoGemm: pre-compile CT transpose cases" OFF)
 option( PRECOMPILE_GEMM_TRANS_CC "AutoGemm: pre-compile CC transpose cases" OFF)
 
+option( INSTALL_SRC "Install source tree" OFF )
+
 set( AUTOGEMM_ARCHITECTURE "Hawaii" CACHE STRING "AutoGemm: device for kernel selection logic" )
 set_property( CACHE AUTOGEMM_ARCHITECTURE PROPERTY STRINGS "Hawaii" "Fiji" )
 
@@ -100,7 +101,7 @@ set_property( CACHE AUTOGEMM_ARCHITECTURE PROPERTY STRINGS "Hawaii" "Fiji" )
 # opencl compiler version
 #set( PRECOMPILE_GEMM_OPENCL_VERSION "2.0" CACHE STRING "OpenCL compiler version supported by device driver." )
 #set_property( CACHE PRECOMPILE_GEMM_OPENCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
-#message( STATUS "AutoGemm PreCompiler will use OpenCL ${PRECOMPILE_GEMM_OPENCL_VERSION} compiler." ) 
+#message( STATUS "AutoGemm PreCompiler will use OpenCL ${PRECOMPILE_GEMM_OPENCL_VERSION} compiler." )
 
 # PreCompile precision selected?
 set( PRECOMPILE_GEMM_PRECISION_SELECTED OFF)
@@ -555,8 +556,8 @@ set(SRC_CL_TEMPLATES_GEN
 	dtrsm_gpu192.clHawaii_64.bin.cl
 	dgemm_hawaiiChannelConfilct.clHawaii_64.bin.cl
 	dgemm_hawaiiSplitKernel.clHawaii_64.bin.cl
-	sgemm_hawaiiSplitKernel.clHawaii_64.bin.cl	
-	sgemm_hawaiiSplitKernel.clBonaire_64.bin.cl	
+	sgemm_hawaiiSplitKernel.clHawaii_64.bin.cl
+	sgemm_hawaiiSplitKernel.clBonaire_64.bin.cl
     dgemm_hawai.clTahiti_64.bin.cl
     dtrsm_gpu.clTahiti_64.bin.cl
 	dgemm_gcn_SmallMatrices.clHawaii_64.bin.cl
@@ -629,7 +630,7 @@ set(CLBLAS_SOURCES
 )
 set(GLOBAL_HEADERS
     ${clBLAS_SOURCE_DIR}/clBLAS.h
-    ${clBLAS_SOURCE_DIR}/clBLAS-complex.h 
+    ${clBLAS_SOURCE_DIR}/clBLAS-complex.h
     ${clBLAS_SOURCE_DIR}/include/clkern.h
     ${clBLAS_SOURCE_DIR}/include/cltypes.h
     ${clBLAS_SOURCE_DIR}/include/dblock_kgen.h
@@ -674,7 +675,7 @@ if( BLAS_DUMP_CLBLAS_KERNELS )
     add_definitions( -DDUMP_CLBLAS_KERNELS )
 endif()
 
-option( BLAS_KEEP_KERNEL_SOURCES "Prevent the library from stripping source from kernels" OFF )
+option( BLAS_KEEP_KERNEL_SOURCES "Prevent the library from stripping source from kernels" ON )
 if( BLAS_KEEP_KERNEL_SOURCES )
     add_definitions( -DKEEP_CLBLAS_KERNEL_SOURCES )
 endif()
@@ -724,7 +725,7 @@ add_custom_command(TARGET OCLBinaryGenerator_GEN
                    PRE_BUILD
 				   COMMAND ${CMAKE_COMMAND} -DOCLBinaryGeneratorBinaryDir=${OCLBinaryGeneratorBinaryDir} -DSOURCE_DIR=${CMAKE_SOURCE_DIR} -DBINARY_DIR=${CMAKE_BINARY_DIR} -DOCL_COMPILER_FLAGS=${OCL_COMPILER_FLAGS}
 				   -P "${CMAKE_SOURCE_DIR}/library/OCLBinaryGenerator.cmake"
-				   )	  
+				   )
 add_dependencies( OCLBinaryGenerator_GEN OCLBinaryGenerator )
 
 endif()
@@ -760,7 +761,7 @@ message(STATUS "OPENCL_VERSION = ${OPENCL_VERSION}")
 #		list(GET OPENCL_FLAGS_REPLACED 1 OPENCL_FLAGS_REPLACED_1)#flags for TAHITI
 #		list(GET OPENCL_FLAGS_REPLACED 3 OPENCL_FLAGS_REPLACED_3)#flags for HAWAII 1
 #		list(GET OPENCL_FLAGS_REPLACED 5 OPENCL_FLAGS_REPLACED_5)#flags for HAWAII 2
-#		list(GET OPENCL_FLAGS_REPLACED 7 OPENCL_FLAGS_REPLACED_7)#flags for BONAIRE	
+#		list(GET OPENCL_FLAGS_REPLACED 7 OPENCL_FLAGS_REPLACED_7)#flags for BONAIRE
 #	else()
 #		MESSAGE(STATUS "flags.txt not found. will use the default flags.")
 #		set (LOAD_CL_FLAGS FALSE)
@@ -788,19 +789,19 @@ if (LOAD_CL_FLAGS)
 add_custom_target( GEN_CLBIN )
 add_custom_command(TARGET GEN_CLBIN
                    PRE_BUILD
-				   COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates"  
-	               -DLOAD_CL_FLAGS=${LOAD_CL_FLAGS} -DTAHITI_FLAG=${OPENCL_FLAGS_REPLACED_1} -DHAWAII1_FLAG=${OPENCL_FLAGS_REPLACED_3} -DHAWAII2_FLAG=${OPENCL_FLAGS_REPLACED_5} -DBONAIRE_FLAG=${OPENCL_FLAGS_REPLACED_7} 
-				   -DENV_PATH=${ENV_PATH} -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL} 
+				   COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates"
+	               -DLOAD_CL_FLAGS=${LOAD_CL_FLAGS} -DTAHITI_FLAG=${OPENCL_FLAGS_REPLACED_1} -DHAWAII1_FLAG=${OPENCL_FLAGS_REPLACED_3} -DHAWAII2_FLAG=${OPENCL_FLAGS_REPLACED_5} -DBONAIRE_FLAG=${OPENCL_FLAGS_REPLACED_7}
+				   -DENV_PATH=${ENV_PATH} -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL}
 				   -DOPENCL_OFFLINE_BUILD_TAHITI_KERNEL=${OPENCL_OFFLINE_BUILD_TAHITI_KERNEL}
 				   -P "${CMAKE_SOURCE_DIR}/library/bingen.cmake"
-				   )	  
+				   )
 add_dependencies( GEN_CLBIN bingen )
 else()
 add_custom_target( GEN_CLBIN )
 add_custom_command(TARGET GEN_CLBIN
                    PRE_BUILD
-				   COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates" 
-				   -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL} 
+				   COMMAND ${CMAKE_COMMAND} -DbingenBinaryDir=${bingenBinaryDir} -DCLTEMPLATE_PATH="${CMAKE_SOURCE_DIR}/library/blas/gens/clTemplates"
+				   -DOPENCL_OFFLINE_BUILD_HAWAII_KERNEL=${OPENCL_OFFLINE_BUILD_HAWAII_KERNEL} -DOPENCL_OFFLINE_BUILD_BONAIRE_KERNEL=${OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL}
 				   -DOPENCL_OFFLINE_BUILD_TAHITI_KERNEL=${OPENCL_OFFLINE_BUILD_TAHITI_KERNEL}
 				   -P "${CMAKE_SOURCE_DIR}/library/bingen.cmake"
 				   )
@@ -854,8 +855,8 @@ set(CLBLAS_ALL_SOURCES
     ${AUTOGEMM_HEADERS}
     ${AUTOGEMM_SCRIPTS}
     ${AUTOGEMM_PRECOMPILED_KERNELS_CONDITIONAL}
-	#${USERGEMM_SRC}
-	#${USERGEMM_HEADERS}
+    ${USERGEMM_SRC}
+    ${USERGEMM_HEADERS}
 )
 add_definitions(-DOPENCL_VERSION="${OPENCL_VERSION}")
 add_library(clBLAS ${CLBLAS_ALL_SOURCES})
@@ -886,7 +887,7 @@ endif()
 set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
 set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
 set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY})
+target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY} ${THREAD_LIBRARY})
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBLAS
@@ -921,8 +922,11 @@ install(    DIRECTORY ${PROJECT_BINARY_DIR}/staging/
             CONFIGURATIONS Debug
             FILES_MATCHING PATTERN "*.pdb" )
 
+if(INSTALL_SRC)
 # Install a snapshot of the source as it was for this build; useful for the .pdb's
-install(    DIRECTORY ${PROJECT_SOURCE_DIR}
-            DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
-            OPTIONAL
-            CONFIGURATIONS Debug )
+    install(    DIRECTORY ${PROJECT_SOURCE_DIR}
+                DESTINATION ${CLBLAS_RUNTIME_DESTINATION}
+                OPTIONAL
+                CONFIGURATIONS Debug )
+endif()
+

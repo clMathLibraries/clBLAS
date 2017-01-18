@@ -10,7 +10,7 @@ This repository houses the code for the OpenCL™ BLAS portion of clMath.
 The complete set of BLAS level 1, 2 & 3 routines is implemented. Please
 see Netlib BLAS for the list of supported routines. In addition to GPU
 devices, the library also supports running on CPU devices to facilitate
-debugging and multicore programming. APPML 1.10 is the most current
+debugging and multicore programming. APPML 1.12 is the most current
 generally available pre-packaged binary version of the library available
 for download for both Linux and Windows platforms.
 
@@ -23,13 +23,12 @@ library does generate and enqueue optimized OpenCL kernels, relieving
 the user from the task of writing, optimizing and maintaining kernel
 code themselves.
 
-## clBLAS update notes 09/2015
+## clBLAS update notes 01/2017
 
-- Introducing [AutoGemm](http://github.com/clMathLibraries/clBLAS/wiki/AutoGemm)
-  - clBLAS's Gemm implementation has been comprehensively overhauled to use AutoGemm. AutoGemm is a suite of python scripts which generate optimized kernels and kernel selection logic, for all precisions, transposes, tile sizes and so on.
-  - CMake is configured to use AutoGemm for clBLAS so the build and usage experience of Gemm remains unchanged (only performance and maintainability has been improved). Kernel sources are generated at build time (not runtime) and can be configured within CMake to be pre-compiled at build time.
-  - clBLAS users with unique Gemm requirements can customize AutoGemm to their needs (such as non-default tile sizes for very small or very skinny matrices); see [AutoGemm](http://github.com/clMathLibraries/clBLAS/wiki/AutoGemm) documentation for details.
-
+- v2.12 is a bugfix release as a rollup of all fixes in /develop branch
+  - Thanks to @pavanky, @iotamudelta, @shahsan10, @psyhtest, @haahh, @hughperkins, @tfauck
+    @abhiShandy, @IvanVergiliev, @zougloub, @mgates3 for contributions to clBLAS v2.12
+- Summary of fixes available to read on the releases tab
 
 ## clBLAS library user documentation
 
@@ -197,8 +196,12 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
 
 ### Test infrastructure
 *  Googletest v1.6
-*  ACML on windows/linux; Accelerate on Mac OSX
 *  Latest Boost
+*  CPU BLAS
+  - Netlib CBLAS (recommended)
+    Ubuntu: install by "apt-get install libblas-dev"
+    Windows: download & install lapack-3.6.0 which comes with CBLAS
+  - or ACML on windows/linux; Accelerate on Mac OSX
 
 ### Performance infrastructure
 * Python

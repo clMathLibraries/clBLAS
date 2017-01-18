@@ -214,7 +214,7 @@ selectVectorization(
         }
 
 		//
-		// Routines that dont use LDS have to be below the isLdsUsed() code
+		// Routines that don't use LDS have to be below the isLdsUsed() code
 		//
 		if (step->funcID == CLBLAS_GEMM2)
 		{
@@ -709,10 +709,10 @@ clblasArgsToKextraFlags(const CLBlasKargs *args, BlasFunctionID funcID)
         }
     }
     if (funcID == CLBLAS_GEMV || funcID == CLBLAS_SYMV) {
-        if (args->ldb.vector == 1) {
+        if (args->ldb.Vector == 1) {
             flags |= KEXTRA_INCX_ONE;
         }
-        if (args->ldc.vector == 1) {
+        if (args->ldc.Vector == 1) {
             flags |= KEXTRA_INCY_ONE;
         }
     }

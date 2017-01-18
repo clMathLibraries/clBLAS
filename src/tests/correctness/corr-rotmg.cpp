@@ -134,8 +134,6 @@ rotmgCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     //Filling random values for SA and SB. C & S are only for output sake
     randomRotmg( (D1 + params->offa), (D2 + params->offb),
                 (X + params->offBX), (Y + params->offCY), (PARAM + params->offc) );
@@ -149,8 +147,6 @@ rotmgCorrectnessTest(TestParams *params)
     memcpy(back_D2, D2, (1 + params->offb)*sizeof(T));
     memcpy(back_PARAM, PARAM, (params->offc + 5)*sizeof(T));
 
-    ::std::cerr << "Done" << ::std::endl;
-
 	// Allocate buffers
     bufD1 = base->createEnqueueBuffer(D1, (1 + params->offa) * sizeof(T), 0, CL_MEM_READ_WRITE);
     bufD2 = base->createEnqueueBuffer(D2, (1 + params->offb) * sizeof(T), 0, CL_MEM_READ_WRITE);
@@ -158,11 +154,8 @@ rotmgCorrectnessTest(TestParams *params)
     bufY = base->createEnqueueBuffer(Y, (1 + params->offCY) * sizeof(T), 0, CL_MEM_READ_ONLY);
     bufParam  = base->createEnqueueBuffer(PARAM,  (5 + params->offc) * sizeof(T), 0, CL_MEM_READ_WRITE);
 
-    ::std::cerr << "Calling reference xROTMG routine... ";
-
 	::clMath::blas::rotmg(back_D1, params->offa, back_D2, params->offb, back_X, params->offBX, back_Y, params->offCY,
                  back_PARAM, params->offc);
-    ::std::cerr << "Done" << ::std::endl;
 
     // Hold X vector
 
@@ -180,8 +173,6 @@ rotmgCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xROTMG routine... ";
 
     DataType type;
     type = ( typeid(T) == typeid(cl_float)) ? TYPE_FLOAT :
@@ -210,7 +201,6 @@ rotmgCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufD1, CL_TRUE, 0,
         (1 + params->offa) * sizeof(T), D1, 0, NULL, NULL);
@@ -258,6 +248,12 @@ rotmgCorrectnessTest(TestParams *params)
         deltaArr[i] = deltaForType * returnMax<T>(back_PARAM[i + (params->offc)]);
     }
     compareMatrices<T>(clblasColumnMajor, 5 , 1, (back_PARAM + params->offc), (PARAM + params->offc), 5, deltaArr);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->offBX, params->offCY, params->offa, params->offb, params->offc, params->alpha);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(D1, D2, X, Y, PARAM);
     deleteBuffers<T>(back_D1, back_D2, back_X, back_Y, back_PARAM);

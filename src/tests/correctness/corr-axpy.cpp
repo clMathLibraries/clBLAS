@@ -111,16 +111,12 @@ axpyCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     // Populate X and Y
     randomVectors(params->N, (X+params->offBX), params->incx, (Y+params->offCY), params->incy);
 
 	memcpy(blasX, X, (lengthX + params->offBX) * sizeof(T));
 	memcpy(blasY, Y, (lengthY + params->offCY) * sizeof(T));
     alpha = convertMultiplier<T>(params->alpha);
-
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(T), 0, CL_MEM_READ_ONLY);
@@ -142,14 +138,8 @@ axpyCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling reference xAXPY routine... ";
-
 	::clMath::blas::axpy((size_t)params->N, alpha, blasX, (size_t)params->offBX, params->incx,
 						 blasY, (size_t)params->offCY, params->incy);
-    ::std::cerr << "Done" << ::std::endl;
-
-
-    ::std::cerr << "Calling clblas xAXPY routine... ";
 
     err = (cl_int)::clMath::clblas::axpy(params->N, alpha, bufX, params->offBX, params->incx, bufY, params->offCY, params->incy,
 										  params->numCommandQueues, base->commandQueues(), 0, NULL, events);
@@ -169,8 +159,6 @@ axpyCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufY, CL_TRUE, 0,
         (lengthY + params->offCY) * sizeof(T), Y, 0, NULL, NULL);
@@ -182,6 +170,13 @@ axpyCorrectnessTest(TestParams *params)
     releaseMemObjects(bufX, bufY);
 
     compareMatrices<T>(clblasRowMajor, lengthY , 1, (blasY + params->offCY), (Y + params->offCY), 1);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->alpha, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(X, Y, blasX, blasY);
     delete[] events;
 }

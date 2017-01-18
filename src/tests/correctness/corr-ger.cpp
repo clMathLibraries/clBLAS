@@ -123,8 +123,6 @@ gerCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     int creationFlags = 0;
     creationFlags =  creationFlags | RANDOM_INIT;
     creationFlags = ( (params-> order) == clblasRowMajor)? (creationFlags | ROW_MAJOR_ORDER) : (creationFlags);
@@ -141,10 +139,6 @@ gerCorrectnessTest(TestParams *params)
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offa) * sizeof(*A), 0, CL_MEM_READ_WRITE);
     bufx = base->createEnqueueBuffer(x, (lengthx + params->offBX) * sizeof(*x), 0, CL_MEM_READ_ONLY);
     bufy = base->createEnqueueBuffer(y, (lengthy + params->offCY) * sizeof(*y), 0, CL_MEM_READ_ONLY);
-
-
-    ::std::cerr << "Done" << ::std::endl;
-    ::std::cerr << "Calling reference xGER routine... ";
 
 
 	clblasOrder fOrder;
@@ -177,7 +171,6 @@ gerCorrectnessTest(TestParams *params)
 
     // Call reference blas routine
     clMath::blas::ger(fOrder, fM, fN, alpha_, fX , fOffx, fIncx, fY, fOffy, fIncy,  A, params->offa, params->lda);
-	::std::cerr << "Done" << ::std::endl;
 
     if ((bufA == NULL) || (bufx == NULL) || (bufy == NULL)) {
         /* Skip the test, the most probable reason is
@@ -194,8 +187,6 @@ gerCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xGER routine... ";
 
     err = (cl_int)::clMath::clblas::ger( params->order, params->M, params->N, alpha_,
                             bufx, params->offBX, params->incx, bufy, params->offCY, params->incy,bufA, params->offa, params->lda,
@@ -218,7 +209,6 @@ gerCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufA, CL_TRUE, 0,
         (lengthA + params->offa)* sizeof(*backA), backA, 0,
@@ -228,6 +218,17 @@ gerCorrectnessTest(TestParams *params)
 
     // handle lda correctly based on row-major/col-major..
     compareMatrices<T>(params->order, params->M , params->N, A+ params->offa, backA + params->offa, params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->M, params->N, useAlpha,
+            base->alpha(),
+            params->lda, params->incx, params->incy, params->offa, params->offBX, params->offCY);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, x, y, backA);
     delete[] events;
 }

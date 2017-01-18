@@ -59,9 +59,6 @@ protected:
         if (base->useN()) {
             N = base->N();
         }
-
-		printTestParams(N, offx, incx);
-        ::std::cerr << "offiAmax = " << offiAmax << ::std::endl;
     }
 
     size_t N;

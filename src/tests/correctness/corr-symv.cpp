@@ -76,8 +76,7 @@ symvCorrectnessTest(TestParams *params)
     isComplex = ((typeid(T) == typeid(FloatComplex)) ||
                  (typeid(T) == typeid(DoubleComplex)));
     if (canCaseBeSkipped(params, isComplex)) {
-        std::cerr << ">> Test is skipped because it has no importance for this "
-                     "level of coverage" << std::endl;
+        std::cerr << ">> Test is skipped" << std::endl;
         SUCCEED();
         return;
     }
@@ -106,7 +105,6 @@ symvCorrectnessTest(TestParams *params)
         beta = convertMultiplier<T>(params->beta);
     }
 
-    ::std::cerr << "Generating input data... ";
     setNans<T>(params->rowsA * params->columnsA, A);
     setNans<T>(params->rowsB * params->columnsB, B);
     setNans<T>(params->rowsC * params->columnsC, blasC);
@@ -125,9 +123,6 @@ symvCorrectnessTest(TestParams *params)
     setVectorNans<T>(params->offCY, abs(params->incy), blasC, params->N,
                   params->columnsC * params->rowsC);
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*clblasC));
-    ::std::cerr << "Done" << ::std::endl;
-
-    ::std::cerr << "Calling reference xSYMV routine... ";
 
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::symv(clblasColumnMajor, params->uplo,
@@ -145,7 +140,6 @@ symvCorrectnessTest(TestParams *params)
 
         delete[] reorderedA;
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                      sizeof(*A), params->offA * sizeof(*A),
@@ -170,7 +164,6 @@ symvCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xSYMV routine... ";
     err = (cl_int)::clMath::clblas::symv(params->order, params->uplo,
         params->N, alpha, bufA, params->offA, params->lda, bufB, params->offBX,
         params->incx, beta, bufC, params->offCY, params->incy,
@@ -191,7 +184,6 @@ symvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE, 0,
                         params->rowsC * params->columnsC * sizeof(*clblasC),
@@ -201,6 +193,15 @@ symvCorrectnessTest(TestParams *params)
 
     compareVectors(params->offCY, params->N, abs(params->incy),
                    params->columnsC * params->rowsC, blasC, clblasC);
+
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, useAlpha, base->alpha(), params->offA, params->lda,
+            params->incx, useBeta, base->beta(), params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;

@@ -85,8 +85,7 @@ syrkCorrectnessTest(TestParams *params)
     isComplex = ((typeid(T) == typeid(FloatComplex)) ||
                  (typeid(T) == typeid(DoubleComplex)));
     if (canCaseBeSkipped(params, isComplex)) {
-        std::cerr << ">> Test is skipped because it has no importance for this "
-                     "level of coverage" << std::endl;
+        std::cerr << ">> Test is skipped" << std::endl;
         SUCCEED();
         return;
     }
@@ -111,7 +110,6 @@ syrkCorrectnessTest(TestParams *params)
         beta = convertMultiplier<T>(params->beta);
     }
 
-    ::std::cerr << "Generating input data... ";
     if (!useAlpha) {
         alpha = random<T>(100);
         if (module(alpha) == 0.0) {
@@ -123,9 +121,7 @@ syrkCorrectnessTest(TestParams *params)
         params->N, params->N, params->K, useAlpha, &alpha, A, params->lda,
         NULL, 0, useBeta, &beta, blasC, params->ldc);
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*blasC));
-    ::std::cerr << "Done" << ::std::endl;
 
-    ::std::cerr << "Calling reference xSYRK routine... ";
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::syrk(clblasColumnMajor, params->uplo, params->transA,
                           params->N, params->K, alpha, A, params->lda,
@@ -149,7 +145,6 @@ syrkCorrectnessTest(TestParams *params)
         delete[] reorderedC;
         delete[] reorderedA;
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                      sizeof(*A), params->offA * sizeof(*A),
@@ -174,7 +169,6 @@ syrkCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xSYRK routine... ";
     err = (cl_int)::clMath::clblas::syrk(params->order, params->uplo,
                                          params->transA, params->N, params->K,
                                          alpha, bufA, params->offA, params->lda,
@@ -197,7 +191,6 @@ syrkCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE,
                         params->offCY * sizeof(*clblasC),
@@ -207,6 +200,14 @@ syrkCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufC);
     compareMatrices<T>(params->order, params->N, params->N, blasC, clblasC,
                        params->ldc);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->N, params->K, useAlpha, base->alpha(),
+            params->offA, params->lda, useBeta, base->beta(), params->offCY, params->ldc);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(A, blasC, clblasC);
     delete[] events;
