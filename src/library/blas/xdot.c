@@ -154,6 +154,7 @@ doDot(
                     err = executeSolutionSeq(&seq2);
             }
                 freeSolutionSeq(&seq2);
+            clReleaseEvent(firstDotCall);
 		}
 		}
 
