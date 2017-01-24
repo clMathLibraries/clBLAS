@@ -71,7 +71,7 @@ before_build:
   - ps: $env:BOOST_LIBRARYDIR = "$env:BOOST_ROOT/lib64-msvc-12.0"
   - ps: mkdir $env:CLBLAS_ROOT
   - ps: pushd $env:CLBLAS_ROOT
-  - cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOCL_VERSION=2.0 -DOPENCL_ROOT=%OPENCL_ROOT% %APPVEYOR_BUILD_FOLDER%/src
+  - cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TEST=OFF -DBUILD_CLIENT=OFF -DOCL_VERSION=2.0 -DOPENCL_ROOT=%OPENCL_ROOT% %APPVEYOR_BUILD_FOLDER%/src
 
 # build_script invokes the compiler
 build_script:

@@ -76,16 +76,6 @@ set( OPENCL_VERSION "1.2" CACHE STRING "The version of OpenCL supported by your 
 set_property( CACHE OPENCL_VERSION PROPERTY STRINGS 2.0 1.2 1.1 )
 message( STATUS "You have confirmed OpenCL ${OPENCL_VERSION} is supported in your system" )
 
-# By default test-correctness is linked and tested against ACML library.
-# However, test-correctness can instead use NETLIB as a reference library
-# On Mac OSX systems, this must be set to OFF for the build to succeed (due to nesting of FindBLAS code)
-if ( APPLE )
-	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
-else ( )
-	message(STATUS "CORR_TEST_WITH_ACML set to OFF. Try link with libblas.so")
-	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
-endif( )
-
 if( CMAKE_GENERATOR MATCHES "NMake" )
   option( NMAKE_COMPILE_VERBOSE "Print compile and link strings to the console" OFF )
   if( NMAKE_COMPILE_VERBOSE )
@@ -96,10 +86,14 @@ if( CMAKE_GENERATOR MATCHES "NMake" )
 endif( )
 
 # If we are on linux, and we wish to link with the netlib BLAS implementation when BUILD_TEST is ON, we need to have a valid fortran compiler
-if(BUILD_TEST AND NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE)
+if((BUILD_TEST OR BUILD_CLIENT) AND (NOT WIN32 AND NOT APPLE))
   project(clBLAS Fortran C CXX )
 else( )
   project(clBLAS C CXX)
+endif( )
+
+if( CORR_TEST_WITH_ACML )
+  message( WARNING "Linking with ACML has been removed; please link netlib or accelerate" )
 endif( )
 
 # Define a version for the code
@@ -126,7 +120,7 @@ set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files' (permissions problems)
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
 if( WIN32 AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-	set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
+  set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
 endif( )
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -171,108 +165,38 @@ endif( )
 
 # add the math library for Linux
 if( UNIX )
-    set(MATH_LIBRARY "m")
-    set(THREAD_LIBRARY "pthread")
+  set(MATH_LIBRARY "m")
+  set(THREAD_LIBRARY "pthread")
 endif()
 
 # set the path to specific OpenCL compiler
 set( OPENCL_COMPILER_DIR "OPENCL COMPILER PATH" CACHE PATH "OPENCL COMPILER PATH")
 if ( ${OPENCL_COMPILER_DIR} STREQUAL "OPENCL COMPILER PATH")
     message( STATUS "Using default OpenCL Compiler")
-	  set(ENV_PATH "$ENV{PATH}")
+    set(ENV_PATH "$ENV{PATH}")
 else ()
     message( STATUS "OPENCL COMPILER: ${OPENCL_COMPILER_DIR}")
-	if(UNIX)
-	  set(ENV_PATH "${OPENCL_COMPILER_DIR}")
-	else()
-	  set(ENV_PATH "${OPENCL_COMPILER_DIR}")
-	endif()
+  if(UNIX)
+    set(ENV_PATH "${OPENCL_COMPILER_DIR}")
+  else()
+    set(ENV_PATH "${OPENCL_COMPILER_DIR}")
+  endif()
 endif()
 
 # Find the BLAS library
 # TODO: maybe this could be written using the FindBLAS module in the future
-if( BUILD_TEST )
-	if(NOT CORR_TEST_WITH_ACML)
-	    if(APPLE)
-			find_library(BLAS_LIBRARIES Accelerate HINTS /System/Library/Frameworks/Accelerate.framework)
-		       	MARK_AS_ADVANCED(BLAS_LIBRARIES)
-		       	message(STATUS "Using Accelerate framework on Mac OS-X")
-	    else()
-			find_package( Netlib COMPONENTS BLAS REQUIRED )
-        endif()
-		else( )
-		# Find ACML BLAS implementation
-		# platform dependent ACML subdirectory
-		if (WIN32)
-			set(ACML_SUBDIR ifort${TARGET_PLATFORM}_mp)
-		else()
-		   set(ACML_SUBDIR gfortran${TARGET_PLATFORM}_mp)
-		endif()
-
-		find_path(ACML_INCLUDE_DIRS acml.h
-			HINTS
-				${ACML_ROOT}/include
-				${ACML_ROOT}/${ACML_SUBDIR}/include
-				$ENV{ACML_ROOT}/include
-                                $ENV{ACML_ROOT}/${ACML_SUBDIR}/include
-		)
-
-		if( ACML_INCLUDE_DIRS )
-		else()
-			message(WARNING "Cannot find acml.h")
-		endif()
-
-		if( UNIX )
-			find_library(ACML_LIBRARIES acml_mp
-				HINTS
-					${ACML_ROOT}/lib
-					${ACML_ROOT}/${ACML_SUBDIR}/lib
-					$ENV{ACML_ROOT}/lib
-                                        $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
-			)
-			find_library(_acml_mv_library acml_mv
-				HINTS
-					${ACML_ROOT}/lib
-					${ACML_ROOT}/${ACML_SUBDIR}/lib
-					$ENV{ACML_ROOT}/lib
-                                        $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
-			)
-			mark_as_advanced(_acml_mv_library)
-		endif( )
-
-		if(WIN32)
-			find_library(ACML_LIBRARIES libacml_mp_dll
-				HINTS
-					${ACML_ROOT}/lib
-					${ACML_ROOT}/${ACML_SUBDIR}/lib
-					$ENV{ACML_ROOT}/lib
-                                        $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
-			)
-		endif( )
-
-		if( NOT ACML_LIBRARIES )
-			message(WARNING "Cannot find libacml")
-		endif( )
-
-		if(ACML_INCLUDE_DIRS AND ACML_LIBRARIES)
-			if(_acml_mv_library)
-				list(APPEND ACML_LIBRARIES ${_acml_mv_library})
-			endif()
-			message(STATUS "Found ACML: ${ACML_LIBRARIES}")
-			set(ACML_FOUND TRUE BOOL "Found the ACML package")
-		endif()
-		mark_as_advanced(ACML_FOUND ACML_INCLUDE_DIRS ACML_LIBRARIES)
-
-	endif( )
+if( BUILD_TEST OR BUILD_CLIENT )
+  if( APPLE )
+    find_library(BLAS_LIBRARIES Accelerate HINTS /System/Library/Frameworks/Accelerate.framework)
+   	MARK_AS_ADVANCED(BLAS_LIBRARIES)
+   	message(STATUS "Using Accelerate framework on Mac OS-X")
+  else()
+    # The client applications does not actually link netlib blas on WIN32
+    if( NOT WIN32 )
+      find_package( Netlib COMPONENTS BLAS REQUIRED )
+    endif( )
+  endif( )
 endif( )
-
-if( BUILD_CLIENT )
-    if( NETLIB_FOUND )
-    else( )
-        message( WARNING "Not find Netlib; BUILD_CLIENT needs the Netlib CBLAS library" )
-    endif()
-endif()
-
 
 # This will define OPENCL_FOUND
 find_package( OpenCL ${OPENCL_VERSION} )
@@ -289,10 +213,10 @@ message(STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}"
 
 
 if( NOT Boost_FOUND )
-	message( STATUS "The clBLAS ktest requires boost to be installed" )
-	set( BUILD_KTEST OFF )
-	message( STATUS "The clBLAS client requires boost to be installed" )
-	set( BUILD_CLIENT OFF )
+  message( STATUS "The clBLAS ktest requires boost to be installed" )
+  set( BUILD_KTEST OFF )
+  message( STATUS "The clBLAS client requires boost to be installed" )
+  set( BUILD_CLIENT OFF )
 endif()
 
 # Turn on maximum compiler verbosity
@@ -323,10 +247,10 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
 elseif( MSVC )
-	# CMake sets huge stack frames for windows, for whatever reason.  We go with compiler default.
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )
+  # CMake sets huge stack frames for windows, for whatever reason.  We go with compiler default.
+  string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+  string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+  string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )
 endif( )
 
 if (WIN32)
@@ -340,49 +264,49 @@ configure_file( "${PROJECT_SOURCE_DIR}/clBLAS.version.h.in" "${PROJECT_BINARY_DI
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 install( FILES
-			"clBLAS.h"
-			"clAmdBlas.h"
-			"clAmdBlas.version.h"
-			"clBLAS-complex.h"
-			"${PROJECT_BINARY_DIR}/include/clBLAS.version.h"
-		DESTINATION
-			"./include" )
+  "clBLAS.h"
+  "clAmdBlas.h"
+  "clAmdBlas.version.h"
+  "clBLAS-complex.h"
+  "${PROJECT_BINARY_DIR}/include/clBLAS.version.h"
+  DESTINATION
+  "./include" )
 
 
 if( BUILD_CLIENT AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/client")
-	add_subdirectory( client )
+  add_subdirectory( client )
 endif( )
 
 if( BUILD_PERFORMANCE AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/scripts/perf" )
-	add_subdirectory( scripts/perf )
+  add_subdirectory( scripts/perf )
 endif( )
 
 if( BUILD_RUNTIME AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/library" )
 #	add_subdirectory( library/tools/bingen )
-	add_subdirectory( library )
-	add_subdirectory( library/tools/tune )
-	if( BUILD_KTEST )
-		add_subdirectory( library/tools/ktest )
-	endif( )
+  add_subdirectory( library )
+  add_subdirectory( library/tools/tune )
+  if( BUILD_KTEST )
+  add_subdirectory( library/tools/ktest )
+  endif( )
 endif()
 
 if( BUILD_SAMPLE AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/samples" )
-	add_subdirectory( samples )
+  add_subdirectory( samples )
 endif( )
 
 # The build server is not supposed to build or package any of the tests; build server script will define this on the command line with
 # cmake -G "Visual Studio 10 Win64" -D BUILDSERVER:BOOL=ON ../..
 if( BUILD_TEST )
-	if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/tests" )
-		add_subdirectory(tests)
-	endif( )
+  if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/tests" )
+  add_subdirectory(tests)
+  endif( )
 
-	# These tests #include <getopts.h>, which is not windows compliant
-	if (NOT WIN32 AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/library" )
-		add_subdirectory( library/blas/gens/tests )
-		add_subdirectory( library/blas/gens/legacy/tests )
-		add_subdirectory( library/common/tests )
-	endif( )
+  # These tests #include <getopts.h>, which is not windows compliant
+  if (NOT WIN32 AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/library" )
+  add_subdirectory( library/blas/gens/tests )
+  add_subdirectory( library/blas/gens/legacy/tests )
+  add_subdirectory( library/common/tests )
+  endif( )
 endif( )
 
 if(WIN32)
@@ -407,17 +331,17 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfigVersion.cmake
 
 # The following code is setting variables to control the behavior of CPack to generate our
 if( WIN32 )
-	set( CPACK_SOURCE_GENERATOR "ZIP" )
-	set( CPACK_GENERATOR "ZIP" )
+  set( CPACK_SOURCE_GENERATOR "ZIP" )
+  set( CPACK_GENERATOR "ZIP" )
 else( )
-	set( CPACK_SOURCE_GENERATOR "TGZ" )
-	set( CPACK_GENERATOR "TGZ" )
+  set( CPACK_SOURCE_GENERATOR "TGZ" )
+  set( CPACK_GENERATOR "TGZ" )
 endif( )
 
 if( TARGET_PLATFORM EQUAL 64 )
-	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${clBLAS_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+  set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${clBLAS_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
 else( )
-	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${clBLAS_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+  set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${clBLAS_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
 endif( )
 
 set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${clBLAS_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-Source")
