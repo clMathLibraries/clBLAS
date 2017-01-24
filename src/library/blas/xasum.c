@@ -43,7 +43,7 @@ doAsum(
         cl_int err;
 		ListHead seq, seq2;
         clblasStatus retCode = clblasSuccess;
-        cl_event firstAsumCall;
+        cl_event firstAsumCall = NULL;
         CLBlasKargs redctnArgs;
         ListNode *listNodePtr;
         SolutionStep *step;
@@ -147,6 +147,7 @@ doAsum(
                     err = executeSolutionSeq(&seq2);
                 }
                 freeSolutionSeq(&seq2);
+                clReleaseEvent(firstAsumCall);
             }
 		}
 

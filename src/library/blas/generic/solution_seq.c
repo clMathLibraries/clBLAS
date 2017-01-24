@@ -238,7 +238,7 @@ releaseStepImgs(SolutionStep *step)
 {
     int i;
     cl_mem *imgs = step->args.scimage;
-    cl_device_id devID = NULL;;
+    cl_device_id devID = NULL;
 
     for (i = 0; (i < 2) && (imgs[i] != NULL); i++) {
         if (devID == NULL) {

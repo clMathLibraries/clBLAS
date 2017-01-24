@@ -43,7 +43,7 @@ doiAmax(
         cl_int err;
 		ListHead seq, seq2;
         clblasStatus retCode = clblasSuccess;
-        cl_event firstiAmaxCall;
+        cl_event firstiAmaxCall = NULL;
         CLBlasKargs redctnArgs;
         ListNode *listNodePtr;
         SolutionStep *step;
@@ -150,6 +150,7 @@ doiAmax(
                     err = executeSolutionSeq(&seq2);
                 }
                 freeSolutionSeq(&seq2);
+                clReleaseEvent(firstiAmaxCall);
             }
 		}
 

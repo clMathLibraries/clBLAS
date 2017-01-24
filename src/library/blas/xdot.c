@@ -47,7 +47,7 @@ doDot(
         cl_int err;
 		ListHead seq, seq2;
         clblasStatus retCode = clblasSuccess;
-        cl_event firstDotCall;
+        cl_event firstDotCall = NULL;
         CLBlasKargs redctnArgs;
         ListNode *listNodePtr;
         SolutionStep *step;
@@ -140,22 +140,23 @@ doDot(
             err = executeSolutionSeq(&seq);
             if (err == CL_SUCCESS)
             {
-            listNodePtr = listNodeFirst(&seq);        // Get the node
-            step = container_of(listNodePtr, node, SolutionStep);
+                listNodePtr = listNodeFirst(&seq);        // Get the node
+                step = container_of(listNodePtr, node, SolutionStep);
 
-                redctnArgs.N = step->pgran.numWGSpawned[0];     // 1D block was used
+                    redctnArgs.N = step->pgran.numWGSpawned[0];     // 1D block was used
 
                 listInitHead(&seq2);
-            err = makeSolutionSeq(CLBLAS_REDUCTION_EPILOGUE, &redctnArgs, numCommandQueues, commandQueues,
-                           1, &firstDotCall, events, &seq2);
+                err = makeSolutionSeq(CLBLAS_REDUCTION_EPILOGUE, &redctnArgs, numCommandQueues, commandQueues,
+                               1, &firstDotCall, events, &seq2);
 
-            if (err == CL_SUCCESS)
-            {
-                    err = executeSolutionSeq(&seq2);
-            }
+                if (err == CL_SUCCESS)
+                {
+                        err = executeSolutionSeq(&seq2);
+                }
                 freeSolutionSeq(&seq2);
-		}
-		}
+                clReleaseEvent(firstDotCall);
+            }
+        }
 
 		freeSolutionSeq(&seq);
 		return (clblasStatus)err;

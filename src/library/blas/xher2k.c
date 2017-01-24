@@ -53,7 +53,7 @@ doHer2k(
     clblasStatus err;
     clblasUplo fUplo;
     clblasTranspose fTransA;
-    cl_event firstHerkCall;
+    cl_event firstHerkCall = NULL;
     clblasStatus retCode = clblasSuccess;
 
     if (!clblasInitialized) {
@@ -146,6 +146,7 @@ doHer2k(
         }
 
         err = executeGEMM(kargs,  numCommandQueues, commandQueues, 1, &firstHerkCall, events);
+        clReleaseEvent(firstHerkCall);
     }
 
     return (clblasStatus)err;
