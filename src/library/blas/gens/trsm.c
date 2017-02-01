@@ -1156,7 +1156,7 @@ generator(
         return -ENOMEM;
     }
 
-    kgenAddStmt(ctx, "#pragma OPENCL EXTENSION cl_amd_printf : enable\n\n");
+    // kgenAddStmt(ctx, "#pragma OPENCL EXTENSION cl_amd_printf : enable\n\n");
 
     b = isDoubleBasedType(dtype);
     kgenDeclareUptrs(ctx, b);

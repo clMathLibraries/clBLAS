@@ -179,7 +179,7 @@ static const char *gbmv_RT_kernel = "
 
 #define TARGET_ROWS  ( %DEF_TARGET_ROWS )
 #define HEIGHT ( %DEF_H)
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
 __kernel void %PREFIXgbmv_RT_kernel( __global const %TYPE * _A, __global %TYPE * _y_vector, __global %TYPE const* restrict _x_vector,
                                     uint M, uint N, uint KL, uint KU, uint lda, int incx, int incy, uint offa, uint offx, uint offy
 #ifndef TBMV_ONLY
