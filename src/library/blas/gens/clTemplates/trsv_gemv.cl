@@ -1420,7 +1420,8 @@ __kernel void %PREFIXtrsv_CLT_ComputeRectangle_kernel( 	__global const %TYPE* _A
 	int blkid = get_group_id(0);
 	int V= %V;
 
-	__local %TYPE solved[%TRIANGLE_HEIGHT];
+	__local %TYPE%V solvedV[%TRIANGLE_HEIGHT/%V];
+	__local %TYPE *solved = (__local %TYPE *)solvedV;
 	__local %TYPE reduce[%TARGET_HEIGHT][ %BLOCKSIZE / %TARGET_HEIGHT];
 	__local %TYPE%V *solved_vec;
 	int blockStartRow;
