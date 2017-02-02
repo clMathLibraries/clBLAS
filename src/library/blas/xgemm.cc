@@ -241,11 +241,12 @@ void makeGemmKernel(
         clProgram,
         1, &clDevice,
         sourceBuildOptions, NULL, NULL );
-      CL_CHECK(err)
+      // CL_CHECK(err)
     }
 
     // print build failure
     if (err != CL_SUCCESS) {
+      int build_err = err;
       printf("clBuildProgram Failed\n");
       printf("err = %d\n", err);
 
@@ -259,7 +260,7 @@ void makeGemmKernel(
       printf("%s\n", buildLog);
       //printf("\n\nKernel String:\n\n");
       //printf("%s\n", kernelSource);
-      //FIXME: The function should be exiting at this point
+      CL_CHECK(build_err);
     }
 
     err = clCreateKernelsInProgram(
