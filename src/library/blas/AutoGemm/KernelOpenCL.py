@@ -359,13 +359,7 @@ def makeOpenCLKernelString(kernel):
   numBLoadsR = (kernel.workGroupNumCols*kernel.microTileNumCols*kernel.unroll) \
       % (kernel.workGroupNumRows*kernel.workGroupNumCols)
 
-  # TODO - zeroString for real and complex
-  if kernel.precision == "c":
-    zeroString = "(float2)(0.f, 0.f)"
-  elif kernel.precision == "z":
-    zeroString = "(double2)(0.0, 0.0)"
-  else:
-    zeroString = "0.0"
+  zeroString = "(DATA_TYPE_STR)(0)"
   for a in range(0, int(numALoads)):
     kStr += "    lA[ %d*localAStride ] = " % a
     if kernel.isRowKernel():

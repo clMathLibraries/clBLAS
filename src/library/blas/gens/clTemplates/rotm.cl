@@ -25,9 +25,9 @@ static const char *rotm_kernel = "
     #endif
 #endif
 
-#define ZERO    (%TYPE)0.0
-#define ONE     (%TYPE)1.0
-#define TWO     (%TYPE)2.0
+#define ZERO    (%TYPE)(0)
+#define ONE     (%TYPE)(1)
+#define TWO     (%TYPE)(2)
 
 __kernel void %PREFIXrotm_kernel( __global %TYPE *_X, __global %TYPE *_Y, uint N,
                                 uint offx, int incx, uint offy, int incy

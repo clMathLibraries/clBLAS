@@ -106,7 +106,7 @@ __kernel void %PREFIXgbmv_RNT_kernel( __global const %TYPE * _A, __global %TYPE 
                         %CONJUGATE(1 , reg1);
                     #endif
                     #ifdef HBMV_ONLY
-                        reg1.odd = 0.0;                 // Imaginary part of diagonal is assumed to be zero
+                        reg1.odd = 0;                 // Imaginary part of diagonal is assumed to be zero
                     #endif
                     %MAD( sum, reg1, reg2 );
                 #else
