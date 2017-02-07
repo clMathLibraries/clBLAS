@@ -15,7 +15,7 @@
  * ************************************************************************/
 
 static const char *iamax_kernel = "
-#pragma OPENCL EXTENSION cl_amd_printf:enable
+//#pragma OPENCL EXTENSION cl_amd_printf:enable
 #ifdef DOUBLE_PRECISION
     #ifdef cl_khr_fp64
     #pragma OPENCL EXTENSION cl_khr_fp64 : enable

@@ -134,7 +134,7 @@ const char * trsv_CL_SolveTriangle_kernel = "
 #else
     #define A(row, col) A[ (row) + (col) * lda]
 #endif
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
 // Only one block of threads launched
 __kernel void %PREFIXtrsv_CL_SolveTriangle_kernel( __global const %TYPE* _A, __global %TYPE* _xnew, uint N, int incx, int isUnity,
                                                    uint lda, int doConj, int startCol, int endRow, uint offa, uint offx
@@ -240,7 +240,7 @@ const char * trsv_CUT_SolveTriangle_kernel = "
 #else
     #define A( row, col) A[ (row) + (col) * lda]
 #endif
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
 __kernel void %PREFIXtrsv_CUT_SolveTriangle_kernel(     __global const %TYPE* _A,
                                                 __global %TYPE* _xnew,
                                                 uint N,
@@ -342,7 +342,7 @@ const char * trsv_CLT_SolveTriangle_kernel = "
 #else
     #define A(row, col) A[ (row) + (col) * lda]
 #endif
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
 
 // Column-Major Lower Non-Unity case
 // StartRow points to actual Row to start from( absolute Column number)

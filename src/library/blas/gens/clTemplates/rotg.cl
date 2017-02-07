@@ -25,8 +25,8 @@ static const char *rotg_kernel = "
     #endif
 #endif
 
-#define ZERO (%TYPE)0.0
-#define PZERO (%PTYPE)0.0
+#define ZERO (%TYPE)(0)
+#define PZERO (%PTYPE)(0)
 
 // CABS(A) returns SQRT(REALPART(A)**2+IMAGPART(A)**2) -- opencl function length() computes the same
 #define CABS( arg )  length( arg )
@@ -53,7 +53,7 @@ __kernel void %PREFIXrotg_kernel( __global %TYPE *_A, __global %TYPE *_B, __glob
 
 	        if(isequal(scale, ZERO))
 	        {
-	            Creg = 1.0;
+	            Creg = 1;
 	            Sreg = ZERO;
 	            R = ZERO;
 	            Z = ZERO;
@@ -68,7 +68,7 @@ __kernel void %PREFIXrotg_kernel( __global %TYPE *_A, __global %TYPE *_B, __glob
 	            Creg = Areg / R;
 	            Sreg = Breg / R;
 	            Z = (isgreater(absA, absB))? Sreg:
-	                    ( (isnotequal(Creg, ZERO))? (1.0/Creg): 1.0 );
+	                    ( (isnotequal(Creg, ZERO))? (1/Creg): 1 );
 	        }
 	        _A[offa] = R;
 	        _B[offb] = Z;
@@ -84,7 +84,7 @@ __kernel void %PREFIXrotg_kernel( __global %TYPE *_A, __global %TYPE *_B, __glob
 	        if(isequal(cabsA, PZERO))
 	        {
 	            Creg = PZERO;
-	            Sreg = (%TYPE)(1.0, 0.0);
+	            Sreg = (%TYPE)(1, 0);
 	            Areg = Breg;
 	        }
 	        else

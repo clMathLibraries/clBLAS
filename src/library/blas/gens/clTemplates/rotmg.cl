@@ -26,13 +26,13 @@ static const char *rotmg_kernel = "
 #endif
 
 // Rotmg exists only for S/D
-#define ZERO    (%TYPE)0.0
-#define ONE     (%TYPE)1.0
-#define TWO     (%TYPE)2.0
+#define ZERO    (%TYPE)(0)
+#define ONE     (%TYPE)(1)
+#define TWO     (%TYPE)(2)
 
-#define GAM     (%TYPE)4096.0
+#define GAM     (%TYPE)(4096)
 #define GAMSQ   (%TYPE)( GAM * GAM )
-#define RGAMSQ  (%TYPE)( 1.0 / GAMSQ )
+#define RGAMSQ  (%TYPE)( 1 / GAMSQ )
 
 __kernel void %PREFIXrotmg_kernel( __global %TYPE *_D1, __global %TYPE *_D2, __global %TYPE *_X1,
                                 __global %TYPE *_Y1, __global %TYPE *_param,
