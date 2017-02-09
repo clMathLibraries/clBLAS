@@ -1278,7 +1278,7 @@ main(int argc, char *argv[])
         }
 
         if (params.optFlags & SET_DEVICE_TYPE) {
-            if (!base->setDeviceType(&params.devType, params.devName)) {
+            if (!base->setDeviceType(params)) {
                 ::std::cerr << "Fatal error, OpenCL or clblas "
                         "initialization failed! Leaving the test." <<
                         ::std::endl;
