@@ -71,7 +71,7 @@ printResult(const char* str)
     nrows = (sizeof(result) / sizeof(FloatComplex)) / ldb;
     for (i = 0; i < nrows; i++) {
         for (j = 0; j < ldb; j++) {
-            printf("%.5f ", result[i * ldb + j].x);
+            printf("%.5f ", result[i * ldb + j].s[0]);
         }
         printf("\n");
     }
