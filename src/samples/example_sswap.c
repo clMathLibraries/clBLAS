@@ -91,7 +91,7 @@ main(void)
         return 1;
     }
 
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL);
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetDeviceIDs() failed with %d\n", err );
         return 1;

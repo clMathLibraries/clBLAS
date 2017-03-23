@@ -71,7 +71,7 @@ printResult(const char* str)
     nrows = (sizeof(result) / sizeof(FloatComplex)) / ldb;
     for (i = 0; i < nrows; i++) {
         for (j = 0; j < ldb; j++) {
-            printf("%.5f ", result[i * ldb + j].s[0]);
+            printf("%.5f ", result[i * ldb + j].x);
         }
         printf("\n");
     }
@@ -81,7 +81,7 @@ int
 main(void)
 {
     cl_int err;
-    cl_platform_id platform = 0;
+    cl_platform_id platform[] = { 0, 0 };
     cl_device_id device = 0;
     cl_context_properties props[3] = { CL_CONTEXT_PLATFORM, 0, 0 };
     cl_context ctx = 0;
@@ -97,7 +97,7 @@ main(void)
         return 1;
     }
 
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL);
+    err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_CPU, 1, &device, NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetDeviceIDs() failed with %d\n", err );
         return 1;

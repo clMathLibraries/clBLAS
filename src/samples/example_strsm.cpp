@@ -80,7 +80,8 @@ int
 main(void)
 {
     cl_int err;
-    cl_platform_id platform = 0;
+    // Increase platforms array for system needs; 2 covers most situations
+    cl_platform_id platforms[] = { 0,0 };
     cl_device_id device = 0;
     cl_context_properties props[3] = { CL_CONTEXT_PLATFORM, 0, 0 };
     cl_context ctx = 0;
@@ -94,19 +95,23 @@ main(void)
     makeScaledIdentity( result, M, N, 0.0f);
 
     /* Setup OpenCL environment. */
-    err = clGetPlatformIDs( 1, &platform, NULL);
+    err = clGetPlatformIDs( sizeof( platforms )/ sizeof( cl_platform_id ), &platforms[0], NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetPlatformIDs() failed with %d\n", err );
         return 1;
     }
 
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL);
+    // Change this statement to pick the desired platform under test
+    cl_platform_id test_platform = platforms[1];
+
+    //!!!  Change device type to validate; works on GPU, faults on CPU
+    err = clGetDeviceIDs(test_platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetDeviceIDs() failed with %d\n", err );
         return 1;
     }
 
-    props[1] = (cl_context_properties)platform;
+    props[1] = (cl_context_properties)test_platform;
     ctx = clCreateContext(props, 1, &device, NULL, NULL, &err);
     if (err != CL_SUCCESS) {
         printf( "clCreateContext() failed with %d\n", err );
