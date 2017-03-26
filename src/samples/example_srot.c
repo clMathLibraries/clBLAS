@@ -83,13 +83,13 @@ main(void)
     /* Setup OpenCL environment. */
     err = clGetPlatformIDs(1, &platform, NULL);
 
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetPlatformIDs() failed with %d\n", err );
         return 1;
     }
 
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL);
 
     if (err != CL_SUCCESS) {
         printf( "clGetDeviceIDs() failed with %d\n", err );
