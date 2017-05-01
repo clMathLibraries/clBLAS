@@ -40,7 +40,12 @@
 #define stat _stat
 #endif
 
-#include "CL/opencl.h"
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
+
 //#include "naive_blas.cpp"
 //using namespace NaiveBlas;
 #include "AutoGemmIncludes/AutoGemmKernelsToPreCompile.h"

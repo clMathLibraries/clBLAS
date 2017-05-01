@@ -65,7 +65,7 @@ __kernel void sgemm_Col_NT_B1_MX032_NX064_KX16_ROW (
   uint offsetB,
   uint offsetC)
 {
-	float rC[2][4] = { (float)0 };
+	float rC[2][4] = { { (float)0 } };
 	float rA[1][2];
 	float rB[1][4];
 
