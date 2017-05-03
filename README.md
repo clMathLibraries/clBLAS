@@ -210,6 +210,6 @@ The simple example below shows how to use clBLAS to compute an OpenCL accelerate
   [clmath@googlegroups.com]: https://groups.google.com/forum/#!forum/clmath
   [clmath-developers@googlegroups.com]: https://groups.google.com/forum/#!forum/clmath-developers
   [project wiki]: https://github.com/clMathLibraries/clBLAS/wiki
-  [build primer]: https://github.com/clMathLibraries/clBLAS/wiki/Build
+  [build primer]: https://github.com/clMathLibraries/clBLAS/wiki/Build-clBLAS-library-*.a-or-*.so-files-only
   [Contributing]: CONTRIBUTING.md
   [Apache License, Version 2.0]: http://www.apache.org/licenses/LICENSE-2.0
