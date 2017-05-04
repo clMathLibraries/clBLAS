@@ -8308,6 +8308,7 @@ clAmdBlasZtbsv(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with float
  * elements.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8407,6 +8408,7 @@ clAmdBlasSgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with double
  * elements.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8479,6 +8481,7 @@ clAmdBlasDgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with float
  * complex elements.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8547,6 +8550,7 @@ clAmdBlasCgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with double
  * complex elements.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8615,6 +8619,7 @@ clAmdBlasZgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with float
  *        elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8704,6 +8709,7 @@ clAmdBlasSgemmEx(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with double
  *        elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8785,6 +8791,7 @@ clAmdBlasDgemmEx(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with float
  *        complex elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -8864,6 +8871,7 @@ clAmdBlasCgemmEx(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with double
  *        complex elements. Exteneded version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -9552,6 +9560,7 @@ clAmdBlasZtrmmEx(
 /**
  * @brief Solving triangular systems of equations with multiple right-hand
  * sides and float elements.
+ * @note This function is not thread-safe.
  *
  * Solving triangular systems of equations:
  *   - \f$ B \leftarrow \alpha A^{-1} B \f$
@@ -9647,6 +9656,7 @@ clAmdBlasStrsm(
 /**
  * @brief Solving triangular systems of equations with multiple right-hand
  * sides and double elements.
+ * @note This function is not thread-safe.
  *
  * Solving triangular systems of equations:
  *   - \f$ B \leftarrow \alpha A^{-1} B \f$
@@ -9847,6 +9857,7 @@ clAmdBlasZtrsm(
 /**
  * @brief Solving triangular systems of equations with multiple right-hand
  *        sides and float elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Solving triangular systems of equations:
  *   - \f$ B \leftarrow \alpha A^{-1} B \f$
@@ -9929,6 +9940,7 @@ clAmdBlasStrsmEx(
 /**
  * @brief Solving triangular systems of equations with multiple right-hand
  *        sides and double elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Solving triangular systems of equations:
  *   - \f$ B \leftarrow \alpha A^{-1} B \f$

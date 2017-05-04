@@ -56,8 +56,10 @@ extern "C" {
  * keeping interfaces familiar to users who know how to use BLAS. All
  * functions accept matrices through buffer objects.
  *
- * This library is entirely thread-safe with the exception of the following API :
- * clblasSetup and clblasTeardown. 
+ * This library is thread-safe with the exception of the following API :
+ * clblasSetup and clblasTeardown, clblasXgemm, clblasStrsm, clblasDtrsm.
+ * clblasXgemm is no longer thread-safe due to Auto-Gemm.
+ * clblasStrsm and clblasDtrsm rely on clblasXgemm. But clblasCtrsm and clblasZtrsm are still thread-safe.  
  * Developers using the library can safely using any blas routine from different thread. 
  *
  * @section deprecated
@@ -7327,6 +7329,7 @@ clblasZtbsv(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with float
  *        elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -7412,6 +7415,7 @@ clblasSgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with double
  *        elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -7488,6 +7492,7 @@ clblasDgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with float
  *        complex elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -7562,6 +7567,7 @@ clblasCgemm(
 /**
  * @brief Matrix-matrix product of general rectangular matrices with double
  *        complex elements. Exteneded version.
+ * @note This function is not thread-safe.
  *
  * Matrix-matrix products:
  *   - \f$ C \leftarrow \alpha A B + \beta C \f$
@@ -7938,6 +7944,7 @@ clblasZtrmm(
 /**
  * @brief Solving triangular systems of equations with multiple right-hand
  *        sides and float elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Solving triangular systems of equations:
  *   - \f$ B \leftarrow \alpha A^{-1} B \f$
@@ -8015,6 +8022,7 @@ clblasStrsm(
 /**
  * @brief Solving triangular systems of equations with multiple right-hand
  *        sides and double elements. Extended version.
+ * @note This function is not thread-safe.
  *
  * Solving triangular systems of equations:
  *   - \f$ B \leftarrow \alpha A^{-1} B \f$
