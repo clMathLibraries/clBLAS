@@ -70,7 +70,8 @@ typedef union FType {
 static void
 printUsage(const char *programName, int exitCode)
 {
-    printf( "USAGE: %s [options] <M N K>\n"
+    printf( "%s - tiles multiplier generator testing and debugging tool.\n"
+            "USAGE: %s [options] <M N K>\n"
             "  --help, -h                Print this help message.\n"
             "  --device, -d <device>     OpenCL device used. <device> can "
             "be \"gpu\" or \"cpu\". Default is \"gpu\".\n"
@@ -102,8 +103,8 @@ printUsage(const char *programName, int exitCode)
             "with one generator function call for both fetching and "
             "multiplication. Separate generators functions are used by "
             "default.\n"
-            "  M N K                     Size of block.\n",
-           programName);
+            "  M N K                     Sizes of blocks multiplied, 4 4 4 for example.\n",
+           programName, programName);
     exit(exitCode);
 }
 
@@ -158,14 +159,15 @@ genTest(
 {
     char s[1024];
     Kstring kstr;
-    char *tName, tVect[64], *ptrName;
+    char *tName, *ptrName;
+    char nameA[64], nameB[64];
     KernelVarNames *vnames = &gset->varNames;
     DataType dtype = gset->kextra->dtype;
     const SubproblemDim *subdims = gset->subdims;
     unsigned int vecLen = gset->kextra->vecLen;
     size_t m, n, k;
     unsigned int i, j;
-    bool tra, trb, localA, localB, vecCoords;
+    bool tra, trb, localA, localB;
     int ret;
     TileMulFlags flags = mulOpts->flags;
     FetchOpts fetchOpts;
@@ -178,14 +180,6 @@ genTest(
     trb = ((flags & TILEMUL_TRB) != 0);
     localA = (mulOpts->memA == CLMEM_LOCAL_MEMORY);
     localB = (mulOpts->memB == CLMEM_LOCAL_MEMORY);
-
-    vecCoords = ((flags & TILEMUL_OPTIMIZE_VEC_COORDS) != 0);
-
-    tVect[0] = '\0';
-
-    if (vecCoords && vecLen != 1) {
-        sprintf(tVect, "%u", vecLen);
-    }
 
     switch (dtype) {
     case TYPE_FLOAT:
@@ -208,15 +202,14 @@ genTest(
         return;
     }
 
-    if (vecCoords) {
-        //Do not use GPtrs in fetching
-        vnames->A = "A";
-        vnames->B = "B";
+    {
+        const char *typePtrName;
+        getVectorTypeName(dtype, vecLen, NULL, &typePtrName);
+        sprintf(nameA, localA ? "LAptr.%s" : "((GPtr)A).%s", typePtrName);
+        sprintf(nameB, localB ? "LBptr.%s" : "((GPtr)B).%s", typePtrName);
     }
-    else {
-        vnames->A = localA ? "LAptr" : "((GPtr)A)";
-        vnames->B = localB ? "LBptr" : "((GPtr)B)";
-    }
+    vnames->A = nameA;
+    vnames->B = nameB;
     if (!localA) {
         vnames->lda = "lda";
 
@@ -243,9 +236,9 @@ genTest(
     kgenAddStmt(ctx, s);
     sprintf(s,"    %s alpha,\n", tName);
     kgenAddStmt(ctx, s);
-    sprintf(s,"    __global %s%s *A,\n", tName, tVect);
+    sprintf(s,"    __global %s *A,\n", tName);
     kgenAddStmt(ctx, s);
-    sprintf(s,"    __global %s%s *B,\n", tName, tVect);
+    sprintf(s,"    __global %s *B,\n", tName);
     kgenAddStmt(ctx, s);
     kgenAddStmt(ctx, "    uint M,\n"
                      "    uint N,\n"
@@ -291,66 +284,14 @@ genTest(
     initDefaultTiles(gset, CLBLAS_GEMM, TILE_PACKED, PRIV_STORAGE_ARRAY);
     declareTileStorages(ctx, gset);
 
-    if (vecCoords) {
-        size_t ha, hb;
-        char *str;
-
-        ha = tra ? k : m;
-        hb = trb ? n : k;
-
-        if (ha > 1) {
-            str = s;
-            str += sprintf(str, "uint%lu ca = {0", ha);
-            for (i = 1; i < ha; i++) {
-                str += sprintf(str, ", %s * %u / %u", vnames->lda, i, vecLen);
-            }
-            str += sprintf(str, "};\n");
-            kgenAddStmt(ctx, s);
-        }
-        else {
-            kgenAddStmt(ctx, "uint ca = 0;\n");
-        }
-        vnames->vectCoordA = "ca";
-
-        if (hb > 1) {
-            str = s;
-            str += sprintf(str, "uint%lu cb = {0", hb);
-            for (i = 1; i < hb; i++) {
-                str += sprintf(str, ", %s * %u / %u", vnames->ldb, i, vecLen);
-            }
-            str += sprintf(str, "};\n");
-            kgenAddStmt(ctx, s);
-        }
-        else {
-            kgenAddStmt(ctx, "uint cb = 0;\n");
-        }
-        vnames->vectCoordB = "cb";
-
-//        uint4 ca = {0, vecLDA, vecLDA * 2, vecLDA * 3};
-//        uint4 cb = {0, vecLDB, vecLDB * 2, vecLDB * 3};
-    }
-
     kgenAddBlankLine(ctx);
 
     sprintf(s, "for (int it = 0; it < iter; it++)");
     kgenBeginBranch(ctx, s);
 
-    if (!(localA && localB)) {
-        kgenAddStmt(ctx, "uint k = 0;\n");
-    }
+    kgenAddStmt(ctx, "uint k = 0;\n");
 
     genZeroTile(ctx, &gset->tileCY);
-
-    if (vecCoords) {
-        char *coordsA[2] = {"workItemM", "k"};
-        char *coordsB[2] = {"k", "workItemN"};
-        sprintf(s, "A += %s * (lda / %u) + %s / %u;\n",
-                coordsA[tra], vecLen, coordsA[1 - tra], vecLen);
-        kgenAddStmt(ctx, s);
-        sprintf(s, "B += %s * (ldb / %u) + %s / %u;\n",
-                coordsB[trb], vecLen, coordsB[1 - trb], vecLen);
-        kgenAddStmt(ctx, s);
-    }
 
     sprintf(s, "for (int k0 = 0; k0 < K; k0 += %lu)", subdims[0].bwidth);
     kgenBeginBranch(ctx, s);
@@ -1061,6 +1002,10 @@ int main(int argc, char *argv[])
     blockM = atoi(argv[optind]);
     blockN = atoi(argv[optind + 1]);
     blockK = atoi(argv[optind + 2]);
+
+    kextra.vecLenA = kextra.vecLen;
+    kextra.vecLenB = kextra.vecLen;
+    kextra.vecLenC = kextra.vecLen;
 
     if ((mulOpts.memA == CLMEM_LOCAL_MEMORY ||
             mulOpts.memB == CLMEM_LOCAL_MEMORY) &&

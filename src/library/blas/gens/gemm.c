@@ -746,8 +746,6 @@ subgGen(
     vnames->alpha = "alpha";
     vnames->beta = "beta";
 
-    vnames->vectCoordA = "vca";
-    vnames->vectCoordB = "vcb";
     vnames->k = exprK.buf;
 
     subgroupsA = (unsigned int)(gset.subdims[0].y/gset.subdims[1].y);
