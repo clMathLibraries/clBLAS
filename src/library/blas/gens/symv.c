@@ -477,7 +477,6 @@ generator(
         kgenAddBlankLine(ctx);
     }
 
-    mulOpts.flags |= TILEMUL_OPTIMIZE_COORD_CALC;
     if (tailM) {
         vnames->sizeM = "N";
     }

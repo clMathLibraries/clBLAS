@@ -140,24 +140,19 @@ typedef enum TileMulFlags {
     TILEMUL_GLOBAL_CYCLIC = TILEMUL_GLOBAL_CYCLIC_A |
                             TILEMUL_GLOBAL_CYCLIC_B |
                             TILEMUL_GLOBAL_CYCLIC_K,
-    // Deprecated
-    TILEMUL_SKEWS = TILEMUL_SKEW_A | TILEMUL_SKEW_B | TILEMUL_SKEW_K,
-    /** Optimize coordinates calculations by storing coordinates values */
-    // Deprecated
-    TILEMUL_OPTIMIZE_COORD_CALC = 0x4000,
     /** Use bwidth0 stride */
-    TILEMUL_BW_STRIDE = 0x8000,
+    TILEMUL_BW_STRIDE = 0x4000,
     /** Optimize coordinates calculations by using vectors
      *  and pointer increments */
     // Deprecated
-    TILEMUL_OPTIMIZE_VEC_COORDS = 0x10000,
+    TILEMUL_OPTIMIZE_VEC_COORDS = 0x8000,
     /** Do not increment K*/
-    TILEMUL_NOT_INC_K = 0x20000,
+    TILEMUL_NOT_INC_K = 0x10000,
     /**
      * Use variants with explicit vectorization. Useful on platforms with
      * true SIMD.
      */
-    TILEMUL_FORCE_VECTORIZATION = 0x40000
+    TILEMUL_FORCE_VECTORIZATION = 0x20000
 } TileMulFlags;
 
 
