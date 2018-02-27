@@ -23,7 +23,7 @@ option( BUILD_PERFORMANCE "Copy the performance scripts that can measure and gra
 option( BUILD_SAMPLE "Build the sample programs" OFF )
 option( BUILD_CLIENT "Build a command line clBLAS client program with a variety of configurable parameters (dependency on Boost)" OFF )
 option( BUILD_KTEST "A command line tool for testing single clBLAS kernel" OFF )
-option( BUILD_SHARED_LIBS "Build shared libraries" ON )
+option( BUILD_SHARED_LIBS "Build shared libraries" OFF )
 
 #enable or disable offline compilation for different devices. Currently only Hawaii, Bonaire, Tahiti have the option.
 #option( OPENCL_OFFLINE_BUILD_HAWAII_KERNEL "Offline compile the OpenCL kernels for Hawaii device" OFF)
