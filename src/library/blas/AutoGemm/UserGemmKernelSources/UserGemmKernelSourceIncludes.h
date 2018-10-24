@@ -77,38 +77,6 @@ extern const char * const sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src;
 extern unsigned char *sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_bin;
 extern size_t sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_binSize;
 
-extern const unsigned int sgemm_NN_gfx900_tensile_workGroupNumRows;
-extern const unsigned int sgemm_NN_gfx900_tensile_workGroupNumCols;
-extern const unsigned int sgemm_NN_gfx900_tensile_microTileNumRows;
-extern const unsigned int sgemm_NN_gfx900_tensile_microTileNumCols;
-extern const char * const sgemm_NN_gfx900_tensile_src;
-extern unsigned char *sgemm_NN_gfx900_tensile_bin;
-extern size_t sgemm_NN_gfx900_tensile_binSize;
-
-extern const unsigned int sgemm_NT_gfx900_tensile_workGroupNumRows;
-extern const unsigned int sgemm_NT_gfx900_tensile_workGroupNumCols;
-extern const unsigned int sgemm_NT_gfx900_tensile_microTileNumRows;
-extern const unsigned int sgemm_NT_gfx900_tensile_microTileNumCols;
-extern const char * const sgemm_NT_gfx900_tensile_src;
-extern unsigned char *sgemm_NT_gfx900_tensile_bin;
-extern size_t sgemm_NT_gfx900_tensile_binSize;
-
-extern const unsigned int sgemm_TN_gfx900_tensile_workGroupNumRows;
-extern const unsigned int sgemm_TN_gfx900_tensile_workGroupNumCols;
-extern const unsigned int sgemm_TN_gfx900_tensile_microTileNumRows;
-extern const unsigned int sgemm_TN_gfx900_tensile_microTileNumCols;
-extern const char * const sgemm_TN_gfx900_tensile_src;
-extern unsigned char *sgemm_TN_gfx900_tensile_bin;
-extern size_t sgemm_TN_gfx900_tensile_binSize;
-
-extern const unsigned int sgemm_TT_gfx900_tensile_workGroupNumRows;
-extern const unsigned int sgemm_TT_gfx900_tensile_workGroupNumCols;
-extern const unsigned int sgemm_TT_gfx900_tensile_microTileNumRows;
-extern const unsigned int sgemm_TT_gfx900_tensile_microTileNumCols;
-extern const char * const sgemm_TT_gfx900_tensile_src;
-extern unsigned char *sgemm_TT_gfx900_tensile_bin;
-extern size_t sgemm_TT_gfx900_tensile_binSize;
-
 extern const unsigned int dgemm_NN_gfx906_tensile_workGroupNumRows;
 extern const unsigned int dgemm_NN_gfx906_tensile_workGroupNumCols;
 extern const unsigned int dgemm_NN_gfx906_tensile_microTileNumRows;

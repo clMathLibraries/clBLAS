@@ -48,12 +48,6 @@
 #include "UserGemmKernelSources/sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_src.cpp"
 #include "UserGemmKernelSources/sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src.cpp"
 
-//**** Special kernels for vega10 from tensile lib
-#include "UserGemmKernelSources/sgemm_NN_gfx900_tensile_src.cpp"
-#include "UserGemmKernelSources/sgemm_NT_gfx900_tensile_src.cpp"
-#include "UserGemmKernelSources/sgemm_TN_gfx900_tensile_src.cpp"
-#include "UserGemmKernelSources/sgemm_TT_gfx900_tensile_src.cpp"
-
 //**** Special kernels for vega20 from tensile lib
 #include "UserGemmKernelSources/dgemm_NN_gfx906_tensile_src.cpp"
 #include "UserGemmKernelSources/dgemm_NT_gfx906_tensile_src.cpp"
