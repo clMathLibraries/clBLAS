@@ -1168,6 +1168,10 @@ const cl_event *eventWaitList,
 cl_event *events,
 bool &specialCaseHandled)
 {
+
+	if (order == clblasRowMajor)
+		return clblasNotImplemented;
+
 	clblasStatus status;
 
 	//handles big multiples of 1024
