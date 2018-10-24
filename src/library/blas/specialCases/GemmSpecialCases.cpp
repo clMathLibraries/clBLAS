@@ -15,7 +15,6 @@
 * ************************************************************************/
 
 #include <algorithm>
-#include <iostream>
 
 #include "GemmSpecialCases.h"
 #include "UserGemmKernelSources/UserGemmKernelSourceIncludes.h"
