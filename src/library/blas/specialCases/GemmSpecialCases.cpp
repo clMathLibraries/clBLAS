@@ -407,15 +407,15 @@ clblasStatus SGEMM_mod1024(
 #define GFXIP_MAJOR_VEGA 9
 #define GFXIP_MINOR_VEGA_20 6
 
-clblasStatus SGEMM_tensile(
+clblasStatus DGEMM_tensile(
 	clblasOrder order,
 	clblasTranspose transA,
 	clblasTranspose transB,
 	cl_uint M, cl_uint N, cl_uint K,
-	float alpha,
+	double alpha,
 	cl_mem A, cl_uint offA, cl_uint lda,
 	cl_mem B, cl_uint offB, cl_uint ldb,
-	float beta,
+	double beta,
 	cl_mem C, cl_uint offC, cl_uint ldc,
 	cl_uint numCommandQueues,
 	cl_command_queue *commandQueues,
@@ -431,480 +431,292 @@ clblasStatus SGEMM_tensile(
 
 	cl_int err;
 
+	// query device
 	cl_device_id device;
 	err = clGetCommandQueueInfo(commandQueues[0], CL_QUEUE_DEVICE, sizeof(device), &device, NULL);
 	CL_CHECK(err);
 
-    cl_uint gfxipMajor = 0;
-    err = clGetDeviceInfo(device, CL_DEVICE_GFXIP_MAJOR_AMD, sizeof(gfxipMajor), &gfxipMajor, NULL);
-    CL_CHECK(err);
+	cl_uint gfxipMajor = 0;
+	err = clGetDeviceInfo(device, CL_DEVICE_GFXIP_MAJOR_AMD, sizeof(gfxipMajor), &gfxipMajor, NULL);
+	CL_CHECK(err);
 
-    if (gfxipMajor == GFXIP_MAJOR_VEGA)
+	cl_uint gfxipMinor = 0;
+	err = clGetDeviceInfo(device, CL_DEVICE_GFXIP_MINOR_AMD, sizeof(gfxipMinor), &gfxipMinor, NULL);
+	CL_CHECK(err);
+
+	if (gfxipMajor == GFXIP_MAJOR_VEGA && gfxipMinor == GFXIP_MINOR_VEGA_20)
 	{
-#if 1
-		if (order == clblasColumnMajor)
+		int M_divisible_by_64 = (M % 64) ? 0 : 1; // M is divisible by 64
+		int N_divisible_by_64 = (N % 64) ? 0 : 1; // N is divisible by 64
+		int K_divisible_by_64 = (K % 64) ? 0 : 1; // K is divisible by 64
+		int mask = (M_divisible_by_64 << 2) | (N_divisible_by_64 << 1) | (K_divisible_by_64 << 0); // 3bit divisibility mask
+
+		enum
+		{
+			NONE,   // none of M,N,K is divisible by 64
+			K64,    // only K is divisible by 64
+			N64,    // only N is divisible by 64
+			NK64,   // N and K are both divisible, and M is not divisible by 64
+			M64,    // only M is divisible by 64
+			MK64,   // M and K are both divisible, and N is not divisible by 64
+			MN64,   // M and N are both divisible, and K is not divisible by 64
+			MNK64,  // all of M,N,K are divisible by 64
+		};
+
+		assert(mask >= NONE && mask <= MNK64);
+
+		// decide if we execute Tensile kernel or fallback to original clBLAS implementation
+		bool fallback = false;
+		if (order == clblasRowMajor)
 		{
 			if (transA == clblasNoTrans && transB == clblasNoTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */		{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */		{}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */
+				switch (mask)
 				{
-					if (M + N < 2253 || M + K > 720|| N + K < 406 || M + N + K > 2796)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
-				{
-					if (M < 512 || N < 656 || K < 128 || M + N < 2895 || M + K > 1280 || N + K < 1424 || M + N + K < 3814)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (M < 656 || N < 512 || M + N < 2908 || M + K < 958 || N + K < 1024 || M + N + K < 3663) {}
-					else
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = true; break;
+				case M64  : break;
+				case MK64 : fallback = (M > 1280) || (K < 128) || (M + N < 1150) || (M + N > 4574) || (M + K > 7168) || (M + N + K < 1424) || (M + N + K > 8338); break;
+				case MN64 : break;
+				case MNK64: fallback = true; break;
 				}
 			}
 			else if (transA == clblasNoTrans && transB == clblasTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */		{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */
+				switch (mask)
 				{
-					if (M + N > 4987 || M + N + K > 8694)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */		{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */
-				{
-					if (M + N > 4160 || M + N + K > 7076)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
-				{
-					if (M + N > 5086|| M + N + K > 9182)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (N > 1536 || M + N > 4108 || N + K > 4224 || M + N + K > 6192)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = (K < 128) || (M + N + K < 1040); break;
+				case M64  : break;
+				case MK64 : break;
+				case MN64 : break;
+				case MNK64: fallback = true; break;
 				}
 			}
 			else if (transA == clblasTrans && transB == clblasNoTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */		{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */		{}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */		{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
+				switch (mask)
 				{
-					if (M + N > 5094 || M + N + K > 9596)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (M + N > 5499 || M + N + K > 9595)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = (M + N > 4987) || (M + N + K > 10176); break;
+				case M64  : fallback = (M > 3072) || (M + N > 4539) || (M + K > 6500) || (M + N + K > 8077); break;
+				case MK64 : fallback = (M > 128) || (N > 894) || (K < 256) || (M + N > 1680) || (M + K > 2112) || (N + K > 3376) || (M + N + K > 3606); break;
+				case MN64 : fallback = (M + N > 3840) || (M + N + K > 7076); break;
+				case MNK64: fallback = (M > 64) || (N > 64) || (K < 768) || (K > 2048) || (M + N > 640) || (M + K > 1408) || (N + K > 1152) || (M + N + K < 576) || (M + N + K > 2048); break;
 				}
 			}
-			else if (transA == clblasTrans && transB == clblasTrans)
+			else // (transA == clblasTrans && transB == clblasTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */		{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */
+				switch (mask)
 				{
-					if (M + N > 7035 || M + N + K > 10486)
-					{
-						return clblasNotImplemented;
-					}
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = (M > 3340) || (N < 128) || (N > 2560) || (K < 1536) || (M + N < 1558) || (M + N > 3888) || (M + K < 790) || (N + K < 1536) || (M + N + K < 2639); break;
+				case M64  : break;
+				case MK64 : fallback = (M < 128) || (K < 128) || (M + N < 1558) || (N + K < 1022) || (M + N + K < 2326); break;
+				case MN64 : break;
+				case MNK64: fallback = true; break;
 				}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */		{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */
-				{
-					if (M + N > 5120 || M + N + K > 8699)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */	{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (M + N > 4731 || N + K > 5120 || M + N + K > 7634)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
-				}
-			}
-			else
-			{
-				return clblasNotImplemented;
 			}
 		}
-		else if (order == clblasRowMajor)
+		else // (order == clblasColumnMajor)
 		{
 			if (transA == clblasNoTrans && transB == clblasNoTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */		{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */		{}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */
+				switch (mask)
 				{
-					if (M < N < 2253 || M + N + K < 2842)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
-				{
-					if (M < 512 || N < 565 || M + N < 2942 || M + K < 1152 || N + K < 1423 || M + N + K < 3814)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (M > 656 || N < 512 || M + N < 2704 || M + K < 1424 || N + K < 1280 || M + N + K < 3710)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = (N > 2048) || (M + N < 1168) || ( M + N > 4731) ||(M + N + K < 1534) || (M + N + K > 8635);break;
+				case M64  : break;
+				case MK64 : fallback = true; break;
+				case MN64 : break;
+				case MNK64: fallback = true; break;
 				}
 			}
 			else if (transA == clblasNoTrans && transB == clblasTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */		{}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */		{}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */		{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
+				switch (mask)
 				{
-					if (M + N > 5455 || M + N + K > 9551)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (K < 128 || M + N > 4990 || M + K < 406 || N + K < 320 || M + N + K < 598 || M + N + K > 9551)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
+				case NONE : break;
+				case K64  : break;
+				case N64  : fallback = (N > 3072) || (M + N > 4539) || (N + K > 6500) || (M + N + K > 8077); break;
+				case NK64 : fallback = (M > 894) || (N > 128) || (M + N > 1814) || (M + K > 3454) || (N + K > 2112) || (M + N + K > 3696); break;
+				case M64  : break;
+				case MK64 : fallback = (M + N > 4987) || (M + N + K > 9996); break;
+				case MN64 : fallback = (M + N > 4160) || (M + N + K > 7076); break;
+				case MNK64: fallback = true; break;
 				}
 			}
 			else if (transA == clblasTrans && transB == clblasNoTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */
+				switch (mask)
 				{
-					if (M + N > 4990 || M + N + K > 8694)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */		{}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */		{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */
-				{
-					if (M + N > 4160 || M + N + K > 7076)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
-				{
-					if (M > 1536 || M + N > 4070 || M + K < 192 || M + K > 4224 || M + N + K < 470 || M + N + K > 6192)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */
-				{
-					if (M + N > 4990 || M + N + K > 9316)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = (M + N + K < 854); break;
+				case M64  : break;
+				case MK64 : break;
+				case MN64 : break;
+				case MNK64: fallback = true; break;
 				}
 			}
-			else if (transA == clblasTrans && transB == clblasTrans)
+			else // (transA == clblasTrans && transB == clblasTrans)
 			{
-				if (0) {}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) != 0) /* MIXED */	{}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) != 0) /* M64 */
+				switch (mask)
 				{
-					if (M + N > 7135 || M + N + K > 10486)
-					{
-						return clblasNotImplemented;
-					}
+				case NONE : break;
+				case K64  : break;
+				case N64  : break;
+				case NK64 : fallback = (N < 128) || (M + N < 1615) || (M + K < 790) || (N + K < 384) || (M + N + K < 2383); break;
+				case M64  : break;
+				case MK64 : fallback = (M < 128) || (N > 3474) || (K < 1280) || (M + N < 1615) || (M + N > 3966) || (M + K < 1536) || (N + K < 1046) || (M + N + K < 2686); break;
+				case MN64 : break;
+				case MNK64: fallback = true; break;
 				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) != 0) /* N64 */		{}
-				else if ((M % 64) != 0 && (N % 64) != 0 && (K % 64) == 0) /* K64 */		{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) != 0) /* MN64 */
-				{
-					if (M + N > 4864 || M + N + K > 8699)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) == 0 && (N % 64) != 0 && (K % 64) == 0) /* MK64 */
-				{
-					if (M > 2560 || M + N > 4731 || M + K > 5120 || M + N + K > 7634)
-					{
-						return clblasNotImplemented;
-					}
-				}
-				else if ((M % 64) != 0 && (N % 64) == 0 && (K % 64) == 0) /* NK64 */	{}
-				else if ((M % 64) == 0 && (N % 64) == 0 && (K % 64) == 0) /* MNK64 */
-				{
-					return clblasNotImplemented;
-				}
-				else
-				{
-					return clblasNotImplemented;
-				}
-			}
-			else
-			{
-				return clblasNotImplemented;
 			}
 		}
-#endif
-		unsigned int threadTile[2] = { 4, 4 };
-		unsigned int groupSize[2] = { 8, 8 };
+
+		if (fallback)
+			return clblasNotImplemented;
+
+		// pick kernel
+		cl_uint threadTile[2] = { 4, 4 };
+		cl_uint groupSize[2] = { 8, 8 };
 		if (transA == clblasNoTrans && transB == clblasNoTrans)
 		{
-			kernelSource = sgemm_NN_gfx900_tensile_src;
-			clKernel = &sgemm_NN_gfx900_tensile_clKernel;
-			kernelBinary = sgemm_NN_gfx900_tensile_bin;
-			kernelBinarySize = sgemm_NN_gfx900_tensile_binSize;
+			kernelSource     =  dgemm_NN_gfx906_tensile_src;
+			clKernel         = &dgemm_NN_gfx906_tensile_clKernel;
+			kernelBinary     =  dgemm_NN_gfx906_tensile_bin;
+			kernelBinarySize =  dgemm_NN_gfx906_tensile_binSize;
 
-			threadTile[0] = sgemm_NN_gfx900_tensile_microTileNumRows;
-			threadTile[1] = sgemm_NN_gfx900_tensile_microTileNumCols;
-			groupSize[0] = sgemm_NN_gfx900_tensile_workGroupNumRows;
-			groupSize[1] = sgemm_NN_gfx900_tensile_workGroupNumCols;
+			threadTile[0] = dgemm_NN_gfx906_tensile_microTileNumRows;
+			threadTile[1] = dgemm_NN_gfx906_tensile_microTileNumCols;
+			groupSize[0]  = dgemm_NN_gfx906_tensile_workGroupNumRows;
+			groupSize[1]  = dgemm_NN_gfx906_tensile_workGroupNumCols;
 		}
 		else if (transA == clblasNoTrans && transB == clblasTrans)
 		{
-			kernelSource = sgemm_NT_gfx900_tensile_src;
-			clKernel = &sgemm_NT_gfx900_tensile_clKernel;
-			kernelBinary = sgemm_NT_gfx900_tensile_bin;
-			kernelBinarySize = sgemm_NT_gfx900_tensile_binSize;
+			kernelSource     =  dgemm_NT_gfx906_tensile_src;
+			clKernel         = &dgemm_NT_gfx906_tensile_clKernel;
+			kernelBinary     =  dgemm_NT_gfx906_tensile_bin;
+			kernelBinarySize =  dgemm_NT_gfx906_tensile_binSize;
 
-			threadTile[0] = sgemm_NT_gfx900_tensile_microTileNumRows;
-			threadTile[1] = sgemm_NT_gfx900_tensile_microTileNumCols;
-			groupSize[0] = sgemm_NT_gfx900_tensile_workGroupNumRows;
-			groupSize[1] = sgemm_NT_gfx900_tensile_workGroupNumCols;
+			threadTile[0] = dgemm_NT_gfx906_tensile_microTileNumRows;
+			threadTile[1] = dgemm_NT_gfx906_tensile_microTileNumCols;
+			groupSize[0]  = dgemm_NT_gfx906_tensile_workGroupNumRows;
+			groupSize[1]  = dgemm_NT_gfx906_tensile_workGroupNumCols;
 		}
 		else if (transA == clblasTrans && transB == clblasNoTrans)
 		{
-			kernelSource = sgemm_TN_gfx900_tensile_src;
-			clKernel = &sgemm_TN_gfx900_tensile_clKernel;
-			kernelBinary = sgemm_TN_gfx900_tensile_bin;
-			kernelBinarySize = sgemm_TN_gfx900_tensile_binSize;
+			kernelSource     =  dgemm_TN_gfx906_tensile_src;
+			clKernel         = &dgemm_TN_gfx906_tensile_clKernel;
+			kernelBinary     =  dgemm_TN_gfx906_tensile_bin;
+			kernelBinarySize =  dgemm_TN_gfx906_tensile_binSize;
 
-			threadTile[0] = sgemm_TN_gfx900_tensile_microTileNumRows;
-			threadTile[1] = sgemm_TN_gfx900_tensile_microTileNumCols;
-			groupSize[0] = sgemm_TN_gfx900_tensile_workGroupNumRows;
-			groupSize[1] = sgemm_TN_gfx900_tensile_workGroupNumCols;
+			threadTile[0] = dgemm_TN_gfx906_tensile_microTileNumRows;
+			threadTile[1] = dgemm_TN_gfx906_tensile_microTileNumCols;
+			groupSize[0]  = dgemm_TN_gfx906_tensile_workGroupNumRows;
+			groupSize[1]  = dgemm_TN_gfx906_tensile_workGroupNumCols;
 		}
-		else if (transA == clblasTrans && transB == clblasTrans)
+		else // (transA == clblasTrans && transB == clblasTrans)
 		{
-			kernelSource = sgemm_TT_gfx900_tensile_src;
-			clKernel = &sgemm_TT_gfx900_tensile_clKernel;
-			kernelBinary = sgemm_TT_gfx900_tensile_bin;
-			kernelBinarySize = sgemm_TT_gfx900_tensile_binSize;
+			kernelSource     =  dgemm_TT_gfx906_tensile_src;
+			clKernel         = &dgemm_TT_gfx906_tensile_clKernel;
+			kernelBinary     =  dgemm_TT_gfx906_tensile_bin;
+			kernelBinarySize =  dgemm_TT_gfx906_tensile_binSize;
 
-			threadTile[0] = sgemm_TT_gfx900_tensile_microTileNumRows;
-			threadTile[1] = sgemm_TT_gfx900_tensile_microTileNumCols;
-			groupSize[0] = sgemm_TT_gfx900_tensile_workGroupNumRows;
-			groupSize[1] = sgemm_TT_gfx900_tensile_workGroupNumCols;
-		}
-		else
-		{
-			return clblasNotImplemented;
+			threadTile[0] = dgemm_TT_gfx906_tensile_microTileNumRows;
+			threadTile[1] = dgemm_TT_gfx906_tensile_microTileNumCols;
+			groupSize[0]  = dgemm_TT_gfx906_tensile_workGroupNumRows;
+			groupSize[1]  = dgemm_TT_gfx906_tensile_workGroupNumCols;
 		}
 
 		specialCaseHandled = true;
 		makeGemmKernel(clKernel, commandQueues[0], kernelSource, User_srcBuildOptions, &kernelBinary, &kernelBinarySize, User_binBuildOptions);
 
-		unsigned int sizeI = M;
-		unsigned int sizeJ = N;
-		unsigned int sizeK = 1; // ?
-		unsigned int sizeL = K;
+		// convert clBLAS args to Tensile args
+		cl_uint sizeI = M;
+		cl_uint sizeJ = N;
+		cl_uint sizeK = 1;
+		cl_uint sizeL = K;
 
-		unsigned int strideC1 = std::max(sizeI, ldc);
-		unsigned int strideC2 = strideC1 * sizeJ;
+		cl_uint strideC1 = std::max(sizeI, ldc);
+		cl_uint strideC2 = strideC1 * sizeJ;
 
-		unsigned int strideA1L = sizeI;  // non-transposed
-		unsigned int strideA2K = sizeI * sizeL;
-		unsigned int strideA1I = sizeL;  // transposed
-//		unsigned int strideA2K = sizeI * sizeL;
-		unsigned int strideA1 = std::max(transA == clblasNoTrans ? sizeI : sizeL, lda);
-		unsigned int strideA2 = strideA1 * (transA == clblasNoTrans ? sizeL : sizeJ);
+		cl_uint strideA1 = std::max(transA == clblasNoTrans ? sizeI : sizeL, lda);
+		cl_uint strideA2 = strideA1 * (transA == clblasNoTrans ? sizeL : sizeJ);
 
-		unsigned int strideB1J = sizeL;  // non-transposed
-		unsigned int strideB2K = sizeL * sizeJ;
-		unsigned int strideB1L = sizeJ;  // transposed
-//		unsigned int strideB2K = sizeL * sizeJ;
-		unsigned int strideB1 = std::max(transB == clblasNoTrans ? sizeL : sizeJ, ldb);
-		unsigned int strideB2 = strideB1 * (transB == clblasNoTrans ? sizeJ : sizeL);
+		cl_uint strideB1 = std::max(transB == clblasNoTrans ? sizeL : sizeJ, ldb);
+		cl_uint strideB2 = strideB1 * (transB == clblasNoTrans ? sizeJ : sizeL);
 
-		/* index assignments */
-		const unsigned int indexD0 = 0;
-		const unsigned int indexD1 = 1;
-		const unsigned int indexDU = 3;
-
-		/* num kernels */
-		const unsigned int numKernels = 1;
-		unsigned int numEnqueues[numKernels] = { 1 };
-
-		/* grid sizes */
-		const unsigned int workDim = 3;
+		// grid sizes
+		const cl_uint workDim = 3;
 		size_t localWorkSize[3] = { 256, 1, 1 };
-		size_t globalWorkSize[numKernels][3];
-		globalWorkSize[0][2] = 1;
-		globalWorkSize[0][2] *= sizeK;
-		unsigned int sizeOfC0 = sizeI;
-		unsigned int sizeOfC1 = sizeJ;
-		unsigned int macroTile0 = static_cast<unsigned int>(groupSize[0] * threadTile[0]);
-		unsigned int macroTile1 = static_cast<unsigned int>(groupSize[1] * threadTile[1]);
-		unsigned int totalWorkGroups0 = sizeOfC0 / macroTile0;
-		unsigned int totalWorkGroups1 = sizeOfC1 / macroTile1;
+		size_t globalWorkSize[3];
+		globalWorkSize[2] = 1 * sizeK;
+		cl_uint macroTile0 = groupSize[0] * threadTile[0];
+		cl_uint macroTile1 = groupSize[1] * threadTile[1];
+		cl_uint totalWorkGroups0 = sizeI / macroTile0;
+		cl_uint totalWorkGroups1 = sizeJ / macroTile1;
+
 		// b/c single kernel, add extra work-group here if edge needed
-		if (totalWorkGroups0*macroTile0 < sizeOfC0) { totalWorkGroups0++; }
-		if (totalWorkGroups1*macroTile1 < sizeOfC1) { totalWorkGroups1++; }
-		globalWorkSize[0][0] = totalWorkGroups0*localWorkSize[0];
-		globalWorkSize[0][1] = totalWorkGroups1*localWorkSize[1];
+		if (totalWorkGroups0*macroTile0 < sizeI)
+			totalWorkGroups0++;
+		if (totalWorkGroups1*macroTile1 < sizeJ)
+			totalWorkGroups1++;
+		globalWorkSize[0] = totalWorkGroups0*localWorkSize[0];
+		globalWorkSize[1] = totalWorkGroups1*localWorkSize[1];
 
-		/* offsets */
-		unsigned int offsets[numKernels][1][3];
-		offsets[0][0][0] = offC; // tensorC
-		offsets[0][0][1] = offA; // tensorA
-		offsets[0][0][2] = offB; // tensorB
+		// setup args
+		err = clSetKernelArg(*clKernel,  0, sizeof(C), &C);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  1, sizeof(A), &A);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  2, sizeof(B), &B);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  3, sizeof(alpha), &alpha);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  4, sizeof(beta),  &beta);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  5, sizeof(offC), &offC);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  6, sizeof(offA), &offA);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  7, sizeof(offB), &offB);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  8, sizeof(strideC1), &strideC1);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel,  9, sizeof(strideC2), &strideC2);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 10, sizeof(strideA1), &strideA1);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 11, sizeof(strideA2), &strideA2);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 12, sizeof(strideB1), &strideB1);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 13, sizeof(strideB2), &strideB2);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 14, sizeof(sizeI), &sizeI);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 15, sizeof(sizeJ), &sizeJ);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 16, sizeof(sizeK), &sizeK);
+		CL_CHECK(err);
+		err = clSetKernelArg(*clKernel, 17, sizeof(sizeL), &sizeL);
+		CL_CHECK(err);
 
-//		/* index sizes */
-//		unsigned int sizes[numKernels][1][4];
-//		sizes[0][0][0] = sizeI;
-//		sizes[0][0][1] = sizeJ;
-//		sizes[0][0][2] = sizeK;
-//		sizes[0][0][3] = sizeL;
-
-		unsigned int kernelIdx = 0;
-		// kernel args same for all enqueues
-		err = clSetKernelArg( *clKernel, 0, sizeof(cl_mem), &C ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 1, sizeof(cl_mem), &A ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 2, sizeof(cl_mem), &B ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 3, sizeof(float), &alpha ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 4, sizeof(float), &beta ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 5, sizeof(unsigned int), &offsets[0][0][0]); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 6, sizeof(unsigned int), &offsets[0][0][1]); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 7, sizeof(unsigned int), &offsets[0][0][2]); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 8, sizeof(unsigned int), &strideC1 ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 9, sizeof(unsigned int), &strideC2 ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 10, sizeof(unsigned int), &strideA1 ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 11, sizeof(unsigned int), &strideA2 ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 12, sizeof(unsigned int), &strideB1 ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 13, sizeof(unsigned int), &strideB2 ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 14, sizeof(unsigned int), &sizeI ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 15, sizeof(unsigned int), &sizeJ ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 16, sizeof(unsigned int), &sizeK ); CL_CHECK(err);
-		err = clSetKernelArg( *clKernel, 17, sizeof(unsigned int), &sizeL ); CL_CHECK(err);
-		err = clEnqueueNDRangeKernel(
-			commandQueues[0],
-			*clKernel,
-			workDim,
-			NULL, // globalWorkOffset
-			globalWorkSize[0],
-			localWorkSize,
-			numEventsInWaitList,
-			eventWaitList,
-			&events[0] );
-			CL_CHECK(err);
+		err = clEnqueueNDRangeKernel(commandQueues[0], *clKernel, workDim, NULL, globalWorkSize, localWorkSize, numEventsInWaitList, eventWaitList, &events[0] );
+		CL_CHECK(err);
 		if (err == CL_SUCCESS)
 		{
 			return clblasSuccess;
@@ -912,307 +724,6 @@ clblasStatus SGEMM_tensile(
 	}
 
 	return clblasNotImplemented;
-}
-
-clblasStatus DGEMM_tensile(
-    clblasOrder order,
-    clblasTranspose transA,
-    clblasTranspose transB,
-    cl_uint M, cl_uint N, cl_uint K,
-    double alpha,
-    cl_mem A, cl_uint offA, cl_uint lda,
-    cl_mem B, cl_uint offB, cl_uint ldb,
-    double beta,
-    cl_mem C, cl_uint offC, cl_uint ldc,
-    cl_uint numCommandQueues,
-    cl_command_queue *commandQueues,
-    cl_uint numEventsInWaitList,
-    const cl_event *eventWaitList,
-    cl_event *events,
-    bool &specialCaseHandled)
-{
-    const char *kernelSource = NULL;
-    cl_kernel  *clKernel = NULL;
-    const unsigned char *kernelBinary = NULL;
-    size_t kernelBinarySize = 0;
-
-    cl_int err;
-
-    // query device
-    cl_device_id device;
-    err = clGetCommandQueueInfo(commandQueues[0], CL_QUEUE_DEVICE, sizeof(device), &device, NULL);
-    CL_CHECK(err);
-
-    cl_uint gfxipMajor = 0;
-    err = clGetDeviceInfo(device, CL_DEVICE_GFXIP_MAJOR_AMD, sizeof(gfxipMajor), &gfxipMajor, NULL);
-    CL_CHECK(err);
-
-    cl_uint gfxipMinor = 0;
-    err = clGetDeviceInfo(device, CL_DEVICE_GFXIP_MINOR_AMD, sizeof(gfxipMinor), &gfxipMinor, NULL);
-    CL_CHECK(err);
-
-    if (gfxipMajor == GFXIP_MAJOR_VEGA && gfxipMinor == GFXIP_MINOR_VEGA_20)
-    {
-        int M_divisible_by_64 = (M % 64) ? 0 : 1; // M is divisible by 64
-        int N_divisible_by_64 = (N % 64) ? 0 : 1; // N is divisible by 64
-        int K_divisible_by_64 = (K % 64) ? 0 : 1; // K is divisible by 64
-        int mask = (M_divisible_by_64 << 2) | (N_divisible_by_64 << 1) | (K_divisible_by_64 << 0); // 3bit divisibility mask
-
-        enum
-        {
-            NONE,   // none of M,N,K is divisible by 64
-            K64,    // only K is divisible by 64
-            N64,    // only N is divisible by 64
-            NK64,   // N and K are both divisible, and M is not divisible by 64
-            M64,    // only M is divisible by 64
-            MK64,   // M and K are both divisible, and N is not divisible by 64
-            MN64,   // M and N are both divisible, and K is not divisible by 64
-            MNK64,  // all of M,N,K are divisible by 64
-        };
-
-        assert(mask >= NONE && mask <= MNK64);
-
-        // decide if we execute Tensile kernel or fallback to original clBLAS implementation
-        bool fallback = false;
-        if (order == clblasRowMajor)
-        {
-            if (transA == clblasNoTrans && transB == clblasNoTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = true; break;
-                case M64  : break;
-                case MK64 : fallback = (M > 1280) || (K < 128) || (M + N < 1150) || (M + N > 4574) || (M + K > 7168) || (M + N + K < 1424) || (M + N + K > 8338); break;
-                case MN64 : break;
-                case MNK64: fallback = true; break;
-                }
-            }
-            else if (transA == clblasNoTrans && transB == clblasTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = (K < 128) || (M + N + K < 1040); break;
-                case M64  : break;
-                case MK64 : break;
-                case MN64 : break;
-                case MNK64: fallback = true; break;
-                }
-            }
-            else if (transA == clblasTrans && transB == clblasNoTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = (M + N > 4987) || (M + N + K > 10176); break;
-                case M64  : fallback = (M > 3072) || (M + N > 4539) || (M + K > 6500) || (M + N + K > 8077); break;
-                case MK64 : fallback = (M > 128) || (N > 894) || (K < 256) || (M + N > 1680) || (M + K > 2112) || (N + K > 3376) || (M + N + K > 3606); break;
-                case MN64 : fallback = (M + N > 3840) || (M + N + K > 7076); break;
-                case MNK64: fallback = (M > 64) || (N > 64) || (K < 768) || (K > 2048) || (M + N > 640) || (M + K > 1408) || (N + K > 1152) || (M + N + K < 576) || (M + N + K > 2048); break;
-                }
-            }
-            else // (transA == clblasTrans && transB == clblasTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = (M > 3340) || (N < 128) || (N > 2560) || (K < 1536) || (M + N < 1558) || (M + N > 3888) || (M + K < 790) || (N + K < 1536) || (M + N + K < 2639); break;
-                case M64  : break;
-                case MK64 : fallback = (M < 128) || (K < 128) || (M + N < 1558) || (N + K < 1022) || (M + N + K < 2326); break;
-                case MN64 : break;
-                case MNK64: fallback = true; break;
-                }
-            }
-        }
-        else // (order == clblasColumnMajor)
-        {
-            if (transA == clblasNoTrans && transB == clblasNoTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = (N > 2048) || (M + N < 1168) || ( M + N > 4731) ||(M + N + K < 1534) || (M + N + K > 8635);break;
-                case M64  : break;
-                case MK64 : fallback = true; break;
-                case MN64 : break;
-                case MNK64: fallback = true; break;
-                }
-            }
-            else if (transA == clblasNoTrans && transB == clblasTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : fallback = (N > 3072) || (M + N > 4539) || (N + K > 6500) || (M + N + K > 8077); break;
-                case NK64 : fallback = (M > 894) || (N > 128) || (M + N > 1814) || (M + K > 3454) || (N + K > 2112) || (M + N + K > 3696); break;
-                case M64  : break;
-                case MK64 : fallback = (M + N > 4987) || (M + N + K > 9996); break;
-                case MN64 : fallback = (M + N > 4160) || (M + N + K > 7076); break;
-                case MNK64: fallback = true; break;
-                }
-            }
-            else if (transA == clblasTrans && transB == clblasNoTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = (M + N + K < 854); break;
-                case M64  : break;
-                case MK64 : break;
-                case MN64 : break;
-                case MNK64: fallback = true; break;
-                }
-            }
-            else // (transA == clblasTrans && transB == clblasTrans)
-            {
-                switch (mask)
-                {
-                case NONE : break;
-                case K64  : break;
-                case N64  : break;
-                case NK64 : fallback = (N < 128) || (M + N < 1615) || (M + K < 790) || (N + K < 384) || (M + N + K < 2383); break;
-                case M64  : break;
-                case MK64 : fallback = (M < 128) || (N > 3474) || (K < 1280) || (M + N < 1615) || (M + N > 3966) || (M + K < 1536) || (N + K < 1046) || (M + N + K < 2686); break;
-                case MN64 : break;
-                case MNK64: fallback = true; break;
-                }
-            }
-        }
-
-        if (fallback)
-            return clblasNotImplemented;
-
-        // pick kernel
-        cl_uint threadTile[2] = { 4, 4 };
-        cl_uint groupSize[2] = { 8, 8 };
-        if (transA == clblasNoTrans && transB == clblasNoTrans)
-        {
-            kernelSource     =  dgemm_NN_gfx906_tensile_src;
-            clKernel         = &dgemm_NN_gfx906_tensile_clKernel;
-            kernelBinary     =  dgemm_NN_gfx906_tensile_bin;
-            kernelBinarySize =  dgemm_NN_gfx906_tensile_binSize;
-
-            threadTile[0] = dgemm_NN_gfx906_tensile_microTileNumRows;
-            threadTile[1] = dgemm_NN_gfx906_tensile_microTileNumCols;
-            groupSize[0]  = dgemm_NN_gfx906_tensile_workGroupNumRows;
-            groupSize[1]  = dgemm_NN_gfx906_tensile_workGroupNumCols;
-        }
-        else if (transA == clblasNoTrans && transB == clblasTrans)
-        {
-            kernelSource     =  dgemm_NT_gfx906_tensile_src;
-            clKernel         = &dgemm_NT_gfx906_tensile_clKernel;
-            kernelBinary     =  dgemm_NT_gfx906_tensile_bin;
-            kernelBinarySize =  dgemm_NT_gfx906_tensile_binSize;
-
-            threadTile[0] = dgemm_NT_gfx906_tensile_microTileNumRows;
-            threadTile[1] = dgemm_NT_gfx906_tensile_microTileNumCols;
-            groupSize[0]  = dgemm_NT_gfx906_tensile_workGroupNumRows;
-            groupSize[1]  = dgemm_NT_gfx906_tensile_workGroupNumCols;
-        }
-        else if (transA == clblasTrans && transB == clblasNoTrans)
-        {
-            kernelSource     =  dgemm_TN_gfx906_tensile_src;
-            clKernel         = &dgemm_TN_gfx906_tensile_clKernel;
-            kernelBinary     =  dgemm_TN_gfx906_tensile_bin;
-            kernelBinarySize =  dgemm_TN_gfx906_tensile_binSize;
-
-            threadTile[0] = dgemm_TN_gfx906_tensile_microTileNumRows;
-            threadTile[1] = dgemm_TN_gfx906_tensile_microTileNumCols;
-            groupSize[0]  = dgemm_TN_gfx906_tensile_workGroupNumRows;
-            groupSize[1]  = dgemm_TN_gfx906_tensile_workGroupNumCols;
-        }
-        else // (transA == clblasTrans && transB == clblasTrans)
-        {
-            kernelSource     =  dgemm_TT_gfx906_tensile_src;
-            clKernel         = &dgemm_TT_gfx906_tensile_clKernel;
-            kernelBinary     =  dgemm_TT_gfx906_tensile_bin;
-            kernelBinarySize =  dgemm_TT_gfx906_tensile_binSize;
-
-            threadTile[0] = dgemm_TT_gfx906_tensile_microTileNumRows;
-            threadTile[1] = dgemm_TT_gfx906_tensile_microTileNumCols;
-            groupSize[0]  = dgemm_TT_gfx906_tensile_workGroupNumRows;
-            groupSize[1]  = dgemm_TT_gfx906_tensile_workGroupNumCols;
-        }
-
-        specialCaseHandled = true;
-        makeGemmKernel(clKernel, commandQueues[0], kernelSource, User_srcBuildOptions, &kernelBinary, &kernelBinarySize, User_binBuildOptions);
-
-        // convert clBLAS args to Tensile args
-        cl_uint sizeI = M;
-        cl_uint sizeJ = N;
-        cl_uint sizeK = 1;
-        cl_uint sizeL = K;
-
-        cl_uint strideC1 = std::max(sizeI, ldc);
-        cl_uint strideC2 = strideC1 * sizeJ;
-
-        cl_uint strideA1 = std::max(transA == clblasNoTrans ? sizeI : sizeL, lda);
-        cl_uint strideA2 = strideA1 * (transA == clblasNoTrans ? sizeL : sizeJ);
-
-        cl_uint strideB1 = std::max(transB == clblasNoTrans ? sizeL : sizeJ, ldb);
-        cl_uint strideB2 = strideB1 * (transB == clblasNoTrans ? sizeJ : sizeL);
-
-        // grid sizes
-        const cl_uint workDim = 3;
-        size_t localWorkSize[3] = { 256, 1, 1 };
-        size_t globalWorkSize[3];
-        globalWorkSize[2] = 1 * sizeK;
-        cl_uint macroTile0 = groupSize[0] * threadTile[0];
-        cl_uint macroTile1 = groupSize[1] * threadTile[1];
-        cl_uint totalWorkGroups0 = sizeI / macroTile0;
-        cl_uint totalWorkGroups1 = sizeJ / macroTile1;
-
-        // b/c single kernel, add extra work-group here if edge needed
-        if (totalWorkGroups0*macroTile0 < sizeI)
-            totalWorkGroups0++;
-        if (totalWorkGroups1*macroTile1 < sizeJ)
-            totalWorkGroups1++;
-        globalWorkSize[0] = totalWorkGroups0*localWorkSize[0];
-        globalWorkSize[1] = totalWorkGroups1*localWorkSize[1];
-
-        // setup args
-        err = clSetKernelArg(*clKernel,  0, sizeof(C), &C);                 CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  1, sizeof(A), &A);                 CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  2, sizeof(B), &B);                 CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  3, sizeof(alpha), &alpha);         CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  4, sizeof(beta),  &beta);          CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  5, sizeof(offC), &offC);           CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  6, sizeof(offA), &offA);           CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  7, sizeof(offB), &offB);           CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  8, sizeof(strideC1), &strideC1);   CL_CHECK(err);
-        err = clSetKernelArg(*clKernel,  9, sizeof(strideC2), &strideC2);   CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 10, sizeof(strideA1), &strideA1);   CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 11, sizeof(strideA2), &strideA2);   CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 12, sizeof(strideB1), &strideB1);   CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 13, sizeof(strideB2), &strideB2);   CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 14, sizeof(sizeI), &sizeI);         CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 15, sizeof(sizeJ), &sizeJ);         CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 16, sizeof(sizeK), &sizeK);         CL_CHECK(err);
-        err = clSetKernelArg(*clKernel, 17, sizeof(sizeL), &sizeL);         CL_CHECK(err);
-
-        err = clEnqueueNDRangeKernel(commandQueues[0], *clKernel, workDim, NULL, globalWorkSize, localWorkSize, numEventsInWaitList, eventWaitList, &events[0] );
-        CL_CHECK(err);
-        if (err == CL_SUCCESS)
-        {
-            return clblasSuccess;
-        }
-    }
-
-    return clblasNotImplemented;
 }
 
 clblasStatus SGEMM_SPLIT64_32(
@@ -1659,28 +1170,6 @@ bool &specialCaseHandled)
 {
 	clblasStatus status;
 
-	// handle specific hardware
-	status = SGEMM_tensile(order,
-		transA,
-		transB,
-		M, N, K,
-		alpha,
-		A, offA, lda,
-		B, offB, ldb,
-		beta,
-		C, offC, ldc,
-		numCommandQueues,
-		commandQueues,
-		numEventsInWaitList,
-		eventWaitList,
-		events,
-		specialCaseHandled);
-	if (specialCaseHandled)
-		return status;
-
-	if (order == clblasRowMajor)
-		return clblasNotImplemented;
-
 	//handles big multiples of 1024
 	status = SGEMM_mod1024(transA,
 		transB,
@@ -1758,28 +1247,28 @@ const cl_event *eventWaitList,
 cl_event *events,
 bool &specialCaseHandled)
 {
-    clblasStatus status;
+	clblasStatus status;
 
-    // handle specific hardware
-    status = DGEMM_tensile(order,
-        transA,
-        transB,
-        M, N, K,
-        alpha,
-        A, offA, lda,
-        B, offB, ldb,
-        beta,
-        C, offC, ldc,
-        numCommandQueues,
-        commandQueues,
-        numEventsInWaitList,
-        eventWaitList,
-        events,
-        specialCaseHandled);
-    if (specialCaseHandled)
-        return status;
+	// handle specific hardware
+	status = DGEMM_tensile(order,
+		transA,
+		transB,
+		M, N, K,
+		alpha,
+		A, offA, lda,
+		B, offB, ldb,
+		beta,
+		C, offC, ldc,
+		numCommandQueues,
+		commandQueues,
+		numEventsInWaitList,
+		eventWaitList,
+		events,
+		specialCaseHandled);
+	if (specialCaseHandled)
+		return status;
 
-    if (order == clblasRowMajor)
+	if (order == clblasRowMajor)
 		return clblasNotImplemented;
 
 	status = DGEMM_BIG_MOD48(transA,

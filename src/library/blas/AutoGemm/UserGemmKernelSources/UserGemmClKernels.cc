@@ -13,10 +13,6 @@ cl_kernel sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_clKernel = NULL;
 cl_kernel sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
 cl_kernel sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
 cl_kernel sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
-cl_kernel sgemm_NN_gfx900_tensile_clKernel = NULL;
-cl_kernel sgemm_NT_gfx900_tensile_clKernel = NULL;
-cl_kernel sgemm_TN_gfx900_tensile_clKernel = NULL;
-cl_kernel sgemm_TT_gfx900_tensile_clKernel = NULL;
 cl_kernel dgemm_NN_gfx906_tensile_clKernel = NULL;
 cl_kernel dgemm_NT_gfx906_tensile_clKernel = NULL;
 cl_kernel dgemm_TN_gfx906_tensile_clKernel = NULL;
@@ -58,22 +54,6 @@ void initUserGemmClKernels(void) {
     if(sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel != NULL) {
         clReleaseKernel(sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel);
         sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel = NULL;
-    }
-    if(sgemm_NN_gfx900_tensile_clKernel != NULL) {
-        clReleaseKernel(sgemm_NN_gfx900_tensile_clKernel);
-        sgemm_NN_gfx900_tensile_clKernel = NULL;
-    }
-    if(sgemm_NT_gfx900_tensile_clKernel != NULL) {
-        clReleaseKernel(sgemm_NT_gfx900_tensile_clKernel);
-        sgemm_NT_gfx900_tensile_clKernel = NULL;
-    }
-    if(sgemm_TN_gfx900_tensile_clKernel != NULL) {
-        clReleaseKernel(sgemm_TN_gfx900_tensile_clKernel);
-        sgemm_TN_gfx900_tensile_clKernel = NULL;
-    }
-    if(sgemm_TT_gfx900_tensile_clKernel != NULL) {
-        clReleaseKernel(sgemm_TT_gfx900_tensile_clKernel);
-        sgemm_TT_gfx900_tensile_clKernel = NULL;
     }
     if(dgemm_NN_gfx906_tensile_clKernel != NULL) {
         clReleaseKernel(dgemm_NN_gfx906_tensile_clKernel);
