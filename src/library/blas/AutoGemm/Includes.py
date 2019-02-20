@@ -272,8 +272,8 @@ class KernelSourceBuildOptions:
     kernelName = kernel.getName()
     self.incStr += "extern const char * const %s_srcBuildOptions;\n" \
         % kernelName
-    self.cppStr += "const char * const %s_srcBuildOptions = \"-cl-std=CL%s\";\n" \
-        % (kernelName, Common.getClCompilerVersion() )
+    self.cppStr += "const char * const %s_srcBuildOptions = \"\";\n" \
+        % kernelName
 
     self.incFile.write( self.incStr )
     self.incStr = ""
@@ -314,7 +314,7 @@ class KernelBinaryBuildOptions:
   def addKernel(self, kernel):
     kernelName = kernel.getName()
     self.incStr += "extern const char * const %s_binBuildOptions;\n" % kernelName
-    self.cppStr += "const char * const %s_binBuildOptions = \"-cl-std=CL%s\";\n" % (kernelName, Common.getClCompilerVersion() )
+    self.cppStr += "const char * const %s_binBuildOptions = \"\";\n" % kernelName
 
     self.incFile.write( self.incStr )
     self.incStr = ""
