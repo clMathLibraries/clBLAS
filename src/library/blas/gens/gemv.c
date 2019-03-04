@@ -297,7 +297,6 @@ generator(
         kgenAddBlankLine(ctx);
     }
 
-    mulOpts.flags |= TILEMUL_OPTIMIZE_COORD_CALC;
     if (tailM) {
         mulOpts.flags |= TILEMUL_GLOBAL_CYCLIC_A;
     }

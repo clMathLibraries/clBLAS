@@ -116,7 +116,7 @@ typedef enum TileMulFlags {
                                           itself */
 
     /**
-     * Deprecated. Use the repsective mode being a part of FetchAddr mode.
+     * Deprecated. Use the respective mode being a part of FetchAddr mode.
      * He is left just for backward compatibility to don't break the working
      * code and will be removed soon
      */
@@ -140,24 +140,15 @@ typedef enum TileMulFlags {
     TILEMUL_GLOBAL_CYCLIC = TILEMUL_GLOBAL_CYCLIC_A |
                             TILEMUL_GLOBAL_CYCLIC_B |
                             TILEMUL_GLOBAL_CYCLIC_K,
-    // Deprecated
-    TILEMUL_SKEWS = TILEMUL_SKEW_A | TILEMUL_SKEW_B | TILEMUL_SKEW_K,
-    /** Optimize coordinates calculations by storing coordinates values */
-    // Deprecated
-    TILEMUL_OPTIMIZE_COORD_CALC = 0x4000,
     /** Use bwidth0 stride */
-    TILEMUL_BW_STRIDE = 0x8000,
-    /** Optimize coordinates calculations by using vectors
-     *  and pointer increments */
-    // Deprecated
-    TILEMUL_OPTIMIZE_VEC_COORDS = 0x10000,
+    TILEMUL_BW_STRIDE = 0x4000,
     /** Do not increment K*/
-    TILEMUL_NOT_INC_K = 0x20000,
+    TILEMUL_NOT_INC_K = 0x8000,
     /**
      * Use variants with explicit vectorization. Useful on platforms with
      * true SIMD.
      */
-    TILEMUL_FORCE_VECTORIZATION = 0x40000
+    TILEMUL_FORCE_VECTORIZATION = 0x10000
 } TileMulFlags;
 
 
@@ -258,10 +249,6 @@ typedef struct KernelVarNames {
     const char *lda;        /**< Leading dimension of matrix A */
     const char *ldb;        /**< Leading dimension of matrix B */
     const char *ldc;        /**< Leading dimension of matrix C, in vectors */
-    const char *vectCoordA; /**< Vector containing indexes of tile a elements
-                                 in matrix A */
-    const char *vectCoordB; /**< Vector containing indexes of tile b elements
-                                 in matrix B*/
     const char *startM;
     const char *startN;
     const char *startK;
