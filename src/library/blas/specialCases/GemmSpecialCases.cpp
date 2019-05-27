@@ -33,7 +33,7 @@
 /*
 template<typename precision>
 clblasStatus SGEMM_SPLIT_CALLS(
-	cl_kernel *ClKernel, clblasOrder order,
+	cl_kernel  ClKernel, clblasOrder order,
 	unsigned int tile_size, unsigned int WG_size,
 	unsigned int M_split_factor,
 	unsigned int N_split_factor,
@@ -54,7 +54,7 @@ clblasStatus SGEMM_SPLIT_CALLS(
 */
 template<typename precision>
 clblasStatus GEMM_SPLIT_CALLS(
-	cl_kernel *ClKernel, clblasOrder order,
+	cl_kernel  ClKernel, clblasOrder order,
 	unsigned int tile_size, unsigned int WG_size,
 	unsigned int M_split_factor,
 	unsigned int N_split_factor,
@@ -104,7 +104,6 @@ clblasStatus GEMM_SPLIT_CALLS(
 
 	if (transA == clblasNoTrans && transB == clblasTrans)
 	{
-
 		unsigned int small_M = M / M_split_factor;
 		unsigned int small_N = N / N_split_factor;
 		unsigned int small_K = K / K_split_factor;
@@ -117,11 +116,11 @@ clblasStatus GEMM_SPLIT_CALLS(
 
 		precision betaone = 1;
 
-		error = clSetKernelArg(*ClKernel, 5, sizeof(cl_uint), &small_M);
+		error = clSetKernelArg(ClKernel, 5, sizeof(cl_uint), &small_M);
 		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(*ClKernel, 6, sizeof(cl_uint), &small_N);
+		error = clSetKernelArg(ClKernel, 6, sizeof(cl_uint), &small_N);
 		assert(error == CL_SUCCESS);
-		error = clSetKernelArg(*ClKernel, 7, sizeof(cl_uint), &small_K);
+		error = clSetKernelArg(ClKernel, 7, sizeof(cl_uint), &small_K);
 		assert(error == CL_SUCCESS);
 
 		for (int M_split_index = 0; M_split_index < M_split_factor; M_split_index++)
@@ -129,21 +128,21 @@ clblasStatus GEMM_SPLIT_CALLS(
 			for (int N_split_index = 0; N_split_index < N_split_factor; N_split_index++)
 			{
 				unsigned int offc_C = ldc*N / N_split_factor * N_split_index + M / M_split_factor * M_split_index + offC;
-				error = clSetKernelArg(*ClKernel, 13, sizeof(cl_uint), &offc_C);
+				error = clSetKernelArg(ClKernel, 13, sizeof(cl_uint), &offc_C);
 				assert(error == CL_SUCCESS);
 
 				for (int K_split_index = 0; K_split_index < K_split_factor; K_split_index++)
 				{
 					unsigned int offa_A = (M / M_split_factor * M_split_index) + (lda * K / K_split_factor * K_split_index) + offA;
 					unsigned int offb_B = (N / N_split_factor * N_split_index) + (ldb * K / K_split_factor * K_split_index) + offB;
-					error = clSetKernelArg(*ClKernel, 11, sizeof(cl_uint), &offa_A);
+					error = clSetKernelArg(ClKernel, 11, sizeof(cl_uint), &offa_A);
 					assert(error == CL_SUCCESS);
-					error = clSetKernelArg(*ClKernel, 12, sizeof(cl_uint), &offb_B);
+					error = clSetKernelArg(ClKernel, 12, sizeof(cl_uint), &offb_B);
 					assert(error == CL_SUCCESS);
 
 					if (K_split_index == 0)
 					{
-						error = clSetKernelArg(*ClKernel, 4, sizeof(precision), &(beta));
+						error = clSetKernelArg(ClKernel, 4, sizeof(precision), &(beta));
 						assert(error == CL_SUCCESS);
 
 						if (M_split_index == 0 && N_split_index == 0)
@@ -152,39 +151,39 @@ clblasStatus GEMM_SPLIT_CALLS(
 							if ((M_split_factor == 1) && (N_split_factor == 1) && (K_split_factor == 1))
 							{
 								//also very last GEMM call
-								error = clEnqueueNDRangeKernel(commandQueues[0], *ClKernel, 2, NULL,
+								error = clEnqueueNDRangeKernel(commandQueues[0], ClKernel, 2, NULL,
 									gs, wgsize, numEventsInWaitList, eventWaitList, &events[0]);
 								assert(error == CL_SUCCESS);
 							}
 							else
 							{
-								error = clEnqueueNDRangeKernel(commandQueues[0], *ClKernel, 2, NULL,
+								error = clEnqueueNDRangeKernel(commandQueues[0], ClKernel, 2, NULL,
 									gs, wgsize, numEventsInWaitList, eventWaitList, NULL);
 								assert(error == CL_SUCCESS);
 							}
 						}
 						else
 						{
-							error = clEnqueueNDRangeKernel(commandQueues[0], *ClKernel, 2, NULL,
+							error = clEnqueueNDRangeKernel(commandQueues[0], ClKernel, 2, NULL,
 								gs, wgsize, 0, NULL, NULL);
 							assert(error == CL_SUCCESS);
 						}
 					}
 					else
 					{
-						error = clSetKernelArg(*ClKernel, 4, sizeof(precision), &betaone);
+						error = clSetKernelArg(ClKernel, 4, sizeof(precision), &betaone);
 						assert(error == CL_SUCCESS);
 
 						if ((M_split_index == (M_split_factor - 1)) && (N_split_index == (N_split_factor - 1)) && (K_split_index == (K_split_factor - 1)))
 						{
 							//very last GEMM call
-							error = clEnqueueNDRangeKernel(commandQueues[0], *ClKernel, 2, NULL,
+							error = clEnqueueNDRangeKernel(commandQueues[0], ClKernel, 2, NULL,
 								gs, wgsize, 0, NULL, events);
 							assert(error == CL_SUCCESS);
 						}
 						else
 						{
-							error = clEnqueueNDRangeKernel(commandQueues[0], *ClKernel, 2, NULL,
+							error = clEnqueueNDRangeKernel(commandQueues[0], ClKernel, 2, NULL,
 								gs, wgsize, 0, NULL, NULL);
 							assert(error == CL_SUCCESS);
 						}
@@ -215,7 +214,7 @@ clblasStatus SGEMM_mod1024(
 	bool &specialCaseHandled)
 {
 	const char *tileKernelSource = NULL;
-	cl_kernel  *tileClKernel = NULL;
+	cl_kernel   tileClKernel = NULL;
 	size_t tileKernelBinarySize = 0;
 	cl_int err;
 
@@ -259,39 +258,39 @@ clblasStatus SGEMM_mod1024(
 					}
 
 					tileKernelSource = sgemm_Col_NT_B1_MX128_NX128_KX16_src;
-					tileClKernel = &sgemm_Col_NT_B1_MX128_NX128_KX16_clKernel;
+					tileClKernel = sgemm_Col_NT_B1_MX128_NX128_KX16_clKernel;
 					tileKernelBinary = sgemm_Col_NT_B1_MX128_NX128_KX16_bin;
 					tileKernelBinarySize = sgemm_Col_NT_B1_MX128_NX128_KX16_binSize;
 
-					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
+					makeGemmKernel(&tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
-					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+					err = clSetKernelArg(tileClKernel, 0, sizeof(cl_mem), &A);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+					err = clSetKernelArg(tileClKernel, 1, sizeof(cl_mem), &B);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+					err = clSetKernelArg(tileClKernel, 2, sizeof(cl_mem), &C);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+					err = clSetKernelArg(tileClKernel, 3, sizeof(cl_float), &alpha);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+					err = clSetKernelArg(tileClKernel, 4, sizeof(cl_float), &beta);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+					err = clSetKernelArg(tileClKernel, 5, sizeof(cl_uint), &M);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+					err = clSetKernelArg(tileClKernel, 6, sizeof(cl_uint), &N);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+					err = clSetKernelArg(tileClKernel, 7, sizeof(cl_uint), &K);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+					err = clSetKernelArg(tileClKernel, 8, sizeof(cl_uint), &lda);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+					err = clSetKernelArg(tileClKernel, 9, sizeof(cl_uint), &ldb);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+					err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint), &ldc);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+					err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint), &offA);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+					err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint), &offB);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+					err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint), &offC);
 					CL_CHECK(err);
 
 					status = GEMM_SPLIT_CALLS(
@@ -334,39 +333,39 @@ clblasStatus SGEMM_mod1024(
 
 
 					tileKernelSource = sgemm_Col_NT_B1_MX096_NX096_KX16_src;
-					tileClKernel = &sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
+					tileClKernel = sgemm_Col_NT_B1_MX096_NX096_KX16_clKernel;
 					tileKernelBinary = sgemm_Col_NT_B1_MX096_NX096_KX16_bin;
 					tileKernelBinarySize = sgemm_Col_NT_B1_MX096_NX096_KX16_binSize;
 
-					makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
+					makeGemmKernel(&tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
-					err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+					err = clSetKernelArg(tileClKernel, 0, sizeof(cl_mem), &A);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+					err = clSetKernelArg(tileClKernel, 1, sizeof(cl_mem), &B);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+					err = clSetKernelArg(tileClKernel, 2, sizeof(cl_mem), &C);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+					err = clSetKernelArg(tileClKernel, 3, sizeof(cl_float), &alpha);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+					err = clSetKernelArg(tileClKernel, 4, sizeof(cl_float), &beta);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+					err = clSetKernelArg(tileClKernel, 5, sizeof(cl_uint), &M);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+					err = clSetKernelArg(tileClKernel, 6, sizeof(cl_uint), &N);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+					err = clSetKernelArg(tileClKernel, 7, sizeof(cl_uint), &K);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+					err = clSetKernelArg(tileClKernel, 8, sizeof(cl_uint), &lda);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+					err = clSetKernelArg(tileClKernel, 9, sizeof(cl_uint), &ldb);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+					err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint), &ldc);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+					err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint), &offA);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+					err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint), &offB);
 					CL_CHECK(err);
-					err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+					err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint), &offC);
 					CL_CHECK(err);
 
 
@@ -416,17 +415,17 @@ clblasStatus SGEMM_SPLIT64_32(
 	cl_event *events,
 	bool &specialCaseHandled)
 {
-	//all the mod32 sizes that is not mod64 or mod96 ranging from 1184 to 3872 
+	//all the mod32 sizes that is not mod64 or mod96 ranging from 1184 to 3872
 	//non mod32 cases are not implemented in this approach and are of less interest
 	const char *tileKernelSource = NULL;
 	const char *rowKernelSource = NULL;
 	const char *columnKernelSource = NULL;
 	const char *singleKernelSource = NULL;
 
-	cl_kernel  *tileClKernel = NULL;
-	cl_kernel  *rowClKernel = NULL;
-	cl_kernel  *columnClKernel = NULL;
-	cl_kernel  *singleClKernel = NULL;
+	cl_kernel   tileClKernel = NULL;
+	cl_kernel   rowClKernel = NULL;
+	cl_kernel   columnClKernel = NULL;
+	cl_kernel   singleClKernel = NULL;
 
 	const unsigned char *tileKernelBinary = NULL;
 	const unsigned char *rowKernelBinary = NULL;
@@ -439,7 +438,7 @@ clblasStatus SGEMM_SPLIT64_32(
 	size_t singleKernelBinarySize = 0;
 
 	cl_int err;
-	
+
 	if ((M >= 1184 && N >= 1184) && (M <= 3872 && N <= 3872) && (M % 64 != 0 && N % 64 != 0) && (M % 96 != 0 && N % 96 != 0) && (K % 16 == 0))
 	{
 		if ((M % 32 == 0 && N % 32 == 0) && (transA == clblasNoTrans && transB == clblasTrans))
@@ -455,83 +454,83 @@ clblasStatus SGEMM_SPLIT64_32(
 			size_t wgsize[2] = { 16, 16 };
 
 			tileKernelSource = sgemm_Col_NT_B1_MX064_NX064_KX16_src;
-			tileClKernel = &sgemm_Col_NT_B1_MX064_NX064_KX16_clKernel;
+			tileClKernel = sgemm_Col_NT_B1_MX064_NX064_KX16_clKernel;
 			tileKernelBinary = sgemm_Col_NT_B1_MX064_NX064_KX16_bin;
 			tileKernelBinarySize = sgemm_Col_NT_B1_MX064_NX064_KX16_binSize;
 
 			rowKernelSource = sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_src;
-			rowClKernel = &sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_clKernel;
+			rowClKernel = sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_clKernel;
 			rowKernelBinary = sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_bin;
 			rowKernelBinarySize = sgemm_Col_NT_B1_MX032_NX064_KX16_ROW_binSize;
 
 			columnKernelSource = sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_src;
-			columnClKernel = &sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_clKernel;
+			columnClKernel = sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_clKernel;
 			columnKernelBinary = sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_bin;
 			columnKernelBinarySize = sgemm_Col_NT_B1_MX064_NX032_KX16_COLUMN_binSize;
 
 			singleKernelSource = sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_src;
-			singleClKernel = &sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_clKernel;
+			singleClKernel = sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_clKernel;
 			singleKernelBinary = sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_bin;
 			singleKernelBinarySize = sgemm_Col_NT_B1_MX032_NX032_KX16_SINGLE_binSize;
 
-			cl_kernel * Kernels[4] = { tileClKernel, rowClKernel, columnClKernel, singleClKernel };
+			cl_kernel   Kernels[4] = { tileClKernel, rowClKernel, columnClKernel, singleClKernel };
 
 
-			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
-			makeGemmKernel(rowClKernel, commandQueues[0], rowKernelSource, User_srcBuildOptions, &rowKernelBinary, &rowKernelBinarySize, User_binBuildOptions);
-			makeGemmKernel(columnClKernel, commandQueues[0], columnKernelSource, User_srcBuildOptions, &columnKernelBinary, &columnKernelBinarySize, User_binBuildOptions);
-			makeGemmKernel(singleClKernel, commandQueues[0], singleKernelSource, User_srcBuildOptions, &singleKernelBinary, &singleKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(&tileClKernel,   commandQueues[0], tileKernelSource,   User_srcBuildOptions, &tileKernelBinary,   &tileKernelBinarySize,   User_binBuildOptions);
+			makeGemmKernel(&rowClKernel,    commandQueues[0], rowKernelSource,    User_srcBuildOptions, &rowKernelBinary,    &rowKernelBinarySize,    User_binBuildOptions);
+			makeGemmKernel(&columnClKernel, commandQueues[0], columnKernelSource, User_srcBuildOptions, &columnKernelBinary, &columnKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(&singleClKernel, commandQueues[0], singleKernelSource, User_srcBuildOptions, &singleKernelBinary, &singleKernelBinarySize, User_binBuildOptions);
 
 			for (int i = 0; i < 4; i++)
 			{
-				err = clSetKernelArg(*Kernels[i], 0, sizeof(cl_mem), &A);
+				err = clSetKernelArg(Kernels[i], 0, sizeof(cl_mem), &A);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 1, sizeof(cl_mem), &B);
+				err = clSetKernelArg(Kernels[i], 1, sizeof(cl_mem), &B);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 2, sizeof(cl_mem), &C);
+				err = clSetKernelArg(Kernels[i], 2, sizeof(cl_mem), &C);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 3, sizeof(cl_float), &alpha);
+				err = clSetKernelArg(Kernels[i], 3, sizeof(cl_float), &alpha);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 4, sizeof(cl_float), &beta);
+				err = clSetKernelArg(Kernels[i], 4, sizeof(cl_float), &beta);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 5, sizeof(cl_uint), &M);
+				err = clSetKernelArg(Kernels[i], 5, sizeof(cl_uint), &M);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 6, sizeof(cl_uint), &N);
+				err = clSetKernelArg(Kernels[i], 6, sizeof(cl_uint), &N);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 7, sizeof(cl_uint), &K);
+				err = clSetKernelArg(Kernels[i], 7, sizeof(cl_uint), &K);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 8, sizeof(cl_uint), &lda);
+				err = clSetKernelArg(Kernels[i], 8, sizeof(cl_uint), &lda);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 9, sizeof(cl_uint), &ldb);
+				err = clSetKernelArg(Kernels[i], 9, sizeof(cl_uint), &ldb);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 10, sizeof(cl_uint), &ldc);
+				err = clSetKernelArg(Kernels[i], 10, sizeof(cl_uint), &ldc);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 11, sizeof(cl_uint), &offA);
+				err = clSetKernelArg(Kernels[i], 11, sizeof(cl_uint), &offA);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 12, sizeof(cl_uint), &offB);
+				err = clSetKernelArg(Kernels[i], 12, sizeof(cl_uint), &offB);
 				CL_CHECK(err);
-				err = clSetKernelArg(*Kernels[i], 13, sizeof(cl_uint), &offC);
+				err = clSetKernelArg(Kernels[i], 13, sizeof(cl_uint), &offC);
 				CL_CHECK(err);
 			}
 
-			err = clEnqueueNDRangeKernel(commandQueues[0], *Kernels[0], 2, NULL, gs, wgsize, numEventsInWaitList, eventWaitList, NULL);
+			err = clEnqueueNDRangeKernel(commandQueues[0], Kernels[0], 2, NULL, gs, wgsize, numEventsInWaitList, eventWaitList, NULL);
 
 			gs[0] = 16;
-			err |= clEnqueueNDRangeKernel(commandQueues[0], *Kernels[1], 2, NULL, gs, wgsize, 0, NULL, NULL);
+			err |= clEnqueueNDRangeKernel(commandQueues[0], Kernels[1], 2, NULL, gs, wgsize, 0, NULL, NULL);
 
 			gs[1] = 16;
 			gs[0] = GlobalX;
-			err |= clEnqueueNDRangeKernel(commandQueues[0], *Kernels[2], 2, NULL, gs, wgsize, 0, NULL, NULL);
+			err |= clEnqueueNDRangeKernel(commandQueues[0], Kernels[2], 2, NULL, gs, wgsize, 0, NULL, NULL);
 
 			gs[0] = 16; gs[1] = 16;
-			err |= clEnqueueNDRangeKernel(commandQueues[0], *Kernels[3], 2, NULL, gs, wgsize, 0, NULL, events);
+			err |= clEnqueueNDRangeKernel(commandQueues[0], Kernels[3], 2, NULL, gs, wgsize, 0, NULL, events);
 
 			if (err == 0)
 				return clblasSuccess;
 
 		}
 	}
-	
+
 	return clblasNotImplemented;
 }
 
@@ -552,7 +551,7 @@ clblasStatus SGEMM_BRANCH_32(
 	bool &specialCaseHandled)
 {
 	const char *tileKernelSource = NULL;
-	cl_kernel  *tileClKernel = NULL;
+	cl_kernel   tileClKernel = NULL;
 	size_t tileKernelBinarySize = 0;
 	cl_int err;
 
@@ -573,42 +572,42 @@ clblasStatus SGEMM_BRANCH_32(
 		{
 			specialCaseHandled = true;
 			tileKernelSource = sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_src;
-			tileClKernel = &sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_clKernel;
+			tileClKernel = sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_clKernel;
 			tileKernelBinary = sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_bin;
 			tileKernelBinarySize = sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_binSize;
 
-			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(&tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
-			err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+			err = clSetKernelArg(tileClKernel, 0, sizeof(cl_mem), &A);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+			err = clSetKernelArg(tileClKernel, 1, sizeof(cl_mem), &B);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+			err = clSetKernelArg(tileClKernel, 2, sizeof(cl_mem), &C);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+			err = clSetKernelArg(tileClKernel, 3, sizeof(cl_float), &alpha);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+			err = clSetKernelArg(tileClKernel, 4, sizeof(cl_float), &beta);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+			err = clSetKernelArg(tileClKernel, 5, sizeof(cl_uint), &M);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+			err = clSetKernelArg(tileClKernel, 6, sizeof(cl_uint), &N);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+			err = clSetKernelArg(tileClKernel, 7, sizeof(cl_uint), &K);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+			err = clSetKernelArg(tileClKernel, 8, sizeof(cl_uint), &lda);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+			err = clSetKernelArg(tileClKernel, 9, sizeof(cl_uint), &ldb);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+			err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint), &ldc);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+			err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint), &offA);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+			err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint), &offB);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+			err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint), &offC);
 			CL_CHECK(err);
 
-			err = clEnqueueNDRangeKernel(commandQueues[0], *tileClKernel, 2, NULL,
+			err = clEnqueueNDRangeKernel(commandQueues[0], tileClKernel, 2, NULL,
 				gs, wgsize, numEventsInWaitList, eventWaitList, &events[0]);
 
 			if (err == 0)
@@ -618,42 +617,42 @@ clblasStatus SGEMM_BRANCH_32(
 		{
 			specialCaseHandled = true;
 			tileKernelSource = sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_src;
-			tileClKernel = &sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_clKernel;
+			tileClKernel = sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_clKernel;
 			tileKernelBinary = sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_bin;
 			tileKernelBinarySize = sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_binSize;
 
-			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(&tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
-			err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+			err = clSetKernelArg(tileClKernel, 0, sizeof(cl_mem), &A);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+			err = clSetKernelArg(tileClKernel, 1, sizeof(cl_mem), &B);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+			err = clSetKernelArg(tileClKernel, 2, sizeof(cl_mem), &C);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+			err = clSetKernelArg(tileClKernel, 3, sizeof(cl_float), &alpha);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+			err = clSetKernelArg(tileClKernel, 4, sizeof(cl_float), &beta);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+			err = clSetKernelArg(tileClKernel, 5, sizeof(cl_uint), &M);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+			err = clSetKernelArg(tileClKernel, 6, sizeof(cl_uint), &N);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+			err = clSetKernelArg(tileClKernel, 7, sizeof(cl_uint), &K);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+			err = clSetKernelArg(tileClKernel, 8, sizeof(cl_uint), &lda);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+			err = clSetKernelArg(tileClKernel, 9, sizeof(cl_uint), &ldb);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+			err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint), &ldc);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+			err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint), &offA);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+			err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint), &offB);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+			err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint), &offC);
 			CL_CHECK(err);
 
-			err = clEnqueueNDRangeKernel(commandQueues[0], *tileClKernel, 2, NULL,
+			err = clEnqueueNDRangeKernel(commandQueues[0], tileClKernel, 2, NULL,
 				gs, wgsize, numEventsInWaitList, eventWaitList, &events[0]);
 
 			if (err == 0)
@@ -663,42 +662,42 @@ clblasStatus SGEMM_BRANCH_32(
 		{
 			specialCaseHandled = true;
 			tileKernelSource = sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_src;
-			tileClKernel = &sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel;
+			tileClKernel = sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel;
 			tileKernelBinary = sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_bin;
 			tileKernelBinarySize = sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_binSize;
 
-			makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
+			makeGemmKernel(&tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
-			err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+			err = clSetKernelArg(tileClKernel, 0, sizeof(cl_mem), &A);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+			err = clSetKernelArg(tileClKernel, 1, sizeof(cl_mem), &B);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+			err = clSetKernelArg(tileClKernel, 2, sizeof(cl_mem), &C);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_float), &alpha);
+			err = clSetKernelArg(tileClKernel, 3, sizeof(cl_float), &alpha);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_float), &beta);
+			err = clSetKernelArg(tileClKernel, 4, sizeof(cl_float), &beta);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+			err = clSetKernelArg(tileClKernel, 5, sizeof(cl_uint), &M);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+			err = clSetKernelArg(tileClKernel, 6, sizeof(cl_uint), &N);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+			err = clSetKernelArg(tileClKernel, 7, sizeof(cl_uint), &K);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+			err = clSetKernelArg(tileClKernel, 8, sizeof(cl_uint), &lda);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+			err = clSetKernelArg(tileClKernel, 9, sizeof(cl_uint), &ldb);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+			err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint), &ldc);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+			err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint), &offA);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+			err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint), &offB);
 			CL_CHECK(err);
-			err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+			err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint), &offC);
 			CL_CHECK(err);
 
-			err = clEnqueueNDRangeKernel(commandQueues[0], *tileClKernel, 2, NULL,
+			err = clEnqueueNDRangeKernel(commandQueues[0], tileClKernel, 2, NULL,
 				gs, wgsize, numEventsInWaitList, eventWaitList, &events[0]);
 
 			if (err == 0)
@@ -726,7 +725,7 @@ clblasStatus DGEMM_BIG_MOD48(
 	bool &specialCaseHandled)
 {
 	const char *tileKernelSource = NULL;
-	cl_kernel  *tileClKernel = NULL;
+	cl_kernel   tileClKernel = NULL;
 	size_t tileKernelBinarySize = 0;
 	cl_int err;
 
@@ -761,39 +760,39 @@ clblasStatus DGEMM_BIG_MOD48(
 		}
 
 		tileKernelSource = dgemm_Col_NT_B1_MX048_NX048_KX08_src;
-		tileClKernel = &dgemm_Col_NT_B1_MX048_NX048_KX08_clKernel;
+		tileClKernel = dgemm_Col_NT_B1_MX048_NX048_KX08_clKernel;
 		tileKernelBinary = dgemm_Col_NT_B1_MX048_NX048_KX08_bin;
 		tileKernelBinarySize = dgemm_Col_NT_B1_MX048_NX048_KX08_binSize;
 
-		makeGemmKernel(tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
+		makeGemmKernel(&tileClKernel, commandQueues[0], tileKernelSource, User_srcBuildOptions, &tileKernelBinary, &tileKernelBinarySize, User_binBuildOptions);
 
-		err = clSetKernelArg(*tileClKernel, 0, sizeof(cl_mem), &A);
+		err = clSetKernelArg(tileClKernel, 0, sizeof(cl_mem), &A);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 1, sizeof(cl_mem), &B);
+		err = clSetKernelArg(tileClKernel, 1, sizeof(cl_mem), &B);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 2, sizeof(cl_mem), &C);
+		err = clSetKernelArg(tileClKernel, 2, sizeof(cl_mem), &C);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 3, sizeof(cl_double), &alpha);
+		err = clSetKernelArg(tileClKernel, 3, sizeof(cl_double), &alpha);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 4, sizeof(cl_double), &beta);
+		err = clSetKernelArg(tileClKernel, 4, sizeof(cl_double), &beta);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 5, sizeof(cl_uint), &M);
+		err = clSetKernelArg(tileClKernel, 5, sizeof(cl_uint), &M);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 6, sizeof(cl_uint), &N);
+		err = clSetKernelArg(tileClKernel, 6, sizeof(cl_uint), &N);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 7, sizeof(cl_uint), &K);
+		err = clSetKernelArg(tileClKernel, 7, sizeof(cl_uint), &K);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 8, sizeof(cl_uint), &lda);
+		err = clSetKernelArg(tileClKernel, 8, sizeof(cl_uint), &lda);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 9, sizeof(cl_uint), &ldb);
+		err = clSetKernelArg(tileClKernel, 9, sizeof(cl_uint), &ldb);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 10, sizeof(cl_uint), &ldc);
+		err = clSetKernelArg(tileClKernel, 10, sizeof(cl_uint), &ldc);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 11, sizeof(cl_uint), &offA);
+		err = clSetKernelArg(tileClKernel, 11, sizeof(cl_uint), &offA);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 12, sizeof(cl_uint), &offB);
+		err = clSetKernelArg(tileClKernel, 12, sizeof(cl_uint), &offB);
 		CL_CHECK(err);
-		err = clSetKernelArg(*tileClKernel, 13, sizeof(cl_uint), &offC);
+		err = clSetKernelArg(tileClKernel, 13, sizeof(cl_uint), &offC);
 		CL_CHECK(err);
 
 		status = GEMM_SPLIT_CALLS(
