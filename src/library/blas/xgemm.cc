@@ -73,9 +73,13 @@ static void force_gemm_column_major(
 		return static_cast<clblasStatus>(err);
 
 const static unsigned int numGemmKernelArgs = 14;
-void *gemmKernelArgs[numGemmKernelArgs];
-size_t gemmKernelArgSizes[numGemmKernelArgs];
-
+#if defined( _WIN32 )
+/*__declspec( thread )*/ static void *gemmKernelArgs[numGemmKernelArgs];
+/*__declspec( thread )*/ static size_t gemmKernelArgSizes[numGemmKernelArgs];
+#else
+static /*__thread*/ void *gemmKernelArgs[numGemmKernelArgs];
+static /*__thread*/ size_t gemmKernelArgSizes[numGemmKernelArgs];
+#endif
 
 /******************************************************************************
  * Is beta zero for optimization
@@ -115,7 +119,8 @@ static char *getKernelName(cl_kernel clKernel)
   // The kernelNameLength turns out to be of proper length.
   // CL_CHECK(err)
 
-  char *kernelName = new char[kernelNameLength];
+  char *kernelName;
+  kernelName = new char[kernelNameLength];
   err = clGetKernelInfo(
     clKernel,
     CL_KERNEL_FUNCTION_NAME,
@@ -128,20 +133,14 @@ static char *getKernelName(cl_kernel clKernel)
 }
 
 typedef struct kernel_map_key_ {
-  cl_context context; // address of context
-  cl_device_id device; // address of device
+  cl_command_queue queue;
   const char *kernelSource; // address of kernel source
 } kernel_map_key;
 
 bool operator<(const kernel_map_key & l, const kernel_map_key & r) {
-  if (l.context < r.context) {
+  if (l.queue < r.queue) {
     return true;
-  } else if (r.context < l.context) {
-    return false;
-  }
-  if (l.device < r.device) {
-    return true;
-  } else if (r.device < l.device) {
+  } else if (r.queue < l.queue) {
     return false;
   }
   if (l.kernelSource < r.kernelSource) {
@@ -166,30 +165,21 @@ void makeGemmKernel(
   size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
+
   typedef std::map<kernel_map_key, cl_kernel> kernel_map_t;
-  #if defined( _WIN32 )
-  __declspec( thread ) static kernel_map_t *kernel_map = 0;
+#if defined( _WIN32 )
+  /*__declspec( thread )*/ static kernel_map_t *kernel_map = 0;
 #else
-  static __thread kernel_map_t *kernel_map = 0;
+  static /*__thread*/ kernel_map_t *kernel_map = 0;
 #endif
   if (!kernel_map) {
     kernel_map = new kernel_map_t();
   }
 
-  cl_context clContext;
-  cl_device_id clDevice;
-  cl_int err;
-
-  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
-  CL_CHECK(err)
-  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
-  CL_CHECK(err)
-
   // is kernel already compiled?
   kernel_map_key key;
+  key.queue = clQueue;
   key.kernelSource = kernelSource;
-  key.context = clContext;
-  key.device = clDevice;
   kernel_map_t::iterator idx = kernel_map->find(key);
   if (idx == kernel_map->end()) {
     *clKernel = NULL;
@@ -198,7 +188,16 @@ void makeGemmKernel(
     return;
   }
 
-  if (true /*!*clKernel*/) { // since kernel wasn't found in map
+  if (true/*!*clKernel*/) { // since kernel wasn't found in map
+    cl_context clContext;
+    cl_device_id clDevice;
+    cl_int err;
+
+    err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
+    CL_CHECK(err)
+    err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
+    CL_CHECK(err)
+
     // kernel has not been built, so build it (from binary, preferably)
     cl_program clProgram;
     cl_int clBinaryStatus;
@@ -258,15 +257,24 @@ void makeGemmKernel(
       printf("\nBuild Log:\n\n");
       printf("%s\n", buildLog);
       //printf("\n\nKernel String:\n\n");
-      //printf("%s\n", kernelSource);
+      //printf("%s\n", *kernelSource);
       //FIXME: The function should be exiting at this point
     }
+
+    cl_uint numKernels = 0;
 
     err = clCreateKernelsInProgram(
       clProgram,
       1, clKernel,
-      NULL );
+      &numKernels );
+
+    if (err != 0)
+    {
+        printf("KERNEL ERROR:\n%s\n", kernelSource);
+
+    }
     CL_CHECK(err)
+
 	err = clReleaseProgram(clProgram);
 	CL_CHECK(err)
 
@@ -356,30 +364,41 @@ clblasGemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
-
-
   // cast types to opencl types
-  cl_mem A = iA;
-  cl_mem B = iB;
-  cl_uint M = static_cast<cl_uint>( iM );
-  cl_uint N = static_cast<cl_uint>( iN );
-  cl_uint K = static_cast<cl_uint>( iK );
-  cl_uint offA = static_cast<cl_uint>( iOffA );
-  cl_uint offB = static_cast<cl_uint>( iOffB );
-  cl_uint offC = static_cast<cl_uint>( iOffC );
-  cl_uint lda = static_cast<cl_uint>( iLda );
-  cl_uint ldb = static_cast<cl_uint>( iLdb );
-  cl_uint ldc = static_cast<cl_uint>( iLdc );
+  cl_mem A;
+  A = iA;
+  cl_mem B;
+  B = iB;
+  cl_uint M;
+  M = static_cast<cl_uint>( iM );
+  cl_uint N;
+  N = static_cast<cl_uint>( iN );
+  cl_uint K;
+  K = static_cast<cl_uint>( iK );
+  cl_uint offA;
+  offA = static_cast<cl_uint>( iOffA );
+  cl_uint offB;
+  offB = static_cast<cl_uint>( iOffB );
+  cl_uint offC;
+  offC = static_cast<cl_uint>( iOffC );
+  cl_uint lda;
+  lda = static_cast<cl_uint>( iLda );
+  cl_uint ldb;
+  ldb = static_cast<cl_uint>( iLdb );
+  cl_uint ldc;
+  ldc = static_cast<cl_uint>( iLdc );
 
-  transA = correctTranspose<Precision>(transA);
-  transB = correctTranspose<Precision>(transB);
+  clblasTranspose tA;
+  tA = correctTranspose<Precision>(transA);
+  clblasTranspose tB;
+  tB = correctTranspose<Precision>(transB);
   // if debug build, validate input
   // CHECK_QUEUES(numCommandQueues, commandQueues);
   // CHECK_EVENTS(numEventsInWaitList, eventWaitList);
-  // CHECK_MATRIX_A(Precision, order, transA, A, M, K, offA, lda);
-  // CHECK_MATRIX_B(Precision, order, transB, B, K, N, offB, ldb);
+  // CHECK_MATRIX_A(Precision, order, tA, A, M, K, offA, lda);
+  // CHECK_MATRIX_B(Precision, order, tB, B, K, N, offB, ldb);
   // CHECK_MATRIX_C(Precision, order, clblasNoTrans, C, M, N, offC, ldc);
-  force_gemm_column_major( order, transA, transB,
+  force_gemm_column_major( order, tA, tB,
     M, N, offA, offB, lda, ldb, A, B );
 
 
@@ -397,8 +416,8 @@ clblasGemm(
   bool specialCaseHandled = false;
 
   clblasStatus SpecialCaseStatus = GemmSpecialCases<Precision>(order,
-	  transA,
-	  transB,
+	  tA,
+	  tB,
 	  M, N, K,
 	  alpha,
 	  A, offA, lda,
@@ -429,17 +448,20 @@ clblasGemm(
   err = clGetDeviceInfo( clDevice, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(clDeviceNumCUs), &clDeviceNumCUs, NULL);
   //CL_CHECK(err)
   returnIfErr(err);
-  unsigned int deviceIdealNumThreads = (8 /*waves per CU*/)*(64 /*threads per wave*/)*clDeviceNumCUs;
-  float optimalNumElementsPerThread = ((float)M*N) / deviceIdealNumThreads;
+  unsigned int deviceIdealNumThreads;
+  deviceIdealNumThreads = (8 /*waves per CU*/)*(64 /*threads per wave*/)*clDeviceNumCUs;
+  float optimalNumElementsPerThread;
+  optimalNumElementsPerThread = ((float)M*N) / deviceIdealNumThreads;
   //optimalNumElementsPerThread = 32;
-  bool betaNonZero = !isZero(beta);
+  bool betaNonZero;
+  betaNonZero = !isZero(beta);
 
 #ifdef AUTOGEMM_PRINT_DEBUG
   printf("%sgemm_%3s_%s%s_B%u_%llux%llux%llu\n",
       getPrecision<Precision>(),
       order==clblasColumnMajor ? "Col" : "Row",
-      transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
-      transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
+      tA==clblasNoTrans ? "N" : tA==clblasTrans ? "T" : "C",
+      tB==clblasNoTrans ? "N" : tB==clblasTrans ? "T" : "C",
       betaNonZero ? 1 : 0,
       iM, iN, iK );
 #endif
@@ -470,8 +492,9 @@ clblasGemm(
   unsigned int microTileNumRows;
   unsigned int microTileNumCols;
   unsigned int unroll;
+
   gemmSelectKernel<Precision>(
-    order, transA, transB,
+    order, tA, tB,
     iM, iN, iK,
     betaNonZero,
     optimalNumElementsPerThread,
@@ -502,15 +525,15 @@ clblasGemm(
   if (!tileKernelSource) {
     printf("ERROR: gemmSelectKernel() couldn't find kernel(s) for { order=%s, transA=%s, transB=%s, M=%u, N=%u, K=%u, beta=%u, onept=%f }\n",
       order==clblasColumnMajor ? "ColMajor" : "RowMajor",
-      transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
-      transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
+      tA==clblasNoTrans ? "N" : tA==clblasTrans ? "T" : "C",
+      tB==clblasNoTrans ? "N" : tB==clblasTrans ? "T" : "C",
       M, N, K,
       betaNonZero ? 1 : 0,
       optimalNumElementsPerThread );
       gemmSelectKernel<Precision>(
           order,
-          transA,
-          transB,
+          tA,
+          tB,
           M,
           N,
           K,
@@ -542,14 +565,18 @@ clblasGemm(
     return clblasNotImplemented;
   }
 
-
-  unsigned int macroTileNumRows = workGroupNumRows*microTileNumRows;
-  unsigned int macroTileNumCols = workGroupNumCols*microTileNumCols;
-  bool needTileKernel = M/macroTileNumRows > 0
-    && N/macroTileNumCols > 0;
-  bool needRowKernel = M%macroTileNumRows > 0 && N/macroTileNumCols > 0;
-  bool needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
-  bool needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
+  unsigned int macroTileNumRows;
+  macroTileNumRows = workGroupNumRows*microTileNumRows;
+  unsigned int macroTileNumCols;
+  macroTileNumCols = workGroupNumCols*microTileNumCols;
+  bool needTileKernel;
+  needTileKernel = M/macroTileNumRows > 0 && N/macroTileNumCols > 0;
+  bool needRowKernel;
+  needRowKernel = M%macroTileNumRows > 0 && N/macroTileNumCols > 0;
+  bool needColKernel;
+  needColKernel = N%macroTileNumCols > 0 && M/macroTileNumRows > 0;
+  bool needCornerKernel;
+  needCornerKernel = M%macroTileNumRows > 0 && N%macroTileNumCols > 0;
 #if 0
   printf("For M,N,K = %u,%u,%u and %u CUs selected tile is wg=%ux%u, microTile=%ux%u, macroTile=%ux%u kernelsNeeded=%u,%u,%u,%u\n",
     M, N, K, clDeviceNumCUs,
@@ -603,11 +630,11 @@ clblasGemm(
   if (needTileKernel) {
     //printf("enqueueing tile kernel\n");
     size_t globalWorkSize[2] = {(M/macroTileNumRows)*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], tileClKernel,
+    err = enqueueGemmKernel( commandQueues[0], tileClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
-      &events[numKernelsEnqueued%numCommandQueues] );
+      events );
 	returnIfErr(err);
     numKernelsEnqueued++;
   }
@@ -618,11 +645,11 @@ clblasGemm(
   if (needRowKernel) {
     //printf("enqueueing row kernel\n");
     size_t globalWorkSize[2] = {1*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], rowClKernel,
+    err = enqueueGemmKernel( commandQueues[0], rowClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
-      &events[numKernelsEnqueued%numCommandQueues] );
+      events );
 	returnIfErr(err);
     numKernelsEnqueued++;
   }
@@ -633,11 +660,11 @@ clblasGemm(
   if (needColKernel) {
     //printf("enqueueing col kernel\n");
     size_t globalWorkSize[2] = { (M/macroTileNumRows)*workGroupNumRows, 1*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], colClKernel,
+    err = enqueueGemmKernel( commandQueues[0], colClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
-      &events[numKernelsEnqueued%numCommandQueues] );
+      events );
 	returnIfErr(err);
     numKernelsEnqueued++;
   }
@@ -648,11 +675,11 @@ clblasGemm(
   if (needCornerKernel) {
     //printf("enqueueing corner kernel\n");
     size_t globalWorkSize[2] = { 1*workGroupNumRows, 1*workGroupNumCols };
-    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], cornerClKernel,
+    err = enqueueGemmKernel( commandQueues[0], cornerClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
-      &events[numKernelsEnqueued%numCommandQueues] );
+      events );
 	returnIfErr(err);
     numKernelsEnqueued++;
   }
