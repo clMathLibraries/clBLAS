@@ -1,0 +1,8 @@
+<package>
+  <description brief="CLBlas">
+  </description>
+  <license></license>
+  <url>http://</url>
+  <logo>http://</logo>
+  <depend package="base/cmake" />
+</package>
