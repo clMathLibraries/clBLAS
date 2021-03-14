@@ -267,12 +267,6 @@ void makeGemmKernel(
       clProgram,
       1, clKernel,
       &numKernels );
-
-    if (err != 0)
-    {
-        printf("KERNEL ERROR:\n%s\n", kernelSource);
-
-    }
     CL_CHECK(err)
 
 	err = clReleaseProgram(clProgram);
