@@ -74,11 +74,11 @@ static void force_gemm_column_major(
 
 const static unsigned int numGemmKernelArgs = 14;
 #if defined( _WIN32 )
-/*__declspec( thread )*/ static void *gemmKernelArgs[numGemmKernelArgs];
-/*__declspec( thread )*/ static size_t gemmKernelArgSizes[numGemmKernelArgs];
+__declspec( thread ) void *gemmKernelArgs[numGemmKernelArgs];
+__declspec( thread ) size_t gemmKernelArgSizes[numGemmKernelArgs];
 #else
-static /*__thread*/ void *gemmKernelArgs[numGemmKernelArgs];
-static /*__thread*/ size_t gemmKernelArgSizes[numGemmKernelArgs];
+__thread void *gemmKernelArgs[numGemmKernelArgs];
+__thread size_t gemmKernelArgSizes[numGemmKernelArgs];
 #endif
 
 /******************************************************************************
@@ -316,6 +316,8 @@ void makeGemmKernel(
 	   numEventsInWaitList, eventWaitList, clEvent);
    if (err != CL_SUCCESS)
 	   return err;
+
+   clFinish(clQueue);
 
    return CL_SUCCESS;
  }
