@@ -129,7 +129,7 @@ uint offsetA,
 uint offsetB,
 uint offsetC)
 {
-	float rC[8][8] = { (float)0 };
+	float rC[8][8] = { { (float)0 } };
 	float rA[1][8];
 	float rB[1][8];
 

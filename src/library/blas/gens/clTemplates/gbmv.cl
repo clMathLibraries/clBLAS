@@ -106,7 +106,7 @@ __kernel void %PREFIXgbmv_RNT_kernel( __global const %TYPE * _A, __global %TYPE 
                         %CONJUGATE(1 , reg1);
                     #endif
                     #ifdef HBMV_ONLY
-                        reg1.odd = 0.0;                 // Imaginary part of diagonal is assumed to be zero
+                        reg1.odd = 0;                 // Imaginary part of diagonal is assumed to be zero
                     #endif
                     %MAD( sum, reg1, reg2 );
                 #else
@@ -179,7 +179,7 @@ static const char *gbmv_RT_kernel = "
 
 #define TARGET_ROWS  ( %DEF_TARGET_ROWS )
 #define HEIGHT ( %DEF_H)
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
 __kernel void %PREFIXgbmv_RT_kernel( __global const %TYPE * _A, __global %TYPE * _y_vector, __global %TYPE const* restrict _x_vector,
                                     uint M, uint N, uint KL, uint KU, uint lda, int incx, int incy, uint offa, uint offx, uint offy
 #ifndef TBMV_ONLY

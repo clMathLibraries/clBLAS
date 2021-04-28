@@ -30,7 +30,7 @@ __kernel void %PREFIXdot_kernel( __global %TYPE *_X, __global %TYPE *_Y, __globa
 {
 	__global %TYPE *X = _X + offx;
 	__global %TYPE *Y = _Y + offy;
-    %TYPE dotP = (%TYPE) 0.0;
+    %TYPE dotP = (%TYPE) 0;
 
     if ( incx < 0 ) {
         X = X + (N - 1) * abs(incx);

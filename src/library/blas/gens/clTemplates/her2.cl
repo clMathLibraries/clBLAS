@@ -47,7 +47,7 @@ __kernel void %PREFIXher2_CL_kernel( __global const %TYPE* _A, __global const %T
 	__local %TYPE xSharedConj[%TARGET_ROWS];
 	__local %TYPE ySharedConj[%TARGET_ROWS];
 
-	if( (alpha.even == 0.0) && (alpha.odd == 0.0) )
+	if( (alpha.even == 0) && (alpha.odd == 0) )
 		return;
 
 	int nBlocks = ((N - 1) / %TARGET_ROWS) + 1;
@@ -155,7 +155,7 @@ __kernel void %PREFIXher2_CL_kernel( __global const %TYPE* _A, __global const %T
             %ADD( res2, res1, res4 );
  /* HER2 defn: On output, if alpha not equal to 0.0, then imaginary part of A is set to zero. */
 
-			res2.odd = (r == c) ? 0.0 : res2.odd;
+			res2.odd = (r == c) ? 0 : res2.odd;
 
 
 			A[r + c * lda] = res2;
@@ -369,7 +369,7 @@ __kernel void %PREFIXher2_CU_kernel( __global const %TYPE* _A, __global const %T
     __local %TYPE xSharedConj[%TARGET_ROWS];
     __local %TYPE ySharedConj[%TARGET_ROWS];
 
-	if( (alpha.even == 0.0) && (alpha.odd == 0.0) )
+	if( (alpha.even == 0) && (alpha.odd == 0) )
 		return;
 
     int nBlocks = ((N - 1) / %TARGET_ROWS) + 1;
@@ -478,7 +478,7 @@ __kernel void %PREFIXher2_CU_kernel( __global const %TYPE* _A, __global const %T
             %ADD( res2, res1, res4 );
  /* HER2 defn: On output, if alpha not equal to 0.0, then imaginary part of A is set to zero. */
 
-			res2.odd = (r == c) ? 0.0 : res2.odd;
+			res2.odd = (r == c) ? 0 : res2.odd;
 
 
 			A[r + c * lda] = res2;

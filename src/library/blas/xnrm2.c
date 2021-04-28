@@ -35,7 +35,7 @@ doNrm2_hypot(CLBlasKargs *kargs,
 {
     cl_int err;
 	ListHead seq, seq2;
-    cl_event firstNrmCall;
+    cl_event firstNrmCall = NULL;
     CLBlasKargs redctnArgs;
     ListNode *listNodePtr;
     SolutionStep *step;
@@ -76,6 +76,7 @@ doNrm2_hypot(CLBlasKargs *kargs,
                 err = executeSolutionSeq(&seq2);
             }
             freeSolutionSeq(&seq2);
+            clReleaseEvent(firstNrmCall);
         }
     }
 
@@ -93,7 +94,7 @@ doNrm2_ssq(CLBlasKargs *kargs,
 {
     cl_int err;
 	ListHead seq, seq2;
-    cl_event firstNrmCall;
+    cl_event firstNrmCall = NULL;
     CLBlasKargs redctnArgs;
     ListNode *listNodePtr;
     SolutionStep *step;
@@ -134,6 +135,7 @@ doNrm2_ssq(CLBlasKargs *kargs,
                 err = executeSolutionSeq(&seq2);
             }
             freeSolutionSeq(&seq2);
+            clReleaseEvent(firstNrmCall);
         }
     }
 

@@ -18,7 +18,12 @@ extern cl_kernel sgemm_Col_NN_B1_MX032_NX032_KX16_BRANCH_clKernel;
 extern cl_kernel sgemm_Col_NT_B1_MX032_NX032_KX16_BRANCH_clKernel;
 extern cl_kernel sgemm_Col_TN_B1_MX032_NX032_KX16_BRANCH_clKernel;
 
-static const int user_kernel_count = 7;
+extern cl_kernel dgemm_NN_gfx906_tensile_clKernel;
+extern cl_kernel dgemm_NT_gfx906_tensile_clKernel;
+extern cl_kernel dgemm_TN_gfx906_tensile_clKernel;
+extern cl_kernel dgemm_TT_gfx906_tensile_clKernel;
+
+static const int user_kernel_count = 11;
 
 #ifdef __cplusplus
 extern "C" {

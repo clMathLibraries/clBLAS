@@ -45,7 +45,7 @@ __kernel void %PREFIXsyr_her_CL_kernel( __global %TYPE* _A, __global const %TYPE
 	__local %TYPE yShared[%TARGET_ROWS];
 
 	// If alpha is zero, the computation yields to a zero value and therefore doesnot update the A matrix.
-	if(alpha == 0.0)
+	if(alpha == 0)
 		return;
 
 	A = _A + offa;
@@ -140,7 +140,7 @@ __kernel void %PREFIXsyr_her_CL_kernel( __global %TYPE* _A, __global const %TYPE
 			      these values. On output, the imaginary parts of diagonal elements are set to zero.
 				*/
 
-				res.odd = (r == c) ? 0.0 : res.odd;
+				res.odd = (r == c) ? 0 : res.odd;
 			#endif
 
 			A( r, c ) = res;
@@ -325,7 +325,7 @@ __kernel void %PREFIXsyr_her_CU_kernel( __global %TYPE* _A, __global const %TYPE
 	__local %TYPE yShared[%TARGET_ROWS];
 
 	// If alpha is zero, the computation yields to a zero value and therefore doesnot update the A matrix.
-	if(alpha == 0.0)
+	if(alpha == 0)
 		return;
 
 	A = _A + offa;
@@ -419,7 +419,7 @@ __kernel void %PREFIXsyr_her_CU_kernel( __global %TYPE* _A, __global const %TYPE
 			      these values. On output, the imaginary parts of diagonal elements are set to zero.
 				*/
 
-				res.odd = (r == c) ? 0.0 : res.odd;
+				res.odd = (r == c) ? 0 : res.odd;
 			#endif
 
 			A( r , c ) = res;

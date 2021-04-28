@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         ( "numQueues", po::value<unsigned int>(&numQueuesToUse)->default_value(1), "Number of cl_command_queues to use( default: 1)")
         ( "roundtrip", po::value<std::string>( &roundtrip )->default_value("noroundtrip"),"including the time of OpenCL memory allocation and transportation; options:roundtrip, noroundtrip(default)")
         ( "memalloc", po::value<std::string>( &memalloc )->default_value("default"),"setting the memory allocation flags for OpenCL; would not take effect if roundtrip time is not measured; options:default(default),alloc_host_ptr,use_host_ptr,copy_host_ptr,use_persistent_mem_amd,rect_mem")
-        ( "validate,v", po::value<int>(&validate)->default_value(0), "Validate GPU results with CPU BLAS? 0 = No, 1 = Yes (default: No): currently only available for gemm and trmm")
+        ( "validate,v", po::value<int>(&validate)->default_value(0), "Validate GPU results with CPU BLAS? 0 = No, 1 = Yes (default: No): currently linux only, available for gemm and trmm")
         ;
 
     po::variables_map vm;
@@ -569,8 +569,8 @@ int main(int argc, char *argv[])
         my_function->initialize_cpu_buffer();
         my_function->initialize_gpu_buffer();
         my_function->setup_apiCallCount( apiCallCount );
-        
-        
+
+
 	for (cl_uint i = 0; i < profileCount; ++i)
         {
             my_function->call_func();
