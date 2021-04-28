@@ -304,6 +304,7 @@ public:
         OPENCL_V_THROW(err, "creating context");
         for (unsigned int i = 0; i < numQueues; i++) {
           queues_[i] = clCreateCommandQueue(ctx_, device_, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
+          OpenCL_V_THROW(err, "create command queue");
         }
 
         timer_id = timer.getUniqueID( "clfunc", 0 );
