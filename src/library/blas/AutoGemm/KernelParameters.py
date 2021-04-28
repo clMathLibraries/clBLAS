@@ -44,15 +44,32 @@ class TileParameters:
   def __repr__(self):
     return self.getName()
 
+  def __lt__(self, other):
+    return self.getName() < other.getName()
+
+  def __cmp__(self, other):
+      # Python3 should ignore this method
+      # This is needed for python2 for proper comparison
+    try:
+      return cmp(self.getName(), other.getName())
+    except:
+      self_name = self.getName()
+      other_name = other.getName()
+      if (self_name < other_name):
+        return -1
+      elif (self_name == other_name):
+        return 0
+      else:
+        return 1
 
   def printAttributes(self):
-    print "workGroupNumRows = %d" % self.workGroupNumRows
-    print "workGroupNumCols = %d" % self.workGroupNumCols
-    print "microTileNumRows = %d" % self.microTileNumRows
-    print "microTileNumCols = %d" % self.microTileNumCols
-    print "macroTileNumRows = %d" % self.macroTileNumRows
-    print "macroTileNumCols = %d" % self.macroTileNumCols
-    print "unroll           = %d" % self.unroll
+    print("workGroupNumRows = %d" % self.workGroupNumRows)
+    print("workGroupNumCols = %d" % self.workGroupNumCols)
+    print("microTileNumRows = %d" % self.microTileNumRows)
+    print("microTileNumCols = %d" % self.microTileNumCols)
+    print("macroTileNumRows = %d" % self.macroTileNumRows)
+    print("macroTileNumCols = %d" % self.macroTileNumCols)
+    print("unroll           = %d" % self.unroll)
 
   ##############################################################################
   # Tile - get Multiples
@@ -72,11 +89,11 @@ class TileParameters:
     return True
     """
     numALoads = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
-        / (self.workGroupNumRows*self.workGroupNumCols)
+        // (self.workGroupNumRows*self.workGroupNumCols)
     numALoadsR = (self.workGroupNumRows*self.microTileNumRows*self.unroll) \
         % (self.workGroupNumRows*self.workGroupNumCols)
     numBLoads = (self.workGroupNumCols*self.microTileNumCols*self.unroll) \
-        / (self.workGroupNumRows*self.workGroupNumCols)
+        // (self.workGroupNumRows*self.workGroupNumCols)
     numBLoadsR = (self.workGroupNumCols*self.microTileNumCols*self.unroll) \
         % (self.workGroupNumRows*self.workGroupNumCols)
     if (numALoads>0 and numALoadsR>0):
@@ -188,11 +205,11 @@ class NonTileParameters:
     self.beta = -1       # 0, 1
 
   def printAttributes(self):
-    print "precision = " + self.precision
-    print "order     = " + self.order
-    print "transA    = " + self.transA
-    print "transB    = " + self.transB
-    print "beta      = %d" % self.beta
+    print("precision = " + self.precision)
+    print("order     = " + self.order)
+    print("transA    = " + self.transA)
+    print("transB    = " + self.transB)
+    print("beta      = %d" % self.beta)
 
   ##############################################################################
   # NonTile - get Name
@@ -250,4 +267,3 @@ class KernelParameters( NonTileParameters, TileParameters ):
   def getCornerName(self):
     return NonTileParameters.getName(self) \
         + "_" + TileParameters.getCornerName(self)
-

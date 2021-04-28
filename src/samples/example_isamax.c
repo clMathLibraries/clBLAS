@@ -119,6 +119,9 @@ main(void)
         printf("Result amax: %d\n", indexMax);
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufX);
     clReleaseMemObject(scratchBuf);

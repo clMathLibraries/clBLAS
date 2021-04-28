@@ -14,7 +14,10 @@
  * limitations under the License.
  * ************************************************************************/
 
-
+#include <map>
+#include <string>
+#include <sstream>
+#include <stdlib.h>
 #include <string.h>
 #include <clBLAS.h>
 
@@ -34,7 +37,7 @@
 //
 // The idea is basically that
 //   B = A*X
-// can be computed as 
+// can be computed as
 //   B' = (A*X)'
 //      = X'*A'
 // And since changing the order is basically a transpose on each matrix,
@@ -42,7 +45,7 @@
 //   B = X*A (so only the side, the uplo must be changed and the M and N sizes swapped)
 //
 // When enabled, only the ColumnMajor kernels need to be implemented
-// for all TRSM 
+// for all TRSM
 //
 
 #define FORCE_COLUMN_MAJOR 1
@@ -64,35 +67,35 @@ static void force_trsm_column_major(Args & args)
 //
 // This file provide the public clBLAS API for
 //
-//   clblasStrsm() 
-//   clblasDtrsm() 
-//   clblasCtrsm() 
-//   clblasZtrsm() 
+//   clblasStrsm()
+//   clblasDtrsm()
+//   clblasCtrsm()
+//   clblasZtrsm()
 //
-// using functors 
-// 
-// Potential optimizations: 
+// using functors
+//
+// Potential optimizations:
 ////
-//  - Get rid of the 'order' argument assuming that 
+//  - Get rid of the 'order' argument assuming that
 //    row-major is equivalent to the transpose of column-major.
-//    That is  
+//    That is
 //
 //       B = A*X
 //
-//    is equivalent to 
+//    is equivalent to
 //
 //       B' = X'*A'
 //
-//    and, when considering the opposite order, is equivalent to   
+//    and, when considering the opposite order, is equivalent to
 //
 //       B = X*A (with A swap between upper and lower)
 //
-//    By applying that transformation early, the functors implementing 
-//    the TRSMs only have to consider one of the two cases. 
+//    By applying that transformation early, the functors implementing
+//    the TRSMs only have to consider one of the two cases.
 //
 
 //
-// Common part of all XTRSM implementations using the old Solver infrastructure 
+// Common part of all XTRSM implementations using the old Solver infrastructure
 //
 
 #define CL_CHECK(RET) \
@@ -103,118 +106,167 @@ static void force_trsm_column_major(Args & args)
 
 #define min(x,y) ((x)<(y)?(x):(y))
 
-static void makeKernel(
-	cl_kernel *clKernel,
-	cl_command_queue clQueue,
-	const char *kernelSource,
-	const char *sourceBuildOptions,
-	const unsigned char **kernelBinary,
-	size_t *kernelBinarySize,
-	const char *binaryBuildOptions)
+static char *getKernelName(cl_kernel clKernel)
 {
-	cl_int err;
-	if (*clKernel) {
-		// kernel has already been built, return
+  cl_int err;
+  // get kernel name
+  size_t kernelNameLength;
+  err = clGetKernelInfo(
+    clKernel,
+    CL_KERNEL_FUNCTION_NAME,
+    sizeof(kernelNameLength),
+    NULL,
+    &kernelNameLength);
+
+  // Do not check this error because of an nvidia bug.
+  // The kernelNameLength turns out to be of proper length.
+  // CL_CHECK(err)
+
+  char *kernelName = new char[kernelNameLength];
+  err = clGetKernelInfo(
+    clKernel,
+    CL_KERNEL_FUNCTION_NAME,
+    kernelNameLength*sizeof(char),
+    kernelName,
+    NULL );
+  CL_CHECK(err)
+
+  return kernelName;
+}
+
+//FIXME: This function should be returning an error.
+void makeKernel(
+  cl_kernel *clKernel,
+  cl_command_queue clQueue,
+  const char *kernelSource,
+  const char *sourceBuildOptions,
+  const unsigned char **kernelBinary,
+  size_t *kernelBinarySize,
+  const char *binaryBuildOptions)
+{
+  //TODO: This will need to be converted to thread local when making clBLAS thread safe
+  typedef std::map<std::string, cl_kernel> kernel_map_t;
+  static kernel_map_t kernel_map;
+
+  cl_context clContext;
+  cl_device_id clDevice;
+  cl_int err;
+
+  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
+  CL_CHECK(err)
+  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
+  CL_CHECK(err)
+
+  std::stringstream ss;
+  ss << clDevice << "_" << clContext;
+  std::string prefix = ss.str();
+
+  if (*clKernel) {
+    char *kernelName = getKernelName(*clKernel);
+    // kernel has already been built, return
 #ifdef AUTOGEMM_PRINT_DEBUG
-		// get kernel name
-		size_t kernelNameLength;
-		err = clGetKernelInfo(
-			*clKernel,
-			CL_KERNEL_FUNCTION_NAME,
-			sizeof(kernelNameLength),
-			NULL,
-			&kernelNameLength);
-		CL_CHECK(err)
-			char *kernelName = new char[kernelNameLength];
-		err = clGetKernelInfo(
-			*clKernel,
-			CL_KERNEL_FUNCTION_NAME,
-			kernelNameLength*sizeof(char),
-			kernelName,
-			NULL);
-		CL_CHECK(err)
-			printf("makeGemmKernel: \"%s\" already built; returning.\n", kernelName);
-		delete[] kernelName;
+    printf("makeKernel: \"%s\" already built; returning.\n", kernelName);
 #endif
-		return;
-	}
-	else {
-		// kernel has not been built, so build it (from binary, preferably)
-		cl_context clContext;
-		cl_device_id clDevice;
-		err = clGetCommandQueueInfo(clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
-		CL_CHECK(err)
-			err = clGetCommandQueueInfo(clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
-		CL_CHECK(err)
-			cl_program clProgram;
-		cl_int clBinaryStatus;
-		if (*kernelBinary) {
+
+    // Check if kernel exists for this device
+    std::string key = prefix + "_" + kernelName;
+    kernel_map_t::iterator idx = kernel_map.find(key);
+
+    // If kernel not found for this device, set to NULL
+    if (idx == kernel_map.end()) {
+        *clKernel = NULL;
+    } else {
+        *clKernel = idx->second;
+    }
+
+    delete[] kernelName;
+  }
+
+  if (!*clKernel) {
+    // kernel has not been built, so build it (from binary, preferably)
+    cl_program clProgram;
+    cl_int clBinaryStatus;
+    if (*kernelBinary) {
 #ifdef AUTOGEMM_PRINT_DEBUG
-			printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
+      printf("makeKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
+      printf("makeKernel: Creating program from binary\n");
 #endif
-			clProgram = clCreateProgramWithBinary(
-				clContext,
-				1, &clDevice,
-				kernelBinarySize, kernelBinary,
-				&clBinaryStatus, &err);
-			CL_CHECK(err)
-				err = clBuildProgram(
-				clProgram,
-				1, &clDevice,
-				binaryBuildOptions, NULL, NULL);
-			CL_CHECK(err)
-		}
-		else {
-			clProgram = clCreateProgramWithSource(
-				clContext,
-				1, &kernelSource,
-				NULL, &err);
-			CL_CHECK(err)
-				err = clBuildProgram(
-				clProgram,
-				1, &clDevice,
-				sourceBuildOptions, NULL, NULL);
-			if (err != CL_SUCCESS) {
-				size_t logSize = 0;
-				char* log;
-				clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
-				log = (char*)calloc(1, logSize + 1);
-				clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
-				printf("=== Build log ===\n%s\n", log);
-				free(log);
-				clReleaseProgram(clProgram);
-			}
-			CL_CHECK(err)
-		}
-		err = clCreateKernelsInProgram(
-			clProgram,
-			1, clKernel,
-			NULL);
-		CL_CHECK(err)
-		err = clReleaseProgram(clProgram);
-		CL_CHECK(err)
+      clProgram = clCreateProgramWithBinary(
+        clContext,
+        1, &clDevice,
+        kernelBinarySize, kernelBinary,
+        &clBinaryStatus, &err );
 #ifdef AUTOGEMM_PRINT_DEBUG
-			// get kernel name
-			size_t kernelNameLength;
-		err = clGetKernelInfo(
-			*clKernel,
-			CL_KERNEL_FUNCTION_NAME,
-			sizeof(kernelNameLength),
-			NULL,
-			&kernelNameLength);
-		CL_CHECK(err)
-			char *kernelName = new char[kernelNameLength];
-		err = clGetKernelInfo(
-			*clKernel,
-			CL_KERNEL_FUNCTION_NAME,
-			kernelNameLength*sizeof(char),
-			kernelName,
-			NULL);
-		CL_CHECK(err)
-			printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
-		delete[] kernelName;
+      if (err != CL_SUCCESS) {
+          printf("makeKernel: Failed to create program with binary\n");
+      }
 #endif
-	}
+      err = clBuildProgram(
+        clProgram,
+        1, &clDevice,
+        binaryBuildOptions, NULL, NULL );
+#ifdef AUTOGEMM_PRINT_DEBUG
+      if (err != CL_SUCCESS) {
+          printf("makeKernel: Failed to build program from binary\n");
+      }
+#endif
+    }
+
+    if (!*kernelBinary || err != CL_SUCCESS) {
+#ifdef AUTOGEMM_PRINT_DEBUG
+      printf("makeKernel: Creating program from source\n");
+#endif
+      clProgram = clCreateProgramWithSource(
+        clContext,
+        1, &kernelSource,
+        NULL, &err );
+      CL_CHECK(err)
+      err = clBuildProgram(
+        clProgram,
+        1, &clDevice,
+        sourceBuildOptions, NULL, NULL );
+      CL_CHECK(err)
+    }
+
+    // print build failure
+    if (err != CL_SUCCESS) {
+      printf("clBuildProgram Failed\n");
+      printf("err = %d\n", err);
+
+      size_t len = 0;
+      clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, 0, NULL, &len);
+      char* buildLog = new char[len];
+
+      printf("Error: Failed to build program executable!\n");
+      clGetProgramBuildInfo(clProgram, clDevice, CL_PROGRAM_BUILD_LOG, len*sizeof(char), buildLog, 0);
+      printf("\nBuild Log:\n\n");
+      printf("%s\n", buildLog);
+      //printf("\n\nKernel String:\n\n");
+      //printf("%s\n", kernelSource);
+      //FIXME: The function should be exiting at this point
+    }
+
+    err = clCreateKernelsInProgram(
+      clProgram,
+      1, clKernel,
+      NULL );
+    CL_CHECK(err)
+	err = clReleaseProgram(clProgram);
+	CL_CHECK(err)
+
+    char *kernelName = getKernelName(*clKernel);
+
+#ifdef AUTOGEMM_PRINT_DEBUG
+    printf("makeKernel: \"%s\" now built; returning.\n", kernelName);
+#endif
+
+    std::string key = prefix + "_" + kernelName;
+    kernel_map[key] = *clKernel;
+
+    delete[] kernelName;
+  }
+
+  return;
 }
 
 static cl_int clearBuffer(cl_command_queue  queue,
@@ -224,13 +276,13 @@ static cl_int clearBuffer(cl_command_queue  queue,
 
 	cl_int err = 0;
 	cl_event  event;
-	// Hummm clEnqueueFillBuffer is OpenCL 1.2 !!! 
+	// Hummm clEnqueueFillBuffer is OpenCL 1.2 !!!
 	double zero = 0.0;
 	err = clEnqueueFillBuffer(queue,
 		buffer,
 		&zero,
 		sizeof(double),
-		0,  // offset 
+		0,  // offset
 		buffer_size,
 		0,
 		NULL,
@@ -240,7 +292,7 @@ static cl_int clearBuffer(cl_command_queue  queue,
 	return err;
 
 }
-// Compute the number of blocks of the specified 'size' to fully cover 'n' 
+// Compute the number of blocks of the specified 'size' to fully cover 'n'
 // Simply speaking, this is n/size rounded up.
 #define BLOCKS(n,size) ( ( (n) / size ) + ( (n) % (size) != 0 ) )
 
@@ -369,10 +421,10 @@ cl_int diag_dtrtri192(
 
 		//cl_kernel diag_dtrtri_kernel_upper = clCreateKernel(prg, "DIAG_DTRTRI_KERNEL_UPPER", &err);
 		makeKernel(diag_dtrtri_kernel_upper_ClKernel,
-			       queue, 
-				   diag_dtrtri_kernel_upper_KernelSource, 
+			       queue,
+				   diag_dtrtri_kernel_upper_KernelSource,
 				   TrtriBuildOptions,
-				   &diag_dtrtri_kernel_upper_KernelBinary, 
+				   &diag_dtrtri_kernel_upper_KernelBinary,
 				   &diag_dtrtri_kernel_upper_KernelBinarySize,
 				   TrtribinBuildOptions);
 
@@ -409,7 +461,7 @@ cl_int diag_dtrtri192(
 		}
 
 		// update the inverse up to the size of BLOCK_SIZE
-		
+
 		for (int i = inner_block_size; i < outer_block_size; i *= 2) {
 
 			switch (i) {
@@ -425,7 +477,7 @@ cl_int diag_dtrtri192(
 					  A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
 				break;
-				
+
 			case 24:
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_24_PART1_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_24_PART2_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
@@ -494,7 +546,7 @@ cl_int diag_dtrtri192(
 					  A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
 				break;
-               
+
 			default:
 
 				break;
@@ -503,7 +555,7 @@ cl_int diag_dtrtri192(
 			if (i * 2 >= M) break;
 
 		}
-		
+
 	}
 
 	return err;
@@ -537,7 +589,7 @@ static clblasStatus gpu_dtrsm192(
 
 	if ((M % 192 == 0) && (N % 192 == 0))
 	{
-		//TODO: the implementation of sub block being 192 only supports 
+		//TODO: the implementation of sub block being 192 only supports
 		//side == right
 		//uplo == upper
 		//trans == notrans
@@ -566,7 +618,7 @@ static clblasStatus gpu_dtrsm192(
 
 			cl_mem InvA = 0;
 			cl_mem X = 0;
-			// X of size mxn  will contain the result 
+			// X of size mxn  will contain the result
 			size_t ldX = M;
 			size_t offX = 0; //must be 0: needed by the _(X,i,j) macro
 			size_t size_X = N*ldX * sizeof(double);
@@ -725,11 +777,11 @@ cl_int call_kernel_triple_update128(
 	clSetKernelArg(*kernel, 4, sizeof(unsigned int), &lda);
 	clSetKernelArg(*kernel, 5, sizeof(int), &npages);
 	clSetKernelArg(*kernel, 6, sizeof(unsigned int), &m);
-	
+
 	err = clEnqueueNDRangeKernel(queue, *kernel, 2, NULL,
 		globalThreads, globalLocal,
 		0, NULL, event);
-    
+
 
 	return err;
 }
@@ -770,7 +822,7 @@ cl_int diag_dtrtri128(
 
 	if (uplo == clblasLower) {
 
-		
+
 		diag_dtrtri_kernel_lower_KernelSource = diag_dtrtri_lower_128_16_src;
 		diag_dtrtri_kernel_lower_ClKernel = &diag_dtrtri_lower_128_16_clKernel;
 		diag_dtrtri_kernel_lower_KernelBinary = diag_dtrtri_lower_128_16_bin;
@@ -916,10 +968,10 @@ cl_int diag_dtrtri128(
 			}
 			if (i * 2 >= M) break;
 		}
-		
+
 	}
 	else {
-		
+
 		diag_dtrtri_kernel_upper_KernelSource = diag_dtrtri_upper_128_16_src;
 		diag_dtrtri_kernel_upper_ClKernel = &diag_dtrtri_upper_128_16_clKernel;
 		diag_dtrtri_kernel_upper_KernelBinary = diag_dtrtri_upper_128_16_bin;
@@ -949,14 +1001,14 @@ cl_int diag_dtrtri128(
 
 		size_t globalThreads[1] = { nthreads };
 		size_t globalLocal[1] = { inner_block_size };
-		
+
 		err = clEnqueueNDRangeKernel(queue, *diag_dtrtri_kernel_upper_ClKernel, 1, NULL,
 			globalThreads, globalLocal,
 			0, NULL, NULL);
 		CL_CHECK(err);
 		//err = clFinish(queue);
 		//CL_CHECK(err);
-			
+
 		if (err != CL_SUCCESS) {
 			//printf( "kernel -diag_dtrtri_kernel_upper- failed with %d\n", err );
 			return err;
@@ -968,13 +1020,13 @@ cl_int diag_dtrtri128(
 		//}
 
 		// update the inverse up to the size of BLOCK_SIZE
-		
+
 		for (int i = inner_block_size; i < outer_block_size; i *= 2) {
 
 			switch (i) {
 			case 16:
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_16_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				
+
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_16_R_clKernel,
 					triple_dgemm_update_128_16_R_src,
 					TrtriBuildOptions,
@@ -991,7 +1043,7 @@ cl_int diag_dtrtri128(
 			case 32:
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_32_PART1_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_32_PART2_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				
+
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_32_PART1_R_clKernel,
 					triple_dgemm_update_128_32_PART1_R_src,
 					TrtriBuildOptions,
@@ -1010,13 +1062,13 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				
+
 				break;
 
 			case 64:
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_64_PART1_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
 				//CALL_KERNEL_TRIPLE_UPDATE("TRIPLE_DGEMM_UPDATE_64_PART2_R", prg, queue, A, offA, d_dinvA, i, lda, M, event);
-				
+
 				err = call_kernel_triple_update128(&triple_dgemm_update_128_64_PART1_R_clKernel,
 					triple_dgemm_update_128_64_PART1_R_src,
 					TrtriBuildOptions,
@@ -1035,7 +1087,7 @@ cl_int diag_dtrtri128(
 					queue,
 					A, offA, d_dinvA, i, lda, M, event);
 				CL_CHECK(err);
-				
+
 				break;
 
 			default:
@@ -1125,12 +1177,12 @@ static clblasStatus gpu_dtrsm128(
 	double one = 1.0;
 	double zero = 0.0;
 
-	// Helper to compute pass the 3 arguments describing a (sub)-matrix to clblasDgemm 
-#define _(M,i,j)       M    , (off##M + ((i)+(j)*ld##M) ) , ld##M 
+	// Helper to compute pass the 3 arguments describing a (sub)-matrix to clblasDgemm
+#define _(M,i,j)       M    , (off##M + ((i)+(j)*ld##M) ) , ld##M
 
 	cl_mem InvA = 0;
 	cl_mem X = 0;
-	// X of size mxn  will contain the result 
+	// X of size mxn  will contain the result
 	size_t ldX = M;
 	size_t offX = 0; //must be 0: needed by the _(X,i,j) macro
 	size_t size_X = N*ldX * sizeof(double);
@@ -1158,17 +1210,17 @@ static clblasStatus gpu_dtrsm128(
 		CL_CHECK(err);
 
 		//
-		// Helper for C = alpha * transp(A) * B + beta * C         
+		// Helper for C = alpha * transp(A) * B + beta * C
 		//
 		// In the calls below:
 		//   - the 1st matrix shall be either A or InvA transposed according to transA.
-		//   - the 2nd and 3rd matrices are either B and X 
-		// 
+		//   - the 2nd and 3rd matrices are either B and X
+		//
 #define DGEMM_LEFT(m, n, k, alpha, A,  B, beta,  C) \
     do { \
         err = clblasDgemm(clblasColumnMajor, transA, clblasNoTrans , m, n, k, alpha, A, B, beta, C , 1, commandQueues, 0, NULL, events ) ; \
         CL_CHECK(err); \
-	    } while(0) 
+	    } while(0)
 
 
 		if (transA == clblasNoTrans)
@@ -1198,12 +1250,12 @@ static clblasStatus gpu_dtrsm128(
 						DGEMM_LEFT(M - i - outer_block_size, N, outer_block_size, neg_one, _(A, i + outer_block_size, i), _(X, i, 0), one, _(B, i + outer_block_size, 0));
 					}
 
-					//check_last_error() ; 
+					//check_last_error() ;
 				}
 
 
 			}
-			else // if ( uplo == clblasUpper) 
+			else // if ( uplo == clblasUpper)
 			{
 				/* the upper case */
 				/* handle the first block seperately with alpha */
@@ -1283,7 +1335,7 @@ static clblasStatus gpu_dtrsm128(
 	else
 	{
 		//
-		// Helper for C = alpha * B * A + beta * C        
+		// Helper for C = alpha * B * A + beta * C
 		//
 		// In the calls below
 		//  - the 2nd matrix shall be either A or InvA transposed according to transA
@@ -1293,7 +1345,7 @@ static clblasStatus gpu_dtrsm128(
     do { \
       err = clblasDgemm(clblasColumnMajor, clblasNoTrans, transA , m, n, k, alpha, B, A, beta, C , 1, commandQueues, 0, NULL, events ) ; \
       CL_CHECK(err); \
-	    } while(0) 
+	    } while(0)
 
 
 		// side=R
@@ -1545,8 +1597,8 @@ cl_event *events)
 	return (clblasStatus)err;
 }
 
-extern "C" 
-clblasStatus 
+extern "C"
+clblasStatus
 clblasStrsm(
     clblasOrder order,
     clblasSide side,
@@ -1571,25 +1623,25 @@ clblasStrsm(
    CHECK_QUEUES(numCommandQueues, commandQueues);
    CHECK_EVENTS(numEventsInWaitList, eventWaitList);
 
-   if ( numCommandQueues>1 ) 
+   if ( numCommandQueues>1 )
    {
        numCommandQueues = 1 ;  // No support for multi-device (yet)
    }
 
-   cl_command_queue queue = commandQueues[0]; 
+   cl_command_queue queue = commandQueues[0];
 
-   clblasStrsmFunctor::Args args(order, 
-                                 side, 
-                                 uplo, 
-                                 transA, 
-                                 diag, 
-                                 M, N, 
+   clblasStrsmFunctor::Args args(order,
+                                 side,
+                                 uplo,
+                                 transA,
+                                 diag,
+                                 M, N,
                                  alpha,
                                  A, offA, lda,
-                                 B, offB, ldb, 
+                                 B, offB, ldb,
                                  queue,
-                                 numEventsInWaitList, 
-                                 eventWaitList, 
+                                 numEventsInWaitList,
+                                 eventWaitList,
                                  events);
 
 
@@ -1608,8 +1660,8 @@ clblasStrsm(
    return res;
 }
 
-extern "C" 
-clblasStatus 
+extern "C"
+clblasStatus
 clblasDtrsm(
     clblasOrder order,
     clblasSide side,
@@ -1631,29 +1683,29 @@ clblasDtrsm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
-   /*
+#if 0
    CHECK_QUEUES(numCommandQueues, commandQueues);
    CHECK_EVENTS(numEventsInWaitList, eventWaitList);
 
-   if ( numCommandQueues>1 ) 
+   if ( numCommandQueues>1 )
    {
        numCommandQueues = 1 ;  // No support for multi-device (yet)
    }
 
-   cl_command_queue queue = commandQueues[0]; 
+   cl_command_queue queue = commandQueues[0];
 
-   clblasDtrsmFunctor::Args args(order, 
-                                 side, 
-                                 uplo, 
-                                 transA, 
-                                 diag, 
-                                 M, N, 
+   clblasDtrsmFunctor::Args args(order,
+                                 side,
+                                 uplo,
+                                 transA,
+                                 diag,
+                                 M, N,
                                  alpha,
                                  A, offA, lda,
-                                 B, offB, ldb, 
+                                 B, offB, ldb,
                                  queue,
-                                 numEventsInWaitList, 
-                                 eventWaitList, 
+                                 numEventsInWaitList,
+                                 eventWaitList,
                                  events);
 
 
@@ -1666,7 +1718,8 @@ clblasDtrsm(
    functor->release();
 
    return res;
-   */
+
+#else
 	bool specialCaseHandled = false;
 
 	//outer block size = 192
@@ -1689,7 +1742,7 @@ clblasDtrsm(
 
 	if (specialCaseHandled)
 		return SpecialCaseStatus;
-	
+
 	SpecialCaseStatus = gpu_dtrsm128(order,
 		side,
 		uplo,
@@ -1707,14 +1760,14 @@ clblasDtrsm(
 
 	if (specialCaseHandled)
 		return SpecialCaseStatus;
-    
+
 
    CLBlasKargs kargs;
 
    memset(&kargs, 0, sizeof(kargs));
    kargs.dtype = TYPE_DOUBLE;
    kargs.alpha.argDouble = alpha;
-   
+
    return doTrsm(&kargs,
 	   order,
 	   side,
@@ -1728,11 +1781,11 @@ clblasDtrsm(
 	   numEventsInWaitList,
 	   eventWaitList,
 	   events);
-   
+#endif
 }
 
-extern "C" 
-clblasStatus 
+extern "C"
+clblasStatus
 clblasCtrsm(
     clblasOrder order,
     clblasSide side,
@@ -1757,25 +1810,25 @@ clblasCtrsm(
    CHECK_QUEUES(numCommandQueues, commandQueues);
    CHECK_EVENTS(numEventsInWaitList, eventWaitList);
 
-   if ( numCommandQueues>1 ) 
+   if ( numCommandQueues>1 )
    {
        numCommandQueues = 1 ;  // No support for multi-device (yet)
    }
 
-   cl_command_queue queue = commandQueues[0]; 
+   cl_command_queue queue = commandQueues[0];
 
-   clblasCtrsmFunctor::Args args(order, 
-                                 side, 
-                                 uplo, 
-                                 transA, 
-                                 diag, 
-                                 M, N, 
+   clblasCtrsmFunctor::Args args(order,
+                                 side,
+                                 uplo,
+                                 transA,
+                                 diag,
+                                 M, N,
                                  alpha,
                                  A, offA, lda,
-                                 B, offB, ldb, 
+                                 B, offB, ldb,
                                  queue,
-                                 numEventsInWaitList, 
-                                 eventWaitList, 
+                                 numEventsInWaitList,
+                                 eventWaitList,
                                  events);
 
 
@@ -1794,8 +1847,8 @@ clblasCtrsm(
    return res;
 }
 
-extern "C" 
-clblasStatus 
+extern "C"
+clblasStatus
 clblasZtrsm(
     clblasOrder order,
     clblasSide side,
@@ -1820,25 +1873,25 @@ clblasZtrsm(
    CHECK_QUEUES(numCommandQueues, commandQueues);
    CHECK_EVENTS(numEventsInWaitList, eventWaitList);
 
-   if ( numCommandQueues>1 ) 
+   if ( numCommandQueues>1 )
    {
        numCommandQueues = 1 ;  // No support for multi-device (yet)
    }
 
-   cl_command_queue queue = commandQueues[0]; 
+   cl_command_queue queue = commandQueues[0];
 
-   clblasZtrsmFunctor::Args args(order, 
-                                 side, 
-                                 uplo, 
-                                 transA, 
-                                 diag, 
-                                 M, N, 
+   clblasZtrsmFunctor::Args args(order,
+                                 side,
+                                 uplo,
+                                 transA,
+                                 diag,
+                                 M, N,
                                  alpha,
                                  A, offA, lda,
-                                 B, offB, ldb, 
+                                 B, offB, ldb,
                                  queue,
-                                 numEventsInWaitList, 
-                                 eventWaitList, 
+                                 numEventsInWaitList,
+                                 eventWaitList,
                                  events);
 
 

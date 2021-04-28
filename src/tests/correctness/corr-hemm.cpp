@@ -133,8 +133,6 @@ hemmCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... " << std::endl;
-
     int creationFlags = 0, AcreationFlags;
     creationFlags =  creationFlags | RANDOM_INIT;
     creationFlags = ( (params-> order) == clblasRowMajor)? (creationFlags | ROW_MAJOR_ORDER) : (creationFlags);
@@ -152,9 +150,6 @@ hemmCorrectnessTest(TestParams *params)
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offA) * sizeof(T), 0, CL_MEM_READ_ONLY);
     bufB = base->createEnqueueBuffer(B, (lengthB + params->offBX) * sizeof(T), 0, CL_MEM_READ_ONLY);
     bufC = base->createEnqueueBuffer(backC, (lengthC + params->offCY) * sizeof(T), 0, CL_MEM_READ_WRITE);
-
-    ::std::cerr << "Done" << ::std::endl;
-    ::std::cerr << "Calling reference xHEMM routine... ";
 
 	clblasOrder fOrder;
     clblasUplo fUplo;
@@ -179,7 +174,6 @@ hemmCorrectnessTest(TestParams *params)
 	// Call reference blas routine
     clMath::blas::hemm(fOrder, fSide, fUplo, fM, fN, alpha_,
                             A, params->offA, params->lda, B, params->offBX, params->ldb, beta_, C, params->offCY, params->ldc);
-	::std::cerr << "Done" << ::std::endl;
 
     if ((bufA == NULL) || (bufB == NULL) || (bufC == NULL)) {
         /* Skip the test, the most probable reason is
@@ -196,8 +190,6 @@ hemmCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xHEMM routine... ";
 
     err = (cl_int)::clMath::clblas::hemm( params->order, params->side, params->uplo, params->M, params->N, alpha_,
                             bufA, params->offA, params->lda, bufB, params->offBX, params->ldb, beta_, bufC, params->offCY, params->ldc,
@@ -220,7 +212,6 @@ hemmCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE, 0,
         (lengthC + params->offCY) * sizeof(T), backC, 0,
@@ -235,6 +226,15 @@ hemmCorrectnessTest(TestParams *params)
 
     // handle lda correctly based on row-major/col-major..
     compareMatrices<T>(params->order, params->M , params->N, (C + params->offCY), (backC + params->offCY), params->ldc);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->side, params->uplo, params->M, params->N, 1, params->alpha, 1, params->beta, params->lda, params->ldb, params->ldc, params->offA, params->offb, params->offc);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, C, backC);
     delete[] events;
 }

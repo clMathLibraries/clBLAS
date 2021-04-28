@@ -108,7 +108,7 @@ selectVectorization(
 	KernelExtraFlags kflags = KEXTRA_NO_FLAGS;
 	CLBlasKargs *kargs  = (CLBlasKargs *)args;
 
-    if( (((kargs->offa) % vlen) != 0))
+    if( (((kargs->offb) % vlen) != 0))
     {
         kflags = KEXTRA_NO_COPY_VEC_A;
     }
@@ -130,12 +130,12 @@ setBuildOpts(
 		#endif
     }
 
-    if( (kargs->ldb.vector) != 1)
+    if( (kargs->ldb.Vector) != 1)
     {
         addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DINCX_NONUNITY");
     }
 
-    if( (kargs->ldb.vector) < 1)
+    if( (kargs->ldb.Vector) < 1)
     {
         addBuildOpt( buildOptStr, BUILD_OPTS_MAXLEN, "-DRETURN_ON_INVALID");
     }
@@ -277,7 +277,7 @@ assignKargs(KernelArg *args, const void *params, const void* )
 	INIT_KARG(&args[1], blasArgs->D);
     initSizeKarg(&args[2], blasArgs->N);
     initSizeKarg(&args[3], blasArgs->offb);
-    incx = blasArgs->ldb.vector;
+    incx = blasArgs->ldb.Vector;
     INIT_KARG(&args[4], incx);
 
 	return;

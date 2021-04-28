@@ -489,13 +489,13 @@ Config::setLDC(size_t ldc)
 void
 Config::setIncX(int incx)
 {
-    kargs_.ldb.vector = incx;
+    kargs_.ldb.Vector = incx;
 }
 
 void
 Config::setIncY(int incy)
 {
-    kargs_.ldc.vector = incy;
+    kargs_.ldc.Vector = incy;
 }
 
 void

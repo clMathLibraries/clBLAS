@@ -77,8 +77,7 @@ trsmCorrectnessTest(TestParams *params)
     isComplex = ((typeid(T) == typeid(FloatComplex)) ||
                  (typeid(T) == typeid(DoubleComplex)));
     if (canCaseBeSkipped(params, isComplex)) {
-        std::cerr << ">> Test is skipped because it has no importance for this "
-                     "level of coverage" << std::endl;
+        std::cerr << ">> Test is skipped" << std::endl;
         SUCCEED();
         return;
     }
@@ -100,17 +99,13 @@ trsmCorrectnessTest(TestParams *params)
         alpha = convertMultiplier<T>(params->alpha);
     }
 
-    ::std::cerr << "Generating input data... ";
-
     randomTrsmMatrices<T>(params->order, params->side, params->uplo,
         params->diag, params->M, params->N, useAlpha,
         &alpha, A, params->lda, B, params->ldb);
 
     memcpy(blasB, B, params->rowsB * params->columnsB * sizeof(*B));
     memcpy(clblasB, B, params->rowsB * params->columnsB * sizeof(*B));
-    ::std::cerr << "Done" << ::std::endl;
 
-    ::std::cerr << "Calling reference xTRSM routine... ";
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::trsm(clblasColumnMajor, params->side, params->uplo,
             params->transA, params->diag, params->M, params->N, alpha, A,
@@ -135,7 +130,6 @@ trsmCorrectnessTest(TestParams *params)
         delete[] reorderedB;
         delete[] reorderedA;
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                      sizeof(*A), params->offA * sizeof(*A),
@@ -160,7 +154,6 @@ trsmCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xTRSM routine... ";
     err = (cl_int)::clMath::clblas::trsm(params->order, params->side,
         params->uplo, params->transA, params->diag, params->M, params->N,
         alpha, bufA, params->offA, params->lda, bufB, params->offBX,
@@ -181,7 +174,6 @@ trsmCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufB, CL_TRUE,
                         params->offBX * sizeof(*clblasB),
@@ -196,6 +188,15 @@ trsmCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(params->order, params->M, params->N, blasB, clblasB,
                        params->ldb, delta);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->side, params->uplo, params->transA, params->diag, params->M, params->N, useAlpha,
+            base->alpha(), params->offA, params->lda, params->offBX, params->ldb);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, B, blasB, clblasB, delta);
     delete[] events;
 }
@@ -364,7 +365,6 @@ void Extratest(size_t M, size_t N, size_t lda, size_t ldb, T alpha, T delta)
     memcpy(blasB, B, N*ldb*sizeof(T));
     memcpy(clblasB, B, N*ldb*sizeof(T));
 
-	::std::cerr << "Calling reference xTRSM routine... ";
 	::clMath::blas::trsm(order, side, uplo, trans, diag, M, N, alpha, A, lda, blasB, ldb);
 
 
@@ -390,7 +390,6 @@ void Extratest(size_t M, size_t N, size_t lda, size_t ldb, T alpha, T delta)
         return;
     }
 
-    ::std::cerr << "Calling clblas xTRSM routine... ";
     err = (cl_int)::clMath::clblas::trsm(order, side, uplo, trans, diag, M, N, alpha, bufA, 0, lda, bufB, 0, ldb,
 				1, base->commandQueues(), 0, NULL, events);
     if (err != CL_SUCCESS) {
@@ -407,7 +406,6 @@ void Extratest(size_t M, size_t N, size_t lda, size_t ldb, T alpha, T delta)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufB, CL_TRUE,
                         0, N*ldb*sizeof(T), clblasB, 0, NULL, NULL);

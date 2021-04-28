@@ -128,9 +128,9 @@ __kernel void %PREFIXsyr2_CL_kernel( __global const %TYPE* _A, __global const %T
 
             %TYPE res1, res2;
             res1 = alpha * X[c * incx];
-			res2 = alpha * X[r * incx];
-            res1 = res1 * Y[r * incx];
-			res2 = res2 * Y[c * incx];
+            res2 = alpha * X[r * incx];
+            res1 = res1 * Y[r * incy];
+            res2 = res2 * Y[c * incy];
 
 			A[r + c * lda] += (res1 + res2);
         }

@@ -4,7 +4,7 @@
 
 #ifndef KERNEL_DGEMM_COL_NN_B1_MX048_NX048_KX08_SRC_H
 #define KERNEL_DGEMM_COL_NN_B1_MX048_NX048_KX08_SRC_H
-#pragma message("AutoGemm's dgemm_Col_NN_B1_MX048_NX048_KX08_src overriden by user.")
+// #pragma message("AutoGemm's dgemm_Col_NN_B1_MX048_NX048_KX08_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -18,6 +18,7 @@ const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_microTileNumCols = 6;
 const unsigned int dgemm_Col_NN_B1_MX048_NX048_KX08_unroll = 8;
 
 const char * const dgemm_Col_NN_B1_MX048_NX048_KX08_src = STRINGIFY(
+_Pragma("OPENCL EXTENSION cl_khr_fp64 : enable")   \n
 
 #define  M6x6 \
             rA[0] = lA[offA + 0];                       \
@@ -94,7 +95,7 @@ __kernel void dgemm_Col_NN_B1_MX048_NX048_KX08 (
     C += offsetC;
 
 
-    double rC[6][6] = {(double)0};
+    double rC[6][6] = { {(double)0} };
     double rA[6];
     double rB[6];
 

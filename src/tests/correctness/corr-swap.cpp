@@ -109,15 +109,11 @@ swapCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     // Populate A and blasX
     randomVectors(params->N, (X+params->offBX), params->incx, (Y+params->offCY), params->incy);
 
 	memcpy(blasX, X, (lengthX + params->offBX) * sizeof(T));
 	memcpy(blasY, Y, (lengthY + params->offCY) * sizeof(T));
-
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(T), 0, CL_MEM_READ_WRITE);
@@ -139,14 +135,8 @@ swapCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling reference xSWAP routine... ";
-
 	::clMath::blas::swap( params->N, blasX, params->offBX, params->incx,
 						 blasY, params->offCY, params->incy);
-    ::std::cerr << "Done" << ::std::endl;
-
-
-    ::std::cerr << "Calling clblas xSWAP routine... ";
 
     DataType type;
     type = ( typeid(T) == typeid(cl_float))? TYPE_FLOAT : (( typeid(T) == typeid(cl_double))? TYPE_DOUBLE: (( typeid(T) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT:TYPE_COMPLEX_DOUBLE));
@@ -169,8 +159,6 @@ swapCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufX, CL_TRUE, 0,
         (lengthX + params->offBX) * sizeof(T), X, 0, NULL, NULL);
@@ -186,6 +174,13 @@ swapCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX), (X + params->offBX), lengthX);
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (Y + params->offCY), lengthY);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx, params->offCY, params->incy);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(X, Y, blasX, blasY);
     delete[] events;
 }

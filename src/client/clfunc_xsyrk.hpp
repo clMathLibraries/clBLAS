@@ -64,7 +64,7 @@ public:
 
     double gflops()
     {
-        return buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return buffer_.n_*(buffer_.n_+1)*buffer_.k_/time_in_ns();
     }
 
     std::string gflops_formula()
@@ -458,7 +458,7 @@ call_func()
     clblasSsyrk(order_, buffer_.uplo_, buffer_.trans_a_, buffer_.n_,
                      buffer_.k_, buffer_.alpha_, buffer_.buf_a_, buffer_.offA_,
                      buffer_.lda_, buffer_.beta_, buffer_.buf_c_, buffer_.offC_,
-                     buffer_.ldc_, 4, queues_, 0, NULL, &event_);
+                     buffer_.ldc_, numQueues, queues_, 0, NULL, &event_);
 
     clWaitForEvents(1, &event_);
     timer.Stop(timer_id);
@@ -645,7 +645,7 @@ template<>
 double
 xSyrk<cl_double2>::gflops()
 {
-        return 4*buffer_.n_*(buffer_.n_+1)*buffer_.n_/time_in_ns();
+        return 4*buffer_.n_*(buffer_.n_+1)*buffer_.k_/time_in_ns();
 }
 
 template<>

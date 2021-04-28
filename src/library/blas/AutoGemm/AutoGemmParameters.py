@@ -5,7 +5,7 @@ import KernelParameters
 # Tile Parameters for Kernel Selection Data
 ################################################################################
 
-kernelSelectionData = {
+kernelSelectionDataHawaii = {
 # [ size, fallback tile, [ valid tiles ] ],
   "s":[
     [ 4000, [ 16, 16,  6,  6], [ [ 16, 16,  6,  6] ] ],
@@ -54,17 +54,55 @@ kernelSelectionData = {
     ],
   }
 
-"""
-for testing all micro-tile sizes
-    [  128, [ 16, 16,  8,  8], [ [ 16, 16,  8,  8] ] ],
-    [  112, [ 16, 16,  7,  7], [ [ 16, 16,  7,  7] ] ],
-    [   96, [ 16, 16,  6,  6], [ [ 16, 16,  6,  6] ] ],
-    [   80, [ 16, 16,  5,  5], [ [ 16, 16,  5,  5] ] ],
-    [   64, [ 16, 16,  4,  4], [ [ 16, 16,  4,  4] ] ],
-    [   48, [ 16, 16,  3,  3], [ [ 16, 16,  3,  3] ] ],
-    [   32, [ 16, 16,  2,  2], [ [ 16, 16,  2,  2] ] ],
-    [    0, [ 16, 16,  1,  1], [ [ 16, 16,  1,  1] ] ],
-"""
+kernelSelectionDataFiji = {
+  "s":[
+    [ 3072, [ 16, 16, 6, 6], [ [ 16, 16, 6, 6], [ 16, 16, 5, 5], [ 16, 16, 4, 4] ] ],
+    [ 2240, [ 16, 16, 6, 6], [ [ 16, 16, 6, 6], [ 16, 16, 4, 4], [ 16, 16, 5, 5], [ 16, 16, 3, 3] ] ],
+    [ 1760, [ 16, 16, 4, 4], [ [ 16, 16, 6, 6], [ 16, 16, 4, 4], [ 16, 16, 5, 5], [ 16, 16, 3, 3] ] ],
+    [ 1600, [ 16, 16, 4, 4], [ [ 16, 16, 4, 4], [ 16, 16, 6, 6], [ 16, 16, 5, 5], [ 16, 16, 3, 3] ] ],
+    [ 1056, [ 16, 16, 4, 4], [ [ 16, 16, 4, 4], [ 16, 16, 6, 6], [ 16, 16, 5, 5], [ 16, 16, 3, 3], [ 16, 16, 2, 2] ] ],
+    [  960, [ 16, 16, 4, 4], [ [ 16, 16, 4, 4], [ 16, 16, 5, 5], [ 16, 16, 3, 3], [ 16, 16, 2, 2] ] ],
+    [  736, [ 16, 16, 3, 3], [ [ 16, 16, 4, 4], [ 16, 16, 3, 3], [ 16, 16, 5, 5], [ 16, 16, 2, 2] ] ],
+    [  528, [ 16, 16, 3, 3], [ [ 16, 16, 4, 4], [ 16, 16, 3, 3], [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [  432, [ 16, 16, 2, 2], [ [ 16, 16, 3, 3], [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [  320, [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [    0, [ 16, 16, 1, 1], [ [ 16, 16, 1, 1] ] ],
+  ],
+  "d":[
+    [ 3200, [ 16, 16, 4, 4], [ [ 16, 16, 4, 4], [ 16, 16, 5, 5], [ 16, 16, 2, 2], [  8,  8, 6, 6 ] ] ],
+    [ 1632, [ 16, 16, 2, 2], [ [ 16, 16, 4, 4], [ 16, 16, 2, 2], [ 16, 16, 5, 5], [  8,  8, 6, 6 ] ] ],
+    [ 1280, [ 16, 16, 2, 2], [ [ 16, 16, 4, 4], [ 16, 16, 2, 2], [ 16, 16, 5, 5], [  8,  8, 6, 6 ], [ 16, 16, 1, 1] ] ],
+    [ 1056, [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [  672, [ 16, 16, 2, 2], [ [ 16, 16, 1, 1] ] ],
+    [    0, [ 16, 16, 1, 1], [ [ 16, 16, 1, 1] ] ],
+  ],
+  "c":[
+    [ 2240,  [ 16, 16, 4, 4], [ [ 16, 16, 4, 4], [ 16, 16, 6, 6], ] ],
+    [ 1440,  [ 16, 16, 4, 4], [ [ 16, 16, 4, 4], [ 16, 16, 6, 6], [ 16, 16, 5, 5], [ 16, 16, 2, 2] ] ],
+    [ 1088,  [ 16, 16, 2, 2], [ [ 16, 16, 4, 4], [ 16, 16, 3, 3], [ 16, 16, 2, 2], [ 16, 16, 5, 5] ] ],
+    [  704,  [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 3, 3], [ 16, 16, 5, 5] ] ],
+    [  528,  [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 3, 3], [ 16, 16, 1, 1] ] ],
+    [  336,  [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [    0,  [ 16, 16, 1, 1], [ [ 16, 16, 1, 1] ] ],
+  ],
+  "z":[
+    [ 2528, [ 16, 16, 2, 2], [ [ 16, 16, 4, 4], [ 16, 16, 2, 2], [ 16, 16, 3, 3] ] ],
+    [ 1872, [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 3, 3], [ 16, 16, 1, 1] ] ],
+    [ 1040, [ 16, 16, 2, 2], [ [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [  768, [ 16, 16, 1, 1], [ [ 16, 16, 2, 2], [ 16, 16, 1, 1] ] ],
+    [    0, [ 16, 16, 1, 1], [ [ 16, 16, 1, 1] ] ],
+  ]
+}
+
+kernelSelectionData = kernelSelectionDataHawaii
+def setArchitecture(architecture):
+  global kernelSelectionData, kernelSelectionDataHawaii, kernelSelectionDataFiji
+
+  if architecture == "Fiji":
+    kernelSelectionData = kernelSelectionDataFiji
+  else:
+    kernelSelectionData = kernelSelectionDataHawaii
+
 
 ################################################################################
 # Non-Tile Parameters
@@ -89,20 +127,20 @@ def getTilesForPrecision(precision):
     validTiles = sizeData[2]
     # add valid tiles
     for tileParams in validTiles:
-      #print tileParams
+      #print(tileParams)
       tile.workGroupNumRows = tileParams[0]
       tile.workGroupNumCols = tileParams[1]
       tile.microTileNumRows = tileParams[2]
       tile.microTileNumCols = tileParams[3]
       tile.macroTileNumRows = tile.workGroupNumRows*tile.microTileNumRows
       tile.macroTileNumCols = tile.workGroupNumCols*tile.microTileNumCols
-      #print tile.getName()
+      #print(tile.getName())
       for unroll in unrolls[precision]:
         tile.unroll = unroll
         if tile.isValid():
           tiles.append( copy.copy(tile) )
         else:
-          print tile.getName() + " - SKIPPING - "
+          print(tile.getName() + " - SKIPPING - ")
 
     # add fallback tile
     tile.workGroupNumRows = fallbackTile[0]
@@ -116,7 +154,7 @@ def getTilesForPrecision(precision):
       if tile.isValid():
         tiles.append( copy.copy(tile) )
       else:
-        print tile.getName() + " - SKIPPING - "
+        print(tile.getName() + " - SKIPPING - ")
 
   setTiles = set(tiles)
   tiles = list( setTiles )

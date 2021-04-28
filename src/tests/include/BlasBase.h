@@ -33,8 +33,7 @@ do {                                                                        \
                                                                             \
     if (err == CL_INVALID_DEVICE && !base->isDevSupportDoublePrecision()) { \
         ::std::cerr << std::endl << ">> " << funcName <<                    \
-                "() reported that this device doesn't support double "      \
-                "precision floating point arithmetic. Test is skipped" <<   \
+                "() no double; test is skipped" <<   \
         ::std::endl;                                                        \
         SUCCEED();                                                          \
                                                                             \
@@ -62,6 +61,8 @@ private:
     cl_device_id additionalDevice_;
     cl_context context_;
     cl_command_queue commandQueues_[MAX_COMMAND_QUEUES];
+    size_t devOrd_;
+    size_t platOrd_;
 
     bool useNumCommandQueues_;
     cl_uint numCommandQueues_;
@@ -86,7 +87,7 @@ private:
     cl_ulong imageA_;
     cl_ulong imageB_;
 
-    BlasBase();
+    BlasBase( );
     ~BlasBase();
     BlasBase(const BlasBase &);             // intentionally undefined
     BlasBase & operator=(const BlasBase &); // intentionally undefined
@@ -102,7 +103,7 @@ private:
                          int primAdd);
 
 public:
-    static BlasBase* getInstance();
+    static BlasBase* getInstance( );
 
     cl_context context()
     {
@@ -198,7 +199,7 @@ public:
         useImages_ = (value != 0);
     }
 
-    bool setDeviceType(cl_device_type* devType, const char* devName);
+    bool setDeviceType(const TestParams& params );
     cl_mem createEnqueueBuffer(const void *data, size_t matrSize, size_t off,
                                cl_mem_flags mode);
     cl_mem readBuffer(void *ptr, size_t off, size_t size);

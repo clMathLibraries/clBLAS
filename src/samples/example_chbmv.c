@@ -154,6 +154,9 @@ main(void)
         /* At this point you will get the result of CHBMV placed in Y array. */
         printResult();
     }
+    
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
 
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);

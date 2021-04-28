@@ -114,8 +114,6 @@ hemvCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
 	if((A == NULL) || (X == NULL) || (blasY == NULL) || (clblasY == NULL))
 	{
 		deleteBuffers<T>(A, X, blasY, clblasY);
@@ -134,7 +132,6 @@ hemvCorrectnessTest(TestParams *params)
 						(X + params->offBX), params->incx, true, &beta, (blasY + params->offCY), params->incy);
     // Copy blasY to clblasY
     memcpy(clblasY, blasY, (lengthY + params->offCY)* sizeof(*blasY));
-    ::std::cerr << "Done" << ::std::endl;
 	/*
 	printf("\n\n before acml call\nA\n");
     printMatrixBlock( params->order, 0, 0, params->N, params->N, params->lda, A+params->offA);
@@ -153,8 +150,6 @@ hemvCorrectnessTest(TestParams *params)
 	//printData( "bufX", blasX, lengthX, 1, lengthX);
 	//printData( "clblasX", clblasX, lengthX, 1, lengthX);
 
-    ::std::cerr << "Calling reference xHEMV routine... ";
-
 	clblasOrder order;
     clblasUplo fUplo;
 
@@ -169,7 +164,6 @@ hemvCorrectnessTest(TestParams *params)
     }
 	::clMath::blas::hemv( order, fUplo, params->N, alpha, A, params->offA, params->lda, X, params->offBX, params->incx,
 						beta, blasY, params->offCY, params->incy);
-    ::std::cerr << "Done" << ::std::endl;
 	/*
 	printf("\n\n after acml call\n");
     printf("\nY\n");
@@ -193,8 +187,6 @@ hemvCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xHEMV routine... ";
-
     err = (cl_int)::clMath::clblas::hemv(params->order, params->uplo, params->N, alpha, bufA,
     					params->offA, params->lda, bufX, params->offBX, params->incx, beta, bufY, params->offCY, params->incy,
 						params->numCommandQueues, base->commandQueues(), 0, NULL, events);
@@ -214,8 +206,6 @@ hemvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufY, CL_TRUE, 0,
         (lengthY + params->offCY) * sizeof(*clblasY), clblasY, 0,
@@ -235,6 +225,15 @@ hemvCorrectnessTest(TestParams *params)
 	*/
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (clblasY + params->offCY),
                        lengthY);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, params->alpha, params->offA,
+            params->lda, params->offBX, params->incx, params->beta, params->offCY, params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, X, blasY, clblasY);
     delete[] events;
 }

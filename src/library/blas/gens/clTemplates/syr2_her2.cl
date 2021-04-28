@@ -148,8 +148,8 @@ __kernel void %PREFIXsyr2_her2_CL_kernel( __global %TYPE* _A, __global const %TY
 				#endif
 			#endif
             %MUL( res5, alpha, res1 );
-            res1 = Y[c * incx];
-            res3 = Y[r * incx];
+            res1 = Y[c * incy];
+            res3 = Y[r * incy];
             #ifdef HER2_ONLY
 				#ifndef HER2_ROWMAJOR
 					%CONJUGATE(1, res1);
@@ -514,8 +514,8 @@ __kernel void %PREFIXsyr2_her2_CU_kernel( __global %TYPE* _A, __global const %TY
 				#endif
 			#endif
             %MUL( res5, alpha, res1 );
-            res1 = Y[c * incx];
-            res3 = Y[r * incx];
+            res1 = Y[c * incy];
+            res3 = Y[r * incy];
             #ifdef HER2_ONLY
 				#ifndef HER2_ROWMAJOR
 					%CONJUGATE(1, res1);

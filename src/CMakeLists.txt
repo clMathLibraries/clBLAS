@@ -1,12 +1,12 @@
 # ########################################################################
 # Copyright 2013 Advanced Micro Devices, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 2.8)
 
 #User toggle-able options that can be changed on the command line with -D
 option( BUILD_RUNTIME "Build the BLAS runtime library" ON )
-option( BUILD_TEST "Build the library testing suite (dependency on google test, Boost, and ACML)" ON )
+option( BUILD_TEST "Build the library testing suite (dependency on google test, Boost, and ACML/NETLIB BLAS)" ON )
 option( BUILD_PERFORMANCE "Copy the performance scripts that can measure and graph performance" OFF )
 option( BUILD_SAMPLE "Build the sample programs" OFF )
 option( BUILD_CLIENT "Build a command line clBLAS client program with a variety of configurable parameters (dependency on Boost)" OFF )
@@ -41,33 +41,33 @@ set( OPENCL_OFFLINE_BUILD_TAHITI_KERNEL OFF)
   #use dynamic generated kernels
 #  MESSAGE(STATUS "Build dynamic Hawaii kernels.")
 #  MESSAGE(STATUS "Check OPENCL_OFFLINE_BUILD_HAWAII_KERNEL to build kernls at compile-time. This will eliminates clBuildProgram() overhead and better kernel performance with certain driver.")
-  add_definitions(-DCLBLAS_HAWAII_DYNAMIC_KERNEL) 
+  add_definitions(-DCLBLAS_HAWAII_DYNAMIC_KERNEL)
 #else()
 #  MESSAGE(STATUS "Build static Hawaii kernels.")
 #  MESSAGE(STATUS "Uncheck OPENCL_OFFLINE_BUILD_HAWAII_KERNEL to build kernls at run-time")
-#  MESSAGE(STATUS "Please ensure the presence of Hawaii device in the system. With certain driver/compiler flags, this might result in compile-time error.")  
+#  MESSAGE(STATUS "Please ensure the presence of Hawaii device in the system. With certain driver/compiler flags, this might result in compile-time error.")
 #endif( )
 
 #if( NOT OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL )
   #use dynamic generated kernels
 #  MESSAGE(STATUS "Build dynamic Bonaire kernels.")
 #  MESSAGE(STATUS "Check OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL to build kernls at compile-time. This will eliminates clBuildProgram() overhead and better kernel performance with certain driver.")
-  add_definitions(-DCLBLAS_BONAIRE_DYNAMIC_KERNEL) 
+  add_definitions(-DCLBLAS_BONAIRE_DYNAMIC_KERNEL)
 #else()
 #  MESSAGE(STATUS "Build static Bonaire kernels.")
 #  MESSAGE(STATUS "Uncheck OPENCL_OFFLINE_BUILD_BONAIRE_KERNEL to build kernls at run-time")
-#  MESSAGE(STATUS "Please ensure the presence of Bonaire device in the system. With certain driver/compiler flags, this might result in compile-time error.")    
+#  MESSAGE(STATUS "Please ensure the presence of Bonaire device in the system. With certain driver/compiler flags, this might result in compile-time error.")
 #endif( )
 
 #if( NOT OPENCL_OFFLINE_BUILD_TAHITI_KERNEL )
   #use dynamic generated kernels
 #  MESSAGE(STATUS "Build dynamic Tahiti kernels.")
 #  MESSAGE(STATUS "Check OPENCL_OFFLINE_BUILD_TAHITI_KERNEL to build kernls at compile-time. This will eliminates clBuildProgram() overhead and better kernel performance with certain driver.")
-  add_definitions(-DCLBLAS_TAHITI_DYNAMIC_KERNEL) 
+  add_definitions(-DCLBLAS_TAHITI_DYNAMIC_KERNEL)
 #else( )
 #  MESSAGE(STATUS "Build static Tahiti kernels.")
 #  MESSAGE(STATUS "Uncheck OPENCL_OFFLINE_BUILD_TAHITI_KERNEL to build kernls at run-time")
-#  MESSAGE(STATUS "Please ensure the presence of Tahiti device in the system. With certain driver/compiler flags, this might result in compile-time error.")    
+#  MESSAGE(STATUS "Please ensure the presence of Tahiti device in the system. With certain driver/compiler flags, this might result in compile-time error.")
 #endif( )
 
 
@@ -82,8 +82,8 @@ message( STATUS "You have confirmed OpenCL ${OPENCL_VERSION} is supported in you
 if ( APPLE )
 	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
 else ( )
-	message(STATUS "CORR_TEST_WITH_ACML set to ON")
-	set(CORR_TEST_WITH_ACML ON CACHE BOOL "Use ACML library in correctness tests")
+	message(STATUS "CORR_TEST_WITH_ACML set to OFF. Try link with libblas.so")
+	set(CORR_TEST_WITH_ACML OFF CACHE BOOL "Use ACML library in correctness tests")
 endif( )
 
 if( CMAKE_GENERATOR MATCHES "NMake" )
@@ -95,8 +95,8 @@ if( CMAKE_GENERATOR MATCHES "NMake" )
   endif( )
 endif( )
 
-# If we are on linux, and we wish to link with the netlib BLAS implementation, we need to have a valid fortran compiler
-if( NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE )
+# If we are on linux, and we wish to link with the netlib BLAS implementation when BUILD_TEST is ON, we need to have a valid fortran compiler
+if(BUILD_TEST AND NOT CORR_TEST_WITH_ACML AND NOT WIN32 AND NOT APPLE)
   project(clBLAS Fortran C CXX )
 else( )
   project(clBLAS C CXX)
@@ -108,7 +108,7 @@ if( NOT DEFINED clBLAS_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_MINOR )
-    set( clBLAS_VERSION_MINOR 8 )
+    set( clBLAS_VERSION_MINOR 12 )
 endif( )
 
 if( NOT DEFINED clBLAS_VERSION_PATCH )
@@ -135,8 +135,8 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif()
 
-# These variables are meant to contain string which should be appended to the installation paths 
-# of library and executable binaries, respectively.  They are meant to be user configurable/overridable.  
+# These variables are meant to contain string which should be appended to the installation paths
+# of library and executable binaries, respectively.  They are meant to be user configurable/overridable.
 set( SUFFIX_LIB_DEFAULT "" )
 set( SUFFIX_BIN_DEFAULT "" )
 
@@ -170,8 +170,9 @@ if( MSVC_IDE )
 endif( )
 
 # add the math library for Linux
-if( UNIX ) 
+if( UNIX )
     set(MATH_LIBRARY "m")
+    set(THREAD_LIBRARY "pthread")
 endif()
 
 # set the path to specific OpenCL compiler
@@ -220,7 +221,7 @@ if( BUILD_TEST )
 		else()
 			message(WARNING "Cannot find acml.h")
 		endif()
-		
+
 		if( UNIX )
 			find_library(ACML_LIBRARIES acml_mp
 				HINTS
@@ -238,7 +239,7 @@ if( BUILD_TEST )
 			)
 			mark_as_advanced(_acml_mv_library)
 		endif( )
-		
+
 		if(WIN32)
 			find_library(ACML_LIBRARIES libacml_mp_dll
 				HINTS
@@ -248,7 +249,7 @@ if( BUILD_TEST )
                                         $ENV{ACML_ROOT}/${ACML_SUBDIR}/lib
 			)
 		endif( )
-		
+
 		if( NOT ACML_LIBRARIES )
 			message(WARNING "Cannot find libacml")
 		endif( )
@@ -265,15 +266,23 @@ if( BUILD_TEST )
 	endif( )
 endif( )
 
+if( BUILD_CLIENT )
+    if( NETLIB_FOUND )
+    else( )
+        message( WARNING "Not find Netlib; BUILD_CLIENT needs the Netlib CBLAS library" )
+    endif()
+endif()
+
+
 # This will define OPENCL_FOUND
-find_package( OpenCL )
+find_package( OpenCL ${OPENCL_VERSION} )
 
 # Find Boost on the system, and configure the type of boost build we want
 set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_LIBS   ON )
 set( Boost_DETAILED_FAILURE_MSG   ON )
-set( Boost_DEBUG ON )
-set( Boost_ADDITIONAL_VERSIONS "1.44.0" "1.44" "1.47.0" "1.47" )
+# set( Boost_DEBUG ON )
+set( Boost_ADDITIONAL_VERSIONS "1.44.0" "1.44" "1.47.0" "1.47" "1.60.0" "1.60" )
 
 find_package( Boost 1.33.0 COMPONENTS program_options )
 message(STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}")
@@ -288,7 +297,7 @@ endif()
 
 # Turn on maximum compiler verbosity
 if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(-pedantic -Wall -Wextra
+    add_definitions(# -pedantic -Wall -Wextra
         -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=500
     )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wstrict-prototypes" CACHE STRING
@@ -296,18 +305,28 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     # Don't use -rpath.
     set(CMAKE_SKIP_RPATH ON CACHE BOOL "Skip RPATH" FORCE)
 
-    set(CMAKE_C_FLAGS "-m${TARGET_PLATFORM} ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-m${TARGET_PLATFORM} ${CMAKE_CXX_FLAGS}")
-    set(CMAKE_Fortran_FLAGS "-m${TARGET_PLATFORM} ${CMAKE_Fortran_FLAGS}")
+    # Need to determine the target machine of the C compiler, because
+    # the '-m32' and '-m64' flags are supported on x86 but not on e.g. ARM.
+    exec_program( "${CMAKE_C_COMPILER} -dumpmachine"
+        OUTPUT_VARIABLE CMAKE_C_COMPILER_MACHINE )
+    message( STATUS "CMAKE_C_COMPILER_MACHINE: ${CMAKE_C_COMPILER_MACHINE}" )
+    # The "86" regular expression matches x86, x86_64, i686, etc.
+    if(${CMAKE_C_COMPILER_MACHINE} MATCHES "86")
+        set(CMAKE_C_FLAGS "-m${TARGET_PLATFORM} ${CMAKE_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "-m${TARGET_PLATFORM} ${CMAKE_CXX_FLAGS}")
+        set(CMAKE_Fortran_FLAGS "-m${TARGET_PLATFORM} ${CMAKE_Fortran_FLAGS}")
+    endif()
 
     if(TARGET_PLATFORM EQUAL 32)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-builtin")
     endif()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing")
 elseif( MSVC )
 	# CMake sets huge stack frames for windows, for whatever reason.  We go with compiler default.
 	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
 	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )
 endif( )
 
 if (WIN32)
@@ -320,13 +339,13 @@ add_definitions( -DCL_USE_DEPRECATED_OPENCL_1_1_APIS )
 configure_file( "${PROJECT_SOURCE_DIR}/clBLAS.version.h.in" "${PROJECT_BINARY_DIR}/include/clBLAS.version.h" )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
-install( FILES 
-			"clBLAS.h" 
+install( FILES
+			"clBLAS.h"
 			"clAmdBlas.h"
 			"clAmdBlas.version.h"
 			"clBLAS-complex.h"
 			"${PROJECT_BINARY_DIR}/include/clBLAS.version.h"
-		DESTINATION 
+		DESTINATION
 			"./include" )
 
 
@@ -351,7 +370,7 @@ if( BUILD_SAMPLE AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/samples" )
 	add_subdirectory( samples )
 endif( )
 
-# The build server is not supposed to build or package any of the tests; build server script will define this on the command line with 
+# The build server is not supposed to build or package any of the tests; build server script will define this on the command line with
 # cmake -G "Visual Studio 10 Win64" -D BUILDSERVER:BOOL=ON ../..
 if( BUILD_TEST )
 	if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/tests" )
@@ -386,7 +405,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/clBLASConfigVersion.cmake
   DESTINATION ${destdir})
 
 
-# The following code is setting variables to control the behavior of CPack to generate our 
+# The following code is setting variables to control the behavior of CPack to generate our
 if( WIN32 )
 	set( CPACK_SOURCE_GENERATOR "ZIP" )
 	set( CPACK_GENERATOR "ZIP" )

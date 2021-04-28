@@ -62,10 +62,6 @@ protected:
         if (useNumCommandQueues) {
             numCommandQueues = base->numCommandQueues();
         }
-
-        printTestParams(N, paramAlpha, offx, incx);
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     size_t N;

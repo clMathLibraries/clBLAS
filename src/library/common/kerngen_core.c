@@ -110,7 +110,7 @@ searchFuncName(const char *source, size_t *len)
     char *name = NULL;
 
     /*
-     * Search the opening paranthesis. The word before it is
+     * Search the opening parenthesis. The word before it is
      * the function name
      */
     sep = strchr(source, '(');

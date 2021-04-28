@@ -111,7 +111,7 @@ doAsum(
         kargs->offA = offAsum;
 		kargs->B = X;
 		kargs->offBX = offx;
-		kargs->ldb.vector = incx;   // Will be using this as incx
+		kargs->ldb.Vector = incx;   // Will be using this as incx
         if(incx <1){
             kargs->N = 1;
         }

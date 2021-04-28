@@ -112,8 +112,6 @@ gbmvCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
 	if((A == NULL) || (X == NULL) || (blasY == NULL) || (clblasY == NULL))
 	{
 		deleteBuffers<T>(A, X, blasY, clblasY);
@@ -130,14 +128,11 @@ gbmvCorrectnessTest(TestParams *params)
                         (A + params->offA), params->lda, (X+params->offBX), params->incx, (blasY+params->offCY), params->incy );
     // Copy blasY to clblasY
     memcpy(clblasY, blasY, (lengthY + params->offCY)* sizeof(*blasY));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offA)* sizeof(*A), 0, CL_MEM_READ_ONLY);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
     bufY = base->createEnqueueBuffer(clblasY, (lengthY + params->offCY) * sizeof(*clblasY), 0, CL_MEM_READ_WRITE);
-
-    ::std::cerr << "Calling reference xGBMV routine... ";
 
 	clblasOrder fOrder;
 	clblasTranspose fTrans;
@@ -159,7 +154,6 @@ gbmvCorrectnessTest(TestParams *params)
    	}
 	clMath::blas::gbmv(fOrder, fTrans, fM, fN, fKL, fKU, alpha, A, params->offA, params->lda,
 							X, params->offBX, params->incx, beta, blasY, params->offCY, params->incy);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufA == NULL) || (bufX == NULL) || (bufY == NULL)) {
         // Skip the test, the most probable reason is
@@ -176,8 +170,6 @@ gbmvCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xGBMV routine... ";
 
     err = (cl_int)clMath::clblas::gbmv(params->order, params->transA, params->M, params->N, params->KL, params->KU,
                                         alpha, bufA, params->offA, params->lda, bufX, params->offBX, params->incx,
@@ -199,8 +191,6 @@ gbmvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufY, CL_TRUE, 0,
         (lengthY + params->offCY) * sizeof(*clblasY), clblasY, 0,
@@ -213,6 +203,15 @@ gbmvCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufX, bufY);
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (clblasY + params->offCY),
                        lengthY);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->transA, params->M, params->N, params->KL, params->KU, params->alpha, params->offA,
+            params->lda, params->offBX, params->incx, params->beta, params->offCY, params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, X, blasY, clblasY);
     delete[] events;
 }

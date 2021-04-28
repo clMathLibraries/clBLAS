@@ -9,7 +9,7 @@ import Common
 ################################################################################
 
 def writeOfflineCompilation(args):
-  print "AutoGemm.py: Generating list of kernels to pre-compile."
+  print("AutoGemm.py: Generating list of kernels to pre-compile.")
   if not os.path.exists( Common.getIncludePath() ):
     os.makedirs( Common.getIncludePath() )
 
@@ -57,7 +57,7 @@ def writeOfflineCompilation(args):
   ocFile.write( fileStr )
   ocFile.close()
   count *= 4
-  print "AutoGemm.py: %u kernels will be pre-compiled." % count
+  print("AutoGemm.py: %u kernels will be pre-compiled." % count)
 
 
 ################################################################################
@@ -76,7 +76,7 @@ if __name__ == "__main__":
   if args.output:
     Common.setOutputPath(args.output)
   else:
-    print "Warning: No output path specified; default is working directory."
+    print("Warning: No output path specified; default is working directory.")
 
   # write offline compilation header
   if args.precisions is None:
@@ -88,4 +88,3 @@ if __name__ == "__main__":
   if args.betas is None:
     args.betas = []
   writeOfflineCompilation(args)
-

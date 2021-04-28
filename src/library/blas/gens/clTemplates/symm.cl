@@ -176,18 +176,18 @@ const char *SYMM_C_KERNEL= "
 			return SYMM_VECTOR_LOAD(A, M, lda, row, col);
 		}
 		#ifdef __SYMM_LOWER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_FIRST(A,M,K,lda,row,col)	%VLOAD(0, (&A[(col)*lda + (row)]))
 		#elif defined(__SYMM_UPPER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_FIRST(A,M,K,lda,row,col) 	%VLOADWITHINCXV2(0, (&A[(row)*lda + (col)]), lda)
 		#endif
 		#define LOADA_SECOND(A,M,K,lda,row,col)		SYMM_VECTOR_LOAD_USING_SCALAR(A, M, lda, row, col)
 		#ifdef __SYMM_LOWER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_THIRD(A,M,K,lda,row, col)	%VLOADWITHINCXV2(0, (&A[(row)*lda + (col)]), lda)
 		#elif defined(__SYMM_UPPER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_THIRD(A,M,K,lda,row, col)	%VLOAD(0, (&A[(col)*lda + (row)]))
 		#endif
 		#define LOADA_TAIL(A,M,K,lda,row,col) 		SYMM_VECTOR_LOAD_USING_SCALAR(A,M,lda,row,col)
@@ -217,18 +217,18 @@ const char *SYMM_C_KERNEL= "
 			return SYMM_VECTOR_LOAD(B, N, ldb, row, col);
 		}
 		#ifdef __SYMM_UPPER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_FIRST(B,K,N,ldb,row,col)	%VLOAD(0, (&B[(col)*(ldb) + (row)]))
 		#elif defined(__SYMM_LOWER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_FIRST(B,K,N,ldb,row,col)	%VLOADWITHINCXV2(0, (&B[(row)*(ldb)  + (col)]), ldb)
 		#endif
 		#define LOADB_SECOND(B,K,N,ldb,row,col)		SYMM_VECTOR_LOAD_USING_SCALAR(B, N, ldb, row, col)
 		#ifdef __SYMM_UPPER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_THIRD(B,K,N,ldb,row,col)	%VLOADWITHINCXV2(0, (&B[(row)*(ldb) + (col)]), ldb)
 		#elif defined(__SYMM_LOWER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_THIRD(B,K,N,ldb,row,col)	%VLOAD(0, (&B[(col)*(ldb) + (row)]))
 		#endif
 		#define LOADB_TAIL(B,K,N,ldb,row,col)		SYMM_VECTOR_LOAD_USING_SCALAR(B, N,ldb,row,col)
@@ -288,7 +288,7 @@ const char *SYMM_C_KERNEL= "
 		// %V 	- Vectoring Width
 		// %PANEL(*) - Panel Width to access Rows of A and Columns of B
 		//		   Right now, %V is assumed to be the panel width.
-		//		   We dont use %PANEL in the current implementation.
+		//		   We don't use %PANEL in the current implementation.
 		//
 		blockDimY = ((M-1) / (threadsY * %ITEMY)) + 1;
 		bidY = ( get_group_id(0) % ( blockDimY));
@@ -673,18 +673,18 @@ const char *SYMM_C_KERNEL_WORKING_EXCEPT_CSYMM_PROBLEM = "
 			return SYMM_VECTOR_LOAD(A, M, lda, row, col);
 		}
 		#ifdef __SYMM_LOWER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_FIRST(A,M,K,lda,row,col)	%VLOAD(0, (&A[(col)*lda + (row)]))
 		#elif defined(__SYMM_UPPER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_FIRST(A,M,K,lda,row,col) 	%VLOADWITHINCXV2(0, (&A[(row)*lda + (col)]), lda)
 		#endif
 		#define LOADA_SECOND(A,M,K,lda,row,col)		SYMM_VECTOR_LOAD_USING_SCALAR(A, M, lda, row, col)
 		#ifdef __SYMM_LOWER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_THIRD(A,M,K,lda,row, col)	%VLOADWITHINCXV2(0, (&A[(row)*lda + (col)]), lda)
 		#elif defined(__SYMM_UPPER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADA_THIRD(A,M,K,lda,row, col)	%VLOAD(0, (&A[(col)*lda + (row)]))
 		#endif
 		#define LOADA_TAIL(A,M,K,lda,row,col) 		SYMM_VECTOR_LOAD_USING_SCALAR(A,M,lda,row,col)
@@ -714,18 +714,18 @@ const char *SYMM_C_KERNEL_WORKING_EXCEPT_CSYMM_PROBLEM = "
 			return SYMM_VECTOR_LOAD(B, N, ldb, row, col);
 		}
 		#ifdef __SYMM_UPPER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_FIRST(B,K,N,ldb,row,col)	%VLOAD(0, (&B[(col)*(ldb) + (row)]))
 		#elif defined(__SYMM_LOWER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_FIRST(B,K,N,ldb,row,col)	%VLOADWITHINCXV2(0, (&B[(row)*(ldb)  + (col)]), ldb)
 		#endif
 		#define LOADB_SECOND(B,K,N,ldb,row,col)		SYMM_VECTOR_LOAD_USING_SCALAR(B, N, ldb, row, col)
 		#ifdef __SYMM_UPPER__
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_THIRD(B,K,N,ldb,row,col)	%VLOADWITHINCXV2(0, (&B[(row)*(ldb) + (col)]), ldb)
 		#elif defined(__SYMM_LOWER__)
-			// CHECK: KPRINTF Behaviour with so many parantheses - If fails, use parantheses in the caller
+			// CHECK: KPRINTF Behaviour with so many parentheses - If fails, use parentheses in the caller
 			#define LOADB_THIRD(B,K,N,ldb,row,col)	%VLOAD(0, (&B[(col)*(ldb) + (row)]))
 		#endif
 		#define LOADB_TAIL(B,K,N,ldb,row,col)		SYMM_VECTOR_LOAD_USING_SCALAR(B, N,ldb,row,col)
@@ -783,7 +783,7 @@ const char *SYMM_C_KERNEL_WORKING_EXCEPT_CSYMM_PROBLEM = "
 		// %V 	- Vectoring Width
 		// %PANEL(*) - Panel Width to access Rows of A and Columns of B
 		//		   Right now, %V is assumed to be the panel width.
-		//		   We dont use %PANEL in the current implementation.
+		//		   We don't use %PANEL in the current implementation.
 		//
 		blockDimY = ((M-1) / (threadsY * %ITEMY)) + 1;
 		bidY = ( get_group_id(0) % ( blockDimY));

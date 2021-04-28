@@ -27,6 +27,11 @@
 #include "test-limits.h"
 #include "dis_warning.h"
 
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+#include "cblas.h"
+#endif
+
 #include "clBLAS.h"
 #if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenCL/cl_ext.h>
@@ -76,6 +81,57 @@ randomScale()
 
     return t;
 }
+
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+
+CBLAS_ORDER
+clblasToCblas_order(clblasOrder value)
+{
+    switch (value) {
+        case clblasRowMajor:           return CblasRowMajor;
+        case clblasColumnMajor:        return CblasColMajor;
+    }
+}
+
+CBLAS_TRANSPOSE
+clblasToCblas_operation(clblasTranspose value)
+{
+    switch (value) {
+        case clblasNoTrans:      return CblasNoTrans;
+        case clblasTrans:        return CblasTrans;
+        case clblasConjTrans:    return CblasConjTrans;
+    }
+}
+
+CBLAS_UPLO
+clblasToCblas_fill(clblasUplo value)
+{
+    switch (value) {
+        case clblasUpper:           return CblasUpper;
+        case clblasLower:           return CblasLower;
+    }
+}
+
+CBLAS_SIDE
+clblasToCblas_side(clblasSide value)
+{
+    switch (value) {
+        case clblasLeft:           return CblasLeft;
+        case clblasRight:          return CblasRight;
+    }
+}
+
+CBLAS_DIAG
+clblasToCblas_diag(clblasDiag value)
+{
+    switch (value) {
+        case clblasNonUnit:           return CblasNonUnit;
+        case clblasUnit:              return CblasUnit;
+    }
+}
+
+#endif
 
 std::string
 prettyPrintClStatus( const cl_int& status )
@@ -269,7 +325,7 @@ public:
     virtual ~clblasFunc()
     {
         clblasTeardown();
-        
+
         for (unsigned int i = 0; i < numQueues; i++) {
           OPENCL_V_THROW( clReleaseCommandQueue(queues_[i]), "releasing command queue" );
         }
@@ -278,21 +334,21 @@ public:
 
     void wait_and_check()
     {
-		cl_int err;
+        cl_int err;
         cl_int wait_status = clWaitForEvents(1, &event_);
 
         if( wait_status != CL_SUCCESS )
         {
-    	    if( wait_status == CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST )
-    	    {
-    	    	clGetEventInfo( event_, CL_EVENT_COMMAND_EXECUTION_STATUS,
+            if( wait_status == CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST )
+            {
+                clGetEventInfo( event_, CL_EVENT_COMMAND_EXECUTION_STATUS,
                                 sizeof(cl_int), &err, NULL );
-    	    	std::cout << "blas function execution status error: " << err << std::endl;
+                std::cout << "blas function execution status error: " << err << std::endl;
                 exit(1);
-    	    }
+            }
             else
             {
-    	    	std::cout << "blas function wait status error: " << wait_status << std::endl;
+                std::cout << "blas function wait status error: " << wait_status << std::endl;
                 exit(1);
             }
         }
@@ -300,14 +356,16 @@ public:
 
     double time_in_ns()
     {
-	    StatisticalTimer& timer = StatisticalTimer::getInstance( );
+        StatisticalTimer& timer = StatisticalTimer::getInstance( );
         return timer.getAverageTime( timer_id ) * 1e9;
     }
+
+    virtual void validate_with_cblas(int v) {}
 
     virtual void call_func() = 0;
     virtual double gflops() = 0;
     virtual std::string gflops_formula() = 0;
-	virtual void setup_apiCallCount(cl_uint apiCallCount){}
+    virtual void setup_apiCallCount(cl_uint apiCallCount){}
     virtual void setup_buffer(int order_option, int side_option,
                               int uplo_option, int diag_option, int
                               transA_option, int transB_option,
@@ -317,20 +375,20 @@ public:
     virtual void initialize_cpu_buffer() = 0;
     virtual void initialize_gpu_buffer() = 0;
     virtual void reset_gpu_write_buffer() = 0;
-	virtual void read_gpu_buffer() = 0;
-	virtual void roundtrip_func() = 0;
-	virtual void roundtrip_func_rect() {}
-	virtual void allochostptr_roundtrip_func() {}
-	virtual void usehostptr_roundtrip_func() {}
-	virtual void copyhostptr_roundtrip_func() {}
-	virtual void usepersismem_roundtrip_func() {}
-	virtual void roundtrip_setup_buffer(int order_option, int side_option,
+    virtual void read_gpu_buffer() = 0;
+    virtual void roundtrip_func() = 0;
+    virtual void roundtrip_func_rect() {}
+    virtual void allochostptr_roundtrip_func() {}
+    virtual void usehostptr_roundtrip_func() {}
+    virtual void copyhostptr_roundtrip_func() {}
+    virtual void usepersismem_roundtrip_func() {}
+    virtual void roundtrip_setup_buffer(int order_option, int side_option,
                               int uplo_option, int diag_option, int
                               transA_option, int transB_option,
                               size_t M, size_t N, size_t K, size_t lda,
                               size_t ldb, size_t ldc, size_t offA, size_t offBX,
                               size_t offCY, double alpha, double beta) = 0;
-	virtual void releaseGPUBuffer_deleteCPUBuffer()=0;
+    virtual void releaseGPUBuffer_deleteCPUBuffer()=0;
     StatisticalTimer& timer;
     StatisticalTimer::sTimerID timer_id;
 
@@ -342,12 +400,12 @@ protected:
     cl_device_id device_;
     cl_context_properties props_[3];
     cl_context ctx_;
-    static const unsigned int numQueues = 4;
+    static const unsigned int numQueues = 1;
     cl_command_queue queues_[numQueues];
     clblasOrder order_;
     cl_event event_;
     size_t maxMemAllocSize;
+    int validate_;
 }; // class clblasFunc
 
 #endif // ifndef CLBLAS_BENCHMARK_COMMON_HXX__
-

@@ -112,8 +112,6 @@ rotCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     //Filling random values for SA and SB. C & S are only for output sake
     randomVectors(params->N, (X + params->offa), params->incx, (Y+params->offb), params->incy);
 
@@ -123,17 +121,12 @@ rotCorrectnessTest(TestParams *params)
     memcpy(back_X, X, (lengthx + params->offa) * sizeof(T));
     memcpy(back_Y, Y, (lengthy + params->offb) * sizeof(T));
 
-    ::std::cerr << "Done" << ::std::endl;
-
 	// Allocate buffers
     bufX = base->createEnqueueBuffer(X, (lengthx + params->offa) * sizeof(T), 0, CL_MEM_READ_WRITE);
     bufY = base->createEnqueueBuffer(Y, (lengthy + params->offb) * sizeof(T), 0, CL_MEM_READ_WRITE);
 
-    ::std::cerr << "Calling reference xROT routine... ";
-
 	::clMath::blas::rot(params->N, back_X, params->offa, params->incx, back_Y, params->offb, params->incy,
                  alpha, beta);
-    ::std::cerr << "Done" << ::std::endl;
 
     // Hold X vector
 
@@ -150,9 +143,6 @@ rotCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xROT routine... ";
-
 
     err = (cl_int)::clMath::clblas::rot( params->N, bufX, params->offa, params->incx, bufY, params->offb, params->incy,
                               alpha, beta, params->numCommandQueues, base->commandQueues(), 0, NULL, events);
@@ -174,8 +164,6 @@ rotCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufX, CL_TRUE, 0,
         (lengthx + params->offa) * sizeof(T), X, 0, NULL, NULL);
@@ -193,6 +181,12 @@ rotCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasRowMajor, lengthx , 1, (back_X + params->offa), (X + params->offa), 1);
     compareMatrices<T>(clblasRowMajor, lengthy , 1, (back_Y + params->offb), (Y + params->offb), 1);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offa, params->incx, params->offb, params->incy, params->alpha, params->beta);
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(X, Y, back_X, back_Y);
     delete[] events;

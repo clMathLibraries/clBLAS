@@ -105,8 +105,6 @@ spmvCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
 	if((AP == NULL) || (X == NULL) || (blasY == NULL) || (clblasY == NULL))
 	{
 		deleteBuffers<T>(AP, X, blasY, clblasY);
@@ -123,14 +121,11 @@ spmvCorrectnessTest(TestParams *params)
 						(X + params->offBX), params->incx, true, &beta, (blasY + params->offCY), params->incy);
     // Copy blasY to clblasY
     memcpy(clblasY, blasY, (lengthY + params->offCY)* sizeof(*blasY));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufAP = base->createEnqueueBuffer(AP, (lengthA + params->offA)* sizeof(*AP), 0, CL_MEM_READ_ONLY);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
     bufY = base->createEnqueueBuffer(clblasY, (lengthY + params->offCY) * sizeof(*clblasY), 0, CL_MEM_READ_WRITE);
-
-    ::std::cerr << "Calling reference xSPMV routine... ";
 
 	clblasOrder order;
     clblasUplo fUplo;
@@ -145,7 +140,6 @@ spmvCorrectnessTest(TestParams *params)
     }
 	::clMath::blas::spmv( order, fUplo, params->N, alpha, AP, params->offA, X, params->offBX, params->incx,
 						beta, blasY, params->offCY, params->incy);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufAP == NULL) || (bufX == NULL) || (bufY == NULL)) {
         // Skip the test, the most probable reason is
@@ -162,8 +156,6 @@ spmvCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xSPMV routine... ";
 
     err = (cl_int)::clMath::clblas::spmv(params->order, params->uplo, params->N, alpha, bufAP,
     					params->offA, bufX, params->offBX, params->incx, beta, bufY, params->offCY, params->incy,
@@ -184,8 +176,6 @@ spmvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufY, CL_TRUE, 0,
         (lengthY + params->offCY) * sizeof(*clblasY), clblasY, 0,
@@ -199,6 +189,15 @@ spmvCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthY , 1, (blasY + params->offCY), (clblasY + params->offCY),
                        lengthY);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, base->alpha(), params->offA,
+            0, params->offBX, params->incx, base->beta(), params->offCY, params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(AP, X, blasY, clblasY);
     delete[] events;
 }

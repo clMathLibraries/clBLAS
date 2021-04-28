@@ -73,8 +73,7 @@ trmmCorrectnessTest(TestParams *params)
     isComplex = ((typeid(T) == typeid(FloatComplex)) ||
                  (typeid(T) == typeid(DoubleComplex)));
     if (canCaseBeSkipped(params, isComplex)) {
-        std::cerr << ">> Test is skipped because it has no importance for this "
-                     "level of coverage" << std::endl;
+        std::cerr << ">> Test is skipped" << std::endl;
         SUCCEED();
         return;
     }
@@ -94,14 +93,11 @@ trmmCorrectnessTest(TestParams *params)
         alpha = convertMultiplier<T>(params->alpha);
     }
 
-    ::std::cerr << "Generating input data... ";
     randomTrmmMatrices<T>(params->order, params->side, params->uplo,
         params->diag, params->M, params->N, useAlpha,
         &alpha, A, params->lda, blasB, params->ldb);
     memcpy(clblasB, blasB, params->rowsB * params->columnsB * sizeof(*blasB));
-    ::std::cerr << "Done" << ::std::endl;
 
-    ::std::cerr << "Calling reference xTRMM routine... ";
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::trmm(clblasColumnMajor, params->side, params->uplo,
             params->transA, params->diag, params->M, params->N, alpha,
@@ -124,7 +120,6 @@ trmmCorrectnessTest(TestParams *params)
         delete[] reorderedB;
         delete[] reorderedA;
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                      sizeof(*A), params->offA * sizeof(*A),
@@ -149,7 +144,6 @@ trmmCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xTRMM routine... ";
     err = (cl_int)::clMath::clblas::trmm(params->order, params->side,
         params->uplo, params->transA, params->diag, params->M, params->N,
         alpha, bufA, params->offA, params->lda, bufB, params->offBX,
@@ -170,7 +164,6 @@ trmmCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufB, CL_TRUE,
                         params->offBX * sizeof(*clblasB),
@@ -180,6 +173,15 @@ trmmCorrectnessTest(TestParams *params)
     releaseMemObjects(bufA, bufB);
     compareMatrices<T>(params->order, params->M, params->N, blasB, clblasB,
                        params->ldb);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->side, params->uplo, params->transA, params->diag, params->M, params->N, useAlpha,
+            base->alpha(), params->offA, params->lda, params->offBX, params->ldb);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasB, clblasB);
     delete[] events;
 }

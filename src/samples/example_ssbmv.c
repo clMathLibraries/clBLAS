@@ -155,6 +155,9 @@ main(void)
         printResult("clblasSsbmv result");
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);
     clReleaseMemObject(bufX);

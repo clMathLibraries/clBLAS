@@ -120,11 +120,6 @@ protected:
             ldc = ::std::max(ldc, M);
             break;
         }
-
-		printTestParams(order, side, uplo, M, N, 1, alpha, 1, beta, lda, ldb, ldc, offa, offb, offc);
-
-        ::std::cerr << "seed = " << seed << ::std::endl;
-        ::std::cerr << "queues = " << numCommandQueues << ::std::endl;
     }
 
     clblasOrder order;

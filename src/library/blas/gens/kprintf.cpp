@@ -854,7 +854,7 @@ void kprintf::handleComplexJoin(char **_src, char **_dst)
     {
         case SCALAR:
             //
-            // Dont do a thing...ComplexJoin not applicable for Real numbers
+            // Don't do a thing...ComplexJoin not applicable for Real numbers
             //
             break;
 
@@ -1547,7 +1547,7 @@ void kprintf::handleReduceSumReal(char **_src, char **_dst, int vlength)
     if (!vlength) //Can happen for SCALAR cases where source code contains this within COMPLEX define
     {
         //
-        // Dont generate a thing.
+        // Don't generate a thing.
         // The src pointer has already been advanced to next line
         // Just move on..
         //

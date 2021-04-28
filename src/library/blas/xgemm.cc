@@ -14,15 +14,25 @@
  * limitations under the License.
  * ************************************************************************/
 
+#include <map>
+#include <string>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <clBLAS.h>
+#include "mutex.h"
 #include "AutoGemmIncludes/AutoGemmKernelSelection.h"
 #include "GemmSpecialCases.h"
 
  #include <functor.h>
 // #include <functor_selector.h>
 #include "xgemm.h"
+
+#ifdef _WIN32
+//#include <thread>
+#else
+#include <pthread.h>
+#endif
 
 /******************************************************************************
  * Row major -> column major
@@ -58,6 +68,9 @@ static void force_gemm_column_major(
     printf("OpenCL error %i on line %u of %s\n", RET, __LINE__, __FILE__); \
     assert(false); \
   }
+#define returnIfErr(err) \
+	if (err != CL_SUCCESS)\
+		return static_cast<clblasStatus>(err);
 
 const static unsigned int numGemmKernelArgs = 14;
 void *gemmKernelArgs[numGemmKernelArgs];
@@ -86,13 +99,66 @@ bool isZero<DoubleComplex>( DoubleComplex value ) {
   return CREAL(value) == 0 && CIMAG(value) == 0;
 };
 
+static char *getKernelName(cl_kernel clKernel)
+{
+  cl_int err;
+  // get kernel name
+  size_t kernelNameLength;
+  err = clGetKernelInfo(
+    clKernel,
+    CL_KERNEL_FUNCTION_NAME,
+    sizeof(kernelNameLength),
+    NULL,
+    &kernelNameLength);
+
+  // Do not check this error because of an nvidia bug.
+  // The kernelNameLength turns out to be of proper length.
+  // CL_CHECK(err)
+
+  char *kernelName = new char[kernelNameLength];
+  err = clGetKernelInfo(
+    clKernel,
+    CL_KERNEL_FUNCTION_NAME,
+    kernelNameLength*sizeof(char),
+    kernelName,
+    NULL );
+  CL_CHECK(err)
+
+  return kernelName;
+}
+
+typedef struct kernel_map_key_ {
+  cl_context context; // address of context
+  cl_device_id device; // address of device
+  const char *kernelSource; // address of kernel source
+} kernel_map_key;
+
+bool operator<(const kernel_map_key & l, const kernel_map_key & r) {
+  if (l.context < r.context) {
+    return true;
+  } else if (r.context < l.context) {
+    return false;
+  }
+  if (l.device < r.device) {
+    return true;
+  } else if (r.device < l.device) {
+    return false;
+  }
+  if (l.kernelSource < r.kernelSource) {
+    return true;
+  } else if (r.kernelSource < l.kernelSource) {
+    return false;
+  }
+  return false;
+}
 
 
 /******************************************************************************
  * Make Gemm Kernel
  *****************************************************************************/
+//FIXME: This function should be returning an error.
 void makeGemmKernel(
-  cl_kernel *clKernel,
+  cl_kernel *clKernel, // ignored as input; returns as output only
   cl_command_queue clQueue,
   const char *kernelSource,
   const char *sourceBuildOptions,
@@ -100,57 +166,72 @@ void makeGemmKernel(
   size_t *kernelBinarySize,
   const char *binaryBuildOptions)
 {
-  cl_int err;
-  if (*clKernel) {
-    // kernel has already been built, return
-#ifdef AUTOGEMM_PRINT_DEBUG
-    // get kernel name
-    size_t kernelNameLength;
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      sizeof(kernelNameLength),
-      NULL,
-      &kernelNameLength );
-    CL_CHECK(err)
-    char *kernelName = new char[kernelNameLength];
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      kernelNameLength*sizeof(char),
-      kernelName,
-      NULL );
-    CL_CHECK(err)
-    printf("makeGemmKernel: \"%s\" already built; returning.\n", kernelName);
-    delete[] kernelName;
+  typedef std::map<kernel_map_key, cl_kernel> kernel_map_t;
+  #if defined( _WIN32 )
+  __declspec( thread ) static kernel_map_t *kernel_map = 0;
+#else
+  static __thread kernel_map_t *kernel_map = 0;
 #endif
-    return;
+  if (!kernel_map) {
+    kernel_map = new kernel_map_t();
+  }
+
+  cl_context clContext;
+  cl_device_id clDevice;
+  cl_int err;
+
+  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
+  CL_CHECK(err)
+  err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
+  CL_CHECK(err)
+
+  // is kernel already compiled?
+  kernel_map_key key;
+  key.kernelSource = kernelSource;
+  key.context = clContext;
+  key.device = clDevice;
+  kernel_map_t::iterator idx = kernel_map->find(key);
+  if (idx == kernel_map->end()) {
+    *clKernel = NULL;
   } else {
+    *clKernel = idx->second;
+    return;
+  }
+
+  if (true /*!*clKernel*/) { // since kernel wasn't found in map
     // kernel has not been built, so build it (from binary, preferably)
-    cl_context clContext;
-    cl_device_id clDevice;
-    err = clGetCommandQueueInfo( clQueue, CL_QUEUE_CONTEXT, sizeof(clContext), &clContext, NULL);
-    CL_CHECK(err)
-    err = clGetCommandQueueInfo( clQueue, CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
-    CL_CHECK(err)
     cl_program clProgram;
     cl_int clBinaryStatus;
     if (*kernelBinary) {
 #ifdef AUTOGEMM_PRINT_DEBUG
       printf("makeGemmKernel: pre-compiled binary found: %llu bytes\n", *kernelBinarySize);
+      printf("makeGemmKernel: Creating program from binary\n");
 #endif
       clProgram = clCreateProgramWithBinary(
         clContext,
         1, &clDevice,
         kernelBinarySize, kernelBinary,
         &clBinaryStatus, &err );
-      CL_CHECK(err)
+#ifdef AUTOGEMM_PRINT_DEBUG
+      if (err != CL_SUCCESS) {
+          printf("makeGemmKernel: Failed to create program with binary\n");
+      }
+#endif
       err = clBuildProgram(
         clProgram,
         1, &clDevice,
         binaryBuildOptions, NULL, NULL );
-      CL_CHECK(err)
-    } else {
+#ifdef AUTOGEMM_PRINT_DEBUG
+      if (err != CL_SUCCESS) {
+          printf("makeGemmKernel: Failed to build program from binary\n");
+      }
+#endif
+    }
+
+    if (!*kernelBinary || err != CL_SUCCESS) {
+#ifdef AUTOGEMM_PRINT_DEBUG
+      printf("makeGemmKernel: Creating program from source\n");
+#endif
       clProgram = clCreateProgramWithSource(
         clContext,
         1, &kernelSource,
@@ -178,6 +259,7 @@ void makeGemmKernel(
       printf("%s\n", buildLog);
       //printf("\n\nKernel String:\n\n");
       //printf("%s\n", kernelSource);
+      //FIXME: The function should be exiting at this point
     }
 
     err = clCreateKernelsInProgram(
@@ -187,36 +269,21 @@ void makeGemmKernel(
     CL_CHECK(err)
 	err = clReleaseProgram(clProgram);
 	CL_CHECK(err)
-    
+
 #ifdef AUTOGEMM_PRINT_DEBUG
-    // get kernel name
-    size_t kernelNameLength;
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      sizeof(kernelNameLength),
-      NULL,
-      &kernelNameLength );
-    CL_CHECK(err)
-    char *kernelName = new char[kernelNameLength];
-    err = clGetKernelInfo(
-      *clKernel,
-      CL_KERNEL_FUNCTION_NAME,
-      kernelNameLength*sizeof(char),
-      kernelName,
-      NULL );
-    CL_CHECK(err)
-    printf("makeGemmKernel: \"%s\" now built; returning.\n", kernelName);
-    delete[] kernelName;
+    printf("makeGemmKernel now built; returning.\n");
 #endif
+
+    //put kernel in map
+    (*kernel_map)[key] = *clKernel;
   }
+  return;
 }
 
- 
 /******************************************************************************
  * Enqueue Gemm Kernel
  *****************************************************************************/
- void enqueueGemmKernel(
+ cl_int enqueueGemmKernel(
    cl_command_queue clQueue,
    cl_kernel clKernel,
    void **kernelArgs,
@@ -229,14 +296,20 @@ void makeGemmKernel(
    cl_event *clEvent)
  {
    for (unsigned int i = 0; i < numKernelArgs; i++) {
-     CL_CHECK( clSetKernelArg( clKernel, i, kernelArgSizes[i], kernelArgs[i]) )
+	   cl_int err = clSetKernelArg(clKernel, i, kernelArgSizes[i], kernelArgs[i]);
+	   if (err != CL_SUCCESS)
+		   return err;
    }
    /*printf("global={%llu, %llu} local={%llu, %llu}\n",
      globalWorkSize[0], globalWorkSize[1],
      localWorkSize[0], localWorkSize[1] );*/
-   CL_CHECK( clEnqueueNDRangeKernel( clQueue, clKernel,
-      2, NULL, globalWorkSize, localWorkSize,
-      numEventsInWaitList, eventWaitList, clEvent ) )
+   cl_uint err = clEnqueueNDRangeKernel(clQueue, clKernel,
+	   2, NULL, globalWorkSize, localWorkSize,
+	   numEventsInWaitList, eventWaitList, clEvent);
+   if (err != CL_SUCCESS)
+	   return err;
+
+   return CL_SUCCESS;
  }
 
 
@@ -244,11 +317,11 @@ void makeGemmKernel(
  * get precision string
  *****************************************************************************/
 template<typename Precision>
-char * getPrecision();
-template<> char * getPrecision<float>() { return "s"; }
-template<> char * getPrecision<double>() { return "d"; }
-template<> char * getPrecision<FloatComplex>()  { return "c"; }
-template<> char * getPrecision<DoubleComplex>() { return "z"; }
+const char * getPrecision();
+template<> const char * getPrecision<float>() { return "s"; }
+template<> const char * getPrecision<double>() { return "d"; }
+template<> const char * getPrecision<FloatComplex>()  { return "c"; }
+template<> const char * getPrecision<DoubleComplex>() { return "z"; }
 
 
 /******************************************************************************
@@ -266,7 +339,7 @@ template<> clblasTranspose correctTranspose<DoubleComplex>( clblasTranspose tran
  * templated Gemm
  *****************************************************************************/
 template<typename Precision>
-clblasStatus 
+clblasStatus
 clblasGemm(
     clblasOrder order,
     clblasTranspose transA,
@@ -283,6 +356,8 @@ clblasGemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+
+
   // cast types to opencl types
   cl_mem A = iA;
   cl_mem B = iB;
@@ -308,7 +383,7 @@ clblasGemm(
     M, N, offA, offB, lda, ldb, A, B );
 
 
-  
+
 /******************************************************************************
  * Handle Special Cases
  *
@@ -318,7 +393,7 @@ clblasGemm(
  * and are mod32 but not mod96 or mod64
  *
  *****************************************************************************/
-  
+
   bool specialCaseHandled = false;
 
   clblasStatus SpecialCaseStatus = GemmSpecialCases<Precision>(order,
@@ -339,18 +414,21 @@ clblasGemm(
 
   if (specialCaseHandled)
 	  return SpecialCaseStatus;
-  
-  
+
+
 /******************************************************************************
  * Optimal num elements per thread
  *****************************************************************************/
   cl_int err;
   cl_device_id clDevice;
   err = clGetCommandQueueInfo( commandQueues[0], CL_QUEUE_DEVICE, sizeof(clDevice), &clDevice, NULL);
-  CL_CHECK(err)
+  //CL_CHECK(err)
+  returnIfErr(err);
+
   cl_uint clDeviceNumCUs;
   err = clGetDeviceInfo( clDevice, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(clDeviceNumCUs), &clDeviceNumCUs, NULL);
-  CL_CHECK(err)
+  //CL_CHECK(err)
+  returnIfErr(err);
   unsigned int deviceIdealNumThreads = (8 /*waves per CU*/)*(64 /*threads per wave*/)*clDeviceNumCUs;
   float optimalNumElementsPerThread = ((float)M*N) / deviceIdealNumThreads;
   //optimalNumElementsPerThread = 32;
@@ -383,10 +461,10 @@ clblasGemm(
   size_t *colKernelBinarySize    = 0;
   size_t *cornerKernelBinarySize = 0;
   const char *binaryBuildOptions = NULL;
-  cl_kernel  *tileClKernel       = NULL;
-  cl_kernel  *rowClKernel        = NULL;
-  cl_kernel  *colClKernel        = NULL;
-  cl_kernel  *cornerClKernel     = NULL;
+  cl_kernel  *tileClKernelDummy       = NULL; // no longer used; broke thread safety
+  cl_kernel  *rowClKernelDummy        = NULL; // no longer used; broke thread safety
+  cl_kernel  *colClKernelDummy        = NULL; // no longer used; broke thread safety
+  cl_kernel  *cornerClKernelDummy     = NULL; // no longer used; broke thread safety
   unsigned int workGroupNumRows;
   unsigned int workGroupNumCols;
   unsigned int microTileNumRows;
@@ -411,10 +489,10 @@ clblasGemm(
     &colKernelBinarySize,
     &cornerKernelBinarySize,
     &binaryBuildOptions,
-    &tileClKernel,
-    &rowClKernel,
-    &colClKernel,
-    &cornerClKernel,
+    &tileClKernelDummy,
+    &rowClKernelDummy,
+    &colClKernelDummy,
+    &cornerClKernelDummy,
     &workGroupNumRows,
     &workGroupNumCols,
     &microTileNumRows,
@@ -422,7 +500,7 @@ clblasGemm(
     &unroll);
   // make sure gemmSelectKernel found a valid kernel
   if (!tileKernelSource) {
-    printf("ERROR: gemmSelectKernel() couldn't find kernel(s) for { order=%s, transA=%s, transB=%s, M=%llu, N=%llu, K=%llu, beta=%u, onept=%f }\n",
+    printf("ERROR: gemmSelectKernel() couldn't find kernel(s) for { order=%s, transA=%s, transB=%s, M=%u, N=%u, K=%u, beta=%u, onept=%f }\n",
       order==clblasColumnMajor ? "ColMajor" : "RowMajor",
       transA==clblasNoTrans ? "N" : transA==clblasTrans ? "T" : "C",
       transB==clblasNoTrans ? "N" : transB==clblasTrans ? "T" : "C",
@@ -452,10 +530,10 @@ clblasGemm(
           &colKernelBinarySize,
           &cornerKernelBinarySize,
           &binaryBuildOptions,
-          &tileClKernel,
-          &rowClKernel,
-          &colClKernel,
-          &cornerClKernel,
+          &tileClKernelDummy,
+          &rowClKernelDummy,
+          &colClKernelDummy,
+          &cornerClKernelDummy,
           &workGroupNumRows,
           &workGroupNumCols,
           &microTileNumRows,
@@ -488,10 +566,15 @@ clblasGemm(
 /******************************************************************************
  * Build kernels
  *****************************************************************************/
-  if (needTileKernel)   makeGemmKernel(  tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary,   tileKernelBinarySize, binaryBuildOptions);
-  if (needRowKernel)    makeGemmKernel(   rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary,    rowKernelBinarySize, binaryBuildOptions);
-  if (needColKernel)    makeGemmKernel(   colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary,    colKernelBinarySize, binaryBuildOptions);
-  if (needCornerKernel) makeGemmKernel(cornerClKernel, commandQueues[0], cornerKernelSource, sourceBuildOptions, &cornerKernelBinary, cornerKernelBinarySize, binaryBuildOptions);
+
+  cl_kernel  tileClKernel       = NULL;
+  cl_kernel  rowClKernel        = NULL;
+  cl_kernel  colClKernel        = NULL;
+  cl_kernel  cornerClKernel     = NULL;
+  if (needTileKernel)   makeGemmKernel(  &tileClKernel, commandQueues[0],   tileKernelSource, sourceBuildOptions,   &tileKernelBinary,   tileKernelBinarySize, binaryBuildOptions);
+  if (needRowKernel)    makeGemmKernel(   &rowClKernel, commandQueues[0],    rowKernelSource, sourceBuildOptions,    &rowKernelBinary,    rowKernelBinarySize, binaryBuildOptions);
+  if (needColKernel)    makeGemmKernel(   &colClKernel, commandQueues[0],    colKernelSource, sourceBuildOptions,    &colKernelBinary,    colKernelBinarySize, binaryBuildOptions);
+  if (needCornerKernel) makeGemmKernel(&cornerClKernel, commandQueues[0], cornerKernelSource, sourceBuildOptions, &cornerKernelBinary, cornerKernelBinarySize, binaryBuildOptions);
   const size_t localWorkSize[2] = { workGroupNumRows, workGroupNumCols };
   unsigned int numKernelsEnqueued = 0;
 
@@ -512,7 +595,7 @@ clblasGemm(
   gemmKernelArgs[11] = &offA;  gemmKernelArgSizes[11] = sizeof(cl_uint);
   gemmKernelArgs[12] = &offB;  gemmKernelArgSizes[12] = sizeof(cl_uint);
   gemmKernelArgs[13] = &offC;  gemmKernelArgSizes[13] = sizeof(cl_uint);
-  
+
 
 /******************************************************************************
  * Enqueue Tile kernel
@@ -520,11 +603,12 @@ clblasGemm(
   if (needTileKernel) {
     //printf("enqueueing tile kernel\n");
     size_t globalWorkSize[2] = {(M/macroTileNumRows)*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *tileClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], tileClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -534,11 +618,12 @@ clblasGemm(
   if (needRowKernel) {
     //printf("enqueueing row kernel\n");
     size_t globalWorkSize[2] = {1*workGroupNumRows, (N/macroTileNumCols)*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *rowClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], rowClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -548,11 +633,12 @@ clblasGemm(
   if (needColKernel) {
     //printf("enqueueing col kernel\n");
     size_t globalWorkSize[2] = { (M/macroTileNumRows)*workGroupNumRows, 1*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *colClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], colClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -562,11 +648,12 @@ clblasGemm(
   if (needCornerKernel) {
     //printf("enqueueing corner kernel\n");
     size_t globalWorkSize[2] = { 1*workGroupNumRows, 1*workGroupNumCols };
-    enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], *cornerClKernel,
+    err = enqueueGemmKernel( commandQueues[numKernelsEnqueued%numCommandQueues], cornerClKernel,
       gemmKernelArgs, gemmKernelArgSizes, numGemmKernelArgs,
       globalWorkSize, localWorkSize,
       numEventsInWaitList, eventWaitList,
       &events[numKernelsEnqueued%numCommandQueues] );
+	returnIfErr(err);
     numKernelsEnqueued++;
   }
 
@@ -577,8 +664,8 @@ clblasGemm(
 /******************************************************************************
  * SGEMM API call
  *****************************************************************************/
-extern "C" 
-clblasStatus 
+extern "C"
+clblasStatus
 clblasSgemm(
     clblasOrder order,
     clblasTranspose transA,
@@ -595,6 +682,29 @@ clblasSgemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_FLOAT, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+
+  	//check matrix B
+	clblasErr = checkMatrixSizes(TYPE_FLOAT, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+	if (clblasErr != clblasSuccess)
+		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_FLOAT, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+      return clblasErr;
+
   return clblasGemm(
        order,
        transA,
@@ -615,7 +725,7 @@ clblasSgemm(
 /******************************************************************************
  * DGEMM API call
  *****************************************************************************/
-extern "C" 
+extern "C"
 clblasStatus
 clblasDgemm( clblasOrder order,
              clblasTranspose transA,
@@ -632,6 +742,29 @@ clblasDgemm( clblasOrder order,
              const cl_event *eventWaitList,
              cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+
+  	//check matrix B
+  	clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_DOUBLE, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+      return clblasErr;
+
    return clblasGemm(
        order,
        transA,
@@ -652,7 +785,7 @@ clblasDgemm( clblasOrder order,
 /******************************************************************************
  * CGEMM API call
  *****************************************************************************/
-extern "C" 
+extern "C"
 clblasStatus
 clblasCgemm(
     clblasOrder order,
@@ -670,6 +803,29 @@ clblasCgemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	return clblasErr;
+
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+
+  	//check matrix B
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_COMPLEX_FLOAT, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
    return clblasGemm(
        order,
        transA,
@@ -690,7 +846,7 @@ clblasCgemm(
 /******************************************************************************
  * ZGEMM API
  *****************************************************************************/
-extern "C" 
+extern "C"
 clblasStatus
 clblasZgemm(
     clblasOrder order,
@@ -708,6 +864,29 @@ clblasZgemm(
     const cl_event *eventWaitList,
     cl_event *events)
 {
+  // check if memory objects are valid
+  clblasStatus clblasErr = clblasSuccess;
+  clblasErr = checkMemObjects(A, B, C, true, A_MAT_ERRSET, B_MAT_ERRSET, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
+  if (K != 0)
+  {
+  	//check matrix A
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, transA, M, K, A, offA, lda, A_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+
+  	//check matrix B
+  	clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, transB, K, N, B, offB, ldb, B_MAT_ERRSET);
+  	if (clblasErr != clblasSuccess)
+  		return clblasErr;
+  }
+  //check matrix C
+  clblasErr = checkMatrixSizes(TYPE_COMPLEX_DOUBLE, order, clblasNoTrans, M, N, C, offC, ldc, C_MAT_ERRSET);
+  if (clblasErr != clblasSuccess)
+  	  return clblasErr;
+
    return clblasGemm(
        order,
        transA,

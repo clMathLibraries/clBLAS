@@ -219,7 +219,7 @@ doNrm2(
     kargs->offa = offNRM2;
 	kargs->B = X;
 	kargs->offBX = offx;
-	kargs->ldb.vector = incx;
+	kargs->ldb.Vector = incx;
     if(incx < 1) {              // According to netlib, if incx<1, NRM2 will be zero
         kargs->N = 1;           // Makeing it launch only 1 work-group
     }

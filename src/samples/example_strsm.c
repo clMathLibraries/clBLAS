@@ -159,6 +159,8 @@ main(void)
         printResult("clblasStrsmEx result");
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
 
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufB);

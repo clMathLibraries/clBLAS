@@ -40,6 +40,7 @@ struct xTrmmBuffer
     clblasDiag diag_;
     T* a_;
     T* b_;
+    T* b_copy;
     cl_mem buf_a_;
     cl_mem buf_b_;
     T alpha_;
@@ -63,6 +64,23 @@ public:
     {
         std::cout << "xtrmm::call_func\n";
     }
+
+
+    void validate_with_cblas(int validate)
+    {
+        #if defined ( _WIN32 ) || defined ( _WIN64 )
+        #else
+        if(validate)
+        {
+            initialize_cpu_buffer();
+            initialize_gpu_buffer();
+            call_func();
+            read_gpu_buffer();
+            validation();
+        }
+        #endif
+    }
+
 
     double gflops()
     {
@@ -225,6 +243,7 @@ public:
 
         buffer_.a_ = new T[buffer_.lda_*buffer_.a_num_vectors_];
         buffer_.b_ = new T[buffer_.ldb_*buffer_.b_num_vectors_];
+        buffer_.b_copy = new T[buffer_.ldb_*buffer_.b_num_vectors_];
 
         cl_int err;
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
@@ -246,7 +265,7 @@ public:
         {
             for (size_t j = 0; j < buffer_.ldb_; ++j)
             {
-                buffer_.b_[i*buffer_.ldb_+j] = random<T>(UPPER_BOUND<T>()) /
+                buffer_.b_copy[i*buffer_.ldb_+j] = buffer_.b_[i*buffer_.ldb_+j] = random<T>(UPPER_BOUND<T>()) /
                                                randomScale<T>();
             }
         }
@@ -294,29 +313,29 @@ public:
                                        sizeof(T),
                                    buffer_.b_, 0, NULL, NULL);
     }
-	void read_gpu_buffer()
-	{
-		cl_int err;
-		err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(T), buffer_.ldb_ * buffer_.b_num_vectors_ *
-                                       sizeof(T),
-								  buffer_.b_, 0, NULL, NULL);
-	}
-	void roundtrip_func()
-	{
-		std::cout << "xTrmm::roundtrip_func\n";
-	}
-	void zerocopy_roundtrip_func()
-	{
-		std::cout << "xTrmm::zerocopy_roundtrip_func\n";
-	}
-	void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
+    void read_gpu_buffer()
+    {
+    cl_int err;
+    err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
+                      buffer_.offB_ * sizeof(T), buffer_.ldb_ * buffer_.b_num_vectors_ *
+                                  sizeof(T),
+                  buffer_.b_, 0, NULL, NULL);
+    }
+    void roundtrip_func()
+    {
+        std::cout << "xTrmm::roundtrip_func\n";
+    }
+    void zerocopy_roundtrip_func()
+    {
+        std::cout << "xTrmm::zerocopy_roundtrip_func\n";
+    }
+    void roundtrip_setup_buffer(int order_option, int side_option, int uplo_option,
                       int diag_option, int transA_option, int  transB_option,
                       size_t M, size_t N, size_t K, size_t lda, size_t ldb,
                       size_t ldc, size_t offA, size_t offBX, size_t offCY,
                       double alpha, double beta)
-	{
-		DUMMY_ARGS_USAGE_3(transB_option, K, beta);
+    {
+    DUMMY_ARGS_USAGE_3(transB_option, K, beta);
         DUMMY_ARGS_USAGE_2(ldc, offCY);
 
         initialize_scalars(alpha, beta);
@@ -447,18 +466,20 @@ public:
 
         buffer_.a_ = new T[buffer_.lda_*buffer_.a_num_vectors_];
         buffer_.b_ = new T[buffer_.ldb_*buffer_.b_num_vectors_];
-	}
-	void releaseGPUBuffer_deleteCPUBuffer()
-	{
-		//this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
-		//need to do this before we eventually hit the destructor
+   }
+
+   void releaseGPUBuffer_deleteCPUBuffer()
+   {
+        //this is necessary since we are running a iteration of tests and calculate the average time. (in client.cpp)
+        //need to do this before we eventually hit the destructor
         delete buffer_.a_;
         delete buffer_.b_;
+        delete buffer_.b_copy;
         OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_a_),
                        "releasing buffer A");
         OPENCL_V_THROW(clReleaseMemObject(buffer_.buf_b_),
                        "releasing buffer B");
-	}
+    }
 protected:
     void initialize_scalars(double alpha, double beta)
     {
@@ -468,7 +489,10 @@ protected:
 
 private:
     xTrmmBuffer<T> buffer_;
-
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+    void validation();
+#endif
 }; // class xTrmm
 
 template<>
@@ -494,9 +518,9 @@ void
 xTrmm<cl_float>::
 roundtrip_func()
 {
-	    timer.Start(timer_id);
-	    cl_int err;
-			//set up buffer
+        timer.Start(timer_id);
+        cl_int err;
+            //set up buffer
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                         (buffer_.lda_ * buffer_.a_num_vectors_ +
                                             buffer_.offA_) * sizeof(cl_float),
@@ -506,8 +530,8 @@ roundtrip_func()
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_float),
                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
+        //initialize gpu buffer
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_float),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_float),
@@ -518,20 +542,20 @@ roundtrip_func()
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_float),
                                    buffer_.b_, 0, NULL, NULL);
-		//call_func
-		    clblasStrmm(order_, buffer_.side_, buffer_.uplo_,
+        //call_func
+            clblasStrmm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      numQueues, queues_, 0, NULL, NULL);
-		//read gpu buffer
-			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_float), buffer_.ldb_ * buffer_.b_num_vectors_ *
+        //read gpu buffer
+            err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
+                                  buffer_.offB_ * sizeof(cl_float), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_float),
-								  buffer_.b_, 0, NULL, &event_);
-			clWaitForEvents(1, &event_);
-			timer.Stop(timer_id);
+                                  buffer_.b_, 0, NULL, &event_);
+            clWaitForEvents(1, &event_);
+            timer.Stop(timer_id);
 
 }
 
@@ -558,9 +582,9 @@ void
 xTrmm<cl_double>::
 roundtrip_func()
 {
-	    timer.Start(timer_id);
-	    cl_int err;
-			//set up buffer
+        timer.Start(timer_id);
+        cl_int err;
+            //set up buffer
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                         (buffer_.lda_ * buffer_.a_num_vectors_ +
                                             buffer_.offA_) * sizeof(cl_double),
@@ -570,8 +594,8 @@ roundtrip_func()
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_double),
                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
+        //initialize gpu buffer
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_double),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_double),
@@ -582,20 +606,20 @@ roundtrip_func()
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_double),
                                    buffer_.b_, 0, NULL, NULL);
-		//call_func
-		    clblasDtrmm(order_, buffer_.side_, buffer_.uplo_,
+        //call_func
+        clblasDtrmm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      numQueues, queues_, 0, NULL, NULL);
-		//read gpu buffer
-			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_double), buffer_.ldb_ * buffer_.b_num_vectors_ *
+        //read gpu buffer
+        err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
+                                  buffer_.offB_ * sizeof(cl_double), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_double),
-								  buffer_.b_, 0, NULL, &event_);
-			clWaitForEvents(1, &event_);
-			timer.Stop(timer_id);
+                                  buffer_.b_, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
+        timer.Stop(timer_id);
 
 }
 
@@ -622,9 +646,9 @@ void
 xTrmm<cl_float2>::
 roundtrip_func()
 {
-	    timer.Start(timer_id);
-	    cl_int err;
-			//set up buffer
+        timer.Start(timer_id);
+        cl_int err;
+            //set up buffer
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                         (buffer_.lda_ * buffer_.a_num_vectors_ +
                                             buffer_.offA_) * sizeof(cl_float2),
@@ -634,8 +658,8 @@ roundtrip_func()
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_float2),
                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
+        //initialize gpu buffer
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_float2),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_float2),
@@ -646,20 +670,20 @@ roundtrip_func()
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_float2),
                                    buffer_.b_, 0, NULL, NULL);
-		//call_func
-		    clblasCtrmm(order_, buffer_.side_, buffer_.uplo_,
+        //call_func
+        clblasCtrmm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      numQueues, queues_, 0, NULL, NULL);
-		//read gpu buffer
-			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_float2), buffer_.ldb_ * buffer_.b_num_vectors_ *
+        //read gpu buffer
+        err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
+                                  buffer_.offB_ * sizeof(cl_float2), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_float2),
-								  buffer_.b_, 0, NULL, &event_);
-			clWaitForEvents(1, &event_);
-			timer.Stop(timer_id);
+                                  buffer_.b_, 0, NULL, &event_);
+        clWaitForEvents(1, &event_);
+        timer.Stop(timer_id);
 
 }
 
@@ -686,9 +710,9 @@ void
 xTrmm<cl_double2>::
 roundtrip_func()
 {
-	    timer.Start(timer_id);
-	    cl_int err;
-			//set up buffer
+        timer.Start(timer_id);
+        cl_int err;
+            //set up buffer
         buffer_.buf_a_ = clCreateBuffer(ctx_, CL_MEM_READ_ONLY,
                                         (buffer_.lda_ * buffer_.a_num_vectors_ +
                                             buffer_.offA_) * sizeof(cl_double2),
@@ -698,8 +722,8 @@ roundtrip_func()
                                         (buffer_.ldb_ * buffer_.b_num_vectors_ +
                                             buffer_.offB_) * sizeof(cl_double2),
                                         NULL, &err);
-		//initialize gpu buffer
-		err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
+        //initialize gpu buffer
+        err = clEnqueueWriteBuffer(queues_[0], buffer_.buf_a_, CL_TRUE,
                                    buffer_.offA_ * sizeof(cl_double2),
                                    buffer_.lda_ * buffer_.a_num_vectors_ *
                                        sizeof(cl_double2),
@@ -710,20 +734,20 @@ roundtrip_func()
                                    buffer_.ldb_ *buffer_.b_num_vectors_ *
                                        sizeof(cl_double2),
                                    buffer_.b_, 0, NULL, NULL);
-		//call_func
-		    clblasZtrmm(order_, buffer_.side_, buffer_.uplo_,
+        //call_func
+            clblasZtrmm(order_, buffer_.side_, buffer_.uplo_,
                      buffer_.trans_a_, buffer_.diag_,
                      buffer_.m_, buffer_.n_, buffer_.alpha_,
                      buffer_.buf_a_, buffer_.offA_, buffer_.lda_,
                      buffer_.buf_b_, buffer_.offB_, buffer_.ldb_,
                      numQueues, queues_, 0, NULL, NULL);
-		//read gpu buffer
-			err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
-			                      buffer_.offB_ * sizeof(cl_double2), buffer_.ldb_ * buffer_.b_num_vectors_ *
+        //read gpu buffer
+            err = clEnqueueReadBuffer(queues_[0], buffer_.buf_b_, CL_TRUE,
+                                  buffer_.offB_ * sizeof(cl_double2), buffer_.ldb_ * buffer_.b_num_vectors_ *
                                        sizeof(cl_double2),
-								  buffer_.b_, 0, NULL, &event_);
-			clWaitForEvents(1, &event_);
-			timer.Stop(timer_id);
+                                  buffer_.b_, 0, NULL, &event_);
+            clWaitForEvents(1, &event_);
+            timer.Stop(timer_id);
 
 }
 
@@ -790,5 +814,89 @@ gflops_formula()
     }
 }
 
+#if defined ( _WIN32 ) || defined ( _WIN64 )
+#else
+
+template<>
+void
+xTrmm<cl_float>::
+validation()
+{
+    cblas_strmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
+		clblasToCblas_diag(buffer_.diag_),
+                buffer_.m_, buffer_.n_, buffer_.alpha_,
+                buffer_.a_ + buffer_.offA_, buffer_.lda_,
+                buffer_.b_copy + buffer_.offB_, buffer_.ldb_);
+
+    cblas_saxpy(buffer_.lda_ * buffer_.n_, -1.0, buffer_.b_, 1, buffer_.b_copy, 1);
+    float norm_error = cblas_snrm2(buffer_.lda_ * buffer_.n_, buffer_.b_copy, 1)/
+                cblas_snrm2(buffer_.lda_ * buffer_.n_, buffer_.b_, 1);
+    printf("Error of clblas_strmm against cblas_strmm = %f \n", norm_error);
+}
+
+
+template<>
+void
+xTrmm<cl_double>::
+validation()
+{
+    cblas_dtrmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
+		clblasToCblas_diag(buffer_.diag_),
+                buffer_.m_, buffer_.n_, buffer_.alpha_,
+                buffer_.a_ + buffer_.offA_, buffer_.lda_,
+                buffer_.b_copy + buffer_.offB_, buffer_.ldb_);
+
+    cblas_daxpy(buffer_.lda_ * buffer_.n_, -1.0, buffer_.b_, 1, buffer_.b_copy, 1);
+    double norm_error = cblas_dnrm2(buffer_.lda_ * buffer_.n_, buffer_.b_copy, 1)/
+                cblas_dnrm2(buffer_.lda_ * buffer_.n_, buffer_.b_, 1);
+    printf("Error of clblas_dtrmm against cblas_dtrmm = %f \n", norm_error);
+}
+
+template<>
+void
+xTrmm<cl_float2>::
+validation()
+{
+    cblas_ctrmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
+		clblasToCblas_diag(buffer_.diag_),
+                buffer_.m_, buffer_.n_, &(buffer_.alpha_),
+                buffer_.a_ + buffer_.offA_, buffer_.lda_,
+                buffer_.b_copy + buffer_.offB_, buffer_.ldb_);
+
+    cl_float2 neg_one = makeScalar<cl_float2>(-1.0);
+    cblas_caxpy(buffer_.lda_ * buffer_.n_, &neg_one, buffer_.b_, 1, buffer_.b_copy, 1);
+    float norm_error = cblas_scnrm2(buffer_.lda_ * buffer_.n_, buffer_.b_copy, 1)/
+                cblas_scnrm2(buffer_.lda_ * buffer_.n_, buffer_.b_, 1);
+    printf("Error of clblas_ctrmm against cblas_ctrmm = %f \n", norm_error);
+}
+
+
+template<>
+void
+xTrmm<cl_double2>::
+validation()
+{
+    cblas_ztrmm(clblasToCblas_order(order_), clblasToCblas_side(buffer_.side_),
+                clblasToCblas_fill(buffer_.uplo_),
+                clblasToCblas_operation(buffer_.trans_a_),
+		clblasToCblas_diag(buffer_.diag_),
+                buffer_.m_, buffer_.n_, &(buffer_.alpha_),
+                buffer_.a_ + buffer_.offA_, buffer_.lda_,
+                buffer_.b_copy + buffer_.offB_, buffer_.ldb_);
+
+    cl_double2 neg_one = makeScalar<cl_double2>(-1.0);
+    cblas_zaxpy(buffer_.lda_ * buffer_.n_, &neg_one, buffer_.b_, 1, buffer_.b_copy, 1);
+    double norm_error = cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.b_copy, 1)/
+                cblas_dznrm2(buffer_.lda_ * buffer_.n_, buffer_.b_, 1);
+    printf("Error of clblas_ztrmm against cblas_ztrmm = %f \n", norm_error);
+}
+
+#endif
 
 #endif // ifndef CLBLAS_BENCHMARK_XTRMM_HXX__

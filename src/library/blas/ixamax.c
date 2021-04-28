@@ -108,7 +108,7 @@ doiAmax(
 		kargs->N = N;
 		kargs->B = X;
         kargs->offb = offx;
-		kargs->ldb.vector = incx;   // Will be using this as incx
+		kargs->ldb.Vector = incx;   // Will be using this as incx
         if(incx < 1) {              // According to netlib, if incx<1, NRM2 will be zero
             kargs->N = 1;           // Makeing it launch only 1 work-group
         }

@@ -77,8 +77,7 @@ gemvCorrectnessTest(TestParams *params)
     isComplex = ((typeid(T) == typeid(FloatComplex)) ||
                  (typeid(T) == typeid(DoubleComplex)));
     if (canCaseBeSkipped(params, isComplex)) {
-        std::cerr << ">> Test is skipped because it has no importance for this "
-                     "level of coverage" << std::endl;
+        std::cerr << ">> Test is skipped" << std::endl;
         SUCCEED();
         return;
     }
@@ -115,7 +114,6 @@ gemvCorrectnessTest(TestParams *params)
         lenY = params->N;
     }
 
-    ::std::cerr << "Generating input data... ";
     setNans<T>(params->rowsA * params->columnsA, A);
     setNans<T>(params->rowsB * params->columnsB, B);
     setNans<T>(params->rowsC * params->columnsC, blasC);
@@ -134,9 +132,6 @@ gemvCorrectnessTest(TestParams *params)
                   params->columnsC * params->rowsC);
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*clblasC));
 
-    ::std::cerr << "Done" << ::std::endl;
-
-    ::std::cerr << "Calling reference xGEMV routine... ";
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::gemv(clblasColumnMajor, params->transA,
                           params->M, params->N, alpha, A, params->lda,
@@ -153,7 +148,6 @@ gemvCorrectnessTest(TestParams *params)
 
         delete[] reorderedA;
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA *
                                      sizeof(*A), params->offA * sizeof(*A),
@@ -178,7 +172,6 @@ gemvCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling clblas xGEMV routine... ";
     err = (cl_int)::clMath::clblas::gemv(params->order, params->transA,
         params->M, params->N, alpha, bufA, params->offA, params->lda,
         bufB, params->offBX, params->incx, beta, bufC, params->offCY,
@@ -199,7 +192,6 @@ gemvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE, 0,
                         params->rowsC * params->columnsC * sizeof(*clblasC),
@@ -209,6 +201,14 @@ gemvCorrectnessTest(TestParams *params)
 
     compareVectors(params->offCY, lenY, abs(params->incy),
                    params->columnsC * params->rowsC, blasC, clblasC);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->transA, params->M, params->N, base->useAlpha(), base->alpha(), params->offA,
+            params->lda, params->incx, base->useBeta(), base->beta(), params->incy);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;

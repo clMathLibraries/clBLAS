@@ -109,20 +109,15 @@ nrm2CorrectnessTest(TestParams *params)
 	}
 
     srand(params->seed);
-    ::std::cerr << "Generating input data... ";
 
 	randomVectors<T1>(params->N, (blasX + params->offBX), params->incx, (T1*)NULL, 0, true);
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufX = base->createEnqueueBuffer(blasX, (lengthX + params->offBX)* sizeof(*blasX), 0, CL_MEM_READ_WRITE);
     bufNRM2 = base->createEnqueueBuffer(NULL, (1 + params->offa) * sizeof(T2), 0, CL_MEM_READ_WRITE);
 	scratchBuff = base->createEnqueueBuffer(NULL, (lengthX * 2 * sizeof(T1)), 0, CL_MEM_READ_WRITE);
 
-    ::std::cerr << "Calling reference xNRM2 routine... ";
-
 	*blasNRM2  = ::clMath::blas::nrm2( params->N, blasX, params->offBX, params->incx);
-    ::std::cerr << "Done" << ::std::endl;
 
     if ((bufX == NULL) || (bufNRM2 == NULL) || (scratchBuff == NULL)) {
         releaseMemObjects(bufX, bufNRM2, scratchBuff);
@@ -137,8 +132,6 @@ nrm2CorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xNRM2 routine... ";
 
     DataType type;
     type = ( typeid(T1) == typeid(cl_float))? TYPE_FLOAT : ( typeid(T1) == typeid(cl_double))? TYPE_DOUBLE: ( typeid(T1) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT:TYPE_COMPLEX_DOUBLE;
@@ -163,8 +156,6 @@ nrm2CorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufNRM2, CL_TRUE, 0,
             (1 + params->offa) * sizeof(*clblasNRM2), clblasNRM2, 0, NULL, NULL);
@@ -181,6 +172,13 @@ nrm2CorrectnessTest(TestParams *params)
         delta += deltaForType * returnMax<T1>(blasX[params->offBX + i]);
     }
     compareValues<T2>( (blasNRM2), (clblasNRM2+params->offa), delta);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->N, params->offBX, params->incx);
+        ::std::cerr << "offNRM2 = " << params->offa << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T1>(blasX);
     deleteBuffers<T2>(blasNRM2,  clblasNRM2);

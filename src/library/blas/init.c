@@ -25,6 +25,10 @@
 #include <events.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef BUILDING_CLBLAS
+#include "AutoGemmTeardown.h"
+#include "UserGemmClKernels.h"
+#endif
 
 clblasStatus
 clblasGetVersion(cl_uint* major, cl_uint* minor, cl_uint* patch)
@@ -249,6 +253,11 @@ clblasTeardown(void)
 
     printMemLeaksInfo();
     releaseMallocTrace();
+
+#ifdef BUILDING_CLBLAS
+   initUserGemmClKernels();
+   initAutoGemmClKernels();
+#endif
 
     clblasInitialized = 0;
 }

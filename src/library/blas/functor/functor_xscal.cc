@@ -81,7 +81,7 @@ doScal(
   kargs->N = N;
   kargs->A = X;
   kargs->offBX = offx;
-  kargs->ldb.vector = incx;	// Will be using this as incx
+  kargs->ldb.Vector = incx;	// Will be using this as incx
 
   if(incx < 0) {    // According to Netlib - return for negative incx
     return clblasSuccess;

@@ -4,7 +4,7 @@
 
 #ifndef KERNEL_SGEMM_COL_NN_B1_MX032_NX032_KX16_SRC_H
 #define KERNEL_SGEMM_COL_NN_B1_MX032_NX032_KX16_SRC_H
-#pragma message("AutoGemm's sgemm_Col_NN_B1_MX032_NX032_KX16_src overriden by user.")
+// #pragma message("AutoGemm's sgemm_Col_NN_B1_MX032_NX032_KX16_src overriden by user.")
 
 #ifndef STRINGIFY
 #define STRINGIFY(S) STRINGIFY2(S)
@@ -49,7 +49,7 @@ __kernel void sgemm_Col_NN_B1_MX032_NX032_KX16 (
   uint offsetB,
   uint offsetC)
 {
-    float rC[2][2]  = {(float)0};
+    float rC[2][2]  = { {(float)0} };
     float rA[1][2];
     float rB[1][2];
 
@@ -79,7 +79,7 @@ __kernel void sgemm_Col_NN_B1_MX032_NX032_KX16 (
 
       __local float* plA = lA + idyT*33+idxT;
       __local float* plB = lB + idxT*33+idyT;
-      
+
       barrier(CLK_LOCAL_MEM_FENCE);
 
       plB[0] = B[0];

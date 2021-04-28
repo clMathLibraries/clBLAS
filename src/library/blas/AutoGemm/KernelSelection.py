@@ -17,10 +17,10 @@ def tileInRange( tileMin, tileMax, rangeMin, rangeMax):
     valid = True
   else:
     valid = False
-  #print "Range [%4ux%4u]: [%4u,%4u] is %s b/c" \
-  #    % (rangeMin, rangeMax, tileMin, tileMax, "valid" if valid else "INVALID" )
-  #print "if ( %i<0 or (%u >= %u and %u>0) and %u <= %u" \
-  #    %( tileMax, tileMax, rangeMax, rangeMax, tileMin, rangeMin )
+  #print("Range [%4ux%4u]: [%4u,%4u] is %s b/c" \
+  #    % (rangeMin, rangeMax, tileMin, tileMax, "valid" if valid else "INVALID" ))
+  #print("if ( %i<0 or (%u >= %u and %u>0) and %u <= %u" \
+  #    %( tileMax, tileMax, rangeMax, rangeMax, tileMin, rangeMin ))
   return valid
 
 
@@ -159,7 +159,7 @@ class KernelSelection:
       ####################################
       # order
       for order in orderList:
-        #print precision + "gemm" + "_" + order
+        #print(precision + "gemm" + "_" + order)
         kernel.order = order
         self.logic += indent(1) + "if (order == " + order + ") {\n"
         transList = transDict[precision]
@@ -167,7 +167,7 @@ class KernelSelection:
         ####################################
         # transA
         for transA in transList:
-          #print precision + "gemm" + "_" + order + "_" + transA
+          #print(precision + "gemm" + "_" + order + "_" + transA)
           kernel.transA = transA
           self.logic += indent(2) + "if (transA == "
           if transA == "N":
@@ -194,7 +194,7 @@ class KernelSelection:
             ####################################
             # beta
             for beta in betaList:
-              #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta)
+              #print(precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta))
               kernel.beta = beta
               self.logic += indent(4) + "if ( "
               if beta == 0:
@@ -212,7 +212,7 @@ class KernelSelection:
                 fallbackTile = sizeEvent[1]
                 validTiles = sizeEvent[2]
                 self.logic += indent(5)+"if ( M*N >= "+str(sizeMin)+"*"+str(sizeMin) + ") {\n"
-                #print precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta) + "_" + str(sizeMin) + "->" + str(sizeMax)
+                #print(precision + "gemm" + "_" + order + "_" + transA + "_" + transB + "_B" + str(beta) + "_" + str(sizeMin) + "->" + str(sizeMax))
 
                 ####################################
                 # valid tiles
@@ -234,7 +234,7 @@ class KernelSelection:
                 ####################################
                 # fallback tile - TODO all tiles begin added
                 self.logic += indent(6)+"// fallback tile\n"
-                #print "\nFallback[%i, %i]"%(sizeMin, sizeMax)
+                #print("\nFallback[%i, %i]"%(sizeMin, sizeMax))
                 kernel.workGroupNumRows = fallbackTile[0]
                 kernel.workGroupNumCols = fallbackTile[1]
                 kernel.microTileNumRows = fallbackTile[2]
@@ -387,7 +387,7 @@ class KernelSelectionSpecific:
     self.betaInitialized = False
 
   def newPrecision(self, precision ):
-    #print "KernelSelectionSpecific: " + precision + "gemm"
+    #print("KernelSelectionSpecific: " + precision + "gemm")
     if self.precisionInitialized:
       self.logic += self.zeroIndent+self.tab+self.tab + "}\n" # 2 tabs
       self.logic += self.zeroIndent+self.tab + "}\n" # 1 tab
@@ -621,7 +621,7 @@ class KernelSelectionSpecific:
 # Main
 ################################################################################
 def writeKernelSelection():
-  print "AutoGemm.py: Generating kernel selection."
+  print("AutoGemm.py: Generating kernel selection.")
   if not os.path.exists( Common.getIncludePath() ):
     os.makedirs( Common.getIncludePath() )
 
@@ -675,9 +675,9 @@ def writeKernelSelection():
 # Main
 ################################################################################
 if __name__ == "__main__":
-  if len(sys.argv) == 2:
+  if len(sys.argv) == 3:
     Common.setOutputPath(sys.argv[1])
+    AutoGemmParameters.setArchitecture(sys.argv[2])
+    writeKernelSelection()
   else:
-    print "Warning: No output path specified; default is working directory."
-  writeKernelSelection()
-
+    print("USAGE: python KernelSelection.py output_path architecture")

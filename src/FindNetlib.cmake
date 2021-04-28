@@ -74,10 +74,10 @@ endif( )
 
 # The library name available from Netlib has different names for 64bit and 32bit libs
 if( LIB64 )
-	set( Netlib_BLAS_LIBNAME libblas )
+	set( Netlib_BLAS_LIBNAME blas )
 #	set( Netlib_BLAS_LIBNAME BLAS )  Even though the download is named BLAS, the linker expects the .dll to be called libblas.dll
 else( )
-	set( Netlib_BLAS_LIBNAME libblas )
+	set( Netlib_BLAS_LIBNAME blas )
 endif( )
 
 list( FIND Netlib_FIND_COMPONENTS BLAS contains_BLAS )
@@ -91,6 +91,7 @@ if( NOT contains_BLAS EQUAL -1 )
 		PATHS
 			/usr/lib
 			/usr/local/lib
+			/usr/lib/libblas
 		DOC "Netlib dynamic library path"
 		PATH_SUFFIXES lib
 	)
@@ -98,6 +99,25 @@ if( NOT contains_BLAS EQUAL -1 )
 
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS( NETLIB DEFAULT_MSG Netlib_BLAS_LIBRARY )
 endif( )
+
+
+#look for netlib cblas header
+if( UNIX )
+    find_path(Netlib_INCLUDE_DIRS cblas.h
+	    HINTS
+		    /usr/include
+	)
+else()
+    find_path(Netlib_INCLUDE_DIRS cblas.h
+        HINTS
+            ${Netlib_ROOT}/CBLAS/include/
+    )
+endif()
+
+if( Netlib_INCLUDE_DIRS )
+else()
+    message(WARNING "Cannot find cblas.h")
+endif()
 
 if( NETLIB_FOUND )
 	list( APPEND Netlib_LIBRARIES ${Netlib_BLAS_LIBRARY} )

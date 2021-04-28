@@ -106,8 +106,6 @@ her2kCorrectnessTest(TestParams *params)
     alpha = convertMultiplier<T>(params->alpha);
     beta  = convertMultiplier<T>(params->beta);
 
-    ::std::cerr << "Generating input data... ";
-
     clblasTranspose ftransB = (params->transA==clblasNoTrans)? clblasConjTrans: clblasNoTrans;
 
     randomGemmMatrices<T>(params->order, params->transA, ftransB,
@@ -115,7 +113,6 @@ her2kCorrectnessTest(TestParams *params)
                                 B, params->ldb, true, &beta, blasC, params->ldc);
 
     memcpy(clblasC, blasC, params->rowsC * params->columnsC * sizeof(*blasC));
-    ::std::cerr << "Done" << ::std::endl;
 
     bufA = base->createEnqueueBuffer(A, params->rowsA * params->columnsA * sizeof(*A), params->offA * sizeof(*A),
                                      CL_MEM_READ_ONLY);
@@ -141,7 +138,6 @@ her2kCorrectnessTest(TestParams *params)
         return;
     }
 
-    ::std::cerr << "Calling reference xHER2K routine... ";
     T fAlpha = alpha;
     if (params->order == clblasColumnMajor) {
         ::clMath::blas::her2k(clblasColumnMajor, params->uplo, params->transA,
@@ -158,9 +154,7 @@ her2kCorrectnessTest(TestParams *params)
 						        A, 0, params->lda, B, 0, params->ldb, CREAL(beta), blasC, 0, params->ldc);
 
     }
-    ::std::cerr << "Done" << ::std::endl;
 
-    ::std::cerr << "Calling clblas xHER2K routine... ";
     err = (cl_int)::clMath::clblas::her2k(params->order, params->uplo,
                                          params->transA, params->N, params->K,
                                          alpha, bufA, params->offA, params->lda, bufB, params->offBX, params->ldb,
@@ -183,13 +177,20 @@ her2kCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     clEnqueueReadBuffer(base->commandQueues()[0], bufC, CL_TRUE, params->offCY * sizeof(*clblasC),
                         params->rowsC * params->columnsC * sizeof(*clblasC), clblasC, 0, NULL, NULL);
 
     releaseMemObjects(bufA, bufB, bufC);
     compareMatrices<T>(params->order, params->N, params->N, blasC, clblasC, params->ldc);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->N, params->K, true, params->alpha,
+            params->offa, params->lda, params->offBX, params->ldb, true, params->beta, params->offCY, params->ldc);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
     deleteBuffers<T>(A, B, blasC, clblasC);
     delete[] events;

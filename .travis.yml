@@ -15,6 +15,7 @@ language: cpp
 # sudo: false instructs travis to build our project in a docker VM (faster)
 # Can not yet install fglrx packages with 'false'
 sudo: required # false
+dist: trusty
 
 # os: expands the build matrix to include multiple os's
 # disable linux, as we get sporadic failures on building boost, needs investigation
@@ -43,6 +44,7 @@ addons:
       # boost-latest contains boost v1.55
       - boost-latest
     packages:
+      - gfortran
       # g++-4.8 is minimum version considered to be the first good c++11 gnu compiler
       # - g++-4.8
       # - clang-3.6
@@ -66,6 +68,8 @@ addons:
 env:
   global:
     - CLBLAS_ROOT=${TRAVIS_BUILD_DIR}/bin/make/release
+    - OPENCL_REGISTRY=https://www.khronos.org/registry/cl
+    - OPENCL_ROOT=${TRAVIS_BUILD_DIR}/bin/opencl
 
 # The following filters our build matrix; we are interested in linux-gcc & osx-clang
 matrix:
@@ -77,13 +81,13 @@ matrix:
 
 before_install:
   # Remove the following linux clause when fglrx can be installed with sudo: false
-  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-      sudo apt-get update -qq &&
-      sudo apt-get install -qq fglrx=2:13.350.1-0ubuntu0.0.1;
-    fi
-  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-      export OPENCL_ROOT="${TRAVIS_BUILD_DIR}/opencl-headers";
-    fi
+  #- if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+  #    sudo apt-get update -qq &&
+  #    sudo apt-get install -qq fglrx=2:13.350.1-0ubuntu0.0.1;
+  #  fi
+  #- if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+  #    export OPENCL_ROOT="${TRAVIS_BUILD_DIR}/opencl-headers";
+  #  fi
   - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
       brew update;
       brew outdated boost || brew upgrade boost;
@@ -97,10 +101,35 @@ before_install:
 install:
   # 'Precise' only distributes v1.1 opencl headers; download 1.2 headers from khronos website
   # Remove when the travis VM upgrades to 'trusty' or beyond
+  #- if [ ${TRAVIS_OS_NAME} == "linux" ]; then
+  #    mkdir -p ${OPENCL_ROOT}/include/CL;
+  #    pushd ${OPENCL_ROOT}/include/CL;
+  #    wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/;
+  #    popd;
+  #  fi
+  # The following linux logic is necessary because of Travis's move to the GCE platform, which does not
+  # currently contain packages for fglrx: https://github.com/travis-ci/travis-ci/issues/5221
+  # We build our own linkable .so file
   - if [ ${TRAVIS_OS_NAME} == "linux" ]; then
-      mkdir -p ${OPENCL_ROOT}/include/CL;
-      pushd ${OPENCL_ROOT}/include/CL;
-      wget -w 1 -r -np -nd -nv -A h,hpp https://www.khronos.org/registry/cl/api/1.2/;
+      mkdir -p ${OPENCL_ROOT};
+      pushd ${OPENCL_ROOT};
+      travis_retry git clone --depth 1 https://github.com/KhronosGroup/OpenCL-ICD-Loader.git;
+      mv ./OpenCL-ICD-Loader/* .;
+      travis_retry git clone --depth 1 https://github.com/KhronosGroup/OpenCL-Headers.git inc/CL;
+      pushd inc/CL;
+      travis_retry wget -w 1 -np -nd -nv -A h,hpp ${OPENCL_REGISTRY}/api/2.1/cl.hpp;
+      popd;
+      mkdir -p lib;
+      pushd lib;
+      cmake -G "Unix Makefiles" ..;
+      make;
+      cp ./bin/libOpenCL.so .;
+      popd;
+      pushd inc/CL;
+      travis_retry git fetch origin opencl12:opencl12;
+      git checkout opencl12;
+      popd;
+      mv inc/ include/;
       popd;
     fi
   # osx image does not contain cl.hpp file; download from Khronos
@@ -114,7 +143,7 @@ install:
 before_script:
   - mkdir -p ${CLBLAS_ROOT}
   - pushd ${CLBLAS_ROOT}
-  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=ON -DOCL_VERSION=2.0 -DOPENCL_ROOT=${OPENCL_ROOT} ${TRAVIS_BUILD_DIR}/src
+  - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TEST=OFF -DBUILD_CLIENT=OFF -DOCL_VERSION=2.0 -DOPENCL_ROOT=${OPENCL_ROOT} ${TRAVIS_BUILD_DIR}/src
 
 # use script: to execute build steps
 script:

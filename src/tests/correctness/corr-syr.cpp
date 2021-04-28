@@ -99,9 +99,6 @@ syrCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
-
 	memset(blasA, -1, (lengthA + params->offa));
 	memset(clblasA, -1, (lengthA + params->offa));
 	memset(X, -1, (lengthX + params->offBX));
@@ -142,13 +139,9 @@ syrCorrectnessTest(TestParams *params)
     memcpy(clblasA, blasA, (lengthA + params->offa)* sizeof(*blasA));
   //  memcpy(tempA, blasA, (lengthA + params->offa)* sizeof(*blasA));
 
-	::std::cerr << "Done" << ::std::endl;
-
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(clblasA, (lengthA + params->offa) * sizeof(*clblasA), 0, CL_MEM_READ_WRITE);
     bufX = base->createEnqueueBuffer(X, (lengthX + params->offBX)* sizeof(*X), 0, CL_MEM_READ_ONLY);
-
-    ::std::cerr << "Calling reference xSYR routine... ";
 
 	clblasOrder order;
     clblasUplo fUplo;
@@ -183,8 +176,6 @@ syrCorrectnessTest(TestParams *params)
 	//printf("After acml\n");
 	//printMatrixBlock( params->order, 0, 0, params->N, params->N, params->lda, blasA);
 
-    ::std::cerr << "Done" << ::std::endl;
-
     if ((bufA == NULL) || (bufX == NULL) ) {
         /* Skip the test, the most probable reason is
          *     matrix too big for a device.
@@ -200,8 +191,6 @@ syrCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xSYR routine... ";
 
     err = (cl_int)::clMath::clblas::syr( params->order, params->uplo, params->N, alpha,
 						bufX, params->offBX, params->incx, bufA, params->offa, params->lda,
@@ -223,7 +212,6 @@ syrCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufA, CL_TRUE, 0,
         (lengthA + params->offa) * sizeof(*clblasA), clblasA, 0,
@@ -241,9 +229,16 @@ syrCorrectnessTest(TestParams *params)
 //    compareMatrices<T>(clblasColumnMajor, 1, (params->lda - params->N), (blasA + params->offa + params->N), (tempA + params->offa + params->N),
 //    					params->lda);
 //	delete[] tempA;
-	printf("Comparing the results\n");
 	compareMatrices<T>(params->order, params->N , params->N, (blasA + params->offa), (clblasA + params->offa),
                        params->lda);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->N, alpha, params->offBX, params->incx, params->offa, params->lda);
+
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
 
 	deleteBuffers<T>(blasA, clblasA, X);
     delete[] events;

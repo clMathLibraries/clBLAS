@@ -130,6 +130,9 @@ main(void)
         printf("Result dot product: %f\n", dotProduct);
     }
 
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufY);
     clReleaseMemObject(bufX);

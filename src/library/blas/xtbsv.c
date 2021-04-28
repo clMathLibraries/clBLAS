@@ -153,15 +153,15 @@ if (err == CL_SUCCESS)
                 gbmv->args.offA += kargs->offA;
                 gbmv->args.offa = gbmv->args.offA;
 
-                if(kargs->ldb.vector < 0)
+                if(kargs->ldb.Vector < 0)
                 {
-                    gbmv->args.offBX = kargs->offBX + ((i-1) * TARGET_ROWS) * abs(kargs->ldb.vector);
-                    gbmv->args.offCY = kargs->offBX + ((i * TARGET_ROWS) ) * abs(kargs->ldb.vector);
+                    gbmv->args.offBX = kargs->offBX + ((i-1) * TARGET_ROWS) * abs(kargs->ldb.Vector);
+                    gbmv->args.offCY = kargs->offBX + ((i * TARGET_ROWS) ) * abs(kargs->ldb.Vector);
                 }
                 else
                 {
-                    gbmv->args.offBX = kargs->offBX + (trtri->args.startRow) * kargs->ldb.vector;
-                    gbmv->args.offCY = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.vector;
+                    gbmv->args.offBX = kargs->offBX + (trtri->args.startRow) * kargs->ldb.Vector;
+                    gbmv->args.offCY = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.Vector;
                 }
 
             } else {
@@ -176,15 +176,15 @@ if (err == CL_SUCCESS)
                 gbmv->args.offA -= gbmv->args.KL;
                 gbmv->args.offA += kargs->offA;
                 gbmv->args.offa = gbmv->args.offA;
-                if(kargs->ldb.vector < 0)
+                if(kargs->ldb.Vector < 0)
                 {
-                    gbmv->args.offBX = kargs->offBX + (kargs->N - gbmv->args.startRow) * abs(kargs->ldb.vector);
-                    gbmv->args.offCY = kargs->offBX + (kargs->N - (gbmv->args.startRow + gbmv->args.M) ) * abs(kargs->ldb.vector);
+                    gbmv->args.offBX = kargs->offBX + (kargs->N - gbmv->args.startRow) * abs(kargs->ldb.Vector);
+                    gbmv->args.offCY = kargs->offBX + (kargs->N - (gbmv->args.startRow + gbmv->args.M) ) * abs(kargs->ldb.Vector);
                 }
                 else
                 {
-                    gbmv->args.offBX = kargs->offBX + (trtri->args.startRow) * kargs->ldb.vector;
-                    gbmv->args.offCY = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.vector;
+                    gbmv->args.offBX = kargs->offBX + (trtri->args.startRow) * kargs->ldb.Vector;
+                    gbmv->args.offCY = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.Vector;
                 }
 
             }
@@ -388,15 +388,15 @@ offa = r * lda + col - (r - k);
                 gbmv->args.offA += kargs->offA;
                 gbmv->args.offa = gbmv->args.offA;
 
-                if(kargs->ldb.vector < 0)
+                if(kargs->ldb.Vector < 0)
                 {
-                    gbmv->args.offBX = kargs->offBX + (kargs->N - (gbmv->args.endRow)) * abs(kargs->ldb.vector);
-                    gbmv->args.offCY = kargs->offBX + (kargs->N - (gbmv->args.endRow + gbmv->args.N) ) * abs(kargs->ldb.vector);
+                    gbmv->args.offBX = kargs->offBX + (kargs->N - (gbmv->args.endRow)) * abs(kargs->ldb.Vector);
+                    gbmv->args.offCY = kargs->offBX + (kargs->N - (gbmv->args.endRow + gbmv->args.N) ) * abs(kargs->ldb.Vector);
                 }
                 else
                 {
-                    gbmv->args.offBX = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.vector;
-                    gbmv->args.offCY = kargs->offBX + (gbmv->args.endRow) * kargs->ldb.vector;
+                    gbmv->args.offBX = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.Vector;
+                    gbmv->args.offCY = kargs->offBX + (gbmv->args.endRow) * kargs->ldb.Vector;
                 }
 
 
@@ -416,15 +416,15 @@ offa = r * lda + col - (r - k);
                 gbmv->args.offA -= gbmv->args.KL;
                 gbmv->args.offA += kargs->offA;
                 gbmv->args.offa = gbmv->args.offA;
-                if(kargs->ldb.vector < 0)
+                if(kargs->ldb.Vector < 0)
                 {
-                    gbmv->args.offBX = kargs->offBX + (kargs->N - gbmv->args.endRow) * abs(kargs->ldb.vector);
-                    gbmv->args.offCY = kargs->offBX + (kargs->N - (gbmv->args.startRow) ) * abs(kargs->ldb.vector);
+                    gbmv->args.offBX = kargs->offBX + (kargs->N - gbmv->args.endRow) * abs(kargs->ldb.Vector);
+                    gbmv->args.offCY = kargs->offBX + (kargs->N - (gbmv->args.startRow) ) * abs(kargs->ldb.Vector);
                 }
                 else
                 {
-                    gbmv->args.offBX = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.vector;
-                    gbmv->args.offCY = kargs->offBX + (gbmv->args.startRow - gbmv->args.N) * kargs->ldb.vector;
+                    gbmv->args.offBX = kargs->offBX + (gbmv->args.startRow) * kargs->ldb.Vector;
+                    gbmv->args.offCY = kargs->offBX + (gbmv->args.startRow - gbmv->args.N) * kargs->ldb.Vector;
                 }
 
             }
@@ -626,13 +626,13 @@ doTbsv(
     kargs->A = A;
     kargs->lda.matrix = lda;
     kargs->B = x;
-    kargs->ldb.vector = incx;
+    kargs->ldb.Vector = incx;
     kargs->offBX = offx;
 	kargs->offa = offa;
 	kargs->offA = offa;
     kargs->C = x;
     kargs->offCY = offx;
-    kargs->ldc.vector = incx;
+    kargs->ldc.Vector = incx;
     kargs->startRow = 0;
 
     if(trans == clblasNoTrans)

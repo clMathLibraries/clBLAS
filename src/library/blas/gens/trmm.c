@@ -1245,7 +1245,7 @@ static int trmmGetDefaultDecomp( PGranularity *pgran,
     unsigned int subdimsNum,
     void *pArgs)
 {
-    (void*)subdimsNum;
+    DUMMY_ARG_USAGE(subdimsNum);
 
     if ( NULL == pArgs ) {
         return -EINVAL;

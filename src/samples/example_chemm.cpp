@@ -161,7 +161,10 @@ main(void)
         /* At this point you will get the result of SYMM placed in C array. */
         printResult();
     }
-
+    
+    /* Release OpenCL events. */
+    clReleaseEvent(event);
+    
     /* Release OpenCL memory objects. */
     clReleaseMemObject(bufC);
     clReleaseMemObject(bufB);

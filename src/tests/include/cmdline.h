@@ -42,7 +42,9 @@ typedef enum SetoptFlags {
     SET_DEVICE_TYPE = (1 << 7),
     SET_INCX  = (1 << 8),
     SET_INCY  = (1 << 9),
-    SET_NUM_COMMAND_QUEUES = (1 << 10)
+    SET_NUM_COMMAND_QUEUES = (1 << 10),
+    SET_DEVICE_ORD = (1 << 11),
+    SET_PLATFORM_ORD = (1 << 12)
 } SetoptFlags;
 
 typedef struct TestParams {
@@ -83,6 +85,8 @@ typedef struct TestParams {
     int useImages;
     cl_device_type devType;
     const char*    devName;
+    size_t devOrd;
+    size_t platOrd;
     cl_uint numCommandQueues;
     SetoptFlags optFlags;
 } TestParams;

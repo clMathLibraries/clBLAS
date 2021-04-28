@@ -108,8 +108,6 @@ trmvCorrectnessTest(TestParams *params)
 
     srand(params->seed);
 
-    ::std::cerr << "Generating input data... ";
-
     // Set data in A and X using populate() routine
     int creationFlags = 0;
     creationFlags =  creationFlags | RANDOM_INIT;
@@ -125,17 +123,14 @@ trmvCorrectnessTest(TestParams *params)
 
     // Copy blasX to clblasX
     memcpy(clblasX, blasX, (lengthX + params->offBX)* sizeof(*blasX));
-    ::std::cerr << "Done" << ::std::endl;
 
 	// Allocate buffers
     bufA = base->createEnqueueBuffer(A, (lengthA + params->offa)* sizeof(*A), 0, CL_MEM_READ_ONLY);
     bufX = base->createEnqueueBuffer(clblasX, (lengthX + params->offBX)* sizeof(*clblasX), 0, CL_MEM_WRITE_ONLY);
-    bufXTemp = base->createEnqueueBuffer(NULL, lengthX * sizeof(*clblasX), 0, CL_MEM_READ_ONLY);
+    bufXTemp = base->createEnqueueBuffer(NULL, lengthX * sizeof(*clblasX), 0, CL_MEM_READ_WRITE);
 
 	//printData( "bufX", blasX, lengthX, 1, lengthX);
 	//printData( "clblasX", clblasX, lengthX, 1, lengthX);
-
-    ::std::cerr << "Calling reference xTRMV routine... ";
 
 
 	clblasOrder order;
@@ -157,7 +152,6 @@ trmvCorrectnessTest(TestParams *params)
     }
 
 	::clMath::blas::trmv( order, fUplo, fTrans, params->diag, params->N, A, params->offa, params->lda, blasX, params->offBX, params->incx);
-    ::std::cerr << "Done" << ::std::endl;
 
     // Hold X vector
 
@@ -176,8 +170,6 @@ trmvCorrectnessTest(TestParams *params)
         SUCCEED();
         return;
     }
-
-    ::std::cerr << "Calling clblas xTRMV routine... ";
 
     DataType type;
     type = ( typeid(T) == typeid(cl_float))? TYPE_FLOAT : ( typeid(T) == typeid(cl_double))? TYPE_DOUBLE: ( typeid(T) == typeid(cl_float2))? TYPE_COMPLEX_FLOAT:TYPE_COMPLEX_DOUBLE;
@@ -202,8 +194,6 @@ trmvCorrectnessTest(TestParams *params)
         delete[] events;
         ASSERT_EQ(CL_SUCCESS, err) << "waitForSuccessfulFinish()";
     }
-    ::std::cerr << "Done" << ::std::endl;
-
 
     err = clEnqueueReadBuffer(base->commandQueues()[0], bufX, CL_TRUE, 0,
         (lengthX + params->offBX) * sizeof(*clblasX), clblasX, 0,
@@ -223,6 +213,14 @@ trmvCorrectnessTest(TestParams *params)
 
     compareMatrices<T>(clblasColumnMajor, lengthX , 1, (blasX + params->offBX), (clblasX + params->offBX),
                        lengthX);
+
+    if (::testing::Test::HasFailure())
+    {
+        printTestParams(params->order, params->uplo, params->transA, params->diag, params->N, params->lda, params->incx, params->offa, params->offBX);
+        ::std::cerr << "seed = " << params->seed << ::std::endl;
+        ::std::cerr << "queues = " << params->numCommandQueues << ::std::endl;
+    }
+
     deleteBuffers<T>(A, blasX, clblasX);
     delete[] events;
 }

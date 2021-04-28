@@ -101,20 +101,20 @@ doHer2(
 	{
 		kargs->uplo = (uplo == clblasUpper) ? clblasLower : clblasUpper;
 		kargs->B = Y;
-		kargs->ldb.vector = incy;
+		kargs->ldb.Vector = incy;
 		kargs->offBX = offy;
 		kargs->C = X;
-		kargs->ldc.vector = incx;
+		kargs->ldc.Vector = incx;
 		kargs->offCY = offx;
 	}
 	else
 	{
 		kargs->uplo = uplo;
 		kargs->B = X;
-		kargs->ldb.vector = incx;
+		kargs->ldb.Vector = incx;
 		kargs->offBX = offx;
 		kargs->C = Y;
-		kargs->ldc.vector = incy;
+		kargs->ldc.Vector = incy;
 		kargs->offCY = offy;
 	}
     kargs->N = N;

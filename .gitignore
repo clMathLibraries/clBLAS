@@ -23,3 +23,6 @@
 
 # vim temp files
 .*.swp
+
+# python compiled files
+*.pyc
