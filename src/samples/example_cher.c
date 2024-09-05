@@ -16,6 +16,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Include CLBLAS header. It automatically includes needed OpenCL header,
