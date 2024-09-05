@@ -81,7 +81,7 @@ int
 main(void)
 {
     cl_int err;
-    cl_platform_id platform[] = { 0, 0 };
+    cl_platform_id platform = 0;
     cl_device_id device = 0;
     cl_context_properties props[3] = { CL_CONTEXT_PLATFORM, 0, 0 };
     cl_context ctx = 0;
@@ -91,13 +91,13 @@ main(void)
     int ret = 0;
 
     /* Setup OpenCL environment. */
-    err = clGetPlatformIDs(sizeof( platform ), &platform, NULL);
+    err = clGetPlatformIDs(1, &platform, NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetPlatformIDs() failed with %d\n", err );
         return 1;
     }
 
-    err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
     if (err != CL_SUCCESS) {
         printf( "clGetDeviceIDs() failed with %d\n", err );
         return 1;
