@@ -17,6 +17,6 @@
 
 /* the configured version and settings for clblas
  */
-#define clblasVersionMajor @clBLAS_VERSION_MAJOR@
-#define clblasVersionMinor @clBLAS_VERSION_MINOR@
-#define clblasVersionPatch @clBLAS_VERSION_PATCH@
+#define clblasVersionMajor @CLBLAS_VERSION_MAJOR@
+#define clblasVersionMinor @CLBLAS_VERSION_MINOR@
+#define clblasVersionPatch @CLBLAS_VERSION_PATCH@
