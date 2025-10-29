@@ -15,8 +15,14 @@
  * ************************************************************************/
 
 
-/* the configured version and settings for clblas
+/*
+ the configured version and settings for clblas
  */
-#define clblasVersionMajor @clBLAS_VERSION_MAJOR@
-#define clblasVersionMinor @clBLAS_VERSION_MINOR@
-#define clblasVersionPatch @clBLAS_VERSION_PATCH@
+
+//#define clblasVersionMajor @clBLAS_VERSION_MAJOR@
+//#define clblasVersionMinor @clBLAS_VERSION_MINOR@
+//#define clblasVersionPatch @clBLAS_VERSION_PATCH@
+
+static int clblasVersionMajor = 1;
+static int clblasVersionMinor = 12;
+static int clblasVersionPatch = 2;

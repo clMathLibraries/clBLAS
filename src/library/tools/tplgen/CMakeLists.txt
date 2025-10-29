@@ -14,7 +14,7 @@
 # limitations under the License.
 # ########################################################################
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 project(tplgen C CXX)
 ADD_DEFINITIONS(/D_CRT_SECURE_NO_WARNINGS)
 ADD_EXECUTABLE(tplgen tplgen.cpp)
